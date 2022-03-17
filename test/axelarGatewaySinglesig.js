@@ -1,18 +1,17 @@
 'use strict';
 
 const chai = require('chai');
-const { ethers } = require("hardhat");
 const {
-    Contract,
-    ContractFactory,
-    utils: {
-        defaultAbiCoder,
-        id,
-        arrayify,
-        keccak256,
-        getCreate2Address,
-        randomBytes,
-    },
+  Contract,
+  ContractFactory,
+  utils: {
+    defaultAbiCoder,
+    id,
+    arrayify,
+    keccak256,
+    getCreate2Address,
+    randomBytes,
+  },
 } = require('ethers');
 const { deployContract, MockProvider, solidity } = require('ethereum-waffle');
 chai.use(solidity);
@@ -24,14 +23,14 @@ const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
 
-const TokenDeployer = require('../artifacts/contracts/gateway/TokenDeployer.sol/TokenDeployer.json');
-const AxelarGatewayProxy = require('../artifacts/contracts/gateway/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
-const AxelarGatewaySinglesig = require('../artifacts/contracts/gateway/AxelarGatewaySinglesig.sol/AxelarGatewaySinglesig.json');
-const BurnableMintableCappedERC20 = require('../artifacts/contracts/gateway/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
-const MintableCappedERC20 = require('../artifacts/contracts/gateway/MintableCappedERC20.sol/MintableCappedERC20.json');
-const DepositHandler = require('../artifacts/contracts/gateway/DepositHandler.sol/DepositHandler.json');
-const ExternalExecutor = require('../artifacts/contracts/gateway/test/ExternalExecutor.sol/ExternalExecutor.json');
-const TokenSwapper = require('../artifacts/contracts/gateway/test/TokenSwapper.sol/TokenSwapper.json');
+const TokenDeployer = require('../build/TokenDeployer.json');
+const AxelarGatewayProxy = require('../build/AxelarGatewayProxy.json');
+const AxelarGatewaySinglesig = require('../build/AxelarGatewaySinglesig.json');
+const BurnableMintableCappedERC20 = require('../build/BurnableMintableCappedERC20.json');
+const MintableCappedERC20 = require('../build/MintableCappedERC20.json');
+const DepositHandler = require('../build/DepositHandler.json');
+const ExternalExecutor = require('../build/ExternalExecutor.json');
+const TokenSwapper = require('../build/TokenSwapper.json');
 const {
   bigNumberToNumber,
   getSignedExecuteInput,
@@ -39,41 +38,31 @@ const {
 } = require('./utils');
 
 describe('AxelarGatewaySingleSig', () => {
-    let ownerWallet,
-        operatorWallet,
-        nonOwnerWallet,
-        adminWallet1,
-        adminWallet2,
-        adminWallet3,
-        adminWallet4,
-        adminWallet5,
-        adminWallet6;
-  let adminWallets;
+  const [
+    ownerWallet,
+    operatorWallet,
+    nonOwnerWallet,
+    adminWallet1,
+    adminWallet2,
+    adminWallet3,
+    adminWallet4,
+    adminWallet5,
+    adminWallet6,
+  ] = new MockProvider().getWallets();
+  const adminWallets = [
+    adminWallet1,
+    adminWallet2,
+    adminWallet3,
+    adminWallet4,
+    adminWallet5,
+    adminWallet6,
+  ];
   const threshold = 3;
 
   let contract;
   let tokenDeployer;
 
   beforeEach(async () => {
-    [
-        ownerWallet,
-        operatorWallet,
-        nonOwnerWallet,
-        adminWallet1,
-        adminWallet2,
-        adminWallet3,
-        adminWallet4,
-        adminWallet5,
-        adminWallet6
-    ] = await ethers.getSigners();
-    adminWallets = [ 
-        adminWallet1,
-        adminWallet2,
-        adminWallet3,
-        adminWallet4,
-        adminWallet5,
-        adminWallet6,
-      ];
     const params = arrayify(
       defaultAbiCoder.encode(
         ['address[]', 'uint8', 'address', 'address'],
@@ -181,7 +170,7 @@ describe('AxelarGatewaySingleSig', () => {
       it('should freeze token after passing threshold', () => {
         return expect(contract.connect(adminWallet1).freezeToken(symbol))
           .to.not.emit(contract, 'TokenFrozen')
-          .then(() => 
+          .then(() =>
             expect(
               contract.connect(adminWallet2).freezeToken(symbol),
             ).to.not.emit(contract, 'TokenFrozen'),
@@ -191,7 +180,7 @@ describe('AxelarGatewaySingleSig', () => {
               .to.emit(contract, 'TokenFrozen')
               .withArgs(symbol),
           )
-          .then(() => 
+          .then(() =>
             expect(
               tokenContract.transfer(ownerWallet.address, 1),
             ).to.be.revertedWith('IS_FROZEN'),
@@ -215,7 +204,7 @@ describe('AxelarGatewaySingleSig', () => {
             expect(tokenContract.transfer(ownerWallet.address, amount))
               .to.emit(tokenContract, 'Transfer')
               .withArgs(nonOwnerWallet.address, ownerWallet.address, amount),
-          )
+          );
       });
     });
 
@@ -318,7 +307,7 @@ describe('AxelarGatewaySingleSig', () => {
         [tokenDeployer.address],
       );
       const wrongImplementationCodeHash = keccak256(
-        AxelarGatewaySinglesig.bytecode,
+        `0x${AxelarGatewaySinglesig.bytecode}`,
       );
       const params = defaultAbiCoder.encode(
         ['address[]', 'uint8', 'address', 'address'],
@@ -476,8 +465,9 @@ describe('AxelarGatewaySingleSig', () => {
             ],
           ),
         );
+
         return getSignedExecuteInput(data, ownerWallet)
-          .then((input) => 
+          .then((input) =>
             expect(contract.execute(input)).to.emit(contract, 'TokenDeployed'),
           )
           .then(() => getSignedExecuteInput(secondTxData, ownerWallet))
@@ -827,7 +817,7 @@ describe('AxelarGatewaySingleSig', () => {
         const depositHandlerAddress = getCreate2Address(
           contract.address,
           salt,
-          keccak256(DepositHandler.bytecode),
+          keccak256(`0x${DepositHandler.bytecode}`),
         );
 
         const burnAmount = amount / 2;
@@ -898,7 +888,7 @@ describe('AxelarGatewaySingleSig', () => {
         const depositHandlerAddress = getCreate2Address(
           contract.address,
           salt,
-          keccak256(DepositHandler.bytecode),
+          keccak256(`0x${DepositHandler.bytecode}`),
         );
 
         const burnAmount = amount / 2;
@@ -1195,7 +1185,7 @@ describe('AxelarGatewaySingleSig', () => {
           const depositHandlerAddress = getCreate2Address(
             contract.address,
             salt,
-            keccak256(DepositHandler.bytecode),
+            keccak256(`0x${DepositHandler.bytecode}`),
           );
           await token
             .connect(nonOwnerWallet)

@@ -1,5 +1,0 @@
-networks: {
-  hardhat: {
-      blockGasLimit: 1e10
-  }
-}
