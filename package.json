@@ -1,0 +1,30 @@
+{
+  "name": "axelar-local-gateway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axelarnetwork/axelar-local-gateway.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/axelarnetwork/axelar-local-gateway/issues"
+  },
+  "homepage": "https://github.com/axelarnetwork/axelar-local-gateway#readme",
+  "dependencies": {
+    "hardhat": "^2.9.1",
+    "mocha": "^9.2.2"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "chai": "^4.3.6",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.6.1"
+  }
+}
