@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.9;
 
-import { TokenDeployer } from '../node_modules/axelar-gateway-solidity/src/TokenDeployer.sol';
-import { AxelarGatewaySinglesig } from '../node_modules/axelar-gateway-solidity/src/AxelarGatewaySinglesig.sol';
-import { AxelarGatewayProxy } from '../node_modules/axelar-gateway-solidity/src/AxelarGatewayProxy.sol';
-import { ExternalExecutor } from '../node_modules/axelar-gateway-solidity/src/test/ExternalExecutor.sol';
-import { TokenSwapper } from '../node_modules/axelar-gateway-solidity/src/test/TokenSwapper.sol';
+import { TokenDeployer } from 'axelar-cgp-solidity/src/TokenDeployer.sol';
+import { AxelarGatewaySinglesig } from 'axelar-cgp-solidity/src/AxelarGatewaySinglesig.sol';
+import { AxelarGatewayProxy } from 'axelar-cgp-solidity/src/AxelarGatewayProxy.sol';
+import { DestinationSwapExecutable } from 'axelar-cgp-solidity/src/test/DestinationSwapExecutable.sol';
+import { TokenSwapper } from  'axelar-cgp-solidity/src/test/TokenSwapper.sol';

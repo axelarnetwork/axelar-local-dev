@@ -1,6 +1,7 @@
 'use strict';
 
 const {
+    ethers,
     Wallet,
     Contract,
     ContractFactory,
@@ -29,8 +30,6 @@ const TokenDeployer = require('../build/TokenDeployer.json');
 const AxelarGatewayProxy = require('../build/AxelarGatewayProxy.json');
 const AxelarGatewaySinglesig = require('../build/AxelarGatewaySinglesig.json');
 const BurnableMintableCappedERC20 = require('../build/BurnableMintableCappedERC20.json');
-const MintableCappedERC20 = require('../build/MintableCappedERC20.json');
-const DepositHandler = require('../build/DepositHandler.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 
 
@@ -47,7 +46,7 @@ class Command {
     }
 }
 
-const chains = [];
+const networks = [];
 
 const defaultAccounts = (n) => {
     const balance = '10000000000000000000000000000000000';
@@ -60,10 +59,10 @@ const defaultAccounts = (n) => {
     return privateKeys.map(secretKey => ({ balance, secretKey }));
 }
 
-class Chain {
+class Network {
     constructor(name='', chainId=-1) {
-        this.name = name === '' ? `Chain ${chains.length+1}` : name;
-        this.chainId = chainId === -1 ? chains.length+1 : chainId;
+        this.name = name === '' ? `Chain ${networks.length+1}` : name;
+        this.chainId = chainId === -1 ? networks.length+1 : chainId;
         const accounts = defaultAccounts(20);
         this.provider = new Web3Provider(require('ganache-core').provider({
             accounts: accounts,
@@ -81,33 +80,6 @@ class Chain {
         this.lastRelayedBlock = 0;
         this.ust = null;
         this.gateway = null;
-    }
-    async deployGateway() {
-        const params = arrayify(
-            defaultAbiCoder.encode(
-            ['address[]', 'uint8', 'address', 'address'],
-            [
-                this.adminWallets.map(wallet => wallet.address),
-                this.threshold,
-                this.ownerWallet.address,
-                this.operatorWallet.address,
-            ],
-            ),
-        );
-        let tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
-        const gateway = await deployContract(this.ownerWallet, AxelarGatewaySinglesig, [
-            tokenDeployer.address,
-        ]);
-        const proxy = await deployContract(this.ownerWallet, AxelarGatewayProxy, [
-            gateway.address,
-            params,
-        ]);
-        let contract = new Contract(
-            proxy.address,
-            AxelarGatewaySinglesig.abi,
-            this.ownerWallet,
-        );
-        return contract;
     }
     async deployToken (name, symbol, decimals, cap) {
         const data = arrayify(defaultAbiCoder.encode(
@@ -170,20 +142,42 @@ class Chain {
 }
 
 module.exports = {
-    createChain: async (name='', chainId=-1) => {
-        const chain = new Chain(name, chainId);
-        chain.gateway = await chain.deployGateway();
+    createNetwork: async (name='', chainId=-1) => {
+        const chain = new Network(name, chainId);const params = arrayify(
+        defaultAbiCoder.encode(
+            ['address[]', 'uint8', 'address', 'address'],
+            [
+                chain.adminWallets.map(wallet => wallet.address),
+                chain.threshold,
+                chain.ownerWallet.address,
+                chain.operatorWallet.address,
+            ],
+            ),
+        );
+        let tokenDeployer = await deployContract(chain.ownerWallet, TokenDeployer);
+        const gateway = await deployContract(chain.ownerWallet, AxelarGatewaySinglesig, [
+            tokenDeployer.address,
+        ]);
+        const proxy = await deployContract(chain.ownerWallet, AxelarGatewayProxy, [
+            gateway.address,
+            params,
+        ]);
+        chain.gateway = new Contract(
+            proxy.address,
+            AxelarGatewaySinglesig.abi,
+            chain.ownerWallet,
+        );
         chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
-        chains.push(chain);
+        networks.push(chain);
         return chain;
     },
-    chains: chains,
+    networks: networks,
     relay: async () => {
         const commands = {};
-        for(let to of chains) {
+        for(let to of networks) {
             commands[to.name] = [];
         }
-        for(const from of chains) {
+        for(const from of networks) {
             let filter = from.gateway.filters.TokenSent();
             let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
             for(let log of logsFrom) {
@@ -206,7 +200,7 @@ module.exports = {
                     [from.name, args.sender, args.contractAddress, args.payloadHash], 
                     ['string', 'string', 'address', 'bytes32'],
                     (async () => {
-                        const to = chains.find(chain=>chain.name == args.destinationChain);
+                        const to = networks.find(chain=>chain.name == args.destinationChain);
                         const contract = new Contract(
                             args.contractAddress,
                             IAxelarExecutable.abi,
@@ -227,13 +221,13 @@ module.exports = {
                     [from.name, args.sender, args.contractAddress, args.payloadHash, args.symbol, args.amount], 
                     ['string', 'string', 'address', 'bytes32', 'string', 'uint256'],
                     (async () => {
-                        const to = chains.find(chain=>chain.name == args.destinationChain);
+                        const to = networks.find(chain=>chain.name == args.destinationChain);
                         const contract = new Contract(
                             args.contractAddress,
                             IAxelarExecutable.abi,
                             to.relayerWallet,
                         );
-                        await (await contract.executeWithMint(commandId, from.name, args.sender, args.payload, args.symbol, args.amount)).wait();
+                        await (await contract.executeWithToken(commandId, from.name, args.sender, args.payload, args.symbol, args.amount)).wait();
                     }),
                 ));
             }
@@ -241,7 +235,7 @@ module.exports = {
             
         }
 
-        for(const to of chains) {
+        for(const to of networks) {
             const toExecute = commands[to.name];
             if(toExecute.length == 0) continue;
             const data = arrayify(
@@ -261,7 +255,11 @@ module.exports = {
             for(const command of toExecute) {
                 if(command.post == null)
                     continue;
-                await command.post();
+                try {
+                    await command.post();
+                } catch(e) {
+                    console.log(e);
+                }
             }
         }
     },

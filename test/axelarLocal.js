@@ -16,7 +16,7 @@ const {
 const { deployContract, solidity } = require('ethereum-waffle');
 chai.use(solidity);
 const { expect } = chai;
-const {createChain, relay} = require('../scripts/AxelarLocal');
+const {createNetwork: createChain, relay} = require('../scripts/AxelarLocal');
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
