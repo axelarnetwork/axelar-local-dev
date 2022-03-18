@@ -35,7 +35,7 @@ const {
   bigNumberToNumber,
   getSignedExecuteInput,
   getRandomID,
-} = require('./utils');
+} = require('../scripts/utils');
 
 describe('AxelarGatewaySingleSig', () => {
   const [

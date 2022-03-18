@@ -1,8 +1,20 @@
 'use strict';
 
+const { get } = require('lodash/fp');
+const { deployContract } = require('ethereum-waffle');
 const {
-  utils: { defaultAbiCoder, id, arrayify, keccak256 },
+  Contract,
+  ContractFactory,
+  utils: {
+    defaultAbiCoder,
+    id,
+    arrayify,
+    keccak256,
+    getCreate2Address,
+    randomBytes,
+  },
 } = require('ethers');
+
 const { sortBy } = require('lodash');
 
 const getRandomInt = (max) => {
@@ -34,4 +46,5 @@ module.exports = {
 
   tickBlockTime: (provider, seconds) =>
     provider.send('evm_increaseTime', [seconds]),
-};
+
+    }
