@@ -1,12 +1,17 @@
 # Axelar Local Gateway
+
 This environment allows you to setup a local instance of the Axelar Gateways, instantiate your application-level executor contracts on the source/destination chains, and simulate message relaying between them.
+
 ## Installation and simple use.
-To install on any nsimply run:
+
+To install on simply run:
+
 ```
 npm install https://github.com/axelarnetwork/axelar-local-gateway
 ```
 
 The following script shows a simple example of how to use this module to create two test blockchains and send some UST from one to the other.
+
 ```
 const  axelar = require('axelar-local-gateway');
 
@@ -32,7 +37,9 @@ const  axelar = require('axelar-local-gateway');
 	console.log(`user2 has ${await  chain2.ust.balanceOf(user2.address)} UST.`);
 })();
 ```
+
 Additional examples are present in the `examples` directory and can be run with:
+
 ```
 node node_modules/axelar-local-gateway/examples/<example_dir>/<file_name>.js
 ```

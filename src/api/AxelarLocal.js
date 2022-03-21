@@ -307,6 +307,7 @@ class Network {
             threshold: this.threshold,
             lastRelayedBlock: this.lastRelayedBlock,
             gatewayAddress: this.gateway.address,
+            port: this.port,
         }
     }
 }
@@ -319,7 +320,7 @@ module.exports = {
     createNetwork: async (options = {}) => {
         const chain = new Network();
         chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
-        chain.chainId = options.chainId | networks.length+1;
+        chain.chainId = options.chainId | networks.length+1336;
         console.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
         const accounts = defaultAccounts(20, options.seed);
 
@@ -343,6 +344,7 @@ module.exports = {
         chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
 
         if(options.port) {
+            chain.port = options.port;
             server.listen(options.port, err=>{
                 if(err)
                     throw err;
