@@ -43,8 +43,15 @@ module.exports = {
   getRandomInt,
 
   getRandomID: () => id(getRandomInt(1e10).toString()),
-
-  tickBlockTime: (provider, seconds) =>
-    provider.send('evm_increaseTime', [seconds]),
-
+  getLogID: (log) => id(log.blockNumber+':'+log.transactionIndex+':'+log.logIndex),
+  defaultAccounts: (n, seed='') => {
+    const balance = '10000000000000000000000000000000000';
+    const privateKeys = [];
+    let key = keccak256(defaultAbiCoder.encode(['string'], [seed]));
+    for(let i=0;i<n;i++) {
+        privateKeys.push(key);
+        key = keccak256(key);
     }
+    return privateKeys.map(secretKey => ({ balance, secretKey }));
+  },
+}

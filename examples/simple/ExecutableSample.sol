@@ -3,7 +3,7 @@
 pragma solidity 0.8.9;
 
 import { IAxelarExecutable } from 'axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
-import {IERC20} from './interfaces/IERC20.sol';
+import {IERC20} from './IERC20.sol';
 
 contract ExecutableSample is IAxelarExecutable {
     string public value;
@@ -48,10 +48,12 @@ contract ExecutableSample is IAxelarExecutable {
         IERC20(tokenAddress).approve(address(gateway), amount_);
         uint256 index = chains.length;
         for(uint i=0; i<chains.length; i++) {
+            //We skip the chain the token is going to.
             if(keccak256(bytes(chains[i])) == keccak256(bytes(chain_))) {
                 index = i;
                 continue;
             }
+            //But update the rest.
             gateway.callContract(
                 chains[i],
                 addresses[i],
@@ -59,6 +61,7 @@ contract ExecutableSample is IAxelarExecutable {
             );
         }
         require(index < chains.length, 'INVALID DESTINATION'); 
+        //We update the contract the token is going to as part of sending it the token.
         gateway.callContractWithToken(
             chains[index],
             addresses[index],
@@ -68,7 +71,7 @@ contract ExecutableSample is IAxelarExecutable {
         );
     }
 
-    //Handle calls created by set. Simply updates this contract's value.
+    //Handles calls created by set on the destination chain. Simply updates this contract's value.
     function _execute(
         string memory /*sourceChain*/,
         string memory /*sourceAddress*/,
@@ -76,9 +79,9 @@ contract ExecutableSample is IAxelarExecutable {
     ) internal override {
         value = abi.decode(payload, (string));
     }
-    
-    /*Handle calls created by setAndSend. Updates this contract's value 
-    and gives the token got to the destination specified at the source chain. */
+
+    /*Handles calls created by setAndSend. Updates this contract's value 
+    and gives the token received to the destination specified at the source chain. */
     function _executeWithToken(
         string memory /*sourceChain*/,
         string memory /*sourceAddress*/, 

@@ -1,16 +1,16 @@
 'use strict';
 
-const {createNetwork: createChain, relay} = require('./AxelarLocal');
+const {createNetwork: createChain, relay} = require('../../src/api/AxelarLocal');
 const { deployContract } = require('ethereum-waffle');
+const { utils : {defaultAbiCoder} } = require('ethers');
 
-const ExecutableSample = require('../build/ExecutableSample.json');
-
+const ExecutableSample = require('../../build/ExecutableSample.json');
 
 (async() => {
 	//Create two chains and get a funded user for each
     const chain1 = await createChain();
     const [user1] = chain1.userWallets;
-    const chain2 = await createChain();
+    const chain2 = await createChain({seed: "asdasd"});
     const [user2] = chain2.userWallets;
 	
 	//Deploy our IAxelarExecutable contracts
@@ -66,5 +66,30 @@ const ExecutableSample = require('../build/ExecutableSample.json');
 	//Updates the value on chain1 also, and gets the UST to user1.
 	await relay();
 	console.log('--- After Setting And Sending and Relaying---');
+	await print();
+
+	//We can manually call a contract on another chain also.
+	await (await chain2.gateway.connect(user2).callContract(
+		chain1.name, 
+		ex1.address, 
+		defaultAbiCoder.encode(['string'], ['Only Chain1 sees this.']),
+	)).wait();
+	await relay();
+
+	console.log('--- After Manually sending a contract call to Chain1 ---');
+	await print();
+
+	//Or manually call a contract with token on another chain.
+    await (await chain1.ust.connect(user1).approve(chain1.gateway.address, 5000)).wait();
+	await (await chain1.gateway.connect(user1).callContractWithToken(
+		chain2.name, 
+		ex2.address, 
+		defaultAbiCoder.encode(['string', 'address'], ['Only Chain2 sees this one though.', user2.address]),
+		'UST',
+		5000,
+	)).wait();
+	await relay();
+
+	console.log('--- After Manually sending a contract call with token to Chain2 ---');
 	await print();
 })();
