@@ -296,7 +296,7 @@ class Network {
         }
     }
     getInfo() {
-        return {
+        const info = {
             name: this.name,
             chainId: this.chainId,
             userKeys: this.userWallets.map(wallet=>wallet.privateKey),
@@ -307,8 +307,8 @@ class Network {
             threshold: this.threshold,
             lastRelayedBlock: this.lastRelayedBlock,
             gatewayAddress: this.gateway.address,
-            port: this.port,
         }
+        return info;
     }
 }
 
