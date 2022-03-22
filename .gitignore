@@ -6,6 +6,7 @@ typechain
 build
 examples/metamask/chain*.json
 examples/metamask/abi/**.json
+**/.DS_Store
 
 #Hardhat files
 cache
