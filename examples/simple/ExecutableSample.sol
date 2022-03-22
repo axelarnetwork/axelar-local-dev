@@ -3,7 +3,7 @@
 pragma solidity 0.8.9;
 
 import { IAxelarExecutable } from 'axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
-import {IERC20} from './IERC20.sol';
+import { IERC20 } from 'axelar-cgp-solidity/src/interfaces/IERC20.sol';
 
 contract ExecutableSample is IAxelarExecutable {
     string public value;
@@ -91,7 +91,7 @@ contract ExecutableSample is IAxelarExecutable {
     ) internal override {
         address destination;
         (value, destination) = abi.decode(payload, (string, address));
-        address tokenAddress = gateway.tokenAddresses(tokenSymbol);
+        address tokenAddress = _getTokenAddress(tokenSymbol);
         IERC20(tokenAddress).transfer(destination, amount);
     }
 }

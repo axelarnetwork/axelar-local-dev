@@ -3,7 +3,7 @@ In this example we create two blockchains and connect to them with Metamask. The
 ## Creating the Networks 
 First run `createNetworks.js` in the background specifying an address to fund. This should be your Metamask address:
 ```
-node node_modules/axelar-local-gateway/examples/remote/exportNetworks.js 0x<your address goes here>
+node node_modules/axelar-local-gateway/examples/remote/exportNetworks.js <your address goes here>
 ```
 ## Connecting to metamask
 While the above is running go to your browser and add the two created networks to metamask. This will be done twice, once for each chain. Open Metamask and click on the Network on the top right and chose *'Create new Network'*. Then fill the following information and click *'Save'*.
@@ -21,14 +21,14 @@ And for **Chain 2**:
 - Currency Symbol: `ETH` (can be anything)
 
 ## Serving the webpage
-You then need to serve this directory over **http**. If you have python installed, then you can simply navigate to this directory and on Mac run: 
+You then need to serve this directory over **http**. You can simply navigate to this directory and run `serve`:
 ```
-python -m SimpleHTTPServer 8000
+cd node_modules/axelar-local-gateway/examples/metamask
+npx serve -l 8000
 ```
-It is quite simple to do on other platforms as well, the internet is your friend here.
 
 ## Using the webpage
-Open your browser and navigate to the [served webpage](http://localhost:8000). Changing the selected chain should prompt you to chainge the active network with metamask. Click the **Track UST** button to add UST to your wallet. This should be done for both networks. If you add your address as the *Destination Address* and specify an amount you will be able approve and send UST to the other chain.
+Open your browser and navigate to the [served webpage](http://localhost:8000). Changing the selected chain should prompt you to chainge the active network with metamask. Click the **Add UST to Wallet** button to add UST to your wallet. This should be done for both networks. If you add your address as the *Destination Address* and specify an amount you will be able approve and send UST to the other chain.
 
 ## Resetting
 If you stop and restart the blockchains you will need to reset your account. This can be done in the *Advanced Settings* of Metamask.
