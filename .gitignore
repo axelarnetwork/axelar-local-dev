@@ -4,7 +4,8 @@ coverage
 coverage.json
 typechain
 build
-examples/metamask
+examples/metamask/chain*.json
+examples/metamask/abi/**.json
 
 #Hardhat files
 cache

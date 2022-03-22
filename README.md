@@ -13,6 +13,7 @@ npm install https://github.com/axelarnetwork/axelar-local-gateway
 The following script shows a simple example of how to use this module to create two test blockchains and send some UST from one to the other.
 
 ```
+// axelarTest.js
 const  axelar = require('axelar-local-gateway');
 
 (async () => {
@@ -37,8 +38,7 @@ const  axelar = require('axelar-local-gateway');
 	console.log(`user2 has ${await  chain2.ust.balanceOf(user2.address)} UST.`);
 })();
 ```
-
-Additional examples are present in the `examples` directory and can be run with:
+Simply run `node <path to the above script>` to test it. Additional examples are present in the `examples` directory and can be run with:
 
 ```
 node node_modules/axelar-local-gateway/examples/<example_dir>/<file_name>.js
@@ -75,3 +75,15 @@ This module exports the following functionality:
   - `threshold`: The number of required admins to perform administrative tasks on the gateway. Defaults to `1`. 
 - `networks`: A list of all the `Network`s in this instance.
 - `relay()`: A function that passes all the messages to all the gateways and calls the appropriate `IAxelarExecutable` contracts.
+
+## Smart Contracts
+To use the Networks created you need to interract with the deployed `AxelarGateway` contract. You can send remote contract calls to contracts implementing the `IAxelarExecutable` interface. 
+### `AxelarGateway`
+This contract exposes three functions to use:
+- `sendToken(string destinationChain, string destinationAddress, string symbol, uint256 amount)`: The `destinationChain` has to match the network name for the token to reach it's destination after realying. The `destinationAddress` is the human readable version of the address, prefixed with `0x`. This is a `string` instread of an `address` because in the real world you can send token to non-evm chains that have other address formats as well. `tokenSymbol` has to match one of the tokens that are deployed in the network, by default just UST but additional tokens can be added (see `deployToken` under `Network`).
+- `callContract(string destinationChain, string contractDestinationAddress, bytes payload)`: See above for `destinationChain` and `contractDestinationAddress`. `payload` is the information passed to the contract on the destination chain. Use `abi.encode` to produce `payload`s.
+- `callContract(string destinationChain, string contractDestinationAddress, bytes payload, string symbol, uint256 amount)`: This is a combination of the above two functions, but the token has to arrive at the contract that is executing.
+### `IAxelarExecutable`
+This interface is to be implemented for a contract to be able to receive remote contract calls. There are two functions that can be overriden, but depending on the use you may only chose to override one of them only.
+- `_execute(string memory sourceChain, string memory sourceAddress, bytes calldata payload)`: This will automatically be called when axelar relays all messages. `sourceChain` and `sourceAddress` can be used to validate who is making the contract call, and `payload` can be decoded with `abi.decode` to produce any data needed.
+- `_executeWithToken(string memory sourceChain, string memory sourceAddress, bytes calldata payload, string memory symbol, uinst256 amount)`: This is the same as above but it is guaranteed to have also received `amount` token specified by `symbol`. You can use _getTokenAddress(symbol) to obtain the address of the ERC20 token received.

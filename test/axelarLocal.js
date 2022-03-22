@@ -2,23 +2,15 @@
 
 const chai = require('chai');
 const {
-  Contract,
-  ContractFactory,
   utils: {
     defaultAbiCoder,
-    id,
-    arrayify,
     keccak256,
-    getCreate2Address,
-    randomBytes,
   },
 } = require('ethers');
 const { deployContract, solidity } = require('ethereum-waffle');
 chai.use(solidity);
 const { expect } = chai;
 const {createNetwork: createChain, relay} = require('../src/scripts/AxelarLocal');
-
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 const IAxelarExecutable = require('../build/ExecutableSample.json');
 

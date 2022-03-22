@@ -1,17 +1,12 @@
 'use strict';
 
-const { get } = require('lodash/fp');
-const { deployContract } = require('ethereum-waffle');
+
 const {
-  Contract,
-  ContractFactory,
   utils: {
     defaultAbiCoder,
     id,
     arrayify,
     keccak256,
-    getCreate2Address,
-    randomBytes,
   },
 } = require('ethers');
 
@@ -45,7 +40,7 @@ module.exports = {
   getRandomID: () => id(getRandomInt(1e10).toString()),
   getLogID: (log) => id(log.blockNumber+':'+log.transactionIndex+':'+log.logIndex),
   defaultAccounts: (n, seed='') => {
-    const balance = '10000000000000000000000000000000000';
+    const balance = 10000000000000000000000000000000000;
     const privateKeys = [];
     let key = keccak256(defaultAbiCoder.encode(['string'], [seed]));
     for(let i=0;i<n;i++) {
