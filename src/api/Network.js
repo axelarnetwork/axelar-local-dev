@@ -19,7 +19,7 @@ const {
     deployContract,
   } = require('./utils');
 const http = require('http');
-const { AxelarGatewayV2 } = require('@axelar-network/axelarjs-sdk');
+const { AxelarGateway } = require('@axelar-network/axelarjs-sdk');
 
 const TokenDeployer = require('../../build/TokenDeployer.json');
 const AxelarGatewayProxy = require('../../build/AxelarGatewayProxy.json');
@@ -57,7 +57,7 @@ class Network {
         this.threshold;
         /** @type {number} */
         this.lastRelayedBlock;
-        /** @type {AxelarGatewayV2} */
+        /** @type {Contract} */
         this.gateway;
         /** @type {Contract} */
         this.ust;
@@ -84,7 +84,7 @@ class Network {
             gateway.address,
             params,
         ]);
-        this.gateway = new AxelarGatewayV2(proxy.address, this.provider).getContract();
+        this.gateway = new AxelarGateway(proxy.address, this.provider).getContract();
         /*new Contract(
             proxy.address,
             IAxelarGateway.abi,
@@ -134,6 +134,14 @@ class Network {
         );
         console.log(`Deployed at ${tokenContract.address}`);
         return tokenContract;
+    }
+    async getTokenContract(symbol) {
+        const address = await this.gateway.tokenAddresses(symbol); 
+        return new Contract(
+            address,
+            BurnableMintableCappedERC20.abi,
+            this.provider
+        );
     }
     async giveToken(address, symbol, amount) {
         const data = arrayify(

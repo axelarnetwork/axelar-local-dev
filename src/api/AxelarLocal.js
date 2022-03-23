@@ -22,7 +22,6 @@ const {
   } = require('./utils');
 const server = require('./server');
 const Network = require('./Network');
-const { AxelarGatewayV2 } = require('@axelar-network/axelarjs-sdk');
 
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
@@ -263,11 +262,12 @@ async function getNetwork(urlOrProvider, info=null) {
     chain.threshold = info.threshold;
     chain.lastRelayedBlock = info.lastRelayedBlock;
 
-    chain.gateway = new AxelarGatewayV2(
+    chain.gateway = new Contract(
         info.gatewayAddress,
+        IAxelarGateway.abi,
         chain.provider
     );
-    chain.ust = await chain.gateway.getERC20TokenContract('UST');
+    chain.ust = await chain.getTokenContract('UST');
 
     console.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
     
