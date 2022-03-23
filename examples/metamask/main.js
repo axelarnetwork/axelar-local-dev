@@ -69,7 +69,12 @@ async function approve() {
 
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner();
+    console.log(gateway.address, amountIn);
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+    console.log(await ust.allowance(account, gateway.address));
     await (await ust.connect(signer).approve(gateway.address, amountIn)).wait();
+    console.log(await ust.allowance(account, gateway.address));
     
 }
 const approveButton = document.getElementById('approve');
@@ -125,7 +130,7 @@ setInterval(async() => {
     let amountIn = document.getElementById('amountIn').value;
     amountIn = BigInt(amountIn * 1e6);
     const allowance = await ust.allowance(account, gateway.address);
-    console.log(allowance);
+    //console.log(allowance);
     if(allowance >= amountIn) {
         approveButton.disabled = true;
         sendButton.disabled = false;

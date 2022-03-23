@@ -56,6 +56,7 @@ This module exports the following functionality:
 	- `ust`: An `ethets.Contract` object corresponding to the IERC20 of the Axelar Wrapped UST on this network.
 	- `ownerWallet`, `operatorWallet`, `relayerWallet`, `adminWallets` `threshold` `lastRelayedBlock`: These are for configuring the gateway and relaying.
 	- `deployToken(name, symbol, decimals, cap)`: Deploys a new token on the network. For a token to be supported properly it needs to be deployed on all created networks.
+	- `getTokenContract(sybmol)`: Returns an `ethers.Contract` linked to the ERC20 token represented by `symbol`.
 	- `giveToken(address, symbol, amount)`: Gives `amount` of `symbol` token to `address`.
 	- `getInfo()`: Returns an object with all the information about the `Network`. 
 	- `relay()`: This method is either equivalent to calling the local instance of this module's `relay()` (see below) or, for remote networks, the host's instance of `relay()`.
@@ -64,17 +65,22 @@ This module exports the following functionality:
   - `chainId`: The chainId of the created network. Defaults to `n`.
   - `seed`: A string used to create the prefunded accounts. Different seeds will result in different contract addresses as well.
   - `port`: If specified the created blockchain will be served on `port`. Additionally, accessing `/axelar` will result in the same output as `Network.getInfo()` and accessing `/relay` will cause the networks present in the instance serving this blockchain to `relay()`.
-- `getNetwork(url, info=null)`: Return `Network` hosted elsewhere into this instance. `info` if specified is expected to have the same format as `Network.getInfo()`. 
+  - `dbPath`: A path to a folder to save this network. If specified and the network has been saved all other options are ignored and the network is loaded from the database.
+- `getNetwork(urlOrProvider, info=null)`: Return `Network` hosted elsewhere into this instance. `info` if specified is expected to have the same format as `Network.getInfo()`. 
 - `setupNetwork(urlOrProvider, options)`: Deploy the gateway and UST Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `options` is `ownerKey` which is a secret key of a funded account. Available options are:
-  -`ownerKey`: This is required and needs to be a funded secret key.
+  - `ownerKey`: This is required and needs to be a funded secret key.
   - `name`: The name of the network. Defaults to ``    `Chain ${n}`   `` 
   - `chainId`: The chainId of the created network. Defaults to `n`.
   - `userKeys`: An array of funded secretKeys to create `Network.userWallets` with. Defaults to `[]`.
   - `operatorKey`, `relayerKey`: They both default to `ownerKey`.
   - `adminKeys`: Defaults to `[ownerKey]`.
   - `threshold`: The number of required admins to perform administrative tasks on the gateway. Defaults to `1`. 
-- `networks`: A list of all the `Network`s in this instance.
+- `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).
+- `getAllNetworks(url)`: This will retreive all the networks served by `listen` called from a different instance.
 - `relay()`: A function that passes all the messages to all the gateways and calls the appropriate `IAxelarExecutable` contracts.
+- `stop(network)`: Destroys the network and removes it from the list of tracked networks.
+- `stopAll()`: Stops all tracked networks.
+- `networks`: A list of all the `Network`s in this instance.
 
 ## Smart Contracts
 To use the Networks created you need to interract with the deployed `AxelarGateway` contract. You can send remote contract calls to contracts implementing the `IAxelarExecutable` interface. 

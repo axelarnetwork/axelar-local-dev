@@ -1,8 +1,7 @@
 'use strict';
 
 const {setupNetwork, relay, getNetwork, createNetwork, networks} = require('../../src/api/AxelarLocal');
-const { defaultAccounts } = require('../../src/api/utils');
-const { deployContract } = require('ethereum-waffle');
+const { defaultAccounts, deployContract } = require('../../src/api/utils');
 const { Contract } = require('ethers');
 
 const MirroredTokenLinker = require('../../build/MirroredTokenLinker.json');

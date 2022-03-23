@@ -20,7 +20,8 @@
   "homepage": "https://github.com/axelarnetwork/axelar-local-gateway#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",
-    "axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#838de95e41f90f625f0445f278d64c75d06ed8e0",
+    "@axelar-network/axelar-cgp-solidity": "3.0.0",
+    "@axelar-network/axelarjs-sdk": "0.5.0-alpha.3",
     "chai": "^4.3.6",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.6.1",

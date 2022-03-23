@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.9;
 
-import { IAxelarExecutable } from 'axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
-import { IERC20 } from 'axelar-cgp-solidity/src/interfaces/IERC20.sol';
+import { IAxelarExecutable } from '@axelar-network/axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
+import { IERC20 } from '@axelar-network/axelar-cgp-solidity/src/interfaces/IERC20.sol';
 
 contract ExecutableSample is IAxelarExecutable {
     string public value;
@@ -71,7 +71,7 @@ contract ExecutableSample is IAxelarExecutable {
         );
     }
 
-    //Handles calls created by set on the destination chain. Simply updates this contract's value.
+    //Handles calls created by set on the source chain. Simply updates this contract's value.
     function _execute(
         string memory /*sourceChain*/,
         string memory /*sourceAddress*/,

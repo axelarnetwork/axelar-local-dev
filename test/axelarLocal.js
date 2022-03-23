@@ -10,7 +10,7 @@ const {
 const { deployContract, solidity } = require('ethereum-waffle');
 chai.use(solidity);
 const { expect } = chai;
-const {createNetwork: createChain, relay} = require('../src/scripts/AxelarLocal');
+const {createNetwork: createChain, relay, stopAll} = require('../src/api/AxelarLocal');
 
 const IAxelarExecutable = require('../build/ExecutableSample.json');
 
@@ -36,6 +36,9 @@ describe('test', () => {
     await (await executable2.connect(user2).addSibling(chain3.name, executable3.address)).wait();
     await (await executable3.connect(user3).addSibling(chain1.name, executable1.address)).wait();
     await (await executable3.connect(user3).addSibling(chain2.name, executable2.address)).wait();
+  });
+  afterEach(async() => {
+	await stopAll();
   });
 
 	describe('sendToken', () => {
@@ -63,13 +66,11 @@ describe('test', () => {
 		it('should update destination value from gateway', async() => {
 			const value = 'test Value';
 			const payload = defaultAbiCoder.encode(['string'], [value]);
-
 			await expect(chain1.gateway.connect(user1).callContract(chain2.name, executable2.address, payload))
 				.to.emit(chain1.gateway, 'ContractCall')
 				.withArgs(user1.address, chain2.name, executable2.address, keccak256(payload), payload);
 
 			await relay();
-
 			expect(await executable1.value())
 				.to.equal('');
 			expect(await executable2.value())

@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import { IAxelarExecutable } from 'axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
+import { IAxelarExecutable } from '@axelar-network/axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
 
 /// @dev An abstract contract responsible for sending token to and receiving token from another TokenLinker.
 abstract contract TokenLinker is IAxelarExecutable {

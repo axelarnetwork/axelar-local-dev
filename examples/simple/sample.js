@@ -1,7 +1,7 @@
 'use strict';
 
 const {createNetwork: createChain, relay} = require('../../src/api/AxelarLocal');
-const { deployContract } = require('ethereum-waffle');
+const { deployContract } = require('../../src/api/utils');
 const { utils : {defaultAbiCoder} } = require('ethers');
 
 const ExecutableSample = require('../../build/ExecutableSample.json');

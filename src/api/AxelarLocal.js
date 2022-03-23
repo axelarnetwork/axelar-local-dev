@@ -4,15 +4,12 @@ const {
     ethers,
     Wallet,
     Contract,
-    ContractFactory,
     providers: {
         Web3Provider,
-        Provider
     },
     utils: {
         defaultAbiCoder,
         arrayify,
-        keccak256,
     },
 } = require('ethers');
 const {
@@ -20,20 +17,18 @@ const {
     getRandomID,
     getLogID,
     defaultAccounts,
+    setJSON,
+    httpGet,
   } = require('./utils');
-const { deployContract } = require('ethereum-waffle');
-const http = require('http');
+const server = require('./server');
+const Network = require('./Network');
 
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
+const fs = require('fs');
 
 
-
-const TokenDeployer = require('../../build/TokenDeployer.json');
-const AxelarGatewayProxy = require('../../build/AxelarGatewayProxy.json');
-const AxelarGatewaySinglesig = require('../../build/AxelarGatewaySinglesig.json');
-const BurnableMintableCappedERC20 = require('../../build/BurnableMintableCappedERC20.json');
+const IAxelarGateway = require('../../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../../build/IAxelarExecutable.json');
 
 //An internal class for handling axelar commands.
@@ -50,6 +45,7 @@ class Command {
     }
 }
 //A local reference to all the axelar networks created/loaded.
+/** @type {[Network]} */
 const networks = [];
 
 //This function relays all the messages between the tracked networks.
@@ -58,6 +54,7 @@ const relay = async () => {
     for(let to of networks) {
         commands[to.name] = [];
     }
+
     for(const from of networks) {
         let filter = from.gateway.filters.TokenSent();
         let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
@@ -79,12 +76,12 @@ const relay = async () => {
             commands[log.args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCall', 
-                [from.name, args.sender, args.contractAddress, args.payloadHash], 
+                [from.name, args.sender, args.destinationContractAddress, args.payloadHash], 
                 ['string', 'string', 'address', 'bytes32'],
                 (async () => {
                     const to = networks.find(chain=>chain.name == args.destinationChain);
                     const contract = new Contract(
-                        args.contractAddress,
+                        args.destinationContractAddress,
                         IAxelarExecutable.abi,
                         to.relayerWallet,
                     );
@@ -100,12 +97,12 @@ const relay = async () => {
             commands[log.args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCallWithMint', 
-                [from.name, args.sender, args.contractAddress, args.payloadHash, args.symbol, args.amount], 
+                [from.name, args.sender, args.destinationContractAddress, args.payloadHash, args.symbol, args.amount], 
                 ['string', 'string', 'address', 'bytes32', 'string', 'uint256'],
                 (async () => {
                     const to = networks.find(chain=>chain.name == args.destinationChain);
                     const contract = new Contract(
-                        args.contractAddress,
+                        args.destinationContractAddress,
                         IAxelarExecutable.abi,
                         to.relayerWallet,
                     );
@@ -152,330 +149,195 @@ const relay = async () => {
     }
 };
 
-/*
-* The Network class
-*/
-class Network {
-    constructor() {
-        /** @type {string} */
-        this.name;
-        /** @type {number} */
-        this.chainId;
-        /** @type {Provider} */
-        this.provider;
-        /** @type {[Wallet]} */
-        this.userWallets;
-        /** @type {Wallet} */
-        this.ownerWallet;
-        /** @type {Wallet} */
-        this.operatorWallet;
-        /** @type {Wallet} */
-        this.relayerWallet;
-        /** @type {[Wallet]} */
-        this.adminWallets;
-        /** @type {number} */
-        this.threshold;
-        /** @type {number} */
-        this.lastRelayedBlock;
-        /** @type {Contract} */
-        this.gateway;
-        /** @type {Contract} */
-        this.ust;
-    }
-    /**
-     * @returns {Contract}
-     */
-    async _deployGateway() {
-        process.stdout.write(`Deploying the Axelar Gateway for ${this.name}... `);
-        const params = arrayify(defaultAbiCoder.encode(
-            ['address[]', 'uint8', 'address', 'address'],
-            [
-                this.adminWallets.map(wallet => wallet.address),
-                this.threshold,
-                this.ownerWallet.address,
-                this.operatorWallet.address,
-            ],
-            ),
-        );
-        let tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
-        const gateway = await deployContract(this.ownerWallet, AxelarGatewaySinglesig, [
-            tokenDeployer.address,
-        ]);
-        const proxy = await deployContract(this.ownerWallet, AxelarGatewayProxy, [
-            gateway.address,
-            params,
-        ]);
-        this.gateway = new Contract(
-            proxy.address,
-            AxelarGatewaySinglesig.abi,
-            this.ownerWallet,
-        );
-        console.log(`Deployed at ${this.gateway.address}`);
-        return this.gateway;
 
-    }
-    /**
-     * @returns {Contract}
-     */
-    async deployToken (name, symbol, decimals, cap) {
-        process.stdout.write(`Deploying ${name} for ${this.name}... `);
-        const data = arrayify(defaultAbiCoder.encode(
-            ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-            [
-                this.chainId,
-                ROLE_OWNER,
-                [getRandomID()],
-                ['deployToken'],
-                [defaultAbiCoder.encode(
-                    ['string', 'string', 'uint8', 'uint256', 'address'],
-                    [name, symbol, decimals, cap, ADDRESS_ZERO],
-                )],
-            ],
-        ));
-    
-        const tokenFactory = new ContractFactory(
-          BurnableMintableCappedERC20.abi,
-          BurnableMintableCappedERC20.bytecode,
-        );
-        const { data: tokenInitCode } = tokenFactory.getDeployTransaction(
-          name,
-          symbol,
-          decimals,
-          cap,
-        );
-    
-        const signedData = getSignedExecuteInput(data, this.ownerWallet);
-        await this.gateway.execute(signedData);
-        let tokenAddress = await this.gateway.tokenAddresses(symbol);
-        const tokenContract = new Contract(
-            tokenAddress,
-            BurnableMintableCappedERC20.abi,
-            this.ownerWallet,
-        );
-        console.log(`Deployed at ${tokenContract.address}`);
-        return tokenContract;
-    }
-    async giveToken(address, symbol, amount) {
-        const data = arrayify(
-            defaultAbiCoder.encode(
-                ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-                [
-                    this.chainId,
-                    ROLE_OWNER,
-                    [getRandomID()],
-                    ['mintToken'],
-                    [
-                        defaultAbiCoder.encode(
-                        ['string', 'address', 'uint256'],
-                        [symbol, address, amount],
-                        ),
-                    ],
-                ],
-            ),
-        );
-
-        const signedData = getSignedExecuteInput(data, this.ownerWallet)
-        await (await this.gateway.execute(signedData)).wait();
-    }
-    async relay() {
-        if(this._isRemote) {
-            await new Promise((resolve, reject) => {
-                http.get(this.url + '/relay', (res) => {
-                    const { statusCode } = res;
-                    if (statusCode !== 200) {
-                        reject()
-                    } 
-                    res.on('data', (chunk) => {});
-                    res.on('end', () => {
-                        resolve();
-                    });
-                });
-            });
-        } else {
-            await relay();
+function listen(port, callback = null) {
+    if(callback == null) 
+        callback = (err) => {
+            if(err)
+                throw err
+            console.log(`Serving ${networks.length} networks on port ${port}`)
         }
-    }
-    getInfo() {
-        const info = {
-            name: this.name,
-            chainId: this.chainId,
-            userKeys: this.userWallets.map(wallet=>wallet.privateKey),
-            ownerKey: this.ownerWallet.privateKey,
-            operatorKey: this.operatorWallet.privateKey,
-            relayerKey: this.relayerWallet.privateKey,
-            adminKeys: this.adminWallets.map(wallet=>wallet.privateKey),
-            threshold: this.threshold,
-            lastRelayedBlock: this.lastRelayedBlock,
-            gatewayAddress: this.gateway.address,
-        }
-        return info;
-    }
+    return server(networks).listen(port, callback);
 }
-
-module.exports = {
-    Network : Network,
-    /**
-     * @returns {Network}
-     */
-    createNetwork: async (options = {}) => {
-        const chain = new Network();
-        chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
-        chain.chainId = options.chainId | networks.length+2500;
-        console.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
-        const accounts = defaultAccounts(20, options.seed);
-
-        const server = require('ganache-core').server( {
-            accounts: accounts,
-            _chainId: chain.chainId,
-            _chainIdRpc: chain.chainId,
+/**
+ * @returns {Network}
+ */
+async function createNetwork(options = {}) {
+    if(options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
+        console.log('this exists!');
+        const info = require(options.dbPath + '/networkInfo.json');
+        const ganacheProvider = require('ganache').provider( {
+            database: {dbPath : options.dbPath},
+            ...options.ganacheOptions,
+            chain: { 
+                chainId: info.chainId,
+                netwrokId: info.chainId,
+            },
+            logging: { quiet: true },
         });
-        chain.provider = new Web3Provider(server.provider);
-        const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
-        chain.userWallets = wallets.splice(10,20);
-        [
-            chain.ownerWallet,
-            chain.operatorWallet,
-            chain.relayerWallet,
-        ] = wallets;
-        chain.adminWallets = wallets.splice(4,10);
-        chain.threshold = 3;
-        chain.lastRelayedBlock = 0;
-        await chain._deployGateway();
-        chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
-
+        const chain = await getNetwork(new Web3Provider(ganacheProvider), info);
+        chain.ganacheProvider = ganacheProvider;
         if(options.port) {
             chain.port = options.port;
-            server.listen(options.port, err=>{
+            chain.server = server(chain).listen(chain.port, (err) => {
                 if(err)
-                    throw err;
-                console.log(`Serving ${chain.name} on ${options.port}.`);
-            });
-            const listener = server.listeners('request')[0];
-            server.off('request', listener);
-            server.addListener('request', async (req, res) => {
-                if(req.method != 'GET') {
-                    listener(req, res);
-                    return;
-                }
-                if(req.url == '/axelar') {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify(chain.getInfo()));
-                } else if(req.url == '/relay') {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    console.log(`Relaying from ${chain.name}.`);
-                    await relay();
-                    res.end();
-                } else {
-                    listener(req, res);
-                }
+                    throw err
+                console.log(`Serving ${chain.name} on port ${chain.port}`)
             });
         }
-        networks.push(chain);
         return chain;
-    },
-    /**
-     * @returns {Network}
-     */
-    getNetwork : async (url, info=null) => {
-        console.log(`Connecting to remote network at ${url}...`);
-        const promise = new Promise((resolve, reject) => {
-            const init = async (data) => {
-                const chain = new Network();
-                chain.name = data.name;
-                chain.chainId = data.chainId;
-                console.log(`It is ${chain.name} and has a chainId of ${chain.chainId}...`);
-                chain.provider = ethers.getDefaultProvider(url);
-                chain.userWallets = data.userKeys.map((x) => new Wallet(x, chain.provider));
-                chain.ownerWallet = new Wallet(data.ownerKey, chain.provider);
-                chain.operatorWallet = new Wallet(data.operatorKey, chain.provider);
-                chain.relayerWallet = new Wallet(data.relayerKey, chain.provider);
+    }
+    const chain = new Network();
+    chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
+    chain.chainId = options.chainId | networks.length+2500;
+    console.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
+    const accounts = defaultAccounts(20, options.seed);
+    
+    chain.ganacheProvider = require('ganache').provider( {
+        database: {dbPath : options.dbPath},
+        ...options.ganacheOptions,
+        wallet: {
+            accounts: accounts,
+        },
+        chain: { 
+            chainId: chain.chainId,
+            netwrokId: chain.chainId,
+        },
+        logging: { quiet: true },
+    });
+    chain.provider = new Web3Provider(chain.ganacheProvider);
+    const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
+    chain.userWallets = wallets.splice(10,20);
+    [
+        chain.ownerWallet,
+        chain.operatorWallet,
+        chain.relayerWallet,
+    ] = wallets;
+    chain.adminWallets = wallets.splice(4,10);
+    chain.threshold = 3;
+    chain.lastRelayedBlock = 0;
+    await chain._deployGateway();
+    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
 
-                chain.adminWallets = data.adminKeys.map((x) => new Wallet(x, chain.provider));
-                chain.threshold = data.threshold;
-                chain.lastRelayedBlock = data.lastRelayedBlock;
-
-                chain.gateway = new Contract(
-                    data.gatewayAddress,
-                    AxelarGatewaySinglesig.abi,
-                    chain.provider
-                );
-                const ustAddress = await chain.gateway.tokenAddresses('UST'); 
-                chain.ust = new Contract(
-                    ustAddress,
-                    BurnableMintableCappedERC20.abi,
-                    chain.provider
-                );
-
-                console.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
-                chain._isRemote = true;
-                chain.url = url;
-                networks.push(chain);
-                resolve(chain);
-            }
-            if(info===null) {
-                http.get(url + '/axelar', (res) => {
-                    const { statusCode } = res;
-                    const contentType = res.headers['content-type'];
-                    let error;
-                    if (statusCode !== 200) {
-                        error = new Error('Request Failed.\n' +
-                            `Status Code: ${statusCode}`);
-                    } else if (!/^application\/json/.test(contentType)) {
-                        error = new Error('Invalid content-type.\n' +
-                            `Expected application/json but received ${contentType}`);
-                    }
-                    if (error) {
-                        res.resume();
-                        reject(error);
-                        return;
-                    }
-                    res.setEncoding('utf8');
-                    let rawData = '';
-                    res.on('data', (chunk) => { rawData += chunk; });
-                    res.on('end', () => {
-                        try {
-                            const parsedData = JSON.parse(rawData);
-                            init(parsedData);
-                        } catch (e) {
-                            reject(e);
-                        }
-                    });
-                });
-            } else {
-                init(info);
-            }
+    if(options.port) {
+        chain.port = options.port;
+        chain.server = server(chain).listen(chain.port, (err) => {
+            if(err)
+                throw err
+            console.log(`Serving ${chain.name} on port ${chain.port}`)
         });
-        return promise;
-    },
-    /**
-     * @returns {Network}
-     */
-    setupNetwork: async (urlOrProvider, options) => {
-        const chain = new Network();
-        chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
-        chain.provider = typeof(urlOrProvider) === 'string' ? ethers.getDefaultProvider(urlOrProvider) : urlOrProvider;
-        chain.chainId = (await chain.provider.getNetwork()).chainId;
-
-        console.log(`Setting up ${chain.name} on a network with a chainId of ${chain.chainId}...`);
-        if(options.userKeys == null) options.userKeys = [];
-        if(options.operatorKey == null) options.operatorKey = options.ownerKey;
-        if(options.relayerKey == null) options.relayerKey = options.ownerKey;
-        if(options.adminKeys == null) options.adminKeys = [options.ownerKey];
-
-        chain.userWallets = options.userKeys.map((x) => new Wallet(x, chain.provider));
-        chain.ownerWallet = new Wallet(options.ownerKey, chain.provider);
-        chain.operatorWallet = new Wallet(options.operatorKey, chain.provider);
-        chain.relayerWallet = new Wallet(options.relayerKey, chain.provider);
-
-        chain.adminWallets = options.adminKeys.map((x) => new Wallet(x, chain.provider));
-        chain.threshold = options.threshold != null ? options.threshold : 1;
-        chain.lastRelayedBlock = await chain.provider.getBlockNumber();
-        await chain._deployGateway();
-        chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
-        networks.push(chain);
-        return chain;
-    },
-    networks: networks,
-    relay: relay,
+    }
+    if(options.dbPath) {
+        setJSON(chain.getInfo(), options.dbPath + '/networkInfo.json');
+    }
+    networks.push(chain);
+    return chain;
 }
 
+/**
+ * @returns {Network}
+ */
+async function getNetwork(urlOrProvider, info=null) {
+
+    if(info===null) 
+        info = await httpGet(urlOrProvider + '/info');
+    const chain = new Network();
+    chain.name = info.name;
+    chain.chainId = info.chainId;
+    console.log(`It is ${chain.name} and has a chainId of ${chain.chainId}...`);
+
+    if(typeof(urlOrProvider) == 'string') {
+        chain.provider = ethers.getDefaultProvider(urlOrProvider);
+        chain._isRemote = true;
+        chain.url = urlOrProvider;
+    } else {
+        chain.provider = urlOrProvider;
+    }
+    chain.userWallets = info.userKeys.map((x) => new Wallet(x, chain.provider));
+    chain.ownerWallet = new Wallet(info.ownerKey, chain.provider);
+    chain.operatorWallet = new Wallet(info.operatorKey, chain.provider);
+    chain.relayerWallet = new Wallet(info.relayerKey, chain.provider);
+
+    chain.adminWallets = info.adminKeys.map((x) => new Wallet(x, chain.provider));
+    chain.threshold = info.threshold;
+    chain.lastRelayedBlock = info.lastRelayedBlock;
+
+    chain.gateway = new Contract(
+        info.gatewayAddress,
+        IAxelarGateway.abi,
+        chain.provider
+    );
+    chain.ust = await chain.getTokenContract('UST');
+
+    console.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
+    
+    networks.push(chain);
+    return chain;
+}
+
+
+/**
+ * @returns {[Network]}
+ */
+ async function getAllNetworks(url) {
+    const n = await httpGet(url + '/info');
+    for(let i=0;i<n;i++) {
+        await getNetwork(url+'/'+i);
+    }
+    return networks;
+}
+
+/**
+ * @returns {Network}
+ */
+async function setupNetwork (urlOrProvider, options) {
+    const chain = new Network();
+    chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
+    chain.provider = typeof(urlOrProvider) === 'string' ? ethers.getDefaultProvider(urlOrProvider) : urlOrProvider;
+    chain.chainId = (await chain.provider.getNetwork()).chainId;
+
+    console.log(`Setting up ${chain.name} on a network with a chainId of ${chain.chainId}...`);
+    if(options.userKeys == null) options.userKeys = [];
+    if(options.operatorKey == null) options.operatorKey = options.ownerKey;
+    if(options.relayerKey == null) options.relayerKey = options.ownerKey;
+    if(options.adminKeys == null) options.adminKeys = [options.ownerKey];
+
+    chain.userWallets = options.userKeys.map((x) => new Wallet(x, chain.provider));
+    chain.ownerWallet = new Wallet(options.ownerKey, chain.provider);
+    chain.operatorWallet = new Wallet(options.operatorKey, chain.provider);
+    chain.relayerWallet = new Wallet(options.relayerKey, chain.provider);
+
+    chain.adminWallets = options.adminKeys.map((x) => new Wallet(x, chain.provider));
+    chain.threshold = options.threshold != null ? options.threshold : 1;
+    chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    await chain._deployGateway();
+    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
+    networks.push(chain);
+    return chain;
+}
+
+async function stop(network){
+    if(network.server != null)
+        await network.server.close();
+    networks.splice(networks.indexOf(network), 1);
+}
+
+
+async function stopAll() {
+    while(networks.length > 0) {
+        await stop(networks[0]);
+    }
+}
+
+
+module.exports = {
+    networks: networks,
+    createNetwork,
+    listen,
+    getNetwork,
+    getAllNetworks,
+    setupNetwork,
+    relay,
+    stop,
+    stopAll, 
+}

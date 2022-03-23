@@ -1,17 +1,8 @@
 const {createNetwork, relay} = require('../../src/api/AxelarLocal');
-const  { outputJsonSync } = require('fs-extra');
+const  { setJSON } = require('../../src/api/utils');
 
 
-function setJSON(data, name) {
-    outputJsonSync(
-        __dirname + '/' + name,
-        data,
-        {
-            spaces:2,
-            EOL: "\n" 
-        }
-    );
-}
+
 
 (async() => {
     //Create an axelar netwrok and serve it at port 8501.
@@ -25,8 +16,8 @@ function setJSON(data, name) {
         seed: '2',
     });
 
-    setJSON(chain1.getInfo(), 'chain1.json');
-    setJSON(chain2.getInfo(), 'chain2.json');
+    setJSON(chain1.getInfo(), './chain1.json');
+    setJSON(chain2.getInfo(), './chain2.json');
     
     let lock = false
     setInterval(async () => {
