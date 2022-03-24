@@ -3,7 +3,7 @@ In this example we create two blockchains and connect to them with Metamask. The
 ## Creating the Networks 
 First run `createNetworks.js` in the background specifying an address to fund. This should be your Metamask address:
 ```
-node node_modules/axelar-local-gateway/examples/remote/exportNetworks.js <your address goes here>
+node node_modules/axelar-local-dev/examples/remote/exportNetworks.js <your address goes here>
 ```
 ## Connecting to metamask
 While the above is running go to your browser and add the two created networks to metamask. This will be done twice, once for each chain. Open Metamask and click on the Network on the top right and chose *'Create new Network'*. Then fill the following information and click *'Save'*.
@@ -23,7 +23,7 @@ And for **Chain 2**:
 ## Serving the webpage
 You then need to serve this directory over **http**. You can simply navigate to this directory and run `serve`:
 ```
-cd node_modules/axelar-local-gateway/examples/metamask
+cd node_modules/axelar-local-dev/examples/metamask
 npx serve -l 8000
 ```
 

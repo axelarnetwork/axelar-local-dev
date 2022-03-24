@@ -1,4 +1,4 @@
-# Axelar Local Gateway
+# Axelar Local Development Environment
 
 This environment allows you to setup a local instance of the Axelar Gateways, instantiate your application-level executor contracts on the source/destination chains, and simulate message relaying between them.
 
@@ -7,14 +7,14 @@ This environment allows you to setup a local instance of the Axelar Gateways, in
 To install on simply run:
 
 ```
-npm install https://github.com/axelarnetwork/axelar-local-gateway
+npm install https://github.com/axelarnetwork/axelar-local-dev
 ```
 
 The following script shows a simple example of how to use this module to create two test blockchains and send some UST from one to the other.
 
 ```
 // axelarTest.js
-const  axelar = require('axelar-local-gateway');
+const  axelar = require('axelar-local-dev');
 
 (async () => {
 	const  chain1 = await  axelar.createNetwork();
@@ -41,7 +41,7 @@ const  axelar = require('axelar-local-gateway');
 Simply run `node <path to the above script>` to test it. Additional examples are present in the `examples` directory and can be run with:
 
 ```
-node node_modules/axelar-local-gateway/examples/<example_dir>/<file_name>.js
+node node_modules/axelar-local-dev/examples/<example_dir>/<file_name>.js
 ```
 
 ## Functionality
