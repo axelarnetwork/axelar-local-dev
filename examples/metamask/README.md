@@ -14,13 +14,13 @@ While the above is running go to your browser and add the two created networks t
 For **Chain 1**:
 - Network Name: `Chain 1`
 - New RPC URL: `http://localhost:8501`
-- ChainI ID: `0x9C4`
+- ChainI ID: `0x9c4`
 - Currency Symbol: `ETH` (can be anything)
 
 And for **Chain 2**:
 - Network Name: `Chain 2`
 - New RPC URL: `http://localhost:8502`
-- ChainI ID: `0x9C5`
+- ChainI ID: `0x9c5`
 - Currency Symbol: `ETH` (can be anything)
 
 ## Serving the webpage
