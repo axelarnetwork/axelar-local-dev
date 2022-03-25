@@ -1,6 +1,6 @@
 # Axelar Local Development Environment
 
-This environment allows you to setup a local instance of the Axelar Gateways, instantiate your application-level executor contracts on the source/destination chains, and simulate message relaying between them.
+This environment allows you to set up a local instances of the Axelar Gateways, instantiate your application-level executor contracts on the source/destination chains, and simulate message relaying between them.
 
 ## Installation and simple use.
 
@@ -27,11 +27,11 @@ const  axelar = require('axelar-local-dev');
 	console.log(`user1 has ${await  chain1.ust.balanceOf(user1.address)} UST.`);
 	console.log(`user2 has ${await  chain2.ust.balanceOf(user2.address)} UST.`);
 
-	//Approve the AxelarGateway to use our UST on chain1.
+	// Approve the AxelarGateway to use our UST on chain1.
 	await (await  chain1.ust.connect(user1).approve(chain1.gateway.address, 100)).wait();
-	//And have it send it to chain2.
+	// And have it send it to chain2.
 	await (await  chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'UST', 100)).wait();
-	//Have axelar relay the tranfer to chain2.
+	// Have axelar relay the tranfer to chain2.
 	await  axelar.relay();
 
 	console.log(`user1 has ${await  chain1.ust.balanceOf(user1.address)} UST.`);
@@ -83,13 +83,13 @@ This module exports the following functionality:
 - `networks`: A list of all the `Network`s in this instance.
 
 ## Smart Contracts
-To use the Networks created you need to interract with the deployed `AxelarGateway` contract. You can send remote contract calls to contracts implementing the `IAxelarExecutable` interface. 
+To use the Networks created you need to interact with the deployed `AxelarGateway` contract. You can send remote contract calls to the contracts implementing the `IAxelarExecutable` interface. 
 ### `AxelarGateway`
 This contract exposes three functions to use:
-- `sendToken(string destinationChain, string destinationAddress, string symbol, uint256 amount)`: The `destinationChain` has to match the network name for the token to reach it's destination after realying. The `destinationAddress` is the human readable version of the address, prefixed with `0x`. This is a `string` instread of an `address` because in the real world you can send token to non-evm chains that have other address formats as well. `tokenSymbol` has to match one of the tokens that are deployed in the network, by default just UST but additional tokens can be added (see `deployToken` under `Network`).
+- `sendToken(string destinationChain, string destinationAddress, string symbol, uint256 amount)`: The `destinationChain` has to match the network name for the token to reach its destination after relaying. The `destinationAddress` is the human-readable version of the address, prefixed with `0x`. This is a `string` instead of an `address` because in the real world you can send token to non-evm chains that have other address formats as well. `tokenSymbol` has to match one of the tokens that are deployed in the network, by default just UST but additional tokens can be added (see `deployToken` under `Network`).
 - `callContract(string destinationChain, string contractDestinationAddress, bytes payload)`: See above for `destinationChain` and `contractDestinationAddress`. `payload` is the information passed to the contract on the destination chain. Use `abi.encode` to produce `payload`s.
 - `callContractWithToken(string destinationChain, string contractDestinationAddress, bytes payload, string symbol, uint256 amount)`: This is a combination of the above two functions, but the token has to arrive at the contract that is executing.
 ### `IAxelarExecutable`
-This interface is to be implemented for a contract to be able to receive remote contract calls. There are two functions that can be overriden, but depending on the use you may only chose to override one of them only.
-- `_execute(string memory sourceChain, string memory sourceAddress, bytes calldata payload)`: This will automatically be called when axelar relays all messages. `sourceChain` and `sourceAddress` can be used to validate who is making the contract call, and `payload` can be decoded with `abi.decode` to produce any data needed.
+This interface is to be implemented for a contract to be able to receive remote contract calls. There are two functions that can be overriden, but depending on the use you may only choose to override one of them only.
+- `_execute(string memory sourceChain, string memory sourceAddress, bytes calldata payload)`: This will automatically be called when Axelar relays all messages. `sourceChain` and `sourceAddress` can be used to validate who is making the contract call, and `payload` can be decoded with `abi.decode` to produce any data needed.
 - `_executeWithToken(string memory sourceChain, string memory sourceAddress, bytes calldata payload, string memory symbol, uinst256 amount)`: This is the same as above but it is guaranteed to have also received `amount` token specified by `symbol`. You can use _getTokenAddress(symbol) to obtain the address of the ERC20 token received.

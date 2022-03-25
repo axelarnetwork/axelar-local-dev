@@ -5,7 +5,7 @@ const  { setJSON } = require('../../src/api/utils');
 
 
 (async() => {
-    //Create an axelar netwrok and serve it at port 8501.
+    // Create an Axelar network and serve it at port 8501
     const chain1 = await createNetwork({
         port: 8501,
         seed: '1',
@@ -29,7 +29,7 @@ const  { setJSON } = require('../../src/api/utils');
 
 
     const args = process.argv.slice(2);
-    if(args && args.length == 0) return;
+    if(args && args.length === 0) return;
     const address = args[0];
     console.log(`Giving 1 ETH and 1000 UST to ${address} on both Chains...`);
     const [ user1 ] = chain1.userWallets; 
