@@ -1,5 +1,3 @@
-
-
 const IAxelarGateway = await fetch('abi/IAxelarGateway.json').then((chain) => {
     return chain.json();
 });
@@ -15,10 +13,10 @@ const chain2 = await fetch('chain2.json').then((chain) => {
 });
 const chains = [chain1, chain2];
 const getChain = (name) => {
-    return chains.find(chain => name == chain.name);
+    return chains.find(chain => name === chain.name);
 }
 const getOtherChain = (name) => {
-    return chains.find(chain => name != chain.name);
+    return chains.find(chain => name !== chain.name);
 }
 let chain;
 let otherChain;
@@ -34,7 +32,7 @@ async function selectChain(e) {
     await window.ethereum.request({
         method: "wallet_switchEthereumChain",
         params: [{
-            chainId: "0x"+chain.chainId.toString(16),
+            chainId: "0x" + chain.chainId.toString(16),
         }]
     });
     provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -44,26 +42,20 @@ async function selectChain(e) {
 }
 
 let scroll = document.getElementById('chain');
-for(let chain of chains) {
+for (let chain of chains) {
     let option = document.createElement('option');
     option.innerHTML = chain.name;
     scroll.appendChild(option);
 }
 scroll.addEventListener('change', selectChain);
 
-selectChain({target:
-    document.getElementById('chain')
+selectChain({
+    target:
+        document.getElementById('chain')
 })
 
 
 async function approve() {
-    let destinationAddress = document.getElementById('destinationAddress').value;
-    if(!ethers.utils.isAddress(destinationAddress)) {
-        alert('Please enter a valid address');
-        return;
-    }
-    destinationAddress = ethers.utils.getAddress(destinationAddress);
-
     let amountIn = document.getElementById('amountIn').value;
     amountIn = BigInt(amountIn * 1e6);
 
@@ -75,14 +67,15 @@ async function approve() {
     console.log(await ust.allowance(account, gateway.address));
     await (await ust.connect(signer).approve(gateway.address, amountIn)).wait();
     console.log(await ust.allowance(account, gateway.address));
-    
+
 }
+
 const approveButton = document.getElementById('approve');
 approveButton.addEventListener('click', approve);
 
 async function send() {
     let destinationAddress = document.getElementById('destinationAddress').value;
-    if(!ethers.utils.isAddress(destinationAddress)) {
+    if (!ethers.utils.isAddress(destinationAddress)) {
         alert('Please enter a valid address');
         return;
     }
@@ -94,8 +87,9 @@ async function send() {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner();
     await (await gateway.connect(signer).sendToken(otherChain.name, destinationAddress, 'UST', amountIn)).wait();
-    
+
 }
+
 const sendButton = document.getElementById('send');
 sendButton.addEventListener('click', send);
 
@@ -105,37 +99,38 @@ async function track() {
         params: {
             type: 'ERC20',
             options: {
-            address: ust.address,
-            symbol: 'UST',
-            decimals: 6,
+                address: ust.address,
+                symbol: 'UST',
+                decimals: 6,
             },
         },
     });
-    
+
 }
+
 const trackButton = document.getElementById('track');
 trackButton.addEventListener('click', track);
 
 async function auto() {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    const account = accounts[0];
-    document.getElementById('destinationAddress').value = account;
+    document.getElementById('destinationAddress').value = accounts[0];
 }
+
 const autoButton = document.getElementById('auto');
 autoButton.addEventListener('click', auto);
 
-setInterval(async() => {
+setInterval(async () => {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     const account = accounts[0];
     let amountIn = document.getElementById('amountIn').value;
     amountIn = BigInt(amountIn * 1e6);
     const allowance = await ust.allowance(account, gateway.address);
-    //console.log(allowance);
-    if(allowance >= amountIn) {
+
+    if (allowance >= amountIn) {
         approveButton.disabled = true;
         sendButton.disabled = false;
     } else {
         approveButton.disabled = false;
         sendButton.disabled = true;
     }
-},1000);
+}, 1000);
