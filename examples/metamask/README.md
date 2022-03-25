@@ -4,7 +4,7 @@ In this example we create two blockchains and connect to them with Metamask. The
 ## Creating the Networks 
 First run `createNetworks.js` in the background specifying an address to fund. This should be your Metamask address:
 ```
-cd node_modules/axelar-local-dev/examples/metamask
+cd node_modules/@axelar-network/axelar-local-dev/examples/metamask
 node createNetworks.js <your metamask address goes here>
 ```
 
@@ -26,7 +26,7 @@ And for **Chain 2**:
 ## Serving the webpage
 You then need to serve this directory over **http**. You can simply navigate to this directory and run `serve`:
 ```
-cd node_modules/axelar-local-dev/examples/metamask
+cd node_modules/@axelar-network/axelar-local-dev/examples/metamask
 npx serve -l 8000
 ```
 

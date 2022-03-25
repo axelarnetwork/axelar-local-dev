@@ -1,5 +1,5 @@
 {
-  "name": "axelar-local-dev",
+  "name": "@axelar-network/axelar-local-dev",
   "version": "1.0.0",
   "description": "",
   "main": "src/api/AxelarLocal.js",

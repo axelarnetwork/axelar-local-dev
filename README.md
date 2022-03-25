@@ -7,41 +7,41 @@ This environment allows you to set up a local instances of the Axelar Gateways, 
 To install on simply run:
 
 ```
-npm install https://github.com/axelarnetwork/axelar-local-dev
+npm install axelarnetwork/axelar-local-dev
 ```
 
 The following script shows a simple example of how to use this module to create two test blockchains and send some UST from one to the other.
 
 ```
 // axelarTest.js
-const  axelar = require('axelar-local-dev');
+const axelar = require('@axelar-network/axelar-local-dev');
 
 (async () => {
-	const  chain1 = await  axelar.createNetwork();
-	const [user1] = chain1.userWallets;
-	const  chain2 = await  axelar.createNetwork();
-	const [user2] = chain2.userWallets;
+	const chain1 = await  axelar.createNetwork();
+	const [ user1 ] = chain1.userWallets;
+	const chain2 = await  axelar.createNetwork();
+	const [ user2 ] = chain2.userWallets;
 
-	await  chain1.giveToken(user1.address, 'UST', 1000);
+	await chain1.giveToken(user1.address, 'UST', 1000);
 
 	console.log(`user1 has ${await  chain1.ust.balanceOf(user1.address)} UST.`);
 	console.log(`user2 has ${await  chain2.ust.balanceOf(user2.address)} UST.`);
 
 	// Approve the AxelarGateway to use our UST on chain1.
-	await (await  chain1.ust.connect(user1).approve(chain1.gateway.address, 100)).wait();
+	await (await chain1.ust.connect(user1).approve(chain1.gateway.address, 100)).wait();
 	// And have it send it to chain2.
-	await (await  chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'UST', 100)).wait();
+	await (await chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'UST', 100)).wait();
 	// Have axelar relay the tranfer to chain2.
 	await  axelar.relay();
 
-	console.log(`user1 has ${await  chain1.ust.balanceOf(user1.address)} UST.`);
-	console.log(`user2 has ${await  chain2.ust.balanceOf(user2.address)} UST.`);
+	console.log(`user1 has ${await chain1.ust.balanceOf(user1.address)} UST.`);
+	console.log(`user2 has ${await chain2.ust.balanceOf(user2.address)} UST.`);
 })();
 ```
 Simply run `node <path to the above script>` to test it. Additional examples are present in the `examples` directory and can be run with:
 
 ```
-node node_modules/axelar-local-dev/examples/<example_dir>/<file_name>.js
+node node_modules/@axelar-network/axelar-local-dev/examples/<example_dir>/<file_name>.js
 ```
 
 ## Functionality
