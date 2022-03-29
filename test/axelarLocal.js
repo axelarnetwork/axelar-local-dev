@@ -10,7 +10,7 @@ const {
 const { deployContract, solidity } = require('ethereum-waffle');
 chai.use(solidity);
 const { expect } = chai;
-const {createNetwork: createChain, relay, stopAll} = require('../src/api/AxelarLocal');
+const {createNetwork: createChain, relay, stopAll} = require('../dist/networkUtils');
 
 const IAxelarExecutable = require('../build/ExecutableSample.json');
 

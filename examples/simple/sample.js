@@ -1,7 +1,7 @@
 'use strict';
 
-const {createNetwork: createChain, relay} = require('../../src/api/AxelarLocal');
-const { deployContract } = require('../../src/api/utils');
+const {createNetwork: createChain, relay} = require('../../dist/networkUtils.js');
+const { deployContract } = require('../../dist/utils.js');
 const { utils : {defaultAbiCoder} } = require('ethers');
 
 const ExecutableSample = require('../../build/ExecutableSample.json');

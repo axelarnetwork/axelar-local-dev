@@ -1,5 +1,5 @@
-const {createNetwork, setupNetwork} = require('../../src/api/AxelarLocal');
-const {defaultAccounts} = require('../../src/api/utils');
+const {createNetwork, setupNetwork} = require('../../dist/networkUtils');
+const {defaultAccounts} = require('../../dist/utils');
 
 
 ( async() => {

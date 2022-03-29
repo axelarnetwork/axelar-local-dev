@@ -1,39 +1,42 @@
 'use strict';
 
-const {
+import {
     ethers,
     Wallet,
     Contract,
-    providers: {
-        Web3Provider,
-    },
-    utils: {
-        defaultAbiCoder,
-        arrayify,
-    },
-} = require('ethers');
+    providers,
+} from 'ethers';
 const {
+    defaultAbiCoder,
+    arrayify,
+} = ethers.utils; 
+import {
     getSignedExecuteInput,
     getRandomID,
     getLogID,
     defaultAccounts,
     setJSON,
     httpGet,
-  } = require('./utils');
-const server = require('./server');
-const Network = require('./Network');
+  } from './utils';
+import server from './server';
+import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup }  from './Network';
 
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
 const fs = require('fs');
 
 
-const IAxelarGateway = require('../../build/IAxelarGateway.json');
-const IAxelarExecutable = require('../../build/IAxelarExecutable.json');
+const IAxelarGateway = require('../build/IAxelarGateway.json');
+const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 
 //An internal class for handling axelar commands.
 class Command {
-    constructor(commandId, name, data, dataSignature, post=null) {
+    commandId: string;
+    name: string;
+    data: any[];
+    encodedData: string;
+    post: (() => Promise<void>) | undefined;
+    constructor(commandId: string, name: string, data: any[], dataSignature: string[], post: (() => Promise<void>) | undefined = undefined) {
         this.commandId = commandId;
         this.name = name;
         this.data = data;
@@ -44,13 +47,10 @@ class Command {
         this.post = post;
     }
 }
-//A local reference to all the axelar networks created/loaded.
-/** @type {[Network]} */
-const networks = [];
 
 //This function relays all the messages between the tracked networks.
-const relay = async () => {
-    const commands = {};
+export const relay = async () => {
+    const commands: {[key: string]: Command[]} = {};
     for(let to of networks) {
         commands[to.name] = [];
     }
@@ -59,8 +59,8 @@ const relay = async () => {
         let filter = from.gateway.filters.TokenSent();
         let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
-            const args = log.args;
-            commands[log.args.destinationChain].push(new Command(
+            const args:any = log.args;
+            commands[args.destinationChain].push(new Command(
                 getLogID(log),
                 'mintToken', 
                 [args.symbol, args.destinationAddress, args.amount], 
@@ -70,10 +70,10 @@ const relay = async () => {
         filter = from.gateway.filters.ContractCall();
         logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
-            const args = log.args;
-            if(commands[log.args.destinationChain] == null) continue;
+            const args: any = log.args;
+            if(commands[args.destinationChain] == null) continue;
             const commandId = getLogID(log);
-            commands[log.args.destinationChain].push(new Command(
+            commands[args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCall', 
                 [from.name, args.sender, args.destinationContractAddress, args.payloadHash], 
@@ -83,7 +83,7 @@ const relay = async () => {
                     const contract = new Contract(
                         args.destinationContractAddress,
                         IAxelarExecutable.abi,
-                        to.relayerWallet,
+                        to!.relayerWallet,
                     );
                     await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait();
                 }),
@@ -92,9 +92,9 @@ const relay = async () => {
         filter = from.gateway.filters.ContractCallWithToken();
         logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
-            const args = log.args;
+            const args: any = log.args;
             const commandId = getLogID(log);
-            commands[log.args.destinationChain].push(new Command(
+            commands[args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCallWithMint', 
                 [from.name, args.sender, args.destinationContractAddress, args.payloadHash, args.symbol, args.amount], 
@@ -104,7 +104,7 @@ const relay = async () => {
                     const contract = new Contract(
                         args.destinationContractAddress,
                         IAxelarExecutable.abi,
-                        to.relayerWallet,
+                        to!.relayerWallet,
                     );
                     await (await contract.executeWithToken(commandId, from.name, args.sender, args.payload, args.symbol, args.amount)).wait();
                 }),
@@ -136,7 +136,7 @@ const relay = async () => {
             if(command.post == null)
                 continue;
 
-            if(!execution.events.find(event=> {
+            if(!execution.events.find((event:any)=> {
                 return event.event == 'Executed' && event.args[0] == command.commandId;
             }))
                 continue;
@@ -150,11 +150,9 @@ const relay = async () => {
 };
 
 
-function listen(port, callback = null) {
-    if(callback == null) 
-        callback = (err) => {
-            if(err)
-                throw err
+function listen(port: number, callback: (() => void) | undefined = undefined) {
+    if(!callback) 
+        callback = () => {
             console.log(`Serving ${networks.length} networks on port ${port}`)
         }
     return server(networks).listen(port, callback);
@@ -162,7 +160,14 @@ function listen(port, callback = null) {
 /**
  * @returns {Network}
  */
-async function createNetwork(options = {}) {
+async function createNetwork(options: NetworkOptions = {
+    dbPath: undefined,
+    ganacheOptions: undefined,
+    port: undefined,
+    name: undefined,
+    chainId: undefined,
+    seed: undefined,
+}) {
     if(options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
         console.log('this exists!');
         const info = require(options.dbPath + '/networkInfo.json');
@@ -175,23 +180,21 @@ async function createNetwork(options = {}) {
             },
             logging: { quiet: true },
         });
-        const chain = await getNetwork(new Web3Provider(ganacheProvider), info);
+        const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
         chain.ganacheProvider = ganacheProvider;
         if(options.port) {
             chain.port = options.port;
-            chain.server = server(chain).listen(chain.port, (err) => {
-                if(err)
-                    throw err
+            chain.server = server(chain).listen(chain.port, () => {
                 console.log(`Serving ${chain.name} on port ${chain.port}`)
             });
         }
         return chain;
     }
-    const chain = new Network();
+    const chain: Network = new Network();
     chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
-    chain.chainId = options.chainId | networks.length+2500;
+    chain.chainId = options.chainId! | networks.length+2500;
     console.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
-    const accounts = defaultAccounts(20, options.seed);
+    const accounts = defaultAccounts(20, options.seed!);
     
     chain.ganacheProvider = require('ganache').provider( {
         database: {dbPath : options.dbPath},
@@ -205,7 +208,7 @@ async function createNetwork(options = {}) {
         },
         logging: { quiet: true },
     });
-    chain.provider = new Web3Provider(chain.ganacheProvider);
+    chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10,20);
     [
@@ -217,13 +220,11 @@ async function createNetwork(options = {}) {
     chain.threshold = 3;
     chain.lastRelayedBlock = 0;
     await chain._deployGateway();
-    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
+    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e18));
 
     if(options.port) {
         chain.port = options.port;
-        chain.server = server(chain).listen(chain.port, (err) => {
-            if(err)
-                throw err
+        chain.server = server(chain).listen(chain.port, () => {
             console.log(`Serving ${chain.name} on port ${chain.port}`)
         });
     }
@@ -237,18 +238,18 @@ async function createNetwork(options = {}) {
 /**
  * @returns {Network}
  */
-async function getNetwork(urlOrProvider, info=null) {
+async function getNetwork(urlOrProvider: string | providers.Provider, info: NetworkInfo | undefined=undefined) {
 
-    if(info===null) 
-        info = await httpGet(urlOrProvider + '/info');
-    const chain = new Network();
+    if(!info) 
+        info = await httpGet(urlOrProvider + '/info') as NetworkInfo;
+    const chain: Network = new Network();
     chain.name = info.name;
     chain.chainId = info.chainId;
     console.log(`It is ${chain.name} and has a chainId of ${chain.chainId}...`);
 
     if(typeof(urlOrProvider) == 'string') {
         chain.provider = ethers.getDefaultProvider(urlOrProvider);
-        chain._isRemote = true;
+        chain.isRemote = true;
         chain.url = urlOrProvider;
     } else {
         chain.provider = urlOrProvider;
@@ -279,8 +280,8 @@ async function getNetwork(urlOrProvider, info=null) {
 /**
  * @returns {[Network]}
  */
- async function getAllNetworks(url) {
-    const n = await httpGet(url + '/info');
+ async function getAllNetworks(url: string) {
+    const n: number = parseInt(await httpGet(url + '/info') as string);
     for(let i=0;i<n;i++) {
         await getNetwork(url+'/'+i);
     }
@@ -290,7 +291,7 @@ async function getNetwork(urlOrProvider, info=null) {
 /**
  * @returns {Network}
  */
-async function setupNetwork (urlOrProvider, options) {
+async function setupNetwork (urlOrProvider: string | providers.Provider, options: NetworkSetup) {
     const chain = new Network();
     chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
     chain.provider = typeof(urlOrProvider) === 'string' ? ethers.getDefaultProvider(urlOrProvider) : urlOrProvider;
@@ -311,12 +312,14 @@ async function setupNetwork (urlOrProvider, options) {
     chain.threshold = options.threshold != null ? options.threshold : 1;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain._deployGateway();
-    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, 1e12);
+    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e18));
     networks.push(chain);
     return chain;
 }
 
-async function stop(network){
+async function stop(network: string | Network){
+    if(typeof(network) == 'string')
+        network = networks.find(chain => chain.name == network)!;
     if(network.server != null)
         await network.server.close();
     networks.splice(networks.indexOf(network), 1);

@@ -5,8 +5,8 @@
   "main": "src/api/AxelarLocal.js",
   "scripts": {
     "test": "mocha -timeout=5000",
-    "build": "rm -rf build && waffle waffle-src.json && waffle waffle-examples.json && cp build/IAxelarGateway.json examples/metamask/abi && cp build/IERC20.json examples/metamask/abi",
-    "postinstall": "npm run build"
+    "build": "tsc && rm -rf build && waffle waffle-src.json && waffle waffle-examples.json && cp build/IAxelarGateway.json examples/metamask/abi && cp build/IERC20.json examples/metamask/abi",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
