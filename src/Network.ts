@@ -1,71 +1,119 @@
 'use strict';
 
-const {
+import {
     ethers,
     Wallet,
     Contract,
     ContractFactory,
-    providers: {
-        Provider
-    },
-    utils: {
-        defaultAbiCoder,
-        arrayify,
-    },
-} = require('ethers');
+    providers,
+} from 'ethers';
+const {
+    defaultAbiCoder,
+    arrayify,
+} = ethers.utils;
 const {
     getSignedExecuteInput,
     getRandomID,
     deployContract,
+    httpGet,
   } = require('./utils');
-const http = require('http');
+import http from 'http';
+const fs = require('fs');
+
 const { AxelarGateway } = require('@axelar-network/axelarjs-sdk');
 
-const TokenDeployer = require('../../build/TokenDeployer.json');
-const AxelarGatewayProxy = require('../../build/AxelarGatewayProxy.json');
-const AxelarGatewaySinglesig = require('../../build/AxelarGatewaySinglesig.json');
-const IAxelarGateway = require('../../build/IAxelarGateway.json');
-const BurnableMintableCappedERC20 = require('../../build/BurnableMintableCappedERC20.json');
-const IAxelarExecutable = require('../../build/IAxelarExecutable.json');
+const TokenDeployer = require('../build/TokenDeployer.json');
+const AxelarGatewayProxy = require('../build/AxelarGatewayProxy.json');
+const AxelarGatewaySinglesig = require('../build/AxelarGatewaySinglesig.json');
+const IAxelarGateway = require('../build/IAxelarGateway.json');
+const BurnableMintableCappedERC20 = require('../build/BurnableMintableCappedERC20.json');
+const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
+
+
+export const networks: Network[] = [];
+export interface NetworkOptions {
+    dbPath: string | undefined;
+    ganacheOptions: any;
+    port: number| undefined;
+    name: string | undefined;
+    chainId: number | undefined;
+    seed: string | undefined
+}
+export interface NetworkInfo {
+    name: string,
+    chainId: number,
+    userKeys: Wallet[],
+    ownerKey: Wallet,
+    operatorKey: Wallet,
+    relayerKey: Wallet,
+    adminKeys: Wallet[],
+    threshold: number,
+    lastRelayedBlock: number,
+    gatewayAddress: string,
+    ustAddress: string,
+}
+export interface NetworkSetup {
+    name: string | undefined,
+    chainId: number | undefined,
+    userKeys: Wallet[] | undefined,
+    ownerKey: Wallet,
+    operatorKey: Wallet | undefined,
+    relayerKey: Wallet | undefined,
+    adminKeys: Wallet[] | undefined,
+    threshold: number | undefined,
+    lastRelayedBlock: number | undefined,
+    gatewayAddress: string | undefined,
+    ustAddress: string | undefined,
+}
+
+
+
+
 /*
 * The Network class
 */
-class Network {
-    constructor() {
-        /** @type {string} */
-        this.name;
-        /** @type {number} */
-        this.chainId;
-        /** @type {Provider} */
-        this.provider;
-        /** @type {[Wallet]} */
-        this.userWallets;
-        /** @type {Wallet} */
-        this.ownerWallet;
-        /** @type {Wallet} */
-        this.operatorWallet;
-        /** @type {Wallet} */
-        this.relayerWallet;
-        /** @type {[Wallet]} */
-        this.adminWallets;
-        /** @type {number} */
-        this.threshold;
-        /** @type {number} */
-        this.lastRelayedBlock;
-        /** @type {Contract} */
-        this.gateway;
-        /** @type {Contract} */
-        this.ust;
+export class Network {
+    name: string;
+    chainId: number;
+    provider: providers.Provider;
+    userWallets: Wallet[];
+    ownerWallet: Wallet;
+    operatorWallet: Wallet;
+    relayerWallet: Wallet;
+    adminWallets: Wallet[];
+    threshold: number;
+    lastRelayedBlock : number;
+    gateway : Contract;
+    ust : Contract;
+    isRemote: boolean | undefined;
+    url: string | undefined;
+    ganacheProvider: any;
+    server: http.Server | undefined;
+    port: number | undefined;
+    constructor(
+        networkish : any = {}
+    ) {
+        this.name = networkish.name;
+        this.chainId = networkish.chainId;
+        this.provider = networkish.provider;
+        this.userWallets = networkish.userWallets;
+        this.ownerWallet = networkish.ownerWallet;
+        this.operatorWallet = networkish.operatorWallet;
+        this.relayerWallet = networkish.relayerWallet;
+        this.adminWallets = networkish.adminWallets;
+        this.threshold = networkish.threshold;
+        this.lastRelayedBlock = networkish.lastRelayedBlock;
+        this.gateway = networkish.gateway;
+        this.ust = networkish.ust;
+        this.isRemote = networkish.isRemote;
+        this.url = networkish.url;
     }
-    /**
-     * @returns {Contract}
-     */
-    async _deployGateway() {
+    async _deployGateway(): Promise<Contract> {
         process.stdout.write(`Deploying the Axelar Gateway for ${this.name}... `);
         const params = arrayify(defaultAbiCoder.encode(
             ['address[]', 'uint8', 'address', 'address'],
@@ -97,7 +145,7 @@ class Network {
     /**
      * @returns {Contract}
      */
-    async deployToken (name, symbol, decimals, cap) {
+    async deployToken (name: string, symbol: string, decimals: number, cap: BigInt) {
         process.stdout.write(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(defaultAbiCoder.encode(
             ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -125,7 +173,7 @@ class Network {
         );
     
         const signedData = getSignedExecuteInput(data, this.ownerWallet);
-        await this.gateway.connect(this.ownerWallet).execute(signedData);
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(
             tokenAddress,
@@ -135,7 +183,7 @@ class Network {
         console.log(`Deployed at ${tokenContract.address}`);
         return tokenContract;
     }
-    async getTokenContract(symbol) {
+    async getTokenContract(symbol: string) {
         const address = await this.gateway.tokenAddresses(symbol); 
         return new Contract(
             address,
@@ -143,7 +191,7 @@ class Network {
             this.provider
         );
     }
-    async giveToken(address, symbol, amount) {
+    async giveToken(address: string, symbol: string, amount: BigInt) {
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -165,24 +213,7 @@ class Network {
         const signedData = getSignedExecuteInput(data, this.ownerWallet)
         await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
     }
-    async relay() {
-        if(this._isRemote) {
-            await new Promise((resolve, reject) => {
-                http.get(this.url + '/relay', (res) => {
-                    const { statusCode } = res;
-                    if (statusCode !== 200) {
-                        reject()
-                    } 
-                    res.on('data', (chunk) => {});
-                    res.on('end', () => {
-                        resolve();
-                    });
-                });
-            });
-        } else {
-            await relay();
-        }
-    }
+    
     getInfo() {
         const info = {
             name: this.name,
@@ -201,4 +232,22 @@ class Network {
     }
 }
 
-module.exports = Network
+
+
+export class RemoteNetwork extends Network{
+    async relay() {
+        await new Promise((resolve: (value: unknown) => void, reject: (value: unknown) => void) => {
+            http.get(this.url + '/relay', (res: http.IncomingMessage) => {
+                const { statusCode } = res;
+                if (statusCode !== 200) {
+                    reject(null)
+                } 
+                res.on('data', (chunk) => {});
+                res.on('end', () => {
+                    resolve(null);
+                });
+            });
+        });
+    }
+}
+

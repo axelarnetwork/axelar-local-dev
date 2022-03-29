@@ -35,7 +35,7 @@ const {
   bigNumberToNumber,
   getSignedExecuteInput,
   getRandomID,
-} = require('../src/api/utils');
+} = require('../dist/utils');
 
 describe('AxelarGatewaySingleSig', () => {
   const [

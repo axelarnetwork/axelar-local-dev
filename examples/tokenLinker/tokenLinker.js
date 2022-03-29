@@ -1,7 +1,7 @@
 'use strict';
 
-const { relay, createNetwork } = require('../../src/api/AxelarLocal');
-const { deployContract } = require('../../src/api/utils');
+const {setupNetwork, relay, getNetwork, createNetwork, networks} = require('../../dist/networkUtils');
+const { defaultAccounts, deployContract } = require('../../dist/utils');
 const { Contract } = require('ethers');
 
 const MirroredTokenLinker = require('../../build/MirroredTokenLinker.json');

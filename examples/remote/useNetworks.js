@@ -1,5 +1,4 @@
-const { getNetwork, relay } = require('../../src/api/AxelarLocal');
-
+const {getNetwork, relay} = require('../../dist/networkUtils');
 
 (async () => {
     // Connect to the Axelar network.
