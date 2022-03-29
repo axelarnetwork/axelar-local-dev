@@ -220,7 +220,7 @@ async function createNetwork(options: NetworkOptions = {
     chain.threshold = 3;
     chain.lastRelayedBlock = 0;
     await chain._deployGateway();
-    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e18));
+    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e70));
 
     if(options.port) {
         chain.port = options.port;
@@ -312,7 +312,7 @@ async function setupNetwork (urlOrProvider: string | providers.Provider, options
     chain.threshold = options.threshold != null ? options.threshold : 1;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain._deployGateway();
-    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e18));
+    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e70));
     networks.push(chain);
     return chain;
 }

@@ -2,7 +2,7 @@
   "name": "axelar-local-gateway",
   "version": "1.0.0",
   "description": "",
-  "main": "src/api/AxelarLocal.js",
+  "main": "dist/networkUtils.js",
   "scripts": {
     "test": "mocha -timeout=5000",
     "build": "tsc && rm -rf build && waffle waffle-src.json && waffle waffle-examples.json && cp build/IAxelarGateway.json examples/metamask/abi && cp build/IERC20.json examples/metamask/abi",

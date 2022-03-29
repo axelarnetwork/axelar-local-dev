@@ -173,7 +173,7 @@ export class Network {
         );
     
         const signedData = getSignedExecuteInput(data, this.ownerWallet);
-        await this.gateway.connect(this.ownerWallet).execute(signedData);
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(
             tokenAddress,
