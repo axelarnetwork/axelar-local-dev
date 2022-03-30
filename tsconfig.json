@@ -3,7 +3,7 @@
       /* Language and Environment */
       "target": "es5" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
       "lib": [
-        "es2015",
+        "es2020",
         "dom"
       ] /* Specify a set of bundled library declaration files that describe the target runtime environment. */,
   
