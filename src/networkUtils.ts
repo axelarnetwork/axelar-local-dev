@@ -25,7 +25,7 @@ const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
 const fs = require('fs');
 
-
+var fullfill = true;
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 
@@ -132,6 +132,7 @@ export const relay = async () => {
         const signedData = getSignedExecuteInput(data, to.ownerWallet);
         const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData)).wait();
         //console.log(execution);
+        if(!fullfill) continue;
         for(const command of toExecute) {
             if(command.post == null)
                 continue;
@@ -343,4 +344,5 @@ module.exports = {
     relay,
     stop,
     stopAll, 
+    fullfill,
 }
