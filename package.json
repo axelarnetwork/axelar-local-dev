@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha -timeout=5000",
     "build": "tsc && rm -rf build && waffle waffle-src.json && waffle waffle-examples.json && cp build/IAxelarGateway.json examples/metamask/abi && cp build/IERC20.json examples/metamask/abi",
-    "prepare": "npm run build"
+    "postinstall": "npm run build"
   },
   "repository": {
     "type": "git",
