@@ -27,6 +27,7 @@ const AxelarGatewayProxy = require('../build/AxelarGatewayProxy.json');
 const AxelarGatewaySinglesig = require('../build/AxelarGatewaySinglesig.json');
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const BurnableMintableCappedERC20 = require('../build/BurnableMintableCappedERC20.json');
+const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 
 const ROLE_OWNER = 1;
@@ -47,15 +48,16 @@ export interface NetworkOptions {
 export interface NetworkInfo {
     name: string,
     chainId: number,
-    userKeys: Wallet[],
-    ownerKey: Wallet,
-    operatorKey: Wallet,
-    relayerKey: Wallet,
-    adminKeys: Wallet[],
+    userKeys: string[],
+    ownerKey: string,
+    operatorKey: string,
+    relayerKey: string,
+    adminKeys: string[],
     threshold: number,
     lastRelayedBlock: number,
     gatewayAddress: string,
     ustAddress: string,
+    gasReceiverAddress: string,
 }
 export interface NetworkSetup {
     name: string | undefined,
@@ -67,8 +69,6 @@ export interface NetworkSetup {
     adminKeys: Wallet[] | undefined,
     threshold: number | undefined,
     lastRelayedBlock: number | undefined,
-    gatewayAddress: string | undefined,
-    ustAddress: string | undefined,
 }
 
 
@@ -89,6 +89,7 @@ export class Network {
     threshold: number;
     lastRelayedBlock : number;
     gateway : Contract;
+    gasReceiver : Contract;
     ust : Contract;
     isRemote: boolean | undefined;
     url: string | undefined;
@@ -109,6 +110,7 @@ export class Network {
         this.threshold = networkish.threshold;
         this.lastRelayedBlock = networkish.lastRelayedBlock;
         this.gateway = networkish.gateway;
+        this.gasReceiver = networkish.gasReceiver;
         this.ust = networkish.ust;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
@@ -140,6 +142,16 @@ export class Network {
         );*/
         console.log(`Deployed at ${this.gateway.address}`);
         return this.gateway;
+
+    }
+    async _deployGasReceiver(): Promise<Contract> {
+        process.stdout.write(`Deploying the Axelar Gas Receiver for ${this.name}... `);
+        this.gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, [
+            this.gateway.address,
+        ]);
+        
+        console.log(`Deployed at ${this.gateway.address}`);
+        return this.gasReceiver;
 
     }
     /**
@@ -215,7 +227,7 @@ export class Network {
     }
     
     getInfo() {
-        const info = {
+        const info: NetworkInfo = {
             name: this.name,
             chainId: this.chainId,
             userKeys: this.userWallets.map(wallet=>wallet.privateKey),
@@ -227,6 +239,7 @@ export class Network {
             lastRelayedBlock: this.lastRelayedBlock,
             gatewayAddress: this.gateway.address,
             ustAddress: this.ust.address,
+            gasReceiverAddress: this.gasReceiver.address,
         }
         return info;
     }

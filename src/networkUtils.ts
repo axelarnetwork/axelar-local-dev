@@ -9,6 +9,7 @@ import {
 const {
     defaultAbiCoder,
     arrayify,
+    keccak256,
 } = ethers.utils; 
 import {
     getSignedExecuteInput,
@@ -25,11 +26,11 @@ const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
 const fs = require('fs');
 
-const settings = {
-    fullfill: true,
-} 
+
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
+const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
+let gasLogs: any = {};
 
 //An internal class for handling axelar commands.
 class Command {
@@ -37,8 +38,8 @@ class Command {
     name: string;
     data: any[];
     encodedData: string;
-    post: (() => Promise<void>) | undefined;
-    constructor(commandId: string, name: string, data: any[], dataSignature: string[], post: (() => Promise<void>) | undefined = undefined) {
+    post: ((options: any) => Promise<void>) | undefined;
+    constructor(commandId: string, name: string, data: any[], dataSignature: string[], post: ((options: any) => Promise<void>) | undefined = undefined) {
         this.commandId = commandId;
         this.name = name;
         this.data = data;
@@ -50,6 +51,13 @@ class Command {
     }
 }
 
+export const getFee = (source: string | Network, destination: string | Network, symbol: string) => {
+    return 1e6;
+}
+export const getGasCost = (source: string | Network, destination: string | Network, tokenOnSource: string, gasLimit: number) => {
+    return 1e6;
+}
+
 //This function relays all the messages between the tracked networks.
 export const relay = async () => {
     const commands: {[key: string]: Command[]} = {};
@@ -58,18 +66,22 @@ export const relay = async () => {
     }
 
     for(const from of networks) {
-        let filter = from.gateway.filters.TokenSent();
+        let filter = from.gasReceiver.filters.GasReceived();
+        if(gasLogs[from.name] == null) gasLogs[from.name] = [];
+        gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        
+        filter = from.gateway.filters.TokenSent();
         let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
             const args:any = log.args;
             commands[args.destinationChain].push(new Command(
-                getLogID(log),
+                getLogID(from.name, log),
                 'mintToken', 
                 [args.symbol, args.destinationAddress, args.amount], 
                 ['string', 'address', 'uint256']
             ));
         }
-        filter = from.gateway.filters.ContractCall();
+        /*filter = from.gateway.filters.ContractCall();
         logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
             const args: any = log.args;
@@ -90,25 +102,35 @@ export const relay = async () => {
                     await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait();
                 }),
             ));
-        }
+        }*/
         filter = from.gateway.filters.ContractCallWithToken();
         logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
             const args: any = log.args;
-            const commandId = getLogID(log);
+            if(args.amount < getFee(from, args.destinationChain, args.symbol)) continue;
+            const amountOut = args.amount - getFee(from, args.destinationChain, args.symbol)
+            const commandId = getLogID(from.name, log);
             commands[args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCallWithMint', 
-                [from.name, args.sender, args.destinationContractAddress, args.payloadHash, args.symbol, args.amount], 
+                [from.name, args.sender, args.destinationContractAddress, args.payloadHash, args.symbol, amountOut], 
                 ['string', 'string', 'address', 'bytes32', 'string', 'uint256'],
-                (async () => {
+                (async (options: any) => {
                     const to = networks.find(chain=>chain.name == args.destinationChain);
                     const contract = new Contract(
                         args.destinationContractAddress,
                         IAxelarExecutable.abi,
                         to!.relayerWallet,
                     );
-                    await (await contract.executeWithToken(commandId, from.name, args.sender, args.payload, args.symbol, args.amount)).wait();
+                    await (await contract.executeWithToken(
+                        commandId, 
+                        from.name, 
+                        args.sender, 
+                        args.payload, 
+                        args.symbol, 
+                        amountOut,
+                        options
+                    )).wait();
                 }),
             ));
         }
@@ -133,8 +155,7 @@ export const relay = async () => {
         );
         const signedData = getSignedExecuteInput(data, to.ownerWallet);
         const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData)).wait();
-        //console.log(execution);
-        if(!settings.fullfill) continue;
+        
         for(const command of toExecute) {
             if(command.post == null)
                 continue;
@@ -143,8 +164,19 @@ export const relay = async () => {
                 return event.event == 'Executed' && event.args[0] == command.commandId;
             }))
                 continue;
+            const fromName = command.data[0]
+            const payed = gasLogs[fromName].find((log: any) => {
+                if(log.destinationChain != to.name) return false;
+                if(log.destinationAddress != command.data[2]) return false;
+                if(keccak256(log.payload) != command.data[3]) return false;
+                if(log.symbol != command.data[4]) return false;
+                if(log.amountThrough - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
+                return true;
+            });
+            if(!payed || payed.gasAmount < getGasCost(fromName, to, payed.gasToken, payed.gasLimit)) continue;
+            
             try {
-                await command.post();
+                await command.post({gasLimit: payed.gasLimit});
             } catch(e) {
                 console.log(e);
             }
@@ -223,6 +255,7 @@ async function createNetwork(options: NetworkOptions = {
     chain.threshold = 3;
     chain.lastRelayedBlock = 0;
     await chain._deployGateway();
+    await chain._deployGasReceiver();
     chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e70));
 
     if(options.port) {
@@ -271,6 +304,11 @@ async function getNetwork(urlOrProvider: string | providers.Provider, info: Netw
         IAxelarGateway.abi,
         chain.provider
     );
+    chain.gasReceiver = new Contract(
+        info.gasReceiverAddress,
+        AxelarGasReceiver.abi,
+        chain.provider
+    );
     chain.ust = await chain.getTokenContract('UST');
 
     console.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
@@ -315,6 +353,7 @@ async function setupNetwork (urlOrProvider: string | providers.Provider, options
     chain.threshold = options.threshold != null ? options.threshold : 1;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain._deployGateway();
+    await chain._deployGasReceiver();
     chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e70));
     networks.push(chain);
     return chain;
@@ -345,6 +384,7 @@ module.exports = {
     setupNetwork,
     relay,
     stop,
-    stopAll, 
-    settings,
+    stopAll,
+    getFee,
+    getGasCost,
 }

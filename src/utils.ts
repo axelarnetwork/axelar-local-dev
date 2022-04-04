@@ -44,7 +44,9 @@ export function getSignedMultisigExecuteInput(data: any, wallets: Wallet[]) {
 }
 
 export const getRandomID = () => id(getRandomInt(1e10).toString());
-export const getLogID = (log: any) => id(log.blockNumber+':'+log.transactionIndex+':'+log.logIndex);
+export const getLogID = (chain: string, log: any) => {
+    return id(chain+":"+log.blockNumber+':'+log.transactionIndex+':'+log.logIndex);
+}
 export const defaultAccounts = (n: number, seed='') => {
     const balance = 10000000000000000000000000000000000;
     const privateKeys = [];
