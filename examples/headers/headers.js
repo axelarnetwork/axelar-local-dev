@@ -4,34 +4,39 @@ const { deployContract } = require('../../dist/utils');
 const Headers = require('../../build/Headers.json');
 
 ( async () => {
+    //The number of chains to all share their headers.
     const n = 5;
+
+    //Setup
     for(let i=0;i<n;i++) {
         const chain = await createNetwork({seed: i.toString()});
         const [user] = chain.userWallets;
         chain.headers = await deployContract(user, Headers, [chain.gateway.address, chain.gasReceiver.address, 10]);
     }
+
+    //Introduce siblings and send headers.
     for(let i=0;i<n;i++) {
         const chain = networks[i];
         const [user] = chain.userWallets;
         const chains = [];
-        const fees = [];
         const gases = [];
         for(let j=0;j<n;j++) {
             if(i==j) continue;
             await (await chain.headers.connect(user).addSibling(networks[j].name, networks[j].headers.address)).wait();
             chains.push(networks[j].name);
-            fees.push(getFee(chain, networks[j], 'UST'));
-            gases.push(getGasCost(chain, networks[j], chain.ust.address, 1e6));
+            gases.push(getGasCost(chain, networks[j], chain.ust.address) * 1e6);
         }
-        let s = fees.reduce((partialSum, a) => partialSum + a, 0) + gases.reduce((partialSum, a) => partialSum + a, 0);;
-        await chain.giveToken(user.address, 'UST', s);
-        await (await chain.ust.connect(user).approve(chain.headers.address, s)).wait();
-        await (await chain.headers.connect(user).updateRemoteHeaders('UST', chains, fees, gases, 1e6)).wait();
+        //Total gas to be payed.
+        let totalGas = gases.reduce((partialSum, a) => partialSum + a, 0);;
+        await chain.giveToken(user.address, 'UST', totalGas);
+        await (await chain.ust.connect(user).approve(chain.headers.address, totalGas)).wait();
+        await (await chain.headers.connect(user).updateRemoteHeaders(chain.ust.address, chains, gases)).wait();
     }
     await relay();
+
+    //Print the last saved header for each chain, and the actualt header of that chain to ensure they match.
     for(let i=0;i<n;i++) {
         const chain = networks[i];
-        const [user] = chain.userWallets;
         console.log(`---- ${chain.name} -----`);
         for(let j=0;j<n;j++) {
             if(i==j) continue;

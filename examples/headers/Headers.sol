@@ -16,19 +16,23 @@ contract Headers is IAxelarExecutable, Ownable {
     AxelarGasReceiver gasReceiver;
     mapping(string => string) public siblings;
 
+    //We need to know where the gateway is as well as where the gasReceiver is. length_ is the maximum number of headers to cache per chain.
     constructor(address gateway_, address gasReceiver_, uint256 length_) IAxelarExecutable(gateway_) {
         length = length_;
         gasReceiver = AxelarGasReceiver(gasReceiver_);
     }
 
+    //Use this to register additional siblings. Siblings are used to send headers to as well as to know who to trust for headers.
     function addSibling(string memory chain_, string memory address_) external onlyOwner() {
         require(bytes(siblings[chain_]).length == 0, 'SIBLING_EXISTS');
         siblings[chain_] = address_;
     }
 
+    //i_ here is how old the header to fetch is. i_=0 is the lastest header we have in store.
     function getHeader(string calldata chain, uint256 i_) external view returns (uint256 block_, bytes32 header_) {
         uint256 l = headersMap[chain].length;
         require(i_ < l, 'NOT_ENOUGHT_HEADERS_STORED');
+        //We store the headers cyclically.
         uint256 i = (n + l - i_) % l;
         block_ = blocksMap[chain][i];
         header_ = headersMap[chain][i];
@@ -39,49 +43,40 @@ contract Headers is IAxelarExecutable, Ownable {
     }
 
     function updateRemoteHeaders(
-        string memory symbol, 
-        string[] memory chains, 
-        uint256[] calldata fees, 
-        uint256[] memory gases,
-        uint256 gasLimit
+        address token, 
+        string[] memory chains,
+        uint256[] memory gases
     ) external {
         bytes memory payload = abi.encode(block.number-1, blockhash(block.number - 1));
         uint256 total;
         for(uint256 i = 0; i< chains.length; i++) {
-            total += fees[i] + gases[i];
+            total += gases[i];
         }
-        address token = _getTokenAddress(symbol);
         IERC20(token).transferFrom(msg.sender, address(this), total);
         for(uint256 i = 0; i < chains.length; i++) {
+            //Pay gas to the gasReceiver to automatically fullfill the call.
             IERC20(token).approve(address(gasReceiver), gases[i]);
             gasReceiver.receiveGas(
                 chains[i], 
                 siblings[chains[i]], 
-                payload, 
-                symbol, 
-                fees[i], 
+                payload,
                 token, 
-                gases[i], 
-                gasLimit
+                gases[i]
             );
-            IERC20(token).approve(address(gateway), fees[i]);
-            gateway.callContractWithToken(
+            gateway.callContract(
                 chains[i], 
                 siblings[chains[i]], 
-                payload, 
-                symbol, 
-                fees[i]
+                payload
             );
         }
     }
 
-    function _executeWithToken(
+    function _execute(
         string memory sourceChain, 
         string memory sourceAddress, 
-        bytes calldata payload, 
-        string memory /*tokenSymbol*/, 
-        uint256 /*amount*/
+        bytes calldata payload
     ) internal override {
+        //Ensure the sender is a sibling. There are more efficient way to do this.
         require(keccak256(bytes(sourceAddress)) == keccak256(bytes(siblings[sourceChain])), 'WRONG_SENDER');
         (
             uint256 block_,

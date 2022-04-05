@@ -7,7 +7,7 @@ import { SourceToken } from "./SourceToken.sol";
 import { TokenLinker } from "./TokenLinker.sol";
 
 contract SourceTokenLinker is TokenLinker {
-    constructor(address gateway_, address token_) TokenLinker(gateway_, token_) {}
+    constructor(address gateway_, address gasReceiver_, address token_) TokenLinker(gateway_, gasReceiver_, token_) {}
 
     function _collectToken(
         address from_,

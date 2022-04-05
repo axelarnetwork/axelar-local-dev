@@ -8,9 +8,10 @@ import { TokenLinker } from "./TokenLinker.sol";
 contract MirroredTokenLinker is TokenLinker {
     constructor(
         address gateway_,
+        address gasReceiver_,
         string memory name_,
         string memory symbol_
-    ) TokenLinker(gateway_, address(new MirroredToken(name_, symbol_))) {}
+    ) TokenLinker(gateway_, gasReceiver_, address(new MirroredToken(name_, symbol_))) {}
     
     function _collectToken(
         address from_,

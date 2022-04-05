@@ -7,7 +7,7 @@ build
 examples/metamask/chain*.json
 examples/metamask/abi/**.json
 **/.DS_Store
-test.js
+./test.js
 
 #Hardhat files
 cache
