@@ -29,13 +29,7 @@ contract ExecutableSample is IAxelarExecutable {
         string calldata value_
     ) external payable {
         value = value_;
-        gasReceiver.receiveGasNative{ value: msg.value }(
-            chain,
-            siblings[chain],
-            abi.encode(value_)
-        );
-
-        gateway.callContract(
+        gasReceiver.receiveGasNativeAndCallRemote{ value: msg.value }(
             chain,
             siblings[chain],
             abi.encode(value_)

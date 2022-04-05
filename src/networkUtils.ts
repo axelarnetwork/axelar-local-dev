@@ -79,7 +79,7 @@ export const relay = async () => {
         
         filter = from.gasReceiver.filters.GasReceivedWithToken();
         gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
-        filter = from.gasReceiver.filters.GasReceivedWithTokenNative();
+        filter = from.gasReceiver.filters.GasReceivedNativeWithToken();
         gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
