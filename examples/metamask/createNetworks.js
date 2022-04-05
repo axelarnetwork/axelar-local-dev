@@ -1,5 +1,5 @@
-const { createNetwork, relay } = require('../../src/api/AxelarLocal');
-const { setJSON } = require('../../src/api/utils');
+const { createNetwork, relay } = require('../../dist/networkUtils.js');
+const { setJSON } = require('../../dist/utils.js');
 
 
 (async () => {
