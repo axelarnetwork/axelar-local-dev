@@ -26,19 +26,13 @@ contract ExecutableSample is IAxelarExecutable {
     //Call this function to update the value of this contract along with all its siblings'.
     function set(
         string memory chain,
-        string calldata value_, 
-        address token, 
-        uint256 gasAmount
-    ) external {
+        string calldata value_
+    ) external payable {
         value = value_;
-        IERC20(token).transferFrom(msg.sender, address(this), gasAmount);
-        IERC20(token).approve(address(gasReceiver), gasAmount);
-        gasReceiver.receiveGas(
+        gasReceiver.receiveGasNative{ value: msg.value }(
             chain,
             siblings[chain],
-            abi.encode(value_),
-            token,
-            gasAmount
+            abi.encode(value_)
         );
 
         gateway.callContract(

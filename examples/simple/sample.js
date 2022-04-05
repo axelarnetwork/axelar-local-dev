@@ -2,7 +2,7 @@
 
 const {createNetwork: createChain, relay, getGasCost, getFee} = require('../../dist/networkUtils.js');
 const { deployContract } = require('../../dist/utils.js');
-const { utils : {defaultAbiCoder} } = require('ethers');
+const { utils : {defaultAbiCoder}, constants: {AddressZero} } = require('ethers');
 
 const ExecutableSample = require('../../build/ExecutableSample.json');
 
@@ -46,11 +46,9 @@ const ExecutableSample = require('../../build/ExecutableSample.json');
     await print();
 
     const gasLimit = 1e6;
-    const gasCost = getGasCost(chain1, chain2, chain1.ust.address);
-    // Approve the AxelarGateway to use our UST on chain1.
-    await (await chain1.ust.connect(user1).approve(ex1.address, gasCost * gasLimit)).wait();
+    const gasCost = getGasCost(chain1, chain2, AddressZero);
     // Set the value on chain1. This will also cause the value on chain2 to change after relay() is called.
-    await (await ex1.connect(user1).set(chain2.name, 'Hello World!', chain1.ust.address, gasCost)).wait();
+    await (await ex1.connect(user1).set(chain2.name, 'Hello World!', {value: gasLimit * gasCost})).wait();
     console.log('--- After Setting but Before Relay---');
     await print();
     // Updates the value on chain2 also.

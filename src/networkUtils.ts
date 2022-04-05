@@ -11,6 +11,7 @@ const {
     arrayify,
     keccak256,
 } = ethers.utils; 
+const AddressZero = ethers.constants.AddressZero;
 import {
     getSignedExecuteInput,
     getRandomID,
@@ -71,9 +72,18 @@ export const relay = async () => {
         if(gasLogsWithToken[from.name] == null) gasLogsWithToken[from.name] = [];
         let filter = from.gasReceiver.filters.GasReceived();
         gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        filter = from.gasReceiver.filters.GasReceivedNative();
+        gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+            return {...log.args, gasToken: AddressZero};
+        }));
+        
         filter = from.gasReceiver.filters.GasReceivedWithToken();
         gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
-        
+        filter = from.gasReceiver.filters.GasReceivedWithTokenNative();
+        gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+            return {...log.args, gasToken: AddressZero};
+        }));
+
         filter = from.gateway.filters.TokenSent();
         let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
