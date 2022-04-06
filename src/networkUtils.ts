@@ -11,6 +11,7 @@ const {
     arrayify,
     keccak256,
 } = ethers.utils; 
+const AddressZero = ethers.constants.AddressZero;
 import {
     getSignedExecuteInput,
     getRandomID,
@@ -31,6 +32,7 @@ const IAxelarGateway = require('../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
 let gasLogs: any = {};
+let gasLogsWithToken: any = {};
 
 //An internal class for handling axelar commands.
 class Command {
@@ -54,8 +56,8 @@ class Command {
 export const getFee = (source: string | Network, destination: string | Network, symbol: string) => {
     return 1e6;
 }
-export const getGasCost = (source: string | Network, destination: string | Network, tokenOnSource: string, gasLimit: number) => {
-    return 1e6;
+export const getGasCost = (source: string | Network, destination: string | Network, tokenOnSource: string) => {
+    return 1;
 }
 
 //This function relays all the messages between the tracked networks.
@@ -66,10 +68,22 @@ export const relay = async () => {
     }
 
     for(const from of networks) {
-        let filter = from.gasReceiver.filters.GasReceived();
         if(gasLogs[from.name] == null) gasLogs[from.name] = [];
+        if(gasLogsWithToken[from.name] == null) gasLogsWithToken[from.name] = [];
+        let filter = from.gasReceiver.filters.GasReceived();
         gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        filter = from.gasReceiver.filters.GasReceivedNative();
+        gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+            return {...log.args, gasToken: AddressZero};
+        }));
         
+        filter = from.gasReceiver.filters.GasReceivedWithToken();
+        gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        filter = from.gasReceiver.filters.GasReceivedNativeWithToken();
+        gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+            return {...log.args, gasToken: AddressZero};
+        }));
+
         filter = from.gateway.filters.TokenSent();
         let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
@@ -81,12 +95,12 @@ export const relay = async () => {
                 ['string', 'address', 'uint256']
             ));
         }
-        /*filter = from.gateway.filters.ContractCall();
+        filter = from.gateway.filters.ContractCall();
         logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
             const args: any = log.args;
             if(commands[args.destinationChain] == null) continue;
-            const commandId = getLogID(log);
+            const commandId = getLogID(from.name, log);
             commands[args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCall', 
@@ -102,7 +116,7 @@ export const relay = async () => {
                     await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait();
                 }),
             ));
-        }*/
+        }
         filter = from.gateway.filters.ContractCallWithToken();
         logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
@@ -164,19 +178,27 @@ export const relay = async () => {
                 return event.event == 'Executed' && event.args[0] == command.commandId;
             }))
                 continue;
-            const fromName = command.data[0]
-            const payed = gasLogs[fromName].find((log: any) => {
-                if(log.destinationChain != to.name) return false;
-                if(log.destinationAddress != command.data[2]) return false;
-                if(keccak256(log.payload) != command.data[3]) return false;
-                if(log.symbol != command.data[4]) return false;
-                if(log.amountThrough - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
-                return true;
-            });
-            if(!payed || payed.gasAmount < getGasCost(fromName, to, payed.gasToken, payed.gasLimit)) continue;
+            const fromName = command.data[0];
             
+            const payed = command.name == 'approveContractCall' ? 
+                gasLogs[fromName].find((log: any) => {
+                    if(log.destinationChain != to.name) return false;
+                    if(log.destinationAddress != command.data[2]) return false;
+                    if(keccak256(log.payload) != command.data[3]) return false;
+                    return true;
+                }) :
+                gasLogsWithToken[fromName].find((log: any) => {
+                    if(log.destinationChain != to.name) return false;
+                    if(log.destinationAddress != command.data[2]) return false;
+                    if(keccak256(log.payload) != command.data[3]) return false;
+                    if(log.symbol != command.data[4]) return false;
+                    if(log.amountThrough - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
+                    return true;
+                });
+
             try {
-                await command.post({gasLimit: payed.gasLimit});
+                const cost = getGasCost(fromName, to, payed.gasToken);
+                await command.post({gasLimit: payed.gasAmount / cost});
             } catch(e) {
                 console.log(e);
             }

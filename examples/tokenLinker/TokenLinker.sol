@@ -3,6 +3,8 @@
 pragma solidity 0.8.9;
 
 import { IAxelarExecutable } from '@axelar-network/axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
+import { AxelarGasReceiver } from '@axelar-network/axelar-cgp-solidity/src/util/AxelarGasReceiver.sol';
+import { IERC20 } from '@axelar-network/axelar-cgp-solidity/src/interfaces/IERC20.sol';
 
 /// @dev An abstract contract responsible for sending token to and receiving token from another TokenLinker.
 abstract contract TokenLinker is IAxelarExecutable {
@@ -12,9 +14,11 @@ abstract contract TokenLinker is IAxelarExecutable {
 
     address public immutable token;
     mapping(string => string) public links;
+    AxelarGasReceiver gasReceiver;
 
-    constructor(address gateway_, address token_) IAxelarExecutable(gateway_) {
+    constructor(address gateway_, address gasReceiver_, address token_) IAxelarExecutable(gateway_) {
         token = token_;
+        gasReceiver = AxelarGasReceiver(gasReceiver_);
     }
 
     //Call this function on setup to tell this contract who it's sibling contracts are.
@@ -25,14 +29,26 @@ abstract contract TokenLinker is IAxelarExecutable {
     function sendTo(
         string memory chain_,
         address recipient_,
-        uint256 amount_
+        uint256 amount_,
+        address gasToken, 
+        uint256 gasAmount
     ) external {
         require(bytes(links[chain_]).length != 0, 'IVALID_DESTINATION_CHAIN');
         _collectToken(msg.sender, amount_);
+        IERC20(gasToken).transferFrom(msg.sender, address(this), gasAmount);
+        IERC20(gasToken).approve(address(gasReceiver), gasAmount);
+        bytes memory payload = abi.encode(recipient_, amount_);
+        gasReceiver.receiveGas(
+            chain_,
+            links[chain_],
+            payload,
+            gasToken,
+            gasAmount
+        );
         gateway.callContract(
             chain_,
             links[chain_],
-            abi.encode(recipient_, amount_)
+            payload
         );
         emit SendInitiated(chain_, recipient_, amount_);
     }
