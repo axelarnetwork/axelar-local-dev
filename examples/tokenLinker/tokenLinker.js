@@ -1,6 +1,6 @@
 'use strict';
 
-const { relay, createNetwork, getFee, getGasCost } = require('../../dist/networkUtils');
+const { relay, createNetwork, getGasPrice } = require('../../dist/networkUtils');
 const { deployContract } = require('../../dist/utils');
 const { Contract } = require('ethers');
 
@@ -60,17 +60,17 @@ const MirroredToken = require('../../build/SourceToken.json');
 
     //These are constant in these dev tools but in actual releases. 
     const gasLimit = 1e6;
-    const gasCost = getGasCost(chain1, chain2, chain1.ust.address);
+    const gasPrice = getGasPrice(chain1, chain2, chain1.ust.address);
 
     console.log('--- Initially ---');
     await print();
     
-    await chain1.giveToken(user1.address, 'UST',  gasCost * gasLimit);
-    await (await chain1.ust.connect(user1).approve(linker1.address, gasCost * gasLimit)).wait();
+    await chain1.giveToken(user1.address, 'UST',  gasPrice * gasLimit);
+    await (await chain1.ust.connect(user1).approve(linker1.address, gasPrice * gasLimit)).wait();
     //Approve linker1 to use our UST on chain1.
     await (await token1.connect(user1).approve(linker1.address, 100000)).wait();
     // And have it send it to chain2.
-    await (await linker1.connect(user1).sendTo(chain2.name, user2.address, 100000, chain1.ust.address, gasCost * gasLimit)).wait();
+    await (await linker1.connect(user1).sendTo(chain2.name, user2.address, 100000, chain1.ust.address, gasPrice * gasLimit)).wait();
     // This facilitates the send.
     await relay();
     // After which the funds have reached chain2
@@ -78,18 +78,18 @@ const MirroredToken = require('../../build/SourceToken.json');
     await print();
 
 
-    await chain2.giveToken(user2.address, 'UST',  gasCost * gasLimit);
-    await (await chain2.ust.connect(user2).approve(linker2.address,  gasCost * gasLimit)).wait();
+    await chain2.giveToken(user2.address, 'UST',  gasPrice * gasLimit);
+    await (await chain2.ust.connect(user2).approve(linker2.address,  gasPrice * gasLimit)).wait();
     // We don't need to approve MirroredTokenLinker since it controls the MirroredToken.
-    await (await linker2.connect(user2).sendTo(chain3.name, user3.address, 50000, chain2.ust.address, gasCost * gasLimit)).wait();
+    await (await linker2.connect(user2).sendTo(chain3.name, user3.address, 50000, chain2.ust.address, gasPrice * gasLimit)).wait();
     await relay();
     console.log('--- After Sending 50000 from chain2 to chain3 ---');
     await print();
 
 
-    await chain3.giveToken(user3.address, 'UST',  gasCost * gasLimit);
-    await (await chain3.ust.connect(user3).approve(linker3.address,  gasCost * gasLimit)).wait();
-    await (await linker3.connect(user3).sendTo(chain1.name, user1.address, 10000, chain3.ust.address, gasCost * gasLimit)).wait();
+    await chain3.giveToken(user3.address, 'UST',  gasPrice * gasLimit);
+    await (await chain3.ust.connect(user3).approve(linker3.address,  gasPrice * gasLimit)).wait();
+    await (await linker3.connect(user3).sendTo(chain1.name, user1.address, 10000, chain3.ust.address, gasPrice * gasLimit)).wait();
     await relay();
     console.log('--- After Sending 10000 from chain3 to chain1 ---');
     await print();

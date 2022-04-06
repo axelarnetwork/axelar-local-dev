@@ -10,6 +10,7 @@ const {
     defaultAbiCoder,
     arrayify,
     keccak256,
+    id,
 } = ethers.utils; 
 const AddressZero = ethers.constants.AddressZero;
 import {
@@ -48,7 +49,7 @@ class Command {
         this.encodedData = defaultAbiCoder.encode(
             dataSignature,
             data,
-        )
+        );
         this.post = post;
     }
 }
@@ -56,7 +57,7 @@ class Command {
 export const getFee = (source: string | Network, destination: string | Network, symbol: string) => {
     return 1e6;
 }
-export const getGasCost = (source: string | Network, destination: string | Network, tokenOnSource: string) => {
+export const getGasPrice = (source: string | Network, destination: string | Network, tokenOnSource: string) => {
     return 1;
 }
 
@@ -84,6 +85,33 @@ export const relay = async () => {
             return {...log.args, gasToken: AddressZero};
         }));
 
+        for(const address in depositAddresses[from.name]) {
+            const data = depositAddresses[from.name][address];
+            const token = await from.getTokenContract(data.tokenSymbol);
+            const fee = getFee(from, data.destinationChain, data.symbol);
+            const balance = await token.balanceOf(address);
+            if(balance > fee) {
+                commands[data.destinationChain].push(new Command(
+                    getRandomID(),
+                    'mintToken', 
+                    [data.tokenSymbol, data.destinationAddress, (balance - fee)], 
+                    ['string', 'address', 'uint256']
+                ));
+                const wallet = new Wallet(data.privateKey, from.provider);
+                if(Number(await from.provider.getBalance(address)) == 0) {
+                    // Create a transaction object
+                    let tx = {
+                        to: address,
+                        // Convert currency unit from ether to wei
+                        value: BigInt(1e16),
+                    }
+                    // Send a transaction
+                    await (await from.ownerWallet.sendTransaction(tx)).wait();
+                }
+                await (await token.connect(wallet).transfer(from.ownerWallet.address, balance)).wait();
+            }
+        }
+
         filter = from.gateway.filters.TokenSent();
         let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
@@ -91,7 +119,7 @@ export const relay = async () => {
             commands[args.destinationChain].push(new Command(
                 getLogID(from.name, log),
                 'mintToken', 
-                [args.symbol, args.destinationAddress, args.amount], 
+                [args.symbol, args.destinationAddress, args.amount - getFee(from, args.destinationChain, args.symbol)], 
                 ['string', 'address', 'uint256']
             ));
         }
@@ -197,7 +225,7 @@ export const relay = async () => {
                 });
 
             try {
-                const cost = getGasCost(fromName, to, payed.gasToken);
+                const cost = getGasPrice(fromName, to, payed.gasToken);
                 await command.post({gasLimit: payed.gasAmount / cost});
             } catch(e) {
                 console.log(e);
@@ -396,6 +424,26 @@ async function stopAll() {
     }
 }
 
+const depositAddresses: any = {};
+
+function depositAddress(from: Network|string, to: Network|string, destination: string, symbol: string) {
+    if(typeof(from) != 'string')
+        from = from.name;
+    if(typeof(to) != 'string')
+        to = to.name;
+    const key = keccak256(id(from + ":" + to +":"+destination + ":"+symbol));
+    const address = new Wallet(key).address;
+    depositAddresses[from] = {
+        [address]: {
+            destinationChain: to,
+            destinationAddress: destination,
+            tokenSymbol: symbol,
+            privateKey: key,
+        }
+    };
+    return address;
+}
+
 
 module.exports = {
     networks: networks,
@@ -408,5 +456,6 @@ module.exports = {
     stop,
     stopAll,
     getFee,
-    getGasCost,
+    getGasPrice,
+    depositAddress,
 }

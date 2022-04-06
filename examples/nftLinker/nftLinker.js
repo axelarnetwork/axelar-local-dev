@@ -1,11 +1,13 @@
-const { createNetwork, networks, relay, getGasCost } = require('../../dist/networkUtils');
-const {utils: { defaultAbiCoder, keccak256 } } = require('ethers');
+const { createNetwork, networks, relay, getGasPrice } = require('../../dist/networkUtils');
+const {utils: { defaultAbiCoder, keccak256 }, constants: { AddressZero } } = require('ethers');
 const { deployContract } = require('../../dist/utils');
 
 
 const NftLinker = require('../../build/NftLinker.json');
 const ERC721Demo = require('../../build/ERC721Demo.json');
 
+
+//Get the owner of a given NFT, returns the chain and address the user is at, as well as the tokenId in that chain.
 const ownerOf = async (sourceChain, operator, tokenId) => {
     const owner = await operator.ownerOf(tokenId);
     if(owner != sourceChain.nftLinker.address) {
@@ -23,7 +25,9 @@ const ownerOf = async (sourceChain, operator, tokenId) => {
 }
 
 (async () => {
+    //Number of supported networks.
     const n = 5;
+    //Create the networks and deploy the contracts there.
     for(let i=0; i<n; i++) {
         const chain = await createNetwork({seed: 'network' + i});
         const [,deployer] = chain.userWallets;
@@ -31,6 +35,7 @@ const ownerOf = async (sourceChain, operator, tokenId) => {
         chain.ERC721 = await deployContract(deployer, ERC721Demo, ['Demo ERC721', 'DEMO']);
     }
 
+    //Link all the nftLinkers together so they know who to trust (only each other).
     for(let i=0; i<n; i++) {   
         const chain = networks[i];
         const [,deployer] = chain.userWallets;
@@ -42,7 +47,7 @@ const ownerOf = async (sourceChain, operator, tokenId) => {
     }
 
 
-
+    //Get the first two chains and generate an NFT on the first one.
     const chain1 = networks[0];
     const [user1] = chain1.userWallets;
     const chain2 = networks[1];
@@ -50,42 +55,39 @@ const ownerOf = async (sourceChain, operator, tokenId) => {
     await (await chain1.ERC721.connect(user1).mint(1234)).wait();
     console.log(await ownerOf(chain1, chain1.ERC721, 1234));
 
+    //Get the gas price assuming a gas limit of 1e6 (which is a safe overestimate);
     const gasLimit = 1e6;
-    const gasCost = getGasCost(chain1, chain2, chain1.ust.address);
-    const gasAmount = gasLimit * gasCost;
+    const gasPrice = getGasPrice(chain1, chain2, AddressZero);
+    const gasAmount = gasLimit * gasPrice;
 
-    await chain1.giveToken(user1.address, 'UST', gasAmount);
-    await (await chain1.ust.connect(user1).approve(chain1.nftLinker.address, gasAmount)).wait();
+    //Approve and send our NFT to chain2.
     await (await chain1.ERC721.connect(user1).approve(chain1.nftLinker.address, 1234)).wait(); 
     await (await chain1.nftLinker.connect(user1).sendNFT(
         chain1.ERC721.address, 
         1234, 
         chain2.name, 
         user2.address, 
-        chain1.ust.address, 
-        gasAmount
+        {value: gasAmount}
     )).wait(); 
-    
+    //Relay this information to chain2.
     await relay();
     
-  
+    //Cycle the NFT from chain2 to all the other chains.
     for(let i=1; i<networks.length; i++) {
         const chain = networks[i];
         const dest = networks[(i+1) % networks.length];
         const [user] = chain.userWallets;
         const [destUser] = dest.userWallets;
         const owner = await ownerOf(chain1, chain1.ERC721, 1234);
-        console.log(owner, user.address);
-
-        await chain.giveToken(user.address, 'UST', gasAmount);
-        await (await chain.ust.connect(user).approve(chain.nftLinker.address, gasAmount)).wait();
+        console.log(owner, 'should show this address:', user.address);
+        //We don't need to approve here because the nftLinker is the minter. 
+        //This is not the safest way to do things but it suffices for our example.
         await (await chain.nftLinker.connect(user).sendNFT(
             chain.nftLinker.address, 
             owner.tokenId, 
             dest.name, 
             destUser.address, 
-            chain.ust.address, 
-            gasAmount
+            {value: gasAmount}
         )).wait(); 
         
         await relay();

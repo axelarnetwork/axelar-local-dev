@@ -1,4 +1,4 @@
-const {createNetwork, networks, relay, getFee, getGasCost} = require('../../dist/networkUtils');
+const {createNetwork, networks, relay, getGasPrice} = require('../../dist/networkUtils');
 const { deployContract } = require('../../dist/utils');
 
 const Headers = require('../../build/Headers.json');
@@ -24,7 +24,9 @@ const Headers = require('../../build/Headers.json');
             if(i==j) continue;
             await (await chain.headers.connect(user).addSibling(networks[j].name, networks[j].headers.address)).wait();
             chains.push(networks[j].name);
-            gases.push(getGasCost(chain, networks[j], chain.ust.address) * 1e6);
+            const gasLimit = 1e6;
+            const gasPrice = getGasPrice(chain, networks[j], chain.ust.address);
+            gases.push(gasPrice * gasLimit);
         }
         //Total gas to be payed.
         let totalGas = gases.reduce((partialSum, a) => partialSum + a, 0);;
@@ -44,8 +46,9 @@ const Headers = require('../../build/Headers.json');
             if(l == 0) continue;
             const [lastBlock, lastHeader] = await chain.headers.getHeader(networks[j].name, 0);
             console.log(`${networks[j].name}: ${lastHeader} at ${lastBlock}`);
-            const block = await networks[j].provider.getBlock(Number(lastBlock));
-            console.log(block.hash);
+            //Use below to verify that the correct headers were relayed.
+            //const block = await networks[j].provider.getBlock(Number(lastBlock));
+            //console.log(block.hash);
         }
     }
 })();
