@@ -15,12 +15,9 @@ const {
     getSignedExecuteInput,
     getRandomID,
     deployContract,
-    httpGet,
   } = require('./utils');
 import http from 'http';
-const fs = require('fs');
 
-const { AxelarGateway } = require('@axelar-network/axelarjs-sdk');
 
 const TokenDeployer = require('../build/TokenDeployer.json');
 const AxelarGatewayProxy = require('../build/AxelarGatewayProxy.json');
@@ -28,7 +25,7 @@ const AxelarGatewaySinglesig = require('../build/AxelarGatewaySinglesig.json');
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const BurnableMintableCappedERC20 = require('../build/BurnableMintableCappedERC20.json');
 const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
-const IAxelarExecutable = require('../build/IAxelarExecutable.json');
+const AxelarGasReceiverProxy = require('../build/AxelarGasReceiverProxy.json');
 
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
@@ -134,23 +131,29 @@ export class Network {
             gateway.address,
             params,
         ]);
-        this.gateway = new AxelarGateway(proxy.address, this.provider).getContract();
-        /*new Contract(
+        this.gateway = new Contract(
             proxy.address,
             IAxelarGateway.abi,
             this.provider,
-        );*/
+        );
         console.log(`Deployed at ${this.gateway.address}`);
         return this.gateway;
 
     }
     async _deployGasReceiver(): Promise<Contract> {
         process.stdout.write(`Deploying the Axelar Gas Receiver for ${this.name}... `);
-        this.gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, [
-            this.gateway.address,
+        const gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, []);
+        const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy, [
+            gasReceiver.address,
+            defaultAbiCoder.encode(['address', 'address'], [this.ownerWallet.address, this.gateway.address]),
         ]);
-        
-        console.log(`Deployed at ${this.gateway.address}`);
+
+        this.gasReceiver = new Contract(
+            gasReceiverProxy.address,
+            AxelarGasReceiver.abi,
+            this.provider,
+        );
+        console.log(`Deployed at ${this.gasReceiver.address}`);
         return this.gasReceiver;
 
     }
