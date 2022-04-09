@@ -26,21 +26,17 @@ export function bigNumberToNumber(bigNumber: BigNumber){
     return bigNumber.toNumber()
 } 
 
-export function getSignedExecuteInput(data: any, wallet: Wallet) {
-    return wallet
-      .signMessage(arrayify(keccak256(data)))
-      .then((signature) =>
-        defaultAbiCoder.encode(['bytes', 'bytes'], [data, signature]),
-      );
+export async function getSignedExecuteInput(data: any, wallet: Wallet) {
+    const signature = await  wallet.signMessage(arrayify(keccak256(data)));
+    return defaultAbiCoder.encode(['bytes', 'bytes'], [data, signature]);
 }
-export function getSignedMultisigExecuteInput(data: any, wallets: Wallet[]) {
-    return Promise.all(
-      sortBy(wallets, (wallet: Wallet) => wallet.address.toLowerCase()).map((wallet: Wallet) =>
-        wallet.signMessage(arrayify(keccak256(data))),
-      ),
-    ).then((signatures) =>
-      defaultAbiCoder.encode(['bytes', 'bytes[]'], [data, signatures]),
-    );
+export async function getSignedMultisigExecuteInput(data: any, wallets: Wallet[]) {
+    const sorted = sortBy(wallets, (wallet: Wallet) => wallet.address.toLowerCase());
+    const signatures = [];
+    for(const wallet of sorted) {
+        signatures.push(await wallet.signMessage(arrayify(keccak256(data))));
+    }
+    return defaultAbiCoder.encode(['bytes', 'bytes[]'], [data, signatures]);
 }
 
 export const getRandomID = () => id(getRandomInt(1e10).toString());
@@ -48,7 +44,7 @@ export const getLogID = (chain: string, log: any) => {
     return id(chain+":"+log.blockNumber+':'+log.transactionIndex+':'+log.logIndex);
 }
 export const defaultAccounts = (n: number, seed='') => {
-    const balance = 10000000000000000000000000000000000;
+    const balance = BigInt(1e30);
     const privateKeys = [];
     let key = keccak256(defaultAbiCoder.encode(['string'], [seed]));
     for(let i=0;i<n;i++) {

@@ -119,7 +119,7 @@ export const relay = async () => {
             commands[args.destinationChain].push(new Command(
                 getLogID(from.name, log),
                 'mintToken', 
-                [args.symbol, args.destinationAddress, args.amount - getFee(from, args.destinationChain, args.symbol)], 
+                [args.symbol, args.destinationAddress, BigInt(args.amount - getFee(from, args.destinationChain, args.symbol))], 
                 ['string', 'address', 'uint256']
             ));
         }
@@ -150,7 +150,7 @@ export const relay = async () => {
         for(let log of logsFrom) {
             const args: any = log.args;
             if(args.amount < getFee(from, args.destinationChain, args.symbol)) continue;
-            const amountOut = args.amount - getFee(from, args.destinationChain, args.symbol)
+            const amountOut = BigInt(args.amount - getFee(from, args.destinationChain, args.symbol))
             const commandId = getLogID(from.name, log);
             commands[args.destinationChain].push(new Command(
                 commandId,
@@ -195,7 +195,7 @@ export const relay = async () => {
                 ],
             ),
         );
-        const signedData = getSignedExecuteInput(data, to.ownerWallet);
+        const signedData = await getSignedExecuteInput(data, to.ownerWallet);
         const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData)).wait();
         
         for(const command of toExecute) {

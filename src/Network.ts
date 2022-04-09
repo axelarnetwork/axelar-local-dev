@@ -160,7 +160,7 @@ export class Network {
     /**
      * @returns {Contract}
      */
-    async deployToken (name: string, symbol: string, decimals: number, cap: BigInt) {
+    async deployToken (name: string, symbol: string, decimals: number, cap: BigInt, address: string = ADDRESS_ZERO) {
         process.stdout.write(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(defaultAbiCoder.encode(
             ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -171,7 +171,7 @@ export class Network {
                 ['deployToken'],
                 [defaultAbiCoder.encode(
                     ['string', 'string', 'uint8', 'uint256', 'address'],
-                    [name, symbol, decimals, cap, ADDRESS_ZERO],
+                    [name, symbol, decimals, cap, address],
                 )],
             ],
         ));
@@ -180,14 +180,8 @@ export class Network {
           BurnableMintableCappedERC20.abi,
           BurnableMintableCappedERC20.bytecode,
         );
-        const { data: tokenInitCode } = tokenFactory.getDeployTransaction(
-          name,
-          symbol,
-          decimals,
-          cap,
-        );
     
-        const signedData = getSignedExecuteInput(data, this.ownerWallet);
+        const signedData = await getSignedExecuteInput(data, this.ownerWallet);
         await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(
@@ -225,7 +219,7 @@ export class Network {
             ),
         );
 
-        const signedData = getSignedExecuteInput(data, this.ownerWallet)
+        const signedData = await getSignedExecuteInput(data, this.ownerWallet);
         await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
     }
     

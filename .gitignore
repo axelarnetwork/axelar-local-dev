@@ -4,10 +4,12 @@ coverage
 coverage.json
 typechain
 build
+build-uniswap
 examples/metamask/chain*.json
 examples/metamask/abi/**.json
 **/.DS_Store
 ./test.js
+./quick.json
 
 #Hardhat files
 cache
