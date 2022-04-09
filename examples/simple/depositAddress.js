@@ -1,6 +1,6 @@
 'use strict';
 
-const {createNetwork: createChain, relay, depositAddress} = require('../../dist/networkUtils.js');
+const {createNetwork: createChain, relay, getDepositAddress} = require('../../dist/networkUtils.js');
 
 const ExecutableSample = require('../../build/ExecutableSample.json');
 
@@ -24,7 +24,7 @@ const ExecutableSample = require('../../build/ExecutableSample.json');
     console.log('--- Initially ---');
     await print();
 
-    const address = depositAddress(chain1, chain2, user2.address, 'UST');
+    const address = getDepositAddress(chain1, chain2, user2.address, 'UST');
     await (await chain1.ust.connect(user1).transfer(address, 5000000)).wait();
     await relay();
     console.log('--- After Using a Deposit Address to Transfer Token ---');

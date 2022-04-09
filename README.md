@@ -53,6 +53,7 @@ This module exports the following functionality:
 	- `provider`: The `ethers.Provider` for the network.
 	- `userWallets`: A list of funded `ethers.Wallet` objects.
 	- `gateway`: An `ethets.Contract` object corresponding to the Axelar Gateway on the network.
+	- `gasReceiver`: An `ethets.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
 	- `ust`: An `ethets.Contract` object corresponding to the IERC20 of the Axelar Wrapped UST on this network.
 	- `ownerWallet`, `operatorWallet`, `relayerWallet`, `adminWallets` `threshold` `lastRelayedBlock`: These are for configuring the gateway and relaying.
 	- `deployToken(name, symbol, decimals, cap)`: Deploys a new token on the network. For a token to be supported properly it needs to be deployed on all created networks.
@@ -78,6 +79,9 @@ This module exports the following functionality:
 - `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).
 - `getAllNetworks(url)`: This will retreive all the networks served by `listen` called from a different instance.
 - `relay()`: A function that passes all the messages to all the gateways and calls the appropriate `IAxelarExecutable` contracts.
+- `getDepostiAddress(sourceNetwork, destinationNetwork, destinationAddress, symbol)`: This function generates a deposit address on `network1` that will route any funds of type `symbol` deposited there (minus some fee) to the `destinationAddress` in `network2`.
+- `getFee(sourceNetwork, destinationNetwork, symbol)`: returns the fee for transferring funds. Is set to a constant `1,000,000`.
+- `getGasPrice(sourceNetwork, destinationNetwork, tokenOnSource)`: returns the gas price to execute on `destinationChain`, to be payed in `sourceChain` in token specified by `tokenOnSource` (which is given as an address). `tokenOnSource=AddressZero` corresponds to the native token of the source chain. It always returns `1` but may change in the future.
 - `stop(network)`: Destroys the network and removes it from the list of tracked networks.
 - `stopAll()`: Stops all tracked networks.
 - `networks`: A list of all the `Network`s in this instance.
@@ -93,3 +97,9 @@ This contract exposes three functions to use:
 This interface is to be implemented for a contract to be able to receive remote contract calls. There are two functions that can be overriden, but depending on the use you may only choose to override one of them only.
 - `_execute(string memory sourceChain, string memory sourceAddress, bytes calldata payload)`: This will automatically be called when Axelar relays all messages. `sourceChain` and `sourceAddress` can be used to validate who is making the contract call, and `payload` can be decoded with `abi.decode` to produce any data needed.
 - `_executeWithToken(string memory sourceChain, string memory sourceAddress, bytes calldata payload, string memory symbol, uinst256 amount)`: This is the same as above but it is guaranteed to have also received `amount` token specified by `symbol`. You can use _getTokenAddress(symbol) to obtain the address of the ERC20 token received.
+### `AxelarGasReceiver`
+This contract is automatically deployed and can be used to pay gas for the destination contract execution on the source chain. Smart contracts calling `callContract` and `callContractWithToken` should also handle paying for gas. It exposes [many functions](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/feat/gas-receiver/src/util/AxelarGasReceiver.sol), but the main ones are
+- `receiveGas(string destinationChain, string destinationAddress, bytes payload, address gasToken, uint256 gasAmount)`: Receives `gasAmount` of `gasToken` to execute the contract call specified. The execution will use a gasLimit of `gasAmount / getGasPrice(...)` (see [above](#functionality) for `getGasPrice`).
+- `receiveGasNative(string destinationChain, string destinationAddress, bytes payload)`: As above with the native token as the `gasToken` and `msg.value` as the `gasAmount`.
+- `receiveGasWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough, address gasToken, uint256 gasAmount)`, `receiveGasNtiveWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough)`: Similar to the above functions but they are for `callContractWithToken` instead of `callContract`.
+- `ReceiveGas(Native)AndCallRemote(WithToken)(...)`: There are four such functions that will also pass the call to the gateway after receiving gas, for convenience.

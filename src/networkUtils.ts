@@ -426,7 +426,7 @@ async function stopAll() {
 
 const depositAddresses: any = {};
 
-function depositAddress(from: Network|string, to: Network|string, destination: string, symbol: string) {
+function getDepositAddress(from: Network|string, to: Network|string, destination: string, symbol: string) {
     if(typeof(from) != 'string')
         from = from.name;
     if(typeof(to) != 'string')
@@ -457,5 +457,5 @@ module.exports = {
     stopAll,
     getFee,
     getGasPrice,
-    depositAddress,
+    getDepositAddress,
 }
