@@ -223,7 +223,7 @@ export const relay = async () => {
                     if(log.amountThrough - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
                     return true;
                 });
-
+            if(!payed) continue;
             try {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
                 await command.post({gasLimit: payed.gasAmount / cost});
@@ -426,17 +426,17 @@ async function stopAll() {
 
 const depositAddresses: any = {};
 
-function getDepositAddress(from: Network|string, to: Network|string, destination: string, symbol: string) {
+function getDepositAddress(from: Network|string, to: Network|string, destinationAddress: string, symbol: string) {
     if(typeof(from) != 'string')
         from = from.name;
     if(typeof(to) != 'string')
         to = to.name;
-    const key = keccak256(id(from + ":" + to +":"+destination + ":"+symbol));
+    const key = keccak256(id(from + ":" + to +":"+destinationAddress + ":"+symbol));
     const address = new Wallet(key).address;
     depositAddresses[from] = {
         [address]: {
             destinationChain: to,
-            destinationAddress: destination,
+            destinationAddress: destinationAddress,
             tokenSymbol: symbol,
             privateKey: key,
         }
