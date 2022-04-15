@@ -462,5 +462,6 @@ module.exports = {
     utils: {
         deployContract,
         defaultAccounts,
+        setJSON,
     }
 }
