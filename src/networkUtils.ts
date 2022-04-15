@@ -20,6 +20,7 @@ import {
     defaultAccounts,
     setJSON,
     httpGet,
+    deployContract,
   } from './utils';
 import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup }  from './Network';
@@ -458,4 +459,8 @@ module.exports = {
     getFee,
     getGasPrice,
     getDepositAddress,
+    utils: {
+        deployContract,
+        defaultAccounts,
+    }
 }
