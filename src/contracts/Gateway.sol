@@ -7,5 +7,5 @@ import { AxelarGatewaySinglesig } from '@axelar-network/axelar-cgp-solidity/src/
 import { AxelarGatewayProxy } from '@axelar-network/axelar-cgp-solidity/src/AxelarGatewayProxy.sol';
 import { DestinationSwapExecutable } from '@axelar-network/axelar-cgp-solidity/src/test/DestinationSwapExecutable.sol';
 import { TokenSwapper } from  '@axelar-network/axelar-cgp-solidity/src/test/TokenSwapper.sol';
-import { AxelarGasReceiver } from  '@axelar-network/axelar-cgp-solidity/src/util/AxelarGasReceiver.sol';
-import { AxelarGasReceiverProxy } from  '@axelar-network/axelar-cgp-solidity/src/util/AxelarGasReceiverProxy.sol';
+import { AxelarGasReceiver } from  '@axelar-network/axelar-cgp-solidity/src/gas-receiver/AxelarGasReceiver.sol';
+import { AxelarGasReceiverProxy } from  '@axelar-network/axelar-cgp-solidity/src/gas-receiver/AxelarGasReceiverProxy.sol';

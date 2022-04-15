@@ -71,16 +71,16 @@ export const relay = async () => {
     for(const from of networks) {
         if(gasLogs[from.name] == null) gasLogs[from.name] = [];
         if(gasLogsWithToken[from.name] == null) gasLogsWithToken[from.name] = [];
-        let filter = from.gasReceiver.filters.GasReceived();
+        let filter = from.gasReceiver.filters.GasPaidForContractCall();
         gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
-        filter = from.gasReceiver.filters.GasReceivedNative();
+        filter = from.gasReceiver.filters.NativeGasPaidForContractCall();
         gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
         
-        filter = from.gasReceiver.filters.GasReceivedWithToken();
+        filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
         gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
-        filter = from.gasReceiver.filters.GasReceivedNativeWithToken();
+        filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
         gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
