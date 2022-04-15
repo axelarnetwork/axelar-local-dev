@@ -117,6 +117,7 @@ export const relay = async () => {
         let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
             const args:any = log.args;
+            if(args.amount <= getFee(from, args.destinationChain, args.symbol)) continue;
             commands[args.destinationChain].push(new Command(
                 getLogID(from.name, log),
                 'mintToken', 
@@ -151,7 +152,8 @@ export const relay = async () => {
         for(let log of logsFrom) {
             const args: any = log.args;
             if(args.amount < getFee(from, args.destinationChain, args.symbol)) continue;
-            const amountOut = BigInt(args.amount - getFee(from, args.destinationChain, args.symbol))
+            const amountOut = BigInt(args.amount - getFee(from, args.destinationChain, args.symbol));
+            if(amountOut < 0) continue;
             const commandId = getLogID(from.name, log);
             commands[args.destinationChain].push(new Command(
                 commandId,
