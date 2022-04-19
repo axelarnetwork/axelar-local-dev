@@ -27,5 +27,8 @@
     "https": "^1.0.0",
     "mocha": "^9.2.2",
     "waffle": "^0.0.4"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.3"
   }
 }
