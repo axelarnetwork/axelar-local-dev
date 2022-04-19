@@ -11,7 +11,7 @@ const {
     arrayify,
     keccak256,
     id,
-} = ethers.utils; 
+} = ethers.utils;
 const AddressZero = ethers.constants.AddressZero;
 import {
     getSignedExecuteInput,
@@ -78,7 +78,7 @@ export const relay = async () => {
         gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
-        
+
         filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
         gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
         filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
@@ -94,8 +94,8 @@ export const relay = async () => {
             if(balance > fee) {
                 commands[data.destinationChain].push(new Command(
                     getRandomID(),
-                    'mintToken', 
-                    [data.tokenSymbol, data.destinationAddress, (balance - fee)], 
+                    'mintToken',
+                    [data.tokenSymbol, data.destinationAddress, (balance - fee)],
                     ['string', 'address', 'uint256']
                 ));
                 const wallet = new Wallet(data.privateKey, from.provider);
@@ -120,8 +120,8 @@ export const relay = async () => {
             if(args.amount <= getFee(from, args.destinationChain, args.symbol)) continue;
             commands[args.destinationChain].push(new Command(
                 getLogID(from.name, log),
-                'mintToken', 
-                [args.symbol, args.destinationAddress, BigInt(args.amount - getFee(from, args.destinationChain, args.symbol))], 
+                'mintToken',
+                [args.symbol, args.destinationAddress, BigInt(args.amount - getFee(from, args.destinationChain, args.symbol))],
                 ['string', 'address', 'uint256']
             ));
         }
@@ -133,8 +133,8 @@ export const relay = async () => {
             const commandId = getLogID(from.name, log);
             commands[args.destinationChain].push(new Command(
                 commandId,
-                'approveContractCall', 
-                [from.name, args.sender, args.destinationContractAddress, args.payloadHash], 
+                'approveContractCall',
+                [from.name, args.sender, args.destinationContractAddress, args.payloadHash],
                 ['string', 'string', 'address', 'bytes32'],
                 (async () => {
                     const to = networks.find(chain=>chain.name == args.destinationChain);
@@ -157,8 +157,8 @@ export const relay = async () => {
             const commandId = getLogID(from.name, log);
             commands[args.destinationChain].push(new Command(
                 commandId,
-                'approveContractCallWithMint', 
-                [from.name, args.sender, args.destinationContractAddress, args.payloadHash, args.symbol, amountOut], 
+                'approveContractCallWithMint',
+                [from.name, args.sender, args.destinationContractAddress, args.payloadHash, args.symbol, amountOut],
                 ['string', 'string', 'address', 'bytes32', 'string', 'uint256'],
                 (async (options: any) => {
                     const to = networks.find(chain=>chain.name == args.destinationChain);
@@ -168,11 +168,11 @@ export const relay = async () => {
                         to!.relayerWallet,
                     );
                     await (await contract.executeWithToken(
-                        commandId, 
-                        from.name, 
-                        args.sender, 
-                        args.payload, 
-                        args.symbol, 
+                        commandId,
+                        from.name,
+                        args.sender,
+                        args.payload,
+                        args.symbol,
                         amountOut,
                         options
                     )).wait();
@@ -180,7 +180,7 @@ export const relay = async () => {
             ));
         }
         from.lastRelayedBlock = await from.provider.getBlockNumber();
-        
+
     }
 
     for(const to of networks) {
@@ -200,7 +200,7 @@ export const relay = async () => {
         );
         const signedData = await getSignedExecuteInput(data, to.ownerWallet);
         const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData)).wait();
-        
+
         for(const command of toExecute) {
             if(command.post == null)
                 continue;
@@ -210,18 +210,18 @@ export const relay = async () => {
             }))
                 continue;
             const fromName = command.data[0];
-            
-            const payed = command.name == 'approveContractCall' ? 
+
+            const payed = command.name == 'approveContractCall' ?
                 gasLogs[fromName].find((log: any) => {
                     if(log.destinationChain != to.name) return false;
                     if(log.destinationAddress != command.data[2]) return false;
-                    if(keccak256(log.payload) != command.data[3]) return false;
+                    if(log.payloadHash != command.data[3]) return false;
                     return true;
                 }) :
                 gasLogsWithToken[fromName].find((log: any) => {
                     if(log.destinationChain != to.name) return false;
                     if(log.destinationAddress != command.data[2]) return false;
-                    if(keccak256(log.payload) != command.data[3]) return false;
+                    if(log.payloadHash != command.data[3]) return false;
                     if(log.symbol != command.data[4]) return false;
                     if(log.amountThrough - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
                     return true;
@@ -239,7 +239,7 @@ export const relay = async () => {
 
 
 function listen(port: number, callback: (() => void) | undefined = undefined) {
-    if(!callback) 
+    if(!callback)
         callback = () => {
             console.log(`Serving ${networks.length} networks on port ${port}`)
         }
@@ -262,7 +262,7 @@ async function createNetwork(options: NetworkOptions = {
         const ganacheProvider = require('ganache').provider( {
             database: {dbPath : options.dbPath},
             ...options.ganacheOptions,
-            chain: { 
+            chain: {
                 chainId: info.chainId,
                 netwrokId: info.chainId,
             },
@@ -283,14 +283,14 @@ async function createNetwork(options: NetworkOptions = {
     chain.chainId = options.chainId! | networks.length+2500;
     console.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
     const accounts = defaultAccounts(20, options.seed!);
-    
+
     chain.ganacheProvider = require('ganache').provider( {
         database: {dbPath : options.dbPath},
         ...options.ganacheOptions,
         wallet: {
             accounts: accounts,
         },
-        chain: { 
+        chain: {
             chainId: chain.chainId,
             netwrokId: chain.chainId,
         },
@@ -329,7 +329,7 @@ async function createNetwork(options: NetworkOptions = {
  */
 async function getNetwork(urlOrProvider: string | providers.Provider, info: NetworkInfo | undefined=undefined) {
 
-    if(!info) 
+    if(!info)
         info = await httpGet(urlOrProvider + '/info') as NetworkInfo;
     const chain: Network = new Network();
     chain.name = info.name;
@@ -365,7 +365,7 @@ async function getNetwork(urlOrProvider: string | providers.Provider, info: Netw
     chain.ust = await chain.getTokenContract('UST');
 
     console.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
-    
+
     networks.push(chain);
     return chain;
 }
