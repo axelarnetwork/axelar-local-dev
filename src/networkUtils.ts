@@ -478,7 +478,7 @@ const createAndExport = async (userAddress: string, deployerAddress: string, opt
 
 module.exports = {
     networks: networks,
-    createLocal,
+    createAndExport,
     createNetwork,
     listen,
     getNetwork,
