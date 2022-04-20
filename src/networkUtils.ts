@@ -248,7 +248,7 @@ function listen(port: number, callback: (() => void) | undefined = undefined) {
 /**
  * @returns {Network}
  */
-async function createNetwork(options: NetworkOptions) {
+async function createNetwork(options: NetworkOptions = {}) {
     if(options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
         console.log('this exists!');
         const info = require(options.dbPath + '/networkInfo.json');
@@ -257,7 +257,7 @@ async function createNetwork(options: NetworkOptions) {
             ...options.ganacheOptions,
             chain: {
                 chainId: info.chainId,
-                netwrokId: info.chainId,
+                networkId: info.chainId,
             },
             logging: { quiet: true },
         });
@@ -273,7 +273,7 @@ async function createNetwork(options: NetworkOptions) {
     }
     const chain: Network = new Network();
     chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
-    chain.chainId = options.chainId! | networks.length+2500;
+    chain.chainId = options.chainId! || networks.length+2500;
     console.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
     const accounts = defaultAccounts(20, options.seed!);
 
@@ -285,7 +285,7 @@ async function createNetwork(options: NetworkOptions) {
         },
         chain: {
             chainId: chain.chainId,
-            netwrokId: chain.chainId,
+            networkId: chain.chainId,
         },
         logging: { quiet: true },
     });
