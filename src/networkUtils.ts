@@ -439,14 +439,14 @@ function getDepositAddress(from: Network|string, to: Network|string, destination
     return address;
 }
 
-const createAndExport = async (options: CreateLocalOptions = {
+export async function createAndExport(options: CreateLocalOptions = {
   chainOutputPath: "./local.json",
   accountsToFund: [],
   fundAmount: ethers.utils.parseEther('100').toString(),
   chains: ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"],
   port: 8500,
   relayInterval: 2000
-}) => {
+}) {
     const chains_local: Record<string, Record<string, string>> = {};
     let i = 0;
     for(const name of options.chains) {
@@ -467,7 +467,7 @@ const createAndExport = async (options: CreateLocalOptions = {
     listen(options.port);
     setInterval(async () => {
         await relay();
-    }, options.port);
+    }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath);
 
     process.on('SIGINT', function() {
