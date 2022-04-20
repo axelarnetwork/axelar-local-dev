@@ -42,6 +42,8 @@ export interface NetworkOptions {
 
 export interface CreateLocalOptions {
   chainOutputPath: string,
+  accountsToFund: string[],
+  fundAmount: string,
   chains: string[],
   relayInterval: number,
   port: number

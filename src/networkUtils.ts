@@ -439,8 +439,10 @@ function getDepositAddress(from: Network|string, to: Network|string, destination
     return address;
 }
 
-const createAndExport = async (userAddress: string, deployerAddress: string, options: CreateLocalOptions = {
+const createAndExport = async (options: CreateLocalOptions = {
   chainOutputPath: "./local.json",
+  accountsToFund: [],
+  fundAmount: ethers.utils.parseEther('100').toString(),
   chains: ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"],
   port: 8500,
   relayInterval: 2000
@@ -454,14 +456,12 @@ const createAndExport = async (userAddress: string, deployerAddress: string, opt
         chains_local[name].gateway = chain.gateway.address;
         chains_local[name].gasReceiver = chain.gasReceiver.address;
         const [user] = chain.userWallets;
-        await (await user.sendTransaction({
-            to: userAddress,
-            value: BigInt(100e18),
-        })).wait();
-        await (await user.sendTransaction({
-            to: deployerAddress,
-            value: BigInt(100e18),
-        })).wait();
+        for(const account of options.accountsToFund) {
+          await user.sendTransaction({
+            to: account,
+            value: options.fundAmount,
+          }).then(tx => tx.wait())
+        }
         i++;
     }
     listen(options.port);
