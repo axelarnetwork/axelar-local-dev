@@ -18,7 +18,6 @@ const {
   } = require('./utils');
 import http from 'http';
 
-
 const TokenDeployer = require('../build/TokenDeployer.json');
 const AxelarGatewayProxy = require('../build/AxelarGatewayProxy.json');
 const AxelarGatewaySinglesig = require('../build/AxelarGatewaySinglesig.json');
