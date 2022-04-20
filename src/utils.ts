@@ -17,7 +17,7 @@ import http from 'http';
 const { outputJsonSync } = require('fs-extra');
 const { sortBy } = require('lodash');
 
-export const logger = console;
+export const logger = {log: console.log};
 
 const getRandomInt = (max: number) => {
     return Math.floor(Math.random() * max);

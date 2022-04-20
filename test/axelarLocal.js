@@ -7,7 +7,7 @@ const {
     keccak256,
   },
 } = require('ethers');
-const { deployContract, solidity } = require('ethereum-waffle');
+const { solidity } = require('ethereum-waffle');
 chai.use(solidity);
 const { expect } = chai;
 const {
@@ -18,6 +18,7 @@ const {
 	utils: { 
 		defaultAccounts,
 		setLogger,
+		deployContract,
 	},
 	setupNetwork,
 	getDepositAddress,
@@ -142,6 +143,151 @@ describe('relay', async() => {
 			await (await chain1.ust.connect(user1).transfer(depositAddress, amount2)).wait();
 			await relay();
 			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount1 - fee + amount2 - fee);
+		});
+	});
+	describe('send token', async () => {
+		it('should send some ust over', async () => {
+			const amount = BigInt(98765432);
+			const fee = BigInt(getFee(chain1, chain2, 'UST'));
+			await chain1.giveToken(user1.address, 'UST', amount);
+			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
+			await (await chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'UST', amount)).wait();
+			await relay();
+			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount - fee);
+		});
+	});
+	describe('call contract', async () => {
+		let ex1, ex2;
+		const Executable = require('../build/Executable.json');
+
+		const message = 'hello there executables!';
+		const payload = defaultAbiCoder.encode(['string'], [message]);
+		beforeEach(async () => {
+			ex1 = await deployContract(user1, Executable, [chain1.gateway.address, chain1.gasReceiver.address]);
+			ex2 = await deployContract(user2, Executable, [chain2.gateway.address, chain1.gasReceiver.address]);
+
+			await (await ex1.connect(user1).addSibling(chain2.name, ex2.address));
+			await (await ex2.connect(user2).addSibling(chain1.name, ex1.address));
+		});
+		it('should call a contract manually and fulfill the call', async () => {
+			await (await chain1.gateway.connect(user1).callContract(chain2.name, ex2.address, payload)).wait();
+			await relay();
+			const filter = chain2.gateway.filters.ContractCallApproved();
+			const args = (await chain2.gateway.queryFilter(filter))[0].args;
+			await (await ex2.connect(user2).execute(args.commandId, chain1.name, user1.address, payload)).wait();
+
+			expect(await ex1.value()).to.equal('');
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(user1.address);
+		});
+		it('should pay for gas and call a contract manually', async () => {
+			await (await chain1.gasReceiver.connect(user1)
+				.payNativeGasForContractCall(chain2.name, ex2.address, payload, {value: 1e6}));
+			await (await chain1.gateway.connect(user1)
+				.callContract(chain2.name, ex2.address, payload)).wait();
+			await relay();
+
+			expect(await ex1.value()).to.equal('');
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(user1.address);
+		});
+		it('should call a contract through the sibling and fulfill the call', async () => {
+			await (await ex1.connect(user1).set(chain2.name, message)).wait();
+			await relay();
+			const filter = chain2.gateway.filters.ContractCallApproved();
+			const args = (await chain2.gateway.queryFilter(filter))[0].args;
+			await (await ex2.connect(user2).execute(args.commandId, chain1.name, ex1.address, payload)).wait();
+
+			expect(await ex1.value()).to.equal(message);
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(ex1.address);
+		});
+		it('should have the sibling pay for gas and make the call', async () => {
+			await (await ex1.connect(user1).set(chain2.name, message, {value: 1e6})).wait();
+			await relay();
+
+			expect(await ex1.value()).to.equal(message);
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(ex1.address);
+		});
+	});
+	describe.only('call contract with token', async () => {
+		let ex1, ex2;
+		const Executable = require('../build/ExecutableWithToken.json');
+		
+		const message = 'hello there executables!';
+		const amount = 1234255675;
+		const fee = getFee(chain1, chain2, 'UST');
+		let payload;
+		
+		beforeEach(async () => {
+			payload = defaultAbiCoder.encode(['string', 'address'], [message, user2.address]);
+			ex1 = await deployContract(user1, Executable, [chain1.gateway.address, chain1.gasReceiver.address]);
+			ex2 = await deployContract(user2, Executable, [chain2.gateway.address, chain1.gasReceiver.address]);
+
+			await (await ex1.connect(user1).addSibling(chain2.name, ex2.address));
+			await (await ex2.connect(user2).addSibling(chain1.name, ex1.address));
+
+			await chain1.giveToken(user1.address, 'UST', amount);
+		});
+		it('should call a contract manually and fulfill the call', async () => {
+			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
+			await (await chain1.gateway.connect(user1).callContractWithToken(chain2.name, ex2.address, payload, 'UST', amount)).wait();
+			await relay();
+			const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
+			const args = (await chain2.gateway.queryFilter(filter))[0].args;
+			await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'UST', amount-fee)).wait();
+
+			expect(await ex1.value()).to.equal('');
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(user1.address);
+			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
+		});
+		it('should pay for gas and call a contract manually', async () => {
+			await (await chain1.gasReceiver.connect(user1)
+				.payNativeGasForContractCallWithToken(chain2.name, ex2.address, payload, 'UST', amount, {value: 1e6}));
+
+			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
+			await (await chain1.gateway.connect(user1)
+				.callContractWithToken(chain2.name, ex2.address, payload, 'UST', amount)).wait();
+			await relay();
+
+			expect(await ex1.value()).to.equal('');
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(user1.address);
+			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
+		});
+		it('should call a contract through the sibling and fulfill the call', async () => {
+
+			await (await chain1.ust.connect(user1).approve(ex1.address, amount)).wait();
+			await (await ex1.connect(user1).setAndSend(chain2.name, message, user2.address, 'UST', amount)).wait();
+			await relay();
+			const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
+			const args = (await chain2.gateway.queryFilter(filter))[0].args;
+			await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'UST', amount - fee)).wait();
+			
+			expect(await ex1.value()).to.equal(message);
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(ex1.address);
+			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
+		});
+		it('shouldhave the sibling pay for gas and make the call', async () => {
+			await (await chain1.ust.connect(user1).approve(ex1.address, amount)).wait();
+			await (await ex1.connect(user1).setAndSend(chain2.name, message, user2.address, 'UST', amount, {value: 1e6})).wait();
+			await relay();
+
+			expect(await ex1.value()).to.equal(message);
+			expect(await ex2.value()).to.equal(message);
+			expect(await ex2.sourceChain()).to.equal(chain1.name);
+			expect(await ex2.sourceAddress()).to.equal(ex1.address);
+			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
 		});
 	});
 });

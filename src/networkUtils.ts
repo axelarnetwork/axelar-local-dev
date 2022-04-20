@@ -229,6 +229,13 @@ export const relay = async () => {
                     return true;
                 });
             if(!payed) continue;
+            if(command.name == 'approveContractCall') {
+                const index = gasLogs[fromName].indexOf(payed);
+                gasLogs[fromName].splice(index, 1);
+            } else {
+                const index = gasLogsWithToken[fromName].indexOf(payed);
+                gasLogsWithToken[fromName].splice(index, 1);
+            }  
             try {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
                 await command.post({gasLimit: payed.gasAmount / cost});
@@ -412,6 +419,8 @@ async function stop(network: string | Network){
         network = networks.find(chain => chain.name == network)!;
     if(network.server != null)
         await network.server.close();
+    delete(gasLogs[network.name]);
+    delete(gasLogsWithToken[network.name]);
     networks.splice(networks.indexOf(network), 1);
 }
 
