@@ -450,24 +450,27 @@ function getDepositAddress(from: Network|string, to: Network|string, destination
     return address;
 }
 
-export async function createAndExport(options: CreateLocalOptions = {
-  chainOutputPath: "./local.json",
-  accountsToFund: [],
-  fundAmount: ethers.utils.parseEther('100').toString(),
-  chains: ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"],
-  port: 8500,
-  relayInterval: 2000
-}) {
+export async function createAndExport(options: CreateLocalOptions = {}) {
+    const defaultOptions = {
+        chainOutputPath: "./local.json",
+        accountsToFund: [],
+        fundAmount: ethers.utils.parseEther('100').toString(),
+        chains: ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"],
+        port: 8500,
+        relayInterval: 2000
+    } as CreateLocalOptions;
+    for(var option in defaultOptions)
+        (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
     const chains_local: Record<string, Record<string, string>> = {};
     let i = 0;
-    for(const name of options.chains) {
+    for(const name of options.chains!) {
         const chain = await createNetwork({name: name, seed: name});
         chains_local[name] = {};
         chains_local[name].rpc = `http://localhost:${options.port}/${i}`;
         chains_local[name].gateway = chain.gateway.address;
         chains_local[name].gasReceiver = chain.gasReceiver.address;
         const [user] = chain.userWallets;
-        for(const account of options.accountsToFund) {
+        for(const account of options.accountsToFund!) {
           await user.sendTransaction({
             to: account,
             value: options.fundAmount,
@@ -475,11 +478,11 @@ export async function createAndExport(options: CreateLocalOptions = {
         }
         i++;
     }
-    listen(options.port);
+    listen(options.port!);
     setInterval(async () => {
         await relay();
     }, options.relayInterval);
-    setJSON(chains_local, options.chainOutputPath);
+    setJSON(chains_local, options.chainOutputPath!);
 
     process.on('SIGINT', function() {
         fs.unlinkSync(options.chainOutputPath);
