@@ -457,6 +457,7 @@ export async function createAndExport(options: CreateLocalOptions = {
         chains_local[name].rpc = `http://localhost:${options.port}/${i}`;
         chains_local[name].gateway = chain.gateway.address;
         chains_local[name].gasReceiver = chain.gasReceiver.address;
+        chains_local[name].ust = chain.ust.address;
         const [user] = chain.userWallets;
         for(const account of options.accountsToFund) {
           await user.sendTransaction({
