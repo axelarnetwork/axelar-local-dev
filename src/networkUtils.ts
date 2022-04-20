@@ -449,7 +449,7 @@ const createLocal = async (userPrivateKey: string, deployerPrivateKey: string, o
     const deployer_address = new Wallet(deployerPrivateKey).address;
     const chains_local: Record<string, Record<string, string>> = {};
     let i = 0;
-    for(const name in chains) {
+    for(const name of chains) {
         const chain = await createNetwork({name: name, seed: name});
         chains_local[name] = {};
         chains_local[name].rpc = `http://localhost:${options.port}/${i}`;
