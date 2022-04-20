@@ -42,6 +42,7 @@ export interface NetworkOptions {
 
 export interface CreateLocalOptions {
   chainOutputPath: string,
+  chains: string[],
   relayInterval: number,
   port: number
 }

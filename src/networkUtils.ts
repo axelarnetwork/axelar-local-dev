@@ -439,17 +439,15 @@ function getDepositAddress(from: Network|string, to: Network|string, destination
     return address;
 }
 
-const chains = ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"];
-const createLocal = async (userPrivateKey: string, deployerPrivateKey: string, options: CreateLocalOptions = {
+const createAndExport = async (userAddress: string, deployerAddress: string, options: CreateLocalOptions = {
   chainOutputPath: "./local.json",
+  chains: ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"],
   port: 8500,
   relayInterval: 2000
 }) => {
-    const user_address = new Wallet(userPrivateKey).address;
-    const deployer_address = new Wallet(deployerPrivateKey).address;
     const chains_local: Record<string, Record<string, string>> = {};
     let i = 0;
-    for(const name of chains) {
+    for(const name of options.chains) {
         const chain = await createNetwork({name: name, seed: name});
         chains_local[name] = {};
         chains_local[name].rpc = `http://localhost:${options.port}/${i}`;
@@ -457,16 +455,16 @@ const createLocal = async (userPrivateKey: string, deployerPrivateKey: string, o
         chains_local[name].gasReceiver = chain.gasReceiver.address;
         const [user] = chain.userWallets;
         await (await user.sendTransaction({
-            to: user_address,
+            to: userAddress,
             value: BigInt(100e18),
         })).wait();
         await (await user.sendTransaction({
-            to: deployer_address,
+            to: deployerAddress,
             value: BigInt(100e18),
         })).wait();
         i++;
     }
-    listen(8500);
+    listen(options.port);
     setInterval(async () => {
         await relay();
     }, options.port);
