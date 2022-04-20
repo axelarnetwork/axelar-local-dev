@@ -35,6 +35,7 @@ const fs = require('fs');
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
+const testnetInfo = require('../info/testnet.json');
 let gasLogs: any = {};
 let gasLogsWithToken: any = {};
 
@@ -510,5 +511,5 @@ module.exports = {
         setJSON,
         setLogger,
     },
-    testnetInfo: require('./info/testnet.json'),
+    testnetInfo,
 }
