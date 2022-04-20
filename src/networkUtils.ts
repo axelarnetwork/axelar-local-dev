@@ -441,7 +441,7 @@ function getDepositAddress(from: Network|string, to: Network|string, destination
 
 const chains = ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"];
 const createLocal = async (userPrivateKey: string, deployerPrivateKey: string, options: CreateLocalOptions = {
-  chainOutputPath: "./local",
+  chainOutputPath: "./local.json",
   port: 8500,
   relayInterval: 2000
 }) => {
