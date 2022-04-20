@@ -21,6 +21,8 @@ import {
     setJSON,
     httpGet,
     deployContract,
+    logger,
+    setLogger
   } from './utils';
 import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup, CreateLocalOptions }  from './Network';
@@ -231,7 +233,7 @@ export const relay = async () => {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
                 await command.post({gasLimit: payed.gasAmount / cost});
             } catch(e) {
-                console.log(e);
+                logger.log(e);
             }
         }
     }
@@ -241,7 +243,7 @@ export const relay = async () => {
 function listen(port: number, callback: (() => void) | undefined = undefined) {
     if(!callback)
         callback = () => {
-            console.log(`Serving ${networks.length} networks on port ${port}`)
+            logger.log(`Serving ${networks.length} networks on port ${port}`)
         }
     return server(networks).listen(port, callback);
 }
@@ -250,7 +252,7 @@ function listen(port: number, callback: (() => void) | undefined = undefined) {
  */
 async function createNetwork(options: NetworkOptions = {}) {
     if(options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
-        console.log('this exists!');
+        logger.log('this exists!');
         const info = require(options.dbPath + '/networkInfo.json');
         const ganacheProvider = require('ganache').provider( {
             database: {dbPath : options.dbPath},
@@ -266,7 +268,7 @@ async function createNetwork(options: NetworkOptions = {}) {
         if(options.port) {
             chain.port = options.port;
             chain.server = server(chain).listen(chain.port, () => {
-                console.log(`Serving ${chain.name} on port ${chain.port}`)
+                logger.log(`Serving ${chain.name} on port ${chain.port}`)
             });
         }
         return chain;
@@ -274,7 +276,7 @@ async function createNetwork(options: NetworkOptions = {}) {
     const chain: Network = new Network();
     chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
     chain.chainId = options.chainId! || networks.length+2500;
-    console.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
+    logger.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
     const accounts = defaultAccounts(20, options.seed!);
 
     chain.ganacheProvider = require('ganache').provider( {
@@ -307,7 +309,7 @@ async function createNetwork(options: NetworkOptions = {}) {
     if(options.port) {
         chain.port = options.port;
         chain.server = server(chain).listen(chain.port, () => {
-            console.log(`Serving ${chain.name} on port ${chain.port}`)
+            logger.log(`Serving ${chain.name} on port ${chain.port}`)
         });
     }
     if(options.dbPath) {
@@ -327,7 +329,7 @@ async function getNetwork(urlOrProvider: string | providers.Provider, info: Netw
     const chain: Network = new Network();
     chain.name = info.name;
     chain.chainId = info.chainId;
-    console.log(`It is ${chain.name} and has a chainId of ${chain.chainId}...`);
+    logger.log(`It is ${chain.name} and has a chainId of ${chain.chainId}...`);
 
     if(typeof(urlOrProvider) == 'string') {
         chain.provider = ethers.getDefaultProvider(urlOrProvider);
@@ -357,7 +359,7 @@ async function getNetwork(urlOrProvider: string | providers.Provider, info: Netw
     );
     chain.ust = await chain.getTokenContract('UST');
 
-    console.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
+    logger.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
 
     networks.push(chain);
     return chain;
@@ -384,7 +386,7 @@ async function setupNetwork (urlOrProvider: string | providers.Provider, options
     chain.provider = typeof(urlOrProvider) === 'string' ? ethers.getDefaultProvider(urlOrProvider) : urlOrProvider;
     chain.chainId = (await chain.provider.getNetwork()).chainId;
 
-    console.log(`Setting up ${chain.name} on a network with a chainId of ${chain.chainId}...`);
+    logger.log(`Setting up ${chain.name} on a network with a chainId of ${chain.chainId}...`);
     if(options.userKeys == null) options.userKeys = [];
     if(options.operatorKey == null) options.operatorKey = options.ownerKey;
     if(options.relayerKey == null) options.relayerKey = options.ownerKey;
@@ -494,5 +496,6 @@ module.exports = {
         deployContract,
         defaultAccounts,
         setJSON,
+        setLogger,
     }
 }

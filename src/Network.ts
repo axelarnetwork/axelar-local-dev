@@ -7,6 +7,7 @@ import {
     ContractFactory,
     providers,
 } from 'ethers';
+import { logger } from './utils';
 const {
     defaultAbiCoder,
     arrayify,
@@ -15,7 +16,7 @@ const {
     getSignedExecuteInput,
     getRandomID,
     deployContract,
-  } = require('./utils');
+} = require('./utils');
 import http from 'http';
 
 const TokenDeployer = require('../build/TokenDeployer.json');
@@ -37,7 +38,7 @@ export interface NetworkOptions {
     port?: number;
     name?: string;
     chainId?: number;
-    seed?: string
+    seed?: string;
 }
 
 export interface CreateLocalOptions {
@@ -120,7 +121,7 @@ export class Network {
         this.url = networkish.url;
     }
     async _deployGateway(): Promise<Contract> {
-        process.stdout.write(`Deploying the Axelar Gateway for ${this.name}... `);
+        logger.log(`Deploying the Axelar Gateway for ${this.name}... `);
         const params = arrayify(defaultAbiCoder.encode(
             ['address[]', 'uint8', 'address', 'address'],
             [
@@ -143,12 +144,12 @@ export class Network {
             IAxelarGateway.abi,
             this.provider,
         );
-        console.log(`Deployed at ${this.gateway.address}`);
+        logger.log(`Deployed at ${this.gateway.address}`);
         return this.gateway;
 
     }
     async _deployGasReceiver(): Promise<Contract> {
-        process.stdout.write(`Deploying the Axelar Gas Receiver for ${this.name}... `);
+        logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
         const gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, []);
         const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy, [
             gasReceiver.address,
@@ -160,7 +161,7 @@ export class Network {
             AxelarGasReceiver.abi,
             this.provider,
         );
-        console.log(`Deployed at ${this.gasReceiver.address}`);
+        logger.log(`Deployed at ${this.gasReceiver.address}`);
         return this.gasReceiver;
 
     }
@@ -168,7 +169,7 @@ export class Network {
      * @returns {Contract}
      */
     async deployToken (name: string, symbol: string, decimals: number, cap: BigInt, address: string = ADDRESS_ZERO) {
-        process.stdout.write(`Deploying ${name} for ${this.name}... `);
+        logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(defaultAbiCoder.encode(
             ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
             [
@@ -196,7 +197,7 @@ export class Network {
             BurnableMintableCappedERC20.abi,
             this.ownerWallet,
         );
-        console.log(`Deployed at ${tokenContract.address}`);
+        logger.log(`Deployed at ${tokenContract.address}`);
         return tokenContract;
     }
     async getTokenContract(symbol: string) {

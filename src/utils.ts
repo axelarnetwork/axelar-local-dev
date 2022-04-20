@@ -17,6 +17,8 @@ import http from 'http';
 const { outputJsonSync } = require('fs-extra');
 const { sortBy } = require('lodash');
 
+export const logger = console;
+
 const getRandomInt = (max: number) => {
     return Math.floor(Math.random() * max);
   };
@@ -106,6 +108,11 @@ export const  httpGet = (url: string) => {
             });
         });
     });
+}
+
+
+export function setLogger(log: (...args: any) => void)  {
+    logger.log = log;
 }
 
 
