@@ -509,5 +509,6 @@ module.exports = {
         defaultAccounts,
         setJSON,
         setLogger,
-    }
+    },
+    testnetInfo: require('./info/testnet.json'),
 }
