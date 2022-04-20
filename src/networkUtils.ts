@@ -23,7 +23,7 @@ import {
     deployContract,
   } from './utils';
 import server from './server';
-import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup }  from './Network';
+import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup, CreateLocalOptions }  from './Network';
 
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
@@ -248,14 +248,7 @@ function listen(port: number, callback: (() => void) | undefined = undefined) {
 /**
  * @returns {Network}
  */
-async function createNetwork(options: NetworkOptions = {
-    dbPath: undefined,
-    ganacheOptions: undefined,
-    port: undefined,
-    name: undefined,
-    chainId: undefined,
-    seed: undefined,
-}) {
+async function createNetwork(options: NetworkOptions) {
     if(options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
         console.log('this exists!');
         const info = require(options.dbPath + '/networkInfo.json');
@@ -420,7 +413,6 @@ async function stop(network: string | Network){
     networks.splice(networks.indexOf(network), 1);
 }
 
-
 async function stopAll() {
     while(networks.length > 0) {
         await stop(networks[0]);
@@ -447,9 +439,49 @@ function getDepositAddress(from: Network|string, to: Network|string, destination
     return address;
 }
 
+const chains = ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"];
+const createLocal = async (userPrivateKey: string, deployerPrivateKey: string, options: CreateLocalOptions = {
+  chainOutputPath: "./local",
+  port: 8500,
+  relayInterval: 2000
+}) => {
+    const user_address = new Wallet(userPrivateKey).address;
+    const deployer_address = new Wallet(deployerPrivateKey).address;
+    const chains_local: Record<string, Record<string, string>> = {};
+    let i = 0;
+    for(const name in chains) {
+      console.log(name)
+        const chain = await createNetwork({name: name, seed: name});
+        chains_local[name] = {};
+        chains_local[name].rpc = `http://localhost:${options.port}/${i}`;
+        chains_local[name].gateway = chain.gateway.address;
+        chains_local[name].gasReceiver = chain.gasReceiver.address;
+        const [user] = chain.userWallets;
+        await (await user.sendTransaction({
+            to: user_address,
+            value: BigInt(100e18),
+        })).wait();
+        await (await user.sendTransaction({
+            to: deployer_address,
+            value: BigInt(100e18),
+        })).wait();
+        i++;
+    }
+    listen(8500);
+    setInterval(async () => {
+        await relay();
+    }, options.port);
+    setJSON(chains_local, options.chainOutputPath);
+
+    process.on('SIGINT', function() {
+        fs.unlinkSync(options.chainOutputPath);
+        process.exit();
+    });
+}
 
 module.exports = {
     networks: networks,
+    createLocal,
     createNetwork,
     listen,
     getNetwork,

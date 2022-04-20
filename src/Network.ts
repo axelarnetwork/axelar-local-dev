@@ -31,17 +31,22 @@ const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
-
-
 export const networks: Network[] = [];
 export interface NetworkOptions {
-    dbPath: string | undefined;
-    ganacheOptions: any;
-    port: number| undefined;
-    name: string | undefined;
-    chainId: number | undefined;
-    seed: string | undefined
+    ganacheOptions?: any;
+    dbPath?: string;
+    port?: number;
+    name?: string;
+    chainId?: number;
+    seed?: string
 }
+
+export interface CreateLocalOptions {
+  chainOutputPath: string,
+  relayInterval: number,
+  port: number
+}
+
 export interface NetworkInfo {
     name: string,
     chainId: number,
@@ -175,12 +180,12 @@ export class Network {
                 )],
             ],
         ));
-    
+
         const tokenFactory = new ContractFactory(
           BurnableMintableCappedERC20.abi,
           BurnableMintableCappedERC20.bytecode,
         );
-    
+
         const signedData = await getSignedExecuteInput(data, this.ownerWallet);
         await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
@@ -193,7 +198,7 @@ export class Network {
         return tokenContract;
     }
     async getTokenContract(symbol: string) {
-        const address = await this.gateway.tokenAddresses(symbol); 
+        const address = await this.gateway.tokenAddresses(symbol);
         return new Contract(
             address,
             BurnableMintableCappedERC20.abi,
@@ -222,7 +227,7 @@ export class Network {
         const signedData = await getSignedExecuteInput(data, this.ownerWallet);
         await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
     }
-    
+
     getInfo() {
         const info: NetworkInfo = {
             name: this.name,
@@ -242,8 +247,6 @@ export class Network {
     }
 }
 
-
-
 export class RemoteNetwork extends Network{
     async relay() {
         await new Promise((resolve: (value: unknown) => void, reject: (value: unknown) => void) => {
@@ -251,7 +254,7 @@ export class RemoteNetwork extends Network{
                 const { statusCode } = res;
                 if (statusCode !== 200) {
                     reject(null)
-                } 
+                }
                 res.on('data', (chunk) => {});
                 res.on('end', () => {
                     resolve(null);
