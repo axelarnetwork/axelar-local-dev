@@ -119,6 +119,10 @@ export default function(
         } else {
             network = networkOrList;
         }
+		if(network == null) {
+			badRequest();
+			return;
+		}
         switch (method) {
           case "POST":
             var payload;
