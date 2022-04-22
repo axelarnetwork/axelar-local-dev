@@ -147,7 +147,7 @@ describe('relay', async() => {
 	});
 	describe('send token', async () => {
 		it('should send some ust over', async () => {
-			const amount = BigInt(98765432);
+			const amount = BigInt(1e8);
 			const fee = BigInt(getFee(chain1, chain2, 'UST'));
 			await chain1.giveToken(user1.address, 'UST', amount);
 			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
@@ -183,7 +183,7 @@ describe('relay', async() => {
 		});
 		it('should pay for gas and call a contract manually', async () => {
 			await (await chain1.gasReceiver.connect(user1)
-				.payNativeGasForContractCall(chain2.name, ex2.address, payload, {value: 1e6}));
+				.payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, {value: 1e6}));
 			await (await chain1.gateway.connect(user1)
 				.callContract(chain2.name, ex2.address, payload)).wait();
 			await relay();
@@ -215,7 +215,7 @@ describe('relay', async() => {
 			expect(await ex2.sourceAddress()).to.equal(ex1.address);
 		});
 	});
-	describe.only('call contract with token', async () => {
+	describe('call contract with token', async () => {
 		let ex1, ex2;
 		const Executable = require('../build/ExecutableWithToken.json');
 		
@@ -250,7 +250,7 @@ describe('relay', async() => {
 		});
 		it('should pay for gas and call a contract manually', async () => {
 			await (await chain1.gasReceiver.connect(user1)
-				.payNativeGasForContractCallWithToken(chain2.name, ex2.address, payload, 'UST', amount, {value: 1e6}));
+				.payNativeGasForContractCallWithToken(user1.address, chain2.name, ex2.address, payload, 'UST', amount, {value: 1e6}));
 
 			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
 			await (await chain1.gateway.connect(user1)

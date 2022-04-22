@@ -65,8 +65,21 @@ export const getGasPrice = (source: string | Network, destination: string | Netw
     return 1;
 }
 
+interface RelayData {
+    depositAddress: any;
+    sendToken: any;
+    callContract: any;
+    callContractWithToken: any;
+}
+
 //This function relays all the messages between the tracked networks.
 export const relay = async () => {
+    const relayData: RelayData = {
+        depositAddress: {},
+        sendToken: {},
+        callContract: {},
+        callContractWithToken: {},
+    }
     const commands: {[key: string]: Command[]} = {};
     for(let to of networks) {
         commands[to.name] = [];
@@ -95,8 +108,16 @@ export const relay = async () => {
             const fee = getFee(from, data.destinationChain, data.symbol);
             const balance = await token.balanceOf(address);
             if(balance > fee) {
+                const commandId = getRandomID();
+                relayData.depositAddress[commandId] = {
+                    from: from.name,
+                    to: data.destinationChain,
+                    amountIn: balance,
+                    fee: fee,
+                    amountOut: balance - fee
+                };
                 commands[data.destinationChain].push(new Command(
-                    getRandomID(),
+                    commandId,
                     'mintToken',
                     [data.tokenSymbol, data.destinationAddress, (balance - fee)],
                     ['string', 'address', 'uint256']
@@ -121,10 +142,19 @@ export const relay = async () => {
         for(let log of logsFrom) {
             const args:any = log.args;
             if(args.amount <= getFee(from, args.destinationChain, args.symbol)) continue;
+            const fee = getFee(from, args.destinationChain, args.symbol)
+            const commandId = getLogID(from.name, log);
+            relayData.sendToken[commandId] = {
+                from: from.name,
+                to: args.destinationChain,
+                amountIn: args.amount,
+                fee: fee,
+                amountOut: args.amount - fee
+            };
             commands[args.destinationChain].push(new Command(
-                getLogID(from.name, log),
+                commandId,
                 'mintToken',
-                [args.symbol, args.destinationAddress, BigInt(args.amount - getFee(from, args.destinationChain, args.symbol))],
+                [args.symbol, args.destinationAddress, BigInt(args.amount - fee)],
                 ['string', 'address', 'uint256']
             ));
         }
@@ -134,6 +164,14 @@ export const relay = async () => {
             const args: any = log.args;
             if(commands[args.destinationChain] == null) continue;
             const commandId = getLogID(from.name, log);
+            relayData.callContract[commandId] = {
+                from: from.name,
+                to: args.destinationChain,
+                sourceAddress: args.sender,
+                destinationContractAddress: args.destinationContractAddress,
+                payload: args.payload,
+                payloadHash: args.payloadHash
+            };
             commands[args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCall',
@@ -146,7 +184,8 @@ export const relay = async () => {
                         IAxelarExecutable.abi,
                         to!.relayerWallet,
                     );
-                    await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait();
+                    relayData.callContract[commandId].execution = 
+                        (await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait()).transactionHash;
                 }),
             ));
         }
@@ -154,10 +193,23 @@ export const relay = async () => {
         logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
         for(let log of logsFrom) {
             const args: any = log.args;
-            if(args.amount < getFee(from, args.destinationChain, args.symbol)) continue;
-            const amountOut = BigInt(args.amount - getFee(from, args.destinationChain, args.symbol));
+            const fee = getFee(from, args.destinationChain, args.symbol);
+            if(args.amount < fee) continue;
+            const amountOut = args.amount - fee;
             if(amountOut < 0) continue;
             const commandId = getLogID(from.name, log);
+            relayData.callContractWithToken[commandId] = {
+                from: from.name,
+                to: args.destinationChain,
+                sourceAddress: args.sender,
+                destinationContractAddress: args.destinationContractAddress,
+                payload: args.payload,
+                payloadHash: args.payloadHash,
+                symbol: args.symbol,
+                amountIn: args.amount,
+                fee: fee,
+                amountOut: amountOut
+            };
             commands[args.destinationChain].push(new Command(
                 commandId,
                 'approveContractCallWithMint',
@@ -170,7 +222,7 @@ export const relay = async () => {
                         IAxelarExecutable.abi,
                         to!.relayerWallet,
                     );
-                    await (await contract.executeWithToken(
+                    relayData.callContract[commandId].execution = (await (await contract.executeWithToken(
                         commandId,
                         from.name,
                         args.sender,
@@ -178,7 +230,7 @@ export const relay = async () => {
                         args.symbol,
                         amountOut,
                         options
-                    )).wait();
+                    )).wait()).transactionHash;
                 }),
             ));
         }
@@ -213,15 +265,16 @@ export const relay = async () => {
             }))
                 continue;
             const fromName = command.data[0];
-
             const payed = command.name == 'approveContractCall' ?
                 gasLogs[fromName].find((log: any) => {
+                    if(log.sourceAddress != command.data[1]) return false;
                     if(log.destinationChain != to.name) return false;
                     if(log.destinationAddress != command.data[2]) return false;
                     if(log.payloadHash != command.data[3]) return false;
                     return true;
                 }) :
                 gasLogsWithToken[fromName].find((log: any) => {
+                    if(log.sourceAddress != command.data[1]) return false;
                     if(log.destinationChain != to.name) return false;
                     if(log.destinationAddress != command.data[2]) return false;
                     if(log.payloadHash != command.data[3]) return false;
@@ -245,6 +298,7 @@ export const relay = async () => {
             }
         }
     }
+    return relayData;
 };
 
 

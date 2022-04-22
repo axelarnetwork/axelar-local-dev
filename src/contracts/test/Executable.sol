@@ -31,6 +31,7 @@ contract Executable is IAxelarExecutable {
         bytes memory payload = abi.encode(value_);
         if(msg.value > 0) {
             gasReceiver.payNativeGasForContractCall{ value: msg.value }(
+                address(this),
                 chain,
                 siblings[chain],
                 payload
