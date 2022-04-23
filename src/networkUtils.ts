@@ -510,7 +510,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         chainOutputPath: "./local.json",
         accountsToFund: [],
         fundAmount: ethers.utils.parseEther('100').toString(),
-        chains: ["moonbeam", "avalanche", "fantom", "ethereum", "polygon"],
+        chains: ["Moonbeam", "Avalanche", "Fantom", "Ethereum", "Polygon"],
         port: 8500,
         relayInterval: 2000
     } as CreateLocalOptions;
