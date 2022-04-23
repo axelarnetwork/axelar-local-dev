@@ -48,6 +48,7 @@ export interface CreateLocalOptions {
   chains?: string[],
   relayInterval?: number,
   port?: number
+  callback?: (network: Network, info: any) => Promise<null>
 }
 
 export interface NetworkInfo {
