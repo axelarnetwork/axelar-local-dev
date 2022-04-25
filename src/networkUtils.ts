@@ -516,11 +516,12 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     } as CreateLocalOptions;
     for(var option in defaultOptions)
         (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
-    const chains_local: Record<string, Record<string, string>> = {};
+    const chains_local: Record<string, Record<string, any>> = {};
     let i = 0;
     for(const name of options.chains!) {
         const chain = await createNetwork({name: name, seed: name});
         chains_local[name] = {
+            chainId: chain.chainId,
             rpc: `http://localhost:${options.port}/${i}`,
             gateway: chain.gateway.address,
             gasReceiver: chain.gasReceiver.address,
