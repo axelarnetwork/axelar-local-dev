@@ -520,10 +520,13 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     let i = 0;
     for(const name of options.chains!) {
         const chain = await createNetwork({name: name, seed: name});
-        chains_local[name] = {};
-        chains_local[name].rpc = `http://localhost:${options.port}/${i}`;
-        chains_local[name].gateway = chain.gateway.address;
-        chains_local[name].gasReceiver = chain.gasReceiver.address;
+        chains_local[name] = {
+            rpc: `http://localhost:${options.port}/${i}`,
+            gateway: chain.gateway.address,
+            gasReceiver: chain.gasReceiver.address,
+            tokenName: testnetInfo[name]?.tokenName,
+            tokenSymbol: testnetInfo[name]?.tokenSymbol,
+        }
         const [user] = chain.userWallets;
         for(const account of options.accountsToFund!) {
           await user.sendTransaction({
