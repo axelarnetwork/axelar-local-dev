@@ -534,7 +534,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             value: options.fundAmount,
           }).then(tx => tx.wait())
         }
-        if(options.callback) options.callback(chain, chains_local[name]);
+        if(options.callback) await options.callback(chain, chains_local[name]);
         i++;
     }
     listen(options.port!);
