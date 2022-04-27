@@ -183,7 +183,7 @@ describe('relay', async() => {
 		});
 		it('should pay for gas and call a contract manually', async () => {
 			await (await chain1.gasReceiver.connect(user1)
-				.payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, {value: 1e6}));
+				.payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, {value: 1e6}));
 			await (await chain1.gateway.connect(user1)
 				.callContract(chain2.name, ex2.address, payload)).wait();
 			await relay();
@@ -250,7 +250,7 @@ describe('relay', async() => {
 		});
 		it('should pay for gas and call a contract manually', async () => {
 			await (await chain1.gasReceiver.connect(user1)
-				.payNativeGasForContractCallWithToken(user1.address, chain2.name, ex2.address, payload, 'UST', amount, {value: 1e6}));
+				.payNativeGasForContractCallWithToken(user1.address, chain2.name, ex2.address, payload, 'UST', amount, user1.address, {value: 1e6}));
 
 			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
 			await (await chain1.gateway.connect(user1)

@@ -279,7 +279,7 @@ export const relay = async () => {
                     if(log.destinationAddress != command.data[2]) return false;
                     if(log.payloadHash != command.data[3]) return false;
                     if(log.symbol != command.data[4]) return false;
-                    if(log.amountThrough - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
+                    if(log.amount - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
                     return true;
                 });
             if(!payed) continue;
@@ -292,7 +292,7 @@ export const relay = async () => {
             }  
             try {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
-                await command.post({gasLimit: payed.gasAmount / cost});
+                await command.post({gasLimit: payed.gasFeeAmount / cost});
             } catch(e) {
                 logger.log(e);
             }
