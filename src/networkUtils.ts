@@ -516,18 +516,21 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     } as CreateLocalOptions;
     for(var option in defaultOptions)
         (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
-    const chains_local: Record<string, Record<string, any>> = {};
+    const chains_local: Record<string, any>[] = [];
     let i = 0;
     for(const name of options.chains!) {
         const chain = await createNetwork({name: name, seed: name});
-        chains_local[name] = {
+        const testnet = testnetInfo.find((info: any) => {return info.name == name});
+        const info = {
+            name: name,
             chainId: chain.chainId,
             rpc: `http://localhost:${options.port}/${i}`,
             gateway: chain.gateway.address,
             gasReceiver: chain.gasReceiver.address,
-            tokenName: testnetInfo[name]?.tokenName,
-            tokenSymbol: testnetInfo[name]?.tokenSymbol,
-        }
+            tokenName: testnet?.tokenName,
+            tokenSymbol: testnet?.tokenSymbol,
+        };
+        chains_local.push(info);
         const [user] = chain.userWallets;
         for(const account of options.accountsToFund!) {
           await user.sendTransaction({
@@ -535,7 +538,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             value: options.fundAmount,
           }).then(tx => tx.wait())
         }
-        if(options.callback) await options.callback(chain, chains_local[name]);
+        if(options.callback) await options.callback(chain, info);
         i++;
     }
     listen(options.port!);
