@@ -223,7 +223,7 @@ export const relay = async () => {
                         IAxelarExecutable.abi,
                         to!.relayerWallet,
                     );
-                    relayData.callContract[commandId].execution = (await (await contract.executeWithToken(
+                    relayData.callContractWithToken[commandId].execution = (await (await contract.executeWithToken(
                         commandId,
                         from.name,
                         args.sender,
