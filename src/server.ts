@@ -7,7 +7,7 @@ import {
     createServer,
 } from 'http';
 import { Network } from './Network';
-import { relay } from './networkUtils';
+import { relay, getDepositAddress } from './networkUtils';
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 function createCORSResponseHeaders(method : string, requestHeaders: IncomingHttpHeaders) {
@@ -98,6 +98,7 @@ export default function(
         }
         var network;
         let url = request.url?.split('/');
+        if(!url) return;
         url?.shift();
         if(Array.isArray(networkOrList)) {
             if(url?.length == 0) {
@@ -110,6 +111,16 @@ export default function(
                 sendResponse(response, 200, headers, JSON.stringify(networkOrList.length));
                 return;
             }
+            if(first == 'getDepositAddress' && method == 'GET') {
+              headers["Content-Type"] = "application/json";
+              const from = url[0].replace('%20', ' ');
+              const to = url[1].replace('%20', ' ');
+              const destinationAddress = url[2];
+              const symbol = url[3];
+
+              sendResponse(response, 200, headers, JSON.stringify(getDepositAddress(from,to,destinationAddress,symbol)));
+              return;
+          }
             var n = parseInt(first!);
             if(n == NaN || n<0 || n>=networkOrList.length) {
                 badRequest();
@@ -119,10 +130,7 @@ export default function(
         } else {
             network = networkOrList;
         }
-		if(network == null) {
-			badRequest();
-			return;
-		}
+		
         switch (method) {
           case "POST":
             var payload;
@@ -149,6 +157,11 @@ export default function(
               headers["Content-Type"] = "application/json";
               sendResponse(response, 400, headers, rpcError(payload.id, -32000, "notifications not supported"));
               break;
+            }
+            
+            if(network == null) {
+              badRequest();
+              return;
             }
             network.ganacheProvider!.send(payload, function(_: any, result: any) {
               headers["Content-Type"] = "application/json";

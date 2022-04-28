@@ -23,6 +23,7 @@ const {
 	setupNetwork,
 	getDepositAddress,
 	getFee,
+	listen
 } = require('../dist/networkUtils');
 
 setLogger((...args) => {});
@@ -65,8 +66,8 @@ describe('create', () => {
 		chain = await setupNetwork(`http://localhost:${port}`, {
 			ownerKey: accounts[0].secretKey,
 		});
-		after(() => {
-			blank.close();
+		after(async () => {
+			await blank.close();
 		})
 	});
 
@@ -143,6 +144,19 @@ describe('relay', async() => {
 			await (await chain1.ust.connect(user1).transfer(depositAddress, amount2)).wait();
 			await relay();
 			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount1 - fee + amount2 - fee);
+		});
+		it('should generate a deposit address remotely', async () => {
+			const port = 8501
+			await new Promise((resolve) => {
+				listen(port, resolve());
+			});
+			const depositAddress = await getDepositAddress(chain1, chain2, user2.address, 'UST', port);
+			const amount = BigInt(12423532412);
+			const fee = BigInt(getFee(chain1, chain2, 'UST'));
+			await chain1.giveToken(user1.address, 'UST', amount);
+			await (await chain1.ust.connect(user1).transfer(depositAddress, amount)).wait();
+			await relay();
+			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount - fee);
 		});
 	});
 	describe('send token', async () => {

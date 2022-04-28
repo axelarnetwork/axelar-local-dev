@@ -185,11 +185,6 @@ export class Network {
             ],
         ));
 
-        const tokenFactory = new ContractFactory(
-          BurnableMintableCappedERC20.abi,
-          BurnableMintableCappedERC20.bytecode,
-        );
-
         const signedData = await getSignedExecuteInput(data, this.ownerWallet);
         await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
         let tokenAddress = await this.gateway.tokenAddresses(symbol);

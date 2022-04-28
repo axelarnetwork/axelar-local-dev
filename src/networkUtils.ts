@@ -38,6 +38,7 @@ const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
 const testnetInfo = require('../info/testnet.json');
 let gasLogs: any = {};
 let gasLogsWithToken: any = {};
+let serverInstance: any;
 
 //An internal class for handling axelar commands.
 class Command {
@@ -307,7 +308,8 @@ function listen(port: number, callback: (() => void) | undefined = undefined) {
         callback = () => {
             logger.log(`Serving ${networks.length} networks on port ${port}`)
         }
-    return server(networks).listen(port, callback);
+    serverInstance = server(networks);
+    return serverInstance.listen(port, callback);
 }
 /**
  * @returns {Network}
@@ -483,26 +485,40 @@ async function stopAll() {
     while(networks.length > 0) {
         await stop(networks[0]);
     }
+    if(serverInstance) {
+        await serverInstance.close();
+        serverInstance = null;
+    }
+
 }
 
 const depositAddresses: any = {};
 
-function getDepositAddress(from: Network|string, to: Network|string, destinationAddress: string, symbol: string) {
+export function getDepositAddress(
+    from: Network|string, 
+    to: Network|string, 
+    destinationAddress: string, 
+    symbol: string, 
+    port: number | undefined = undefined
+) {
     if(typeof(from) != 'string')
         from = from.name;
     if(typeof(to) != 'string')
         to = to.name;
-    const key = keccak256(id(from + ":" + to +":"+destinationAddress + ":"+symbol));
-    const address = new Wallet(key).address;
-    depositAddresses[from] = {
-        [address]: {
-            destinationChain: to,
-            destinationAddress: destinationAddress,
-            tokenSymbol: symbol,
-            privateKey: key,
-        }
-    };
-    return address;
+    if(!port) {
+        const key = keccak256(id(from + ":" + to +":"+destinationAddress + ":"+symbol));
+        const address = new Wallet(key).address;
+        depositAddresses[from] = {
+            [address]: {
+                destinationChain: to,
+                destinationAddress: destinationAddress,
+                tokenSymbol: symbol,
+                privateKey: key,
+            }
+        };
+        return address;
+    }
+    return httpGet(`http:/localhost:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${symbol}`);
 }
 
 export async function createAndExport(options: CreateLocalOptions = {}) {
