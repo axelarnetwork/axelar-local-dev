@@ -25,7 +25,7 @@ import {
     setLogger
   } from './utils';
 import server from './server';
-import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup, CreateLocalOptions }  from './Network';
+import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup }  from './Network';
 
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
@@ -37,9 +37,28 @@ const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
 const testnetInfo = require('../info/testnet.json');
 const mainnetInfo = require('../info/mainnet.json');
-let gasLogs: any = {};
-let gasLogsWithToken: any = {};
+let gasLogs: any[] = [];
+let gasLogsWithToken: any[] = [];
 let serverInstance: any;
+
+
+export interface RelayData {
+    depositAddress: any;
+    sendToken: any;
+    callContract: any;
+    callContractWithToken: any;
+}
+
+export interface CreateLocalOptions {
+    chainOutputPath?: string,
+    accountsToFund?: string[],
+    fundAmount?: string,
+    chains?: string[],
+    relayInterval?: number,
+    port?: number
+    afterRelay?: (relayData: RelayData) => void;
+    callback?: (network: Network, info: any) => Promise<null>
+  }
 
 //An internal class for handling axelar commands.
 class Command {
@@ -67,13 +86,6 @@ export const getGasPrice = (source: string | Network, destination: string | Netw
     return 1;
 }
 
-interface RelayData {
-    depositAddress: any;
-    sendToken: any;
-    callContract: any;
-    callContractWithToken: any;
-}
-
 //This function relays all the messages between the tracked networks.
 export const relay = async () => {
     const relayData: RelayData = {
@@ -88,19 +100,17 @@ export const relay = async () => {
     }
 
     for(const from of networks) {
-        if(gasLogs[from.name] == null) gasLogs[from.name] = [];
-        if(gasLogsWithToken[from.name] == null) gasLogsWithToken[from.name] = [];
         let filter = from.gasReceiver.filters.GasPaidForContractCall();
-        gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        gasLogs = gasLogs.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
         filter = from.gasReceiver.filters.NativeGasPaidForContractCall();
-        gasLogs[from.name] = gasLogs[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+        gasLogs = gasLogs.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
 
         filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
-        gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        gasLogsWithToken = gasLogsWithToken.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
         filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
-        gasLogsWithToken[from.name] = gasLogsWithToken[from.name].concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+        gasLogsWithToken = gasLogsWithToken.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
 
@@ -268,29 +278,30 @@ export const relay = async () => {
                 continue;
             const fromName = command.data[0];
             const payed = command.name == 'approveContractCall' ?
-                gasLogs[fromName].find((log: any) => {
-                    if(log.sourceAddress != command.data[1]) return false;
-                    if(log.destinationChain != to.name) return false;
-                    if(log.destinationAddress != command.data[2]) return false;
-                    if(log.payloadHash != command.data[3]) return false;
+                gasLogs.find((log: any) => {
+                    if(log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
+                    if(log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
+                    if(log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
+                    if(log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
                     return true;
                 }) :
-                gasLogsWithToken[fromName].find((log: any) => {
-                    if(log.sourceAddress != command.data[1]) return false;
-                    if(log.destinationChain != to.name) return false;
-                    if(log.destinationAddress != command.data[2]) return false;
-                    if(log.payloadHash != command.data[3]) return false;
+                gasLogsWithToken.find((log: any) => {
+                    if(log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
+                    if(log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
+                    if(log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
+                    if(log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
                     if(log.symbol != command.data[4]) return false;
                     if(log.amount - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
                     return true;
                 });
+                
             if(!payed) continue;
             if(command.name == 'approveContractCall') {
-                const index = gasLogs[fromName].indexOf(payed);
-                gasLogs[fromName].splice(index, 1);
+                const index = gasLogs.indexOf(payed);
+                gasLogs.splice(index, 1);
             } else {
-                const index = gasLogsWithToken[fromName].indexOf(payed);
-                gasLogsWithToken[fromName].splice(index, 1);
+                const index = gasLogsWithToken.indexOf(payed);
+                gasLogsWithToken.splice(index, 1);
             }  
             try {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
@@ -477,8 +488,6 @@ async function stop(network: string | Network){
         network = networks.find(chain => chain.name == network)!;
     if(network.server != null)
         await network.server.close();
-    delete(gasLogs[network.name]);
-    delete(gasLogsWithToken[network.name]);
     networks.splice(networks.indexOf(network), 1);
 }
 
@@ -490,6 +499,8 @@ async function stopAll() {
         await serverInstance.close();
         serverInstance = null;
     }
+    gasLogs = []
+    gasLogsWithToken = [];
 
 }
 
@@ -560,7 +571,8 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     }
     listen(options.port!);
     setInterval(async () => {
-        await relay();
+        const relayData = await relay();
+        if(options.afterRelay) options.afterRelay(relayData);
     }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath!);
 

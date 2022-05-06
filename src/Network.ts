@@ -41,16 +41,6 @@ export interface NetworkOptions {
     seed?: string;
 }
 
-export interface CreateLocalOptions {
-  chainOutputPath?: string,
-  accountsToFund?: string[],
-  fundAmount?: string,
-  chains?: string[],
-  relayInterval?: number,
-  port?: number
-  callback?: (network: Network, info: any) => Promise<null>
-}
-
 export interface NetworkInfo {
     name: string,
     chainId: number,
