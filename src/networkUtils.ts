@@ -380,7 +380,7 @@ async function createNetwork(options: NetworkOptions = {}) {
     chain.lastRelayedBlock = 0;
     await chain._deployGateway();
     await chain._deployGasReceiver();
-    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e70));
+    chain.usdc = await chain.deployToken('Axelar Wrapped USDC', 'USDC', 6, BigInt(1e70));
 
     if(options.port) {
         chain.port = options.port;
@@ -433,9 +433,9 @@ async function getNetwork(urlOrProvider: string | providers.Provider, info: Netw
         AxelarGasReceiver.abi,
         chain.provider
     );
-    chain.ust = await chain.getTokenContract('UST');
+    chain.usdc = await chain.getTokenContract('USDC');
 
-    logger.log(`Its gateway is deployed at ${chain.gateway.address} its UST ${chain.ust.address}.`);
+    logger.log(`Its gateway is deployed at ${chain.gateway.address} its USDC ${chain.usdc.address}.`);
 
     networks.push(chain);
     return chain;
@@ -478,7 +478,7 @@ async function setupNetwork (urlOrProvider: string | providers.Provider, options
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain._deployGateway();
     await chain._deployGasReceiver();
-    chain.ust = await chain.deployToken('Axelar Wrapped UST', 'UST', 6, BigInt(1e70));
+    chain.usdc = await chain.deployToken('Axelar Wrapped USDC', 'USDC', 6, BigInt(1e70));
     networks.push(chain);
     return chain;
 }
