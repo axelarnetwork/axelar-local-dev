@@ -52,7 +52,7 @@ export interface NetworkInfo {
     threshold: number,
     lastRelayedBlock: number,
     gatewayAddress: string,
-    ustAddress: string,
+    usdcAddress: string,
     gasReceiverAddress: string,
 }
 export interface NetworkSetup {
@@ -86,7 +86,7 @@ export class Network {
     lastRelayedBlock : number;
     gateway : Contract;
     gasReceiver : Contract;
-    ust : Contract;
+    usdc : Contract;
     isRemote: boolean | undefined;
     url: string | undefined;
     ganacheProvider: any;
@@ -107,7 +107,7 @@ export class Network {
         this.lastRelayedBlock = networkish.lastRelayedBlock;
         this.gateway = networkish.gateway;
         this.gasReceiver = networkish.gasReceiver;
-        this.ust = networkish.ust;
+        this.usdc = networkish.usdc;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
     }
@@ -229,7 +229,7 @@ export class Network {
             threshold: this.threshold,
             lastRelayedBlock: this.lastRelayedBlock,
             gatewayAddress: this.gateway.address,
-            ustAddress: this.ust.address,
+            usdcAddress: this.usdc.address,
             gasReceiverAddress: this.gasReceiver.address,
         }
         return info;

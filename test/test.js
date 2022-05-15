@@ -72,7 +72,7 @@ describe('create', () => {
 	});
 
 	afterEach(async () => {
-		expect(await chain.gateway.tokenAddresses('UST')).to.equal(chain.ust.address);
+		expect(await chain.gateway.tokenAddresses('USDC')).to.equal(chain.usdc.address);
 		await (await chain.gasReceiver.connect(chain.ownerWallet).collectFees(chain.ownerWallet.address, [])).wait();
 		stopAll();
 	});
@@ -91,8 +91,8 @@ describe('token', () => {
 
 	it('should give token to a user', async () => {
 		const amount = 12584532;
-		await chain.giveToken(user.address, 'UST', amount);
-		expect(await chain.ust.balanceOf(user.address)).to.equal(amount);
+		await chain.giveToken(user.address, 'USDC', amount);
+		expect(await chain.usdc.balanceOf(user.address)).to.equal(amount);
 	});
 	it('should deploy a new token', async() => {
 		const name = 'Test Token';
@@ -122,52 +122,52 @@ describe('relay', async() => {
 	});
 	describe('deposit address', async() => {
 		it('should generate a deposit address', async () => {
-			const depositAddress = getDepositAddress(chain1, chain2, user2.address, 'UST');
+			const depositAddress = getDepositAddress(chain1, chain2, user2.address, 'USDC');
 			const amount = BigInt(12423532412);
-			const fee = BigInt(getFee(chain1, chain2, 'UST'));
-			await chain1.giveToken(user1.address, 'UST', amount);
-			await (await chain1.ust.connect(user1).transfer(depositAddress, amount)).wait();
+			const fee = BigInt(getFee(chain1, chain2, 'USDC'));
+			await chain1.giveToken(user1.address, 'USDC', amount);
+			await (await chain1.usdc.connect(user1).transfer(depositAddress, amount)).wait();
 			await relay();
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount - fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount - fee);
 		});
 		it('should generate a deposit address to use twice', async () => {
-			const depositAddress = getDepositAddress(chain1, chain2, user2.address, 'UST');
+			const depositAddress = getDepositAddress(chain1, chain2, user2.address, 'USDC');
 			const amount1 = BigInt(12423532412);
 			const amount2 = BigInt(5489763092348);
-			const fee = BigInt(getFee(chain1, chain2, 'UST'));
-			await chain1.giveToken(user1.address, 'UST', amount1);
-			await (await chain1.ust.connect(user1).transfer(depositAddress, amount1)).wait();
+			const fee = BigInt(getFee(chain1, chain2, 'USDC'));
+			await chain1.giveToken(user1.address, 'USDC', amount1);
+			await (await chain1.usdc.connect(user1).transfer(depositAddress, amount1)).wait();
 			await relay();
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount1 - fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount1 - fee);
 
-			await chain1.giveToken(user1.address, 'UST', amount2);
-			await (await chain1.ust.connect(user1).transfer(depositAddress, amount2)).wait();
+			await chain1.giveToken(user1.address, 'USDC', amount2);
+			await (await chain1.usdc.connect(user1).transfer(depositAddress, amount2)).wait();
 			await relay();
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount1 - fee + amount2 - fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount1 - fee + amount2 - fee);
 		});
 		it('should generate a deposit address remotely', async () => {
 			const port = 8501
 			await new Promise((resolve) => {
 				listen(port, resolve());
 			});
-			const depositAddress = await getDepositAddress(chain1, chain2, user2.address, 'UST', port);
+			const depositAddress = await getDepositAddress(chain1, chain2, user2.address, 'USDC', port);
 			const amount = BigInt(12423532412);
-			const fee = BigInt(getFee(chain1, chain2, 'UST'));
-			await chain1.giveToken(user1.address, 'UST', amount);
-			await (await chain1.ust.connect(user1).transfer(depositAddress, amount)).wait();
+			const fee = BigInt(getFee(chain1, chain2, 'USDC'));
+			await chain1.giveToken(user1.address, 'USDC', amount);
+			await (await chain1.usdc.connect(user1).transfer(depositAddress, amount)).wait();
 			await relay();
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount - fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount - fee);
 		});
 	});
 	describe('send token', async () => {
-		it('should send some ust over', async () => {
+		it('should send some usdc over', async () => {
 			const amount = BigInt(1e8);
-			const fee = BigInt(getFee(chain1, chain2, 'UST'));
-			await chain1.giveToken(user1.address, 'UST', amount);
-			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
-			await (await chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'UST', amount)).wait();
+			const fee = BigInt(getFee(chain1, chain2, 'USDC'));
+			await chain1.giveToken(user1.address, 'USDC', amount);
+			await (await chain1.usdc.connect(user1).approve(chain1.gateway.address, amount)).wait();
+			await (await chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'USDC', amount)).wait();
 			await relay();
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount - fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount - fee);
 		});
 	});
 	describe('call contract', async () => {
@@ -235,7 +235,7 @@ describe('relay', async() => {
 		
 		const message = 'hello there executables!';
 		const amount = 1234255675;
-		const fee = getFee(chain1, chain2, 'UST');
+		const fee = getFee(chain1, chain2, 'USDC');
 		let payload;
 		
 		beforeEach(async () => {
@@ -246,62 +246,62 @@ describe('relay', async() => {
 			await (await ex1.connect(user1).addSibling(chain2.name, ex2.address));
 			await (await ex2.connect(user2).addSibling(chain1.name, ex1.address));
 
-			await chain1.giveToken(user1.address, 'UST', amount);
+			await chain1.giveToken(user1.address, 'USDC', amount);
 		});
 		it('should call a contract manually and fulfill the call', async () => {
-			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
-			await (await chain1.gateway.connect(user1).callContractWithToken(chain2.name, ex2.address, payload, 'UST', amount)).wait();
+			await (await chain1.usdc.connect(user1).approve(chain1.gateway.address, amount)).wait();
+			await (await chain1.gateway.connect(user1).callContractWithToken(chain2.name, ex2.address, payload, 'USDC', amount)).wait();
 			await relay();
 			const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
 			const args = (await chain2.gateway.queryFilter(filter))[0].args;
-			await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'UST', amount-fee)).wait();
+			await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'USDC', amount-fee)).wait();
 
 			expect(await ex1.value()).to.equal('');
 			expect(await ex2.value()).to.equal(message);
 			expect(await ex2.sourceChain()).to.equal(chain1.name);
 			expect(await ex2.sourceAddress()).to.equal(user1.address);
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount-fee);
 		});
 		it('should pay for gas and call a contract manually', async () => {
 			await (await chain1.gasReceiver.connect(user1)
-				.payNativeGasForContractCallWithToken(user1.address, chain2.name, ex2.address, payload, 'UST', amount, user1.address, {value: 1e6}));
+				.payNativeGasForContractCallWithToken(user1.address, chain2.name, ex2.address, payload, 'USDC', amount, user1.address, {value: 1e6}));
 
-			await (await chain1.ust.connect(user1).approve(chain1.gateway.address, amount)).wait();
+			await (await chain1.usdc.connect(user1).approve(chain1.gateway.address, amount)).wait();
 			await (await chain1.gateway.connect(user1)
-				.callContractWithToken(chain2.name, ex2.address, payload, 'UST', amount)).wait();
+				.callContractWithToken(chain2.name, ex2.address, payload, 'USDC', amount)).wait();
 			await relay();
 
 			expect(await ex1.value()).to.equal('');
 			expect(await ex2.value()).to.equal(message);
 			expect(await ex2.sourceChain()).to.equal(chain1.name);
 			expect(await ex2.sourceAddress()).to.equal(user1.address);
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount-fee);
 		});
 		it('should call a contract through the sibling and fulfill the call', async () => {
 
-			await (await chain1.ust.connect(user1).approve(ex1.address, amount)).wait();
-			await (await ex1.connect(user1).setAndSend(chain2.name, message, user2.address, 'UST', amount)).wait();
+			await (await chain1.usdc.connect(user1).approve(ex1.address, amount)).wait();
+			await (await ex1.connect(user1).setAndSend(chain2.name, message, user2.address, 'USDC', amount)).wait();
 			await relay();
 			const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
 			const args = (await chain2.gateway.queryFilter(filter))[0].args;
-			await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'UST', amount - fee)).wait();
+			await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'USDC', amount - fee)).wait();
 			
 			expect(await ex1.value()).to.equal(message);
 			expect(await ex2.value()).to.equal(message);
 			expect(await ex2.sourceChain()).to.equal(chain1.name);
 			expect(await ex2.sourceAddress()).to.equal(ex1.address);
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount-fee);
 		});
 		it('shouldhave the sibling pay for gas and make the call', async () => {
-			await (await chain1.ust.connect(user1).approve(ex1.address, amount)).wait();
-			await (await ex1.connect(user1).setAndSend(chain2.name, message, user2.address, 'UST', amount, {value: 1e6})).wait();
+			await (await chain1.usdc.connect(user1).approve(ex1.address, amount)).wait();
+			await (await ex1.connect(user1).setAndSend(chain2.name, message, user2.address, 'USDC', amount, {value: 1e6})).wait();
 			await relay();
 
 			expect(await ex1.value()).to.equal(message);
 			expect(await ex2.value()).to.equal(message);
 			expect(await ex2.sourceChain()).to.equal(chain1.name);
 			expect(await ex2.sourceAddress()).to.equal(ex1.address);
-			expect(await chain2.ust.balanceOf(user2.address)).to.equal(amount-fee);
+			expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount-fee);
 		});
 	});
 });
