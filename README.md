@@ -22,20 +22,20 @@ const axelar = require('@axelar-network/axelar-local-dev');
 	const chain2 = await  axelar.createNetwork();
 	const [ user2 ] = chain2.userWallets;
 
-	await chain1.giveToken(user1.address, 'UST', 1000);
+	await chain1.giveToken(user1.address, 'aUSDC', 1000);
 
-	console.log(`user1 has ${await  chain1.ust.balanceOf(user1.address)} UST.`);
-	console.log(`user2 has ${await  chain2.ust.balanceOf(user2.address)} UST.`);
+	console.log(`user1 has ${await  chain1.usdc.balanceOf(user1.address)} aUSDC.`);
+	console.log(`user2 has ${await  chain2.usdc.balanceOf(user2.address)} aUSDC.`);
 
-	// Approve the AxelarGateway to use our UST on chain1.
-	await (await chain1.ust.connect(user1).approve(chain1.gateway.address, 100)).wait();
+	// Approve the AxelarGateway to use our aUSDC on chain1.
+	await (await chain1.usdc.connect(user1).approve(chain1.gateway.address, 100)).wait();
 	// And have it send it to chain2.
-	await (await chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'UST', 100)).wait();
+	await (await chain1.gateway.connect(user1).sendToken(chain2.name, user2.address, 'aUSDC', 100)).wait();
 	// Have axelar relay the tranfer to chain2.
 	await  axelar.relay();
 
-	console.log(`user1 has ${await chain1.ust.balanceOf(user1.address)} UST.`);
-	console.log(`user2 has ${await chain2.ust.balanceOf(user2.address)} UST.`);
+	console.log(`user1 has ${await chain1.usdc.balanceOf(user1.address)} aUSDC.`);
+	console.log(`user2 has ${await chain2.usdc.balanceOf(user2.address)} aUSDC.`);
 })();
 ```
 Simply run `node <path to the above script>` to test it. Additional examples are present in the `examples` directory and can be run with:
