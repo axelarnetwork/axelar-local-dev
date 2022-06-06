@@ -43,5 +43,14 @@
     "gasReceiver": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
     "tokenName": "DEV",
     "tokenSymbol": "DEV"
+  },
+  {
+    "name": "Binance",
+    "chainId": 97,
+    "gateway": "0x4D147dCb984e6affEEC47e44293DA442580A3Ec0",
+    "rpc": "https://data-seed-prebsc-1-s1.binance.org:8545/",
+    "gasReceiver": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+    "tokenName": "Binance Coin",
+    "tokenSymbol": "BNB"
   }
 ]
