@@ -558,7 +558,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             rpc: `http://localhost:${options.port}/${i}`,
             gateway: chain.gateway.address,
             gasReceiver: chain.gasReceiver.address,
-            ConstAddressDeployer: chain.constAddressDeployer.address,
+            constAddressDeployer: chain.constAddressDeployer.address,
             tokenName: testnet?.tokenName,
             tokenSymbol: testnet?.tokenSymbol,
         };
