@@ -21,6 +21,7 @@
   "dependencies": {
     "@axelar-network/axelar-cgp-solidity": "^3.2.1",
     "@types/node": "^17.0.31",
+    "axelar-utils-solidity": "github:axelarnetwork/axelar-utils-solidity",
     "ethers": "^5.6.5",
     "fs-extra": "^10.1.0",
     "ganache": "^7.1.0",

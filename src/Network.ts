@@ -10,7 +10,9 @@ import {
 import { logger } from './utils';
 const {
     defaultAbiCoder,
-    arrayify,
+    arrayify, 
+    keccak256, 
+    toUtf8Bytes,
 } = ethers.utils;
 const {
     getSignedExecuteInput,
@@ -26,6 +28,7 @@ const IAxelarGateway = require('../build/IAxelarGateway.json');
 const BurnableMintableCappedERC20 = require('../build/BurnableMintableCappedERC20.json');
 const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
 const AxelarGasReceiverProxy = require('../build/AxelarGasReceiverProxy.json');
+const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
 
 const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
@@ -54,6 +57,7 @@ export interface NetworkInfo {
     gatewayAddress: string,
     usdcAddress: string,
     gasReceiverAddress: string,
+    constAddressDeployerAddress: string,
 }
 export interface NetworkSetup {
     name: string | undefined,
@@ -86,6 +90,7 @@ export class Network {
     lastRelayedBlock : number;
     gateway : Contract;
     gasReceiver : Contract;
+    constAddressDeployer : Contract;
     usdc : Contract;
     isRemote: boolean | undefined;
     url: string | undefined;
@@ -107,6 +112,7 @@ export class Network {
         this.lastRelayedBlock = networkish.lastRelayedBlock;
         this.gateway = networkish.gateway;
         this.gasReceiver = networkish.gasReceiver;
+        this.constAddressDeployer = networkish.constAddressDeployer;
         this.usdc = networkish.usdc;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
@@ -154,6 +160,25 @@ export class Network {
         );
         logger.log(`Deployed at ${this.gasReceiver.address}`);
         return this.gasReceiver;
+
+    }
+    async _deployConstAddressDeployer(): Promise<Contract> {
+        logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
+        const constAddressDeployerDeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
+        const deployerWallet = new Wallet(constAddressDeployerDeployerPrivateKey, this.provider);
+        await this.ownerWallet.sendTransaction({
+            to: deployerWallet.address,
+            value: BigInt(1e18),
+        }).then(tx => tx.wait());
+        const constAddressDeployer = await deployContract(deployerWallet, ConstAddressDeployer, []);
+
+        this.constAddressDeployer = new Contract(
+            constAddressDeployer.address,
+            ConstAddressDeployer.abi,
+            this.provider,
+        );
+        logger.log(`Deployed at ${this.constAddressDeployer.address}`);
+        return this.constAddressDeployer;
 
     }
     /**
@@ -231,6 +256,7 @@ export class Network {
             gatewayAddress: this.gateway.address,
             usdcAddress: this.usdc.address,
             gasReceiverAddress: this.gasReceiver.address,
+            constAddressDeployerAddress: this.constAddressDeployer.address,
         }
         return info;
     }

@@ -35,6 +35,7 @@ const fs = require('fs');
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
+const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
 const testnetInfo = require('../info/testnet.json');
 const mainnetInfo = require('../info/mainnet.json');
 let gasLogs: any[] = [];
@@ -378,6 +379,7 @@ async function createNetwork(options: NetworkOptions = {}) {
     chain.adminWallets = wallets.splice(4,10);
     chain.threshold = 3;
     chain.lastRelayedBlock = 0;
+    await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
     chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
@@ -476,6 +478,7 @@ async function setupNetwork (urlOrProvider: string | providers.Provider, options
     chain.adminWallets = options.adminKeys.map((x) => new Wallet(x, chain.provider));
     chain.threshold = options.threshold != null ? options.threshold : 1;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
     chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
