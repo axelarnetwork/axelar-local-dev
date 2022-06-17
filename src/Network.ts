@@ -201,7 +201,7 @@ export class Network {
         ));
 
         const signedData = await getSignedExecuteInput(data, this.ownerWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData, {gasLimit: 9e6})).wait();
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(
             tokenAddress,
@@ -239,7 +239,7 @@ export class Network {
         );
 
         const signedData = await getSignedExecuteInput(data, this.ownerWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData, {gasLimit: 9e6})).wait();
     }
 
     getInfo() {

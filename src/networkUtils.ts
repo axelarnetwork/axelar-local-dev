@@ -101,17 +101,18 @@ export const relay = async () => {
     }
 
     for(const from of networks) {
+        let filterFromBlock = (from.lastRelayedBlock === await from.provider.getBlockNumber()) ? from.lastRelayedBlock : from.lastRelayedBlock+1;
         let filter = from.gasReceiver.filters.GasPaidForContractCall();
-        gasLogs = gasLogs.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        gasLogs = gasLogs.concat((await from.gasReceiver.queryFilter(filter, filterFromBlock)).map(log => log.args));
         filter = from.gasReceiver.filters.NativeGasPaidForContractCall();
-        gasLogs = gasLogs.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+        gasLogs = gasLogs.concat((await from.gasReceiver.queryFilter(filter, filterFromBlock)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
 
         filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
-        gasLogsWithToken = gasLogsWithToken.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => log.args));
+        gasLogsWithToken = gasLogsWithToken.concat((await from.gasReceiver.queryFilter(filter, filterFromBlock)).map(log => log.args));
         filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
-        gasLogsWithToken = gasLogsWithToken.concat((await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock+1)).map(log => {
+        gasLogsWithToken = gasLogsWithToken.concat((await from.gasReceiver.queryFilter(filter, filterFromBlock)).map(log => {
             return {...log.args, gasToken: AddressZero};
         }));
 
@@ -151,7 +152,7 @@ export const relay = async () => {
         }
 
         filter = from.gateway.filters.TokenSent();
-        let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
+        let logsFrom = await from.gateway.queryFilter(filter, filterFromBlock);
         for(let log of logsFrom) {
             const args:any = log.args;
             if(args.amount <= getFee(from, args.destinationChain, args.symbol)) continue;
@@ -172,7 +173,7 @@ export const relay = async () => {
             ));
         }
         filter = from.gateway.filters.ContractCall();
-        logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
+        logsFrom = await from.gateway.queryFilter(filter, filterFromBlock);
         for(let log of logsFrom) {
             const args: any = log.args;
             if(commands[args.destinationChain] == null) continue;
@@ -198,12 +199,12 @@ export const relay = async () => {
                         to!.relayerWallet,
                     );
                     relayData.callContract[commandId].execution = 
-                        (await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait()).transactionHash;
+                        (await (await contract.execute(commandId, from.name, args.sender, args.payload, {gasLimit: 9e6})).wait()).transactionHash;
                 }),
             ));
         }
         filter = from.gateway.filters.ContractCallWithToken();
-        logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock+1);
+        logsFrom = await from.gateway.queryFilter(filter, filterFromBlock);
         for(let log of logsFrom) {
             const args: any = log.args;
             const fee = getFee(from, args.destinationChain, args.symbol);
@@ -242,7 +243,8 @@ export const relay = async () => {
                         args.payload,
                         args.symbol,
                         amountOut,
-                        options
+                        options,
+                        {gasLimit: 9e6}
                     )).wait()).transactionHash;
                 }),
             ));
@@ -267,7 +269,7 @@ export const relay = async () => {
             ),
         );
         const signedData = await getSignedExecuteInput(data, to.ownerWallet);
-        const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData)).wait();
+        const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData, {gasLimit: 9e6})).wait();
 
         for(const command of toExecute) {
             if(command.post == null)
@@ -378,7 +380,7 @@ async function createNetwork(options: NetworkOptions = {}) {
     ] = wallets;
     chain.adminWallets = wallets.splice(4,10);
     chain.threshold = 3;
-    chain.lastRelayedBlock = 0;
+    chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
