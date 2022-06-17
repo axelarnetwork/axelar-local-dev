@@ -51,8 +51,17 @@ node node_modules/@axelar-network/axelar-local-dev/examples/<example_dir>/<file_
 
 ## Functionality
 
-This module exports the following functionality:
+This module exports the following types:
 
+- `CreateLocalOptions`: Options to setup multiple local chains using `createAndExport` (see below). All are optional.
+  - `chainOutputPath`: A path to save a json file with all the information for the chains that are setup.
+  - `accountsToFund`: A list of addresses to fund.
+  - `fundAmount`: A string representing the amount of ether to fund accounts with. Defaults to `100 ETH`.
+  - `chains`: A list with all of the chain names (also determines the number of created networks). Defaults to `["Moonbeam", "Avalanche", "Fantom", "Ethereum", "Polygon"]`.
+  - `relayInterval`?: amount of time between relay of events in miliseconds. Defaults to `2000`.
+  - `port`: Port to listen to. Defaults to `8500`.
+  - `afterRelay`: A function `(relayData: RelayData) => void` which will be called after each relay. Mainly to be used for debugging.
+  - `callback`: A function `(network: Network, info: any) => Promise<null>` that will be called right after setting up each network. Use this to setup additional features, like deploying contracts that already exist on testnet/mainnet.
 - `Network`: This object type is used to handle most functionality within the module. It has the following properties:
   - `name`: The name of the network.
   - `chainId`: The chainId of the network.
@@ -67,21 +76,41 @@ This module exports the following functionality:
   - `giveToken(address, symbol, amount)`: Gives `amount` of `symbol` token to `address`.
   - `getInfo()`: Returns an object with all the information about the `Network`.
   - `relay()`: This method is either equivalent to calling the local instance of this module's `relay()` (see below) or, for remote networks, the host's instance of `relay()`.
-- `createNetwork(options)`: Creates a new `Network`. All `options` are optional here but the following can be used:
-  - `name`: The name to give the `Network`. Defaults to `` `Chain ${n}` ``
-  - `chainId`: The chainId of the created network. Defaults to `n`.
-  - `seed`: A string used to create the prefunded accounts. Different seeds will result in different contract addresses as well.
-  - `port`: If specified the created blockchain will be served on `port`. Additionally, accessing `/axelar` will result in the same output as `Network.getInfo()` and accessing `/relay` will cause the networks present in the instance serving this blockchain to `relay()`.
-  - `dbPath`: A path to a folder to save this network. If specified and the network has been saved all other options are ignored and the network is loaded from the database.
-- `getNetwork(urlOrProvider, info=null)`: Return `Network` hosted elsewhere into this instance. `info` if specified is expected to have the same format as `Network.getInfo()`.
-- `setupNetwork(urlOrProvider, options)`: Deploy the gateway and UST Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `options` is `ownerKey` which is a secret key of a funded account. Available options are:
-  - `ownerKey`: This is required and needs to be a funded secret key.
-  - `name`: The name of the network. Defaults to `` `Chain ${n}` ``
-  - `chainId`: The chainId of the created network. Defaults to `n`.
-  - `userKeys`: An array of funded secretKeys to create `Network.userWallets` with. Defaults to `[]`.
-  - `operatorKey`, `relayerKey`: They both default to `ownerKey`.
-  - `adminKeys`: Defaults to `[ownerKey]`.
-  - `threshold`: The number of required admins to perform administrative tasks on the gateway. Defaults to `1`.
+- `NetworkOptions` This type is used as an input to create networks and can include the following. All are optional.
+  - `ganacheOptions`: Additional options to be passed into `require(ganache).provider`.
+  - `dbPath`: Where to save/find the db for a network already created. Will not save unless specified.
+  - `port`: Which port to listen to for this network. Will not listen to any port unless specified.
+  - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
+  - `chainId`: The chainId of the network, defaults to `n`.
+  - `seed`: A seed that determines the addresses of funded accounts and contract addresses.
+- `NetworkSetup`: This type is used as an input to setup networks and can include the following. All but `ownerKey` are optional.
+  - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
+  - `chainId`: The chainId of the network, defaults to `n`.
+  - `ownerKey`: A funded `ethers.Wallet` that will be used for deployments.
+  - `userKeys`: A list funded `ethers.Wallet`.
+  - `operatorKey`, `relayerKey`, `adminKeys`, `threshold`: Optional info for gateway setup.
+- `NetworkInfo`: Information of a chain, used to get an already setup network. They can be obtained by `getInfo()` for any existing network.
+  - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
+  - `chainId`: The chainId of the network, defaults to `n`.
+  - `userKeys`: The user private keys.
+  - `ownerKey`: The owner private key.
+  - `operatorKey`: The operator private key.
+  - `relayerKey`: The relayer private key.
+  - `adminKeys`: The admin private key.
+  - `threshold`: The threshold of signers on the gateway.
+  - `lastRelayedBlock`: The last block that events were replayed up to.
+  - `gatewayAddress`: The address of the Axelar gateway.
+  - `usdcAddress`: The address of USDC.
+  - `gasReceiverAddress`: The address of the `gasReceiver` contract.
+  - `constAddressDeployerAddress`: The address of the `constAddressDeployer` contract.
+
+
+The following is exported by this module.
+
+- `createAndExport(CreateLocalOptions)`: Creates and sets up a number of networks, and listens for RPC for all of them on a single port.
+- `createNetwork(NetworkOptions)`: Creates a new `Network`. 
+- `getNetwork(urlOrProvider, NetworkInfo=null)`: Return `Network` hosted elsewhere into this instance.
+- `setupNetwork(urlOrProvider, NetworkSetup)`: Deploy the gateway and USDC Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `NetworkSetup` is `ownerKey` which is a wallet of a funded account.
 - `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).
 - `getAllNetworks(url)`: This will retreive all the networks served by `listen` called from a different instance.
 - `relay()`: A function that passes all the messages to all the gateways and calls the appropriate `IAxelarExecutable` contracts.
