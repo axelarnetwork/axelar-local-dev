@@ -17,11 +17,6 @@
     },
     {
       "inputs": [],
-      "name": "IsFrozen",
-      "type": "error"
-    },
-    {
-      "inputs": [],
       "name": "NotOwner",
       "type": "error"
     },

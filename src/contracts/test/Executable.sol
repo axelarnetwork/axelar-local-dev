@@ -2,19 +2,19 @@
 
 pragma solidity 0.8.9;
 
-import { IAxelarExecutable } from '@axelar-network/axelar-cgp-solidity/src/interfaces/IAxelarExecutable.sol';
-import { AxelarGasReceiver } from '@axelar-network/axelar-cgp-solidity/src/gas-receiver/AxelarGasReceiver.sol';
+import { IAxelarExecutable } from '@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol';
+import { IAxelarGasService } from '@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol';
 
 contract Executable is IAxelarExecutable {
     string public value;
     string public sourceChain;
     string public sourceAddress;
-    AxelarGasReceiver gasReceiver;
+    IAxelarGasService gasReceiver;
     mapping(string => string) public siblings;
     
 
     constructor(address gateway_, address gasReceiver_) IAxelarExecutable(gateway_) {
-        gasReceiver = AxelarGasReceiver(gasReceiver_);
+        gasReceiver = IAxelarGasService(gasReceiver_);
     }
 
     //Call this function on setup to tell this contract who it's sibling contracts are.

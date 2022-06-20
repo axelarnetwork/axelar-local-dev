@@ -23,11 +23,12 @@ import http from 'http';
 
 const TokenDeployer = require('../build/TokenDeployer.json');
 const AxelarGatewayProxy = require('../build/AxelarGatewayProxy.json');
-const AxelarGatewaySinglesig = require('../build/AxelarGatewaySinglesig.json');
+const AxelarGateway = require('../build/AxelarGateway.json');
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const BurnableMintableCappedERC20 = require('../build/BurnableMintableCappedERC20.json');
-const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
-const AxelarGasReceiverProxy = require('../build/AxelarGasReceiverProxy.json');
+const Auth = require('../build/AxelarAuthMultisig.json');
+const AxelarGasReceiver = require('../build/AxelarGasService.json');
+const AxelarGasReceiverProxy = require('../build/AxelarGasServiceProxy.json');
 const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
 
 const ROLE_OWNER = 1;
@@ -119,23 +120,26 @@ export class Network {
     }
     async _deployGateway(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gateway for ${this.name}... `);
+
         const params = arrayify(defaultAbiCoder.encode(
-            ['address[]', 'uint8', 'address', 'address'],
+            ['address[]', 'uint8', 'bytes'],
             [
                 this.adminWallets.map(wallet => wallet.address),
                 this.threshold,
-                this.ownerWallet.address,
-                this.operatorWallet.address,
+                '0x',
             ],
         ));
-        let tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
-        const gateway = await deployContract(this.ownerWallet, AxelarGatewaySinglesig, [
+        const auth = await deployContract(this.ownerWallet, Auth, [[defaultAbiCoder.encode(['address[]', 'uint256'], [[this.operatorWallet.address], 1])]]);
+        const tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
+        const gateway = await deployContract(this.ownerWallet, AxelarGateway, [
+            auth.address,
             tokenDeployer.address,
         ]);
         const proxy = await deployContract(this.ownerWallet, AxelarGatewayProxy, [
             gateway.address,
             params,
         ]);
+        await (await auth.transferOwnership(proxy.address)).wait();
         this.gateway = new Contract(
             proxy.address,
             IAxelarGateway.abi,
@@ -187,21 +191,21 @@ export class Network {
     async deployToken (name: string, symbol: string, decimals: number, cap: BigInt, address: string = ADDRESS_ZERO) {
         logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(defaultAbiCoder.encode(
-            ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
+            ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
             [
                 this.chainId,
-                ROLE_OWNER,
                 [getRandomID()],
                 ['deployToken'],
                 [defaultAbiCoder.encode(
-                    ['string', 'string', 'uint8', 'uint256', 'address'],
-                    [name, symbol, decimals, cap, address],
+                    ['string', 'string', 'uint8', 'uint256', 'address', 'uint256'],
+                    [name, symbol, decimals, cap, address, 0],
                 )],
             ],
         ));
 
-        const signedData = await getSignedExecuteInput(data, this.ownerWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData, {gasLimit: 9e6})).wait();
+        const signedData = await getSignedExecuteInput(data, this.operatorWallet);
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData, {gasLimit: BigInt(1e7)})).wait();
+
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(
             tokenAddress,
@@ -238,8 +242,9 @@ export class Network {
             ),
         );
 
-        const signedData = await getSignedExecuteInput(data, this.ownerWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData, {gasLimit: 9e6})).wait();
+        const signedData = await getSignedExecuteInput(data, this.operatorWallet);
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData)).wait();
+
     }
 
     getInfo() {
