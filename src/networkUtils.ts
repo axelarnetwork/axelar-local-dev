@@ -378,7 +378,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     ] = wallets;
     chain.adminWallets = wallets.splice(4,10);
     chain.threshold = 3;
-    chain.lastRelayedBlock = 0;
+    chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
