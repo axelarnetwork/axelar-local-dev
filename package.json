@@ -8,6 +8,10 @@
     "build": "rm -rf build && rm -rf dist && npx waffle && tsc",
     "prepare": "tsc"
   },
+  "engines" : {
+    "node" : ">=14.13.1"
+  },
+  "engineStrict" : true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/axelarnetwork/axelar-local-dev.git"
