@@ -33,7 +33,7 @@ const fs = require('fs');
 
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
-const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
+const AxelarGasReceiver = require('../build/AxelarGasService.json');
 const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
 const testnetInfo = require('../info/testnet.json');
 const mainnetInfo = require('../info/mainnet.json');
@@ -265,7 +265,7 @@ export const relay = async () => {
                 ],
             ),
         );
-        const signedData = await getSignedExecuteInput(data, to.ownerWallet);
+        const signedData = await getSignedExecuteInput(data, to.operatorWallet);
         const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData)).wait();
 
         for(const command of toExecute) {
