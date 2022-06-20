@@ -31,7 +31,6 @@ const ROLE_OWNER = 1;
 const ROLE_OPERATOR = 2;
 const fs = require('fs');
 
-
 const IAxelarGateway = require('../build/IAxelarGateway.json');
 const IAxelarExecutable = require('../build/IAxelarExecutable.json');
 const AxelarGasReceiver = require('../build/AxelarGasReceiver.json');
@@ -197,7 +196,7 @@ export const relay = async () => {
                         IAxelarExecutable.abi,
                         to!.relayerWallet,
                     );
-                    relayData.callContract[commandId].execution = 
+                    relayData.callContract[commandId].execution =
                         (await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait()).transactionHash;
                 }),
             ));
@@ -295,7 +294,7 @@ export const relay = async () => {
                     if(log.amount - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
                     return true;
                 });
-                
+
             if(!payed) continue;
             if(command.name == 'approveContractCall') {
                 const index = gasLogs.indexOf(payed);
@@ -303,7 +302,7 @@ export const relay = async () => {
             } else {
                 const index = gasLogsWithToken.indexOf(payed);
                 gasLogsWithToken.splice(index, 1);
-            }  
+            }
             try {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
                 await command.post({gasLimit: payed.gasFeeAmount / cost});
@@ -510,10 +509,10 @@ async function stopAll() {
 const depositAddresses: any = {};
 
 export function getDepositAddress(
-    from: Network|string, 
-    to: Network|string, 
-    destinationAddress: string, 
-    symbol: string, 
+    from: Network|string,
+    to: Network|string,
+    destinationAddress: string,
+    symbol: string,
     port: number | undefined = undefined
 ) {
     if(typeof(from) != 'string')
@@ -586,26 +585,15 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     });
 }
 
-module.exports = {
-    networks: networks,
-    createAndExport,
-    createNetwork,
-    listen,
-    getNetwork,
-    getAllNetworks,
-    setupNetwork,
-    relay,
-    stop,
-    stopAll,
-    getFee,
-    getGasPrice,
-    getDepositAddress,
-    utils: {
-        deployContract,
-        defaultAccounts,
-        setJSON,
-        setLogger,
-    },
-    testnetInfo,
-    mainnetInfo,
+export const utils = {
+  deployContract,
+  defaultAccounts,
+  setJSON,
+  setLogger,
+}
+
+export {
+  networks,
+  testnetInfo,
+  mainnetInfo
 }
