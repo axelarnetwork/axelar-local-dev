@@ -30,7 +30,8 @@ export function bigNumberToNumber(bigNumber: BigNumber){
 
 export async function getSignedExecuteInput(data: any, wallet: Wallet) {
     const signature = await  wallet.signMessage(arrayify(keccak256(data)));
-    return defaultAbiCoder.encode(['bytes', 'bytes'], [data, signature]);
+    const signData = defaultAbiCoder.encode(['address[]', 'bytes[]'], [[wallet.address], [signature]]);
+    return defaultAbiCoder.encode(['bytes', 'bytes'], [data, signData]);
 }
 export async function getSignedMultisigExecuteInput(data: any, wallets: Wallet[]) {
     const sorted = sortBy(wallets, (wallet: Wallet) => wallet.address.toLowerCase());

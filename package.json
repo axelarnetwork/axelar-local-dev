@@ -8,10 +8,10 @@
     "build": "rm -rf build && rm -rf dist && npx waffle && tsc",
     "prepare": "tsc"
   },
-  "engines" : {
-    "node" : ">=14.13.1"
+  "engines": {
+    "node": ">=14.13.1"
   },
-  "engineStrict" : true,
+  "engineStrict": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/axelarnetwork/axelar-local-dev.git"
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/axelarnetwork/axelar-local-dev#readme",
   "dependencies": {
-    "@axelar-network/axelar-cgp-solidity": "^3.2.1",
+    "@axelar-network/axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#v4.0.0",
     "@types/node": "^17.0.31",
     "axelar-utils-solidity": "github:axelarnetwork/axelar-utils-solidity",
     "ethers": "^5.6.5",
