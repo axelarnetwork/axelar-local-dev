@@ -315,7 +315,7 @@ export const relay = async () => {
 };
 
 
-function listen(port: number, callback: (() => void) | undefined = undefined) {
+export function listen(port: number, callback: (() => void) | undefined = undefined) {
     if(!callback)
         callback = () => {
             logger.log(`Serving ${networks.length} networks on port ${port}`)
@@ -326,7 +326,7 @@ function listen(port: number, callback: (() => void) | undefined = undefined) {
 /**
  * @returns {Network}
  */
-async function createNetwork(options: NetworkOptions = {}) {
+export async function createNetwork(options: NetworkOptions = {}) {
     if(options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
         logger.log('this exists!');
         const info = require(options.dbPath + '/networkInfo.json');
@@ -399,7 +399,7 @@ async function createNetwork(options: NetworkOptions = {}) {
 /**
  * @returns {Network}
  */
-async function getNetwork(urlOrProvider: string | providers.Provider, info: NetworkInfo | undefined=undefined) {
+export async function getNetwork(urlOrProvider: string | providers.Provider, info: NetworkInfo | undefined=undefined) {
 
     if(!info)
         info = await httpGet(urlOrProvider + '/info') as NetworkInfo;
@@ -446,7 +446,7 @@ async function getNetwork(urlOrProvider: string | providers.Provider, info: Netw
 /**
  * @returns {[Network]}
  */
- async function getAllNetworks(url: string) {
+export async function getAllNetworks(url: string) {
     const n: number = parseInt(await httpGet(url + '/info') as string);
     for(let i=0;i<n;i++) {
         await getNetwork(url+'/'+i);
@@ -457,7 +457,7 @@ async function getNetwork(urlOrProvider: string | providers.Provider, info: Netw
 /**
  * @returns {Network}
  */
-async function setupNetwork (urlOrProvider: string | providers.Provider, options: NetworkSetup) {
+export async function setupNetwork (urlOrProvider: string | providers.Provider, options: NetworkSetup) {
     const chain = new Network();
     chain.name = options.name != null ? options.name : `Chain ${networks.length+1}`;
     chain.provider = typeof(urlOrProvider) === 'string' ? ethers.getDefaultProvider(urlOrProvider) : urlOrProvider;
@@ -485,7 +485,7 @@ async function setupNetwork (urlOrProvider: string | providers.Provider, options
     return chain;
 }
 
-async function stop(network: string | Network){
+export async function stop(network: string | Network){
     if(typeof(network) == 'string')
         network = networks.find(chain => chain.name == network)!;
     if(network.server != null)
@@ -493,7 +493,7 @@ async function stop(network: string | Network){
     networks.splice(networks.indexOf(network), 1);
 }
 
-async function stopAll() {
+export async function stopAll() {
     while(networks.length > 0) {
         await stop(networks[0]);
     }
