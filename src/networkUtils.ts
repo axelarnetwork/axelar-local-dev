@@ -305,7 +305,8 @@ export const relay = async () => {
             }
             try {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
-                await command.post({gasLimit: BigInt(payed.gasFeeAmount / cost)});
+                const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
+                await command.post({gasLimit: BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost))});
             } catch(e) {
                 logger.log(e);
             }

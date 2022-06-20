@@ -220,7 +220,7 @@ describe('relay', async() => {
 			expect(await ex2.sourceAddress()).to.equal(ex1.address);
 		});
 		it('should have the sibling pay for gas and make the call', async () => {
-			await (await ex1.connect(user1).set(chain2.name, message, {value: 1e6})).wait();
+			await (await ex1.connect(user1).set(chain2.name, message, {value: BigInt(1e18)})).wait();
 			await relay();
 
 			expect(await ex1.value()).to.equal(message);
