@@ -305,7 +305,7 @@ export const relay = async () => {
             }
             try {
                 const cost = getGasPrice(fromName, to, payed.gasToken);
-                await command.post({gasLimit: payed.gasFeeAmount / cost});
+                await command.post({gasLimit: BigInt(payed.gasFeeAmount / cost)});
             } catch(e) {
                 logger.log(e);
             }
