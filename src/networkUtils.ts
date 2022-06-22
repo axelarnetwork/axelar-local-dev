@@ -30,6 +30,7 @@ const mainnetInfo = require('../info/mainnet.json');
 let gasLogs: any[] = [];
 let gasLogsWithToken: any[] = [];
 let serverInstance: any;
+let interval: any;
 
 export interface RelayData {
     depositAddress: any;
@@ -494,6 +495,9 @@ export async function stopAll() {
         await serverInstance.close();
         serverInstance = null;
     }
+    if (interval) {
+        clearInterval(interval);
+    }
     gasLogs = [];
     gasLogsWithToken = [];
 }
@@ -566,7 +570,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         i++;
     }
     listen(options.port!);
-    setInterval(async () => {
+    interval = setInterval(async () => {
         const relayData = await relay();
         if (options.afterRelay) options.afterRelay(relayData);
     }, options.relayInterval);
