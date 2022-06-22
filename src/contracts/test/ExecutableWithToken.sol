@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.9;
 
-
 import { IAxelarExecutable } from '@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol';
 import { IAxelarGasService } from '@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol';
 import { IERC20 } from '@axelar-network/axelar-cgp-solidity/contracts/interfaces/IERC20.sol';
@@ -11,9 +10,8 @@ contract ExecutableWithToken is IAxelarExecutable {
     string public value;
     string public sourceChain;
     string public sourceAddress;
-    IAxelarGasService gasReceiver;
+    IAxelarGasService public gasReceiver;
     mapping(string => string) public siblings;
-    
 
     constructor(address gateway_, address gasReceiver_) IAxelarExecutable(gateway_) {
         gasReceiver = IAxelarGasService(gasReceiver_);
@@ -34,7 +32,7 @@ contract ExecutableWithToken is IAxelarExecutable {
     ) external payable {
         value = value_;
         bytes memory payload = abi.encode(value_, destinationAddress);
-        if(msg.value > 0) {
+        if (msg.value > 0) {
             gasReceiver.payNativeGasForContractCallWithToken{ value: msg.value }(
                 address(this),
                 chain,
@@ -48,20 +46,14 @@ contract ExecutableWithToken is IAxelarExecutable {
         address token = gateway.tokenAddresses(symbol);
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         IERC20(token).approve(address(gateway), amount);
-        gateway.callContractWithToken(
-            chain,
-            siblings[chain],
-            payload,
-            symbol,
-            amount
-        );
+        gateway.callContractWithToken(chain, siblings[chain], payload, symbol, amount);
     }
 
     /*Handles calls created by setAndSend. Updates this contract's value 
     and gives the token received to the destination specified at the source chain. */
     function _executeWithToken(
         string memory sourceChain_,
-        string memory sourceAddress_, 
+        string memory sourceAddress_,
         bytes calldata payload_,
         string memory symbol,
         uint256 amount

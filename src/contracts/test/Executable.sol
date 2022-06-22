@@ -9,9 +9,8 @@ contract Executable is IAxelarExecutable {
     string public value;
     string public sourceChain;
     string public sourceAddress;
-    IAxelarGasService gasReceiver;
+    IAxelarGasService public gasReceiver;
     mapping(string => string) public siblings;
-    
 
     constructor(address gateway_, address gasReceiver_) IAxelarExecutable(gateway_) {
         gasReceiver = IAxelarGasService(gasReceiver_);
@@ -23,33 +22,20 @@ contract Executable is IAxelarExecutable {
     }
 
     //Call this function to update the value of this contract along with all its siblings'.
-    function set(
-        string memory chain,
-        string calldata value_
-    ) external payable {
+    function set(string memory chain, string calldata value_) external payable {
         value = value_;
         bytes memory payload = abi.encode(value_);
-        if(msg.value > 0) {
-            gasReceiver.payNativeGasForContractCall{ value: msg.value }(
-                address(this),
-                chain,
-                siblings[chain],
-                payload,
-                msg.sender
-            );
+        if (msg.value > 0) {
+            gasReceiver.payNativeGasForContractCall{ value: msg.value }(address(this), chain, siblings[chain], payload, msg.sender);
         }
-        gateway.callContract(
-            chain,
-            siblings[chain],
-            payload
-        );
+        gateway.callContract(chain, siblings[chain], payload);
     }
 
     /*Handles calls created by setAndSend. Updates this contract's value 
     and gives the token received to the destination specified at the source chain. */
     function _execute(
         string memory sourceChain_,
-        string memory sourceAddress_, 
+        string memory sourceAddress_,
         bytes calldata payload_
     ) internal override {
         (value) = abi.decode(payload_, (string));
