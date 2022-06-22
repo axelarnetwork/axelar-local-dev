@@ -4,9 +4,11 @@
   "description": "",
   "main": "dist/networkUtils.js",
   "scripts": {
-    "test": "mocha -timeout=5000",
-    "build": "rm -rf build && rm -rf dist && npx waffle && tsc",
-    "prepare": "tsc"
+    "test": "npx hardhat test",
+    "build": "rm -rf artifacts && rm -rf dist && npx hardhat compile && npx tsc",
+    "prepare": "tsc",
+    "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
+    "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
   },
   "engines": {
     "node": ">=14.13.1"
@@ -34,7 +36,14 @@
   },
   "devDependencies": {
     "chai": "^4.3.6",
-    "ethereum-waffle": "^3.4.4",
-    "mocha": "^10.0.0"
+    "eslint": "^8.17.0",
+    "eslint-config-richardpringle": "^2.0.0",
+    "hardhat": "^2.9.9",
+    "hardhat-gas-reporter": "^1.0.8",
+    "mocha": "^10.0.0",
+    "prettier": "^2.6.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.7",
+    "solidity-coverage": "^0.7.21"
   }
 }

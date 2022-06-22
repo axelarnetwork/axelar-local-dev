@@ -11,7 +11,7 @@ examples/metamask/abi/**.json
 
 #Hardhat files
 cache
-artifacts
+
 # Logs
 logs
 *.log
