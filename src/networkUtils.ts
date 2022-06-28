@@ -213,7 +213,7 @@ export const relay = async () => {
             const args: any = log.args;
             const fee = getFee(from, args.destinationChain, args.symbol);
             if (args.amount < fee) continue;
-            const amountOut = args.amount - fee;
+            const amountOut = args.amount.sub(fee);
             if (amountOut < 0) continue;
             const commandId = getLogID(from.name, log);
             relayData.callContractWithToken[commandId] = {
