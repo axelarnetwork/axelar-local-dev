@@ -7,7 +7,10 @@
     "gasReceiver": "0x4154CF6eea0633DD9c4933E76a077fD7E9260738",
     "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
     "tokenName": "Ether",
-    "tokenSymbol": "ETH"
+    "tokenSymbol": "ETH",
+    "tokens": {
+      "uusdc": "USDC"
+    }
   },
   {
     "name": "Avalanche",
@@ -17,7 +20,10 @@
     "gasReceiver": "0xB53C693544363912D2A034f70D9d98808D5E192a",
     "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
     "tokenName": "Avax",
-    "tokenSymbol": "AVAX"
+    "tokenSymbol": "AVAX",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
   },
   {
     "name": "Fantom",
@@ -27,7 +33,10 @@
     "gasReceiver": "0x2879da536D9d107D6b92D95D7c4CFaA5De7088f4",
     "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
     "tokenName": "Fantom",
-    "tokenSymbol": "FTM"
+    "tokenSymbol": "FTM",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
   },
   {
     "name": "Polygon",
@@ -37,7 +46,10 @@
     "gasReceiver": "0xc8E0b617c388c7E800a7643adDD01218E14a727a",
     "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
     "tokenName": "Matic",
-    "tokenSymbol": "MATIC"
+    "tokenSymbol": "MATIC",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
   },
   {
     "name": "Moonbeam",
@@ -46,7 +58,10 @@
     "rpc": "https://rpc.api.moonbeam.network",
     "gasReceiver": "0x27927CD55db998b720214205e598aA9AD614AEE3",
     "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
-    "tokenName": "DEV",
-    "tokenSymbol": "DEV"
+    "tokenName": "Glimmer",
+    "tokenSymbol": "GLMR",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
   }
 ]

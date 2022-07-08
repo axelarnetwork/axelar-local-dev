@@ -1,6 +1,7 @@
 import { OutgoingHttpHeaders, IncomingHttpHeaders, Server, ServerResponse, IncomingMessage, createServer } from 'http';
 import { Network } from './Network';
-import { relay, getDepositAddress } from './networkUtils';
+import { getDepositAddress } from './networkUtils';
+import { relay } from './relay';
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 function createCORSResponseHeaders(method: string, requestHeaders: IncomingHttpHeaders) {

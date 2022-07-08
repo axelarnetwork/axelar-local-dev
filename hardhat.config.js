@@ -30,5 +30,8 @@ module.exports = {
     },
     paths: {
         sources: "./src/contracts",
-    }
+    },
+    mocha: {
+        timeout: 100000
+    },
 };
