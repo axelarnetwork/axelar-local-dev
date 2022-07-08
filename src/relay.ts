@@ -188,11 +188,11 @@ const updateCallContract = async(from: Network, blockNumber: number, relayData: 
                 'approveContractCall',
                 [from.name, args.sender, args.destinationContractAddress, args.payloadHash],
                 ['string', 'string', 'address', 'bytes32'],
-                async () => {
+                async (options: any) => {
                     const to = networks.find((chain) => chain.name == args.destinationChain);
                     const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to!.relayerWallet);
                     relayData.callContract[commandId].execution = (
-                        await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait()
+                        await (await contract.execute(commandId, from.name, args.sender, args.payload, options)).wait()
                     ).transactionHash;
                 }
             )
