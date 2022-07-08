@@ -8,6 +8,8 @@ examples/metamask/abi/**.json
 **/.DS_Store
 ./test.js
 ./quick.json
+local.json
+temp.js
 
 #Hardhat files
 cache

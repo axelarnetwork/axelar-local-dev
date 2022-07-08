@@ -17,7 +17,6 @@ const AxelarGasReceiverProxy = require('../artifacts/@axelar-network/axelar-cgp-
 const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
 
 const ROLE_OWNER = 1;
-const ROLE_OPERATOR = 2;
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 export const networks: Network[] = [];
@@ -44,6 +43,7 @@ export interface NetworkInfo {
     usdcAddress: string;
     gasReceiverAddress: string;
     constAddressDeployerAddress: string;
+    tokens: {[key: string] : string};
 }
 export interface NetworkSetup {
     name: string | undefined;
@@ -80,6 +80,7 @@ export class Network {
     ganacheProvider: any;
     server: http.Server | undefined;
     port: number | undefined;
+    tokens: { [key: string]: string; };
     constructor(networkish: any = {}) {
         this.name = networkish.name;
         this.chainId = networkish.chainId;
@@ -97,6 +98,7 @@ export class Network {
         this.usdc = networkish.usdc;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
+        this.tokens = networkish.tokens;
     }
     async _deployGateway(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gateway for ${this.name}... `);
@@ -116,6 +118,38 @@ export class Network {
         await (await auth.transferOwnership(proxy.address)).wait();
         this.gateway = new Contract(proxy.address, IAxelarGateway.abi, this.provider);
         logger.log(`Deployed at ${this.gateway.address}`);
+        return this.gateway;
+    }
+
+    async _upgradeGateway(
+        oldAdminAddresses : string[] | undefined = undefined, 
+        oldThreshold : number = this.threshold
+    ): Promise<Contract> {
+        const adminWallets = oldAdminAddresses != undefined ? oldAdminAddresses.map((address: string) => 
+            (this.provider as any).getSigner(address)
+        ): this.adminWallets;
+
+        logger.log(`Upgrading the Axelar Gateway for ${this.name}... `);
+
+        const params = arrayify(
+            defaultAbiCoder.encode(
+                ['address[]', 'uint256', 'bytes'],
+                [this.adminWallets.map((wallet) => wallet.address), this.threshold, '0x']
+            )
+        );
+        const auth = await deployContract(this.ownerWallet, Auth, [
+            [defaultAbiCoder.encode(['address[]', 'uint256'], [[this.operatorWallet.address], 1])],
+        ]);
+        const tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
+        const gateway = await deployContract(this.ownerWallet, AxelarGateway, [auth.address, tokenDeployer.address]);
+        const implementationCode = await this.provider.getCode(gateway.address);
+        const implementationCodeHash = keccak256(implementationCode);
+        for(let i = 0; i < oldThreshold; i++) {
+            await (await this.gateway.connect(adminWallets[i])
+                .upgrade(gateway.address, implementationCodeHash, params)).wait();
+        }
+        await (await auth.transferOwnership(this.gateway.address)).wait();
+        logger.log(`Upgraded ${this.gateway.address}`);
         return this.gateway;
     }
     async _deployGasReceiver(): Promise<Contract> {
@@ -146,10 +180,7 @@ export class Network {
         logger.log(`Deployed at ${this.constAddressDeployer.address}`);
         return this.constAddressDeployer;
     }
-    /**
-     * @returns {Contract}
-     */
-    async deployToken(name: string, symbol: string, decimals: number, cap: BigInt, address: string = ADDRESS_ZERO) {
+    async deployToken(name: string, symbol: string, decimals: number, cap: BigInt, alias: string = symbol, address: string = ADDRESS_ZERO) {
         logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(
             defaultAbiCoder.encode(
@@ -172,13 +203,16 @@ export class Network {
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(tokenAddress, BurnableMintableCappedERC20.abi, this.ownerWallet);
         logger.log(`Deployed at ${tokenContract.address}`);
+        this.tokens[alias] = symbol;
         return tokenContract;
     }
-    async getTokenContract(symbol: string) {
+    async getTokenContract(alias: string) {
+        const symbol = this.tokens[alias];
         const address = await this.gateway.tokenAddresses(symbol);
         return new Contract(address, BurnableMintableCappedERC20.abi, this.provider);
     }
-    async giveToken(address: string, symbol: string, amount: BigInt) {
+    async giveToken(address: string, alias: string, amount: BigInt) {
+        const symbol = this.tokens[alias];
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -211,6 +245,7 @@ export class Network {
             usdcAddress: this.usdc.address,
             gasReceiverAddress: this.gasReceiver.address,
             constAddressDeployerAddress: this.constAddressDeployer.address,
+            tokens: this.tokens,
         };
         return info;
     }

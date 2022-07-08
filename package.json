@@ -2,7 +2,7 @@
     "name": "@axelar-network/axelar-local-dev",
     "version": "1.0.1",
     "description": "",
-    "main": "dist/networkUtils.js",
+    "main": "dist/index.js",
     "scripts": {
         "test": "npx hardhat test",
         "build": "rm -rf artifacts && rm -rf dist && npx hardhat compile && npx tsc",

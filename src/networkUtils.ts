@@ -1,329 +1,44 @@
 'use strict';
 
-import { ethers, Wallet, Contract, providers } from 'ethers';
-const { defaultAbiCoder, arrayify, keccak256, id } = ethers.utils;
-const AddressZero = ethers.constants.AddressZero;
+import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
+const { defaultAbiCoder, keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 import {
-    getSignedExecuteInput,
-    getRandomID,
-    getLogID,
     defaultAccounts,
     setJSON,
     httpGet,
-    deployContract,
     logger,
-    setLogger,
 } from './utils';
 import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
-
-const ROLE_OWNER = 1;
-const ROLE_OPERATOR = 2;
+const { merge } = require('lodash');
 const fs = require('fs');
 
+
 const IAxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json');
-const IAxelarExecutable = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json');
 const IAxelarGasReceiver = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json');
+const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
+const AxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json');
 
-const testnetInfo = require('../info/testnet.json');
-const mainnetInfo = require('../info/mainnet.json');
-let gasLogs: any[] = [];
-let gasLogsWithToken: any[] = [];
 let serverInstance: any;
-let interval: any;
 
-export interface RelayData {
-    depositAddress: any;
-    sendToken: any;
-    callContract: any;
-    callContractWithToken: any;
-}
 
-export interface CreateLocalOptions {
-    chainOutputPath?: string;
-    accountsToFund?: string[];
-    fundAmount?: string;
-    chains?: string[];
-    relayInterval?: number;
-    port?: number;
-    afterRelay?: (relayData: RelayData) => void;
-    callback?: (network: Network, info: any) => Promise<null>;
-}
 
-//An internal class for handling axelar commands.
-class Command {
-    commandId: string;
+export interface ChainCloneData {
     name: string;
-    data: any[];
-    encodedData: string;
-    post: ((options: any) => Promise<void>) | undefined;
-    constructor(
-        commandId: string,
-        name: string,
-        data: any[],
-        dataSignature: string[],
-        post: ((options: any) => Promise<void>) | undefined = undefined
-    ) {
-        this.commandId = commandId;
-        this.name = name;
-        this.data = data;
-        this.encodedData = defaultAbiCoder.encode(dataSignature, data);
-        this.post = post;
-    }
+    gateway: string;
+    rpc: string;
+    gasReceiver: string;
+    constAddressDeployer: string;
+    tokenName: string;
+    tokenSymbol: string;
+    tokens: { [key: string]: string; };
 }
 
-export const getFee = (source: string | Network, destination: string | Network, symbol: string) => {
+export const getFee = (source: string | Network, destination: string | Network, alias: string) => {
     return 1e6;
 };
 export const getGasPrice = (source: string | Network, destination: string | Network, tokenOnSource: string) => {
     return 1;
-};
-
-//This function relays all the messages between the tracked networks.
-export const relay = async () => {
-    const relayData: RelayData = {
-        depositAddress: {},
-        sendToken: {},
-        callContract: {},
-        callContractWithToken: {},
-    };
-    const commands: { [key: string]: Command[] } = {};
-    for (let to of networks) {
-        commands[to.name] = [];
-    }
-
-    for (const from of networks) {
-        let filter = from.gasReceiver.filters.GasPaidForContractCall();
-        const blockNumber = await from.provider.getBlockNumber();
-        if (blockNumber <= from.lastRelayedBlock) continue;
-        gasLogs = gasLogs.concat(
-            (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args)
-        );
-        filter = from.gasReceiver.filters.NativeGasPaidForContractCall();
-        gasLogs = gasLogs.concat(
-            (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
-                return { ...log.args, gasToken: AddressZero };
-            })
-        );
-
-        filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
-        gasLogsWithToken = gasLogsWithToken.concat(
-            (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args)
-        );
-        filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
-        gasLogsWithToken = gasLogsWithToken.concat(
-            (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
-                return { ...log.args, gasToken: AddressZero };
-            })
-        );
-
-        for (const address in depositAddresses[from.name]) {
-            const data = depositAddresses[from.name][address];
-            const token = await from.getTokenContract(data.tokenSymbol);
-            const fee = getFee(from, data.destinationChain, data.symbol);
-            const balance = await token.balanceOf(address);
-            if (balance > fee) {
-                const commandId = getRandomID();
-                relayData.depositAddress[commandId] = {
-                    from: from.name,
-                    to: data.destinationChain,
-                    amountIn: balance,
-                    fee: fee,
-                    amountOut: balance - fee,
-                };
-                commands[data.destinationChain].push(
-                    new Command(
-                        commandId,
-                        'mintToken',
-                        [data.tokenSymbol, data.destinationAddress, balance - fee],
-                        ['string', 'address', 'uint256']
-                    )
-                );
-                const wallet = new Wallet(data.privateKey, from.provider);
-                if (Number(await from.provider.getBalance(address)) == 0) {
-                    // Create a transaction object
-                    let tx = {
-                        to: address,
-                        // Convert currency unit from ether to wei
-                        value: BigInt(1e16),
-                    };
-                    // Send a transaction
-                    await (await from.ownerWallet.sendTransaction(tx)).wait();
-                }
-                await (await token.connect(wallet).transfer(from.ownerWallet.address, balance)).wait();
-            }
-        }
-
-        filter = from.gateway.filters.TokenSent();
-        let logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
-        for (let log of logsFrom) {
-            const args: any = log.args;
-            if (args.amount <= getFee(from, args.destinationChain, args.symbol)) continue;
-            const fee = getFee(from, args.destinationChain, args.symbol);
-            const commandId = getLogID(from.name, log);
-            relayData.sendToken[commandId] = {
-                from: from.name,
-                to: args.destinationChain,
-                amountIn: args.amount,
-                fee: fee,
-                amountOut: args.amount - fee,
-            };
-            commands[args.destinationChain].push(
-                new Command(
-                    commandId,
-                    'mintToken',
-                    [args.symbol, args.destinationAddress, BigInt(args.amount - fee)],
-                    ['string', 'address', 'uint256']
-                )
-            );
-        }
-        filter = from.gateway.filters.ContractCall();
-        logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
-        for (let log of logsFrom) {
-            const args: any = log.args;
-            if (commands[args.destinationChain] == null) continue;
-            const commandId = getLogID(from.name, log);
-            relayData.callContract[commandId] = {
-                from: from.name,
-                to: args.destinationChain,
-                sourceAddress: args.sender,
-                destinationContractAddress: args.destinationContractAddress,
-                payload: args.payload,
-                payloadHash: args.payloadHash,
-            };
-            commands[args.destinationChain].push(
-                new Command(
-                    commandId,
-                    'approveContractCall',
-                    [from.name, args.sender, args.destinationContractAddress, args.payloadHash],
-                    ['string', 'string', 'address', 'bytes32'],
-                    async () => {
-                        const to = networks.find((chain) => chain.name == args.destinationChain);
-                        const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to!.relayerWallet);
-                        relayData.callContract[commandId].execution = (
-                            await (await contract.execute(commandId, from.name, args.sender, args.payload)).wait()
-                        ).transactionHash;
-                    }
-                )
-            );
-        }
-        filter = from.gateway.filters.ContractCallWithToken();
-        logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
-        for (let log of logsFrom) {
-            const args: any = log.args;
-            const fee = getFee(from, args.destinationChain, args.symbol);
-            if (args.amount < fee) continue;
-            const amountOut = args.amount.sub(fee);
-            if (amountOut < 0) continue;
-            const commandId = getLogID(from.name, log);
-            relayData.callContractWithToken[commandId] = {
-                from: from.name,
-                to: args.destinationChain,
-                sourceAddress: args.sender,
-                destinationContractAddress: args.destinationContractAddress,
-                payload: args.payload,
-                payloadHash: args.payloadHash,
-                symbol: args.symbol,
-                amountIn: args.amount,
-                fee: fee,
-                amountOut: amountOut,
-            };
-            commands[args.destinationChain].push(
-                new Command(
-                    commandId,
-                    'approveContractCallWithMint',
-                    [from.name, args.sender, args.destinationContractAddress, args.payloadHash, args.symbol, amountOut],
-                    ['string', 'string', 'address', 'bytes32', 'string', 'uint256'],
-                    async (options: any) => {
-                        const to = networks.find((chain) => chain.name == args.destinationChain);
-                        const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to!.relayerWallet);
-                        relayData.callContractWithToken[commandId].execution = (
-                            await (
-                                await contract.executeWithToken(
-                                    commandId,
-                                    from.name,
-                                    args.sender,
-                                    args.payload,
-                                    args.symbol,
-                                    amountOut,
-                                    options
-                                )
-                            ).wait()
-                        ).transactionHash;
-                    }
-                )
-            );
-        }
-        from.lastRelayedBlock = await blockNumber;
-    }
-
-    for (const to of networks) {
-        const toExecute = commands[to.name];
-        if (toExecute.length == 0) continue;
-        const data = arrayify(
-            defaultAbiCoder.encode(
-                ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-                [
-                    to.chainId,
-                    ROLE_OWNER,
-                    toExecute.map((com) => com.commandId),
-                    toExecute.map((com) => com.name),
-                    toExecute.map((com) => com.encodedData),
-                ]
-            )
-        );
-        const signedData = await getSignedExecuteInput(data, to.operatorWallet);
-        const execution = await (await to.gateway.connect(to.ownerWallet).execute(signedData, { gasLimit: BigInt(1e7) })).wait();
-
-        for (const command of toExecute) {
-            if (command.post == null) continue;
-
-            if (
-                !execution.events.find((event: any) => {
-                    return event.event == 'Executed' && event.args[0] == command.commandId;
-                })
-            )
-                continue;
-            const fromName = command.data[0];
-            const payed =
-                command.name == 'approveContractCall'
-                    ? gasLogs.find((log: any) => {
-                          if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                          if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                          if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                          if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                          return true;
-                      })
-                    : gasLogsWithToken.find((log: any) => {
-                          if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                          if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                          if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                          if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                          if (log.symbol != command.data[4]) return false;
-                          if (log.amount - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
-                          return true;
-                      });
-
-            if (!payed) continue;
-            if (command.name == 'approveContractCall') {
-                const index = gasLogs.indexOf(payed);
-                gasLogs.splice(index, 1);
-            } else {
-                const index = gasLogsWithToken.indexOf(payed);
-                gasLogsWithToken.splice(index, 1);
-            }
-            try {
-                const cost = getGasPrice(fromName, to, payed.gasToken);
-                const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
-                await command.post({
-                    gasLimit: BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost)),
-                });
-            } catch (e) {
-                logger.log(e);
-            }
-        }
-    }
-    return relayData;
 };
 
 export function listen(port: number, callback: (() => void) | undefined = undefined) {
@@ -334,22 +49,23 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
     serverInstance = server(networks);
     return serverInstance.listen(port, callback);
 }
-/**
- * @returns {Network}
- */
+
 export async function createNetwork(options: NetworkOptions = {}) {
     if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
-        logger.log('this exists!');
+        
         const info = require(options.dbPath + '/networkInfo.json');
-        const ganacheProvider = require('ganache').provider({
+        const ganacheOptions = {
             database: { dbPath: options.dbPath },
             ...options.ganacheOptions,
             chain: {
+                vmErrorsOnRPCResponse: true,
                 chainId: info.chainId,
                 networkId: info.chainId,
             },
             logging: { quiet: true },
-        });
+        }
+        merge(ganacheOptions, options.ganacheOptions);
+        const ganacheProvider = require('ganache').provider(ganacheOptions);
         const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
         chain.ganacheProvider = ganacheProvider;
         if (options.port) {
@@ -366,18 +82,20 @@ export async function createNetwork(options: NetworkOptions = {}) {
     logger.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
     const accounts = defaultAccounts(20, options.seed!);
 
-    chain.ganacheProvider = require('ganache').provider({
+    const ganacheOptions = {
         database: { dbPath: options.dbPath },
-        ...options.ganacheOptions,
         wallet: {
             accounts: accounts,
         },
         chain: {
             chainId: chain.chainId,
             networkId: chain.chainId,
+            vmErrorsOnRPCResponse: true,
         },
         logging: { quiet: true },
-    });
+    }
+    merge(ganacheOptions, options.ganacheOptions);
+    chain.ganacheProvider = require('ganache').provider(ganacheOptions);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
@@ -388,8 +106,9 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
+    chain.tokens = {};
     chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
-
+    
     if (options.port) {
         chain.port = options.port;
         chain.server = server(chain).listen(chain.port, () => {
@@ -403,9 +122,6 @@ export async function createNetwork(options: NetworkOptions = {}) {
     return chain;
 }
 
-/**
- * @returns {Network}
- */
 export async function getNetwork(urlOrProvider: string | providers.Provider, info: NetworkInfo | undefined = undefined) {
     if (!info) info = (await httpGet(urlOrProvider + '/info')) as NetworkInfo;
     const chain: Network = new Network();
@@ -424,15 +140,15 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.ownerWallet = new Wallet(info.ownerKey, chain.provider);
     chain.operatorWallet = new Wallet(info.operatorKey, chain.provider);
     chain.relayerWallet = new Wallet(info.relayerKey, chain.provider);
-
     chain.adminWallets = info.adminKeys.map((x) => new Wallet(x, chain.provider));
     chain.threshold = info.threshold;
     chain.lastRelayedBlock = info.lastRelayedBlock;
-
+    chain.tokens = info.tokens;
+    
     chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
     chain.gasReceiver = new Contract(info.gasReceiverAddress, IAxelarGasReceiver.abi, chain.provider);
     chain.usdc = await chain.getTokenContract('aUSDC');
-
+    
     logger.log(`Its gateway is deployed at ${chain.gateway.address} its aUSDC ${chain.usdc.address}.`);
 
     networks.push(chain);
@@ -476,7 +192,77 @@ export async function setupNetwork(urlOrProvider: string | providers.Provider, o
     await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
+    chain.tokens = {};
     chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
+    networks.push(chain);
+    return chain;
+}
+
+export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOptions = {}) {
+    if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
+        throw new Error('Not supported, bug foivos if you need to fork and archive chains');
+    }
+    const chain: Network = new Network();
+    chain.name = options.name != null ? options.name : chainInfo.name != null ? chainInfo.name : `Chain ${networks.length + 1}`;
+    chain.chainId = options.chainId! || networks.length + 2500;
+    logger.log(`Forking ${chain.name} with a chainId of ${chain.chainId}...`);
+    const accounts = defaultAccounts(20, options.seed!);
+
+    //This section gets the admin accounts so we can unlock them in our fork to upgrade the gateway to a 'localized' version
+    const forkProvider = getDefaultProvider(chainInfo.rpc);
+    const gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, forkProvider);
+    const KEY_ADMIN_EPOCH = keccak256(toUtf8Bytes('admin-epoch'));
+    const adminEpoch = await gateway.getUint(KEY_ADMIN_EPOCH);
+    const PREFIX_ADMIN_THRESHOLD = keccak256(toUtf8Bytes('admin-threshold'));
+    const thresholdKey = keccak256(solidityPack(['bytes32', 'uint256'],[PREFIX_ADMIN_THRESHOLD, adminEpoch]));
+    const oldThreshold = await gateway.getUint(thresholdKey);
+    const oldAdminAddresses: string[] = [];
+    for(let i=0; i<oldThreshold; i++) {
+        const PREFIX_ADMIN = keccak256(toUtf8Bytes('admin'));
+        const adminKey = keccak256(solidityPack(['bytes32', 'uint256', 'uint256'], [PREFIX_ADMIN, adminEpoch, i]));
+        const address = await gateway.getAddress(adminKey);
+        oldAdminAddresses.push(address);
+    }
+
+    const ganacheOptions = {
+        database: { dbPath: options.dbPath },
+        wallet: {
+            accounts: accounts,
+            unlockedAccounts: oldAdminAddresses,
+        },
+        chain: {
+            chainId: chain.chainId,
+            networkId: chain.chainId,
+            vmErrorsOnRPCResponse: true,
+        },
+        fork: {url: chainInfo.rpc}, 
+        logging: { quiet: true },
+    }
+    merge(ganacheOptions, options.ganacheOptions);
+    chain.ganacheProvider = require('ganache').provider(ganacheOptions);
+    chain.provider = new providers.Web3Provider(chain.ganacheProvider);
+    const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
+    chain.userWallets = wallets.splice(10, 20);
+    [chain.ownerWallet, chain.operatorWallet, chain.relayerWallet] = wallets;
+    chain.adminWallets = wallets.splice(4, 10);
+    chain.threshold = 3;
+    chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    chain.constAddressDeployer = new Contract(chainInfo.constAddressDeployer, ConstAddressDeployer.abi, chain.provider);
+    chain.gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, chain.provider);
+    await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
+    chain.gasReceiver = new Contract(chainInfo.gasReceiver, IAxelarGasReceiver.abi, chain.provider);
+
+    chain.tokens = chainInfo.tokens;
+
+    if (options.port) {
+        chain.port = options.port;
+        chain.server = server(chain).listen(chain.port, () => {
+            logger.log(`Serving ${chain.name} on port ${chain.port}`);
+        });
+    }
+    if (options.dbPath) {
+        setJSON(chain.getInfo(), options.dbPath + '/networkInfo.json');
+    }
     networks.push(chain);
     return chain;
 }
@@ -495,98 +281,32 @@ export async function stopAll() {
         await serverInstance.close();
         serverInstance = null;
     }
-    if (interval) {
-        clearInterval(interval);
-    }
-    gasLogs = [];
-    gasLogsWithToken = [];
 }
 
-const depositAddresses: any = {};
+export const depositAddresses: any = {};
 
 export function getDepositAddress(
     from: Network | string,
     to: Network | string,
     destinationAddress: string,
-    symbol: string,
+    alias: string,
     port: number | undefined = undefined
 ) {
     if (typeof from != 'string') from = from.name;
     if (typeof to != 'string') to = to.name;
     if (!port) {
-        const key = keccak256(id(from + ':' + to + ':' + destinationAddress + ':' + symbol));
+        const key = keccak256(id(from + ':' + to + ':' + destinationAddress + ':' + alias));
         const address = new Wallet(key).address;
         depositAddresses[from] = {
             [address]: {
                 destinationChain: to,
                 destinationAddress: destinationAddress,
-                tokenSymbol: symbol,
+                alias: alias,
                 privateKey: key,
             },
         };
         return address;
     }
-    return httpGet(`http:/localhost:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${symbol}`);
+    return httpGet(`http:/localhost:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${alias}`);
 }
 
-export async function createAndExport(options: CreateLocalOptions = {}) {
-    const defaultOptions = {
-        chainOutputPath: './local.json',
-        accountsToFund: [],
-        fundAmount: ethers.utils.parseEther('100').toString(),
-        chains: ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
-        port: 8500,
-        relayInterval: 2000,
-    } as CreateLocalOptions;
-    for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
-    const chains_local: Record<string, any>[] = [];
-    let i = 0;
-    for (const name of options.chains!) {
-        const chain = await createNetwork({ name: name, seed: name });
-        const testnet = testnetInfo.find((info: any) => {
-            return info.name == name;
-        });
-        const info = {
-            name: name,
-            chainId: chain.chainId,
-            rpc: `http://localhost:${options.port}/${i}`,
-            gateway: chain.gateway.address,
-            gasReceiver: chain.gasReceiver.address,
-            constAddressDeployer: chain.constAddressDeployer.address,
-            tokenName: testnet?.tokenName,
-            tokenSymbol: testnet?.tokenSymbol,
-        };
-        chains_local.push(info);
-        const [user] = chain.userWallets;
-        for (const account of options.accountsToFund!) {
-            await user
-                .sendTransaction({
-                    to: account,
-                    value: options.fundAmount,
-                })
-                .then((tx) => tx.wait());
-        }
-        if (options.callback) await options.callback(chain, info);
-        i++;
-    }
-    listen(options.port!);
-    interval = setInterval(async () => {
-        const relayData = await relay();
-        if (options.afterRelay) options.afterRelay(relayData);
-    }, options.relayInterval);
-    setJSON(chains_local, options.chainOutputPath!);
-
-    process.on('SIGINT', function () {
-        fs.unlinkSync(options.chainOutputPath);
-        process.exit();
-    });
-}
-
-export const utils = {
-    deployContract,
-    defaultAccounts,
-    setJSON,
-    setLogger,
-};
-
-export { networks, testnetInfo, mainnetInfo };
