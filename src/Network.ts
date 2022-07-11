@@ -43,7 +43,7 @@ export interface NetworkInfo {
     usdcAddress: string;
     gasReceiverAddress: string;
     constAddressDeployerAddress: string;
-    tokens: {[key: string] : string};
+    tokens: { [key: string]: string };
 }
 export interface NetworkSetup {
     name: string | undefined;
@@ -80,7 +80,7 @@ export class Network {
     ganacheProvider: any;
     server: http.Server | undefined;
     port: number | undefined;
-    tokens: { [key: string]: string; };
+    tokens: { [key: string]: string };
     constructor(networkish: any = {}) {
         this.name = networkish.name;
         this.chainId = networkish.chainId;
@@ -121,13 +121,11 @@ export class Network {
         return this.gateway;
     }
 
-    async _upgradeGateway(
-        oldAdminAddresses : string[] | undefined = undefined, 
-        oldThreshold : number = this.threshold
-    ): Promise<Contract> {
-        const adminWallets = oldAdminAddresses != undefined ? oldAdminAddresses.map((address: string) => 
-            (this.provider as any).getSigner(address)
-        ): this.adminWallets;
+    async _upgradeGateway(oldAdminAddresses: string[] | undefined = undefined, oldThreshold: number = this.threshold): Promise<Contract> {
+        const adminWallets =
+            oldAdminAddresses != undefined
+                ? oldAdminAddresses.map((address: string) => (this.provider as any).getSigner(address))
+                : this.adminWallets;
 
         logger.log(`Upgrading the Axelar Gateway for ${this.name}... `);
 
@@ -144,9 +142,8 @@ export class Network {
         const gateway = await deployContract(this.ownerWallet, AxelarGateway, [auth.address, tokenDeployer.address]);
         const implementationCode = await this.provider.getCode(gateway.address);
         const implementationCodeHash = keccak256(implementationCode);
-        for(let i = 0; i < oldThreshold; i++) {
-            await (await this.gateway.connect(adminWallets[i])
-                .upgrade(gateway.address, implementationCodeHash, params)).wait();
+        for (let i = 0; i < oldThreshold; i++) {
+            await (await this.gateway.connect(adminWallets[i]).upgrade(gateway.address, implementationCodeHash, params)).wait();
         }
         await (await auth.transferOwnership(this.gateway.address)).wait();
         logger.log(`Upgraded ${this.gateway.address}`);

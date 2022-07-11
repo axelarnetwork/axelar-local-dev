@@ -2,17 +2,11 @@
 
 import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
 const { defaultAbiCoder, keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
-import {
-    defaultAccounts,
-    setJSON,
-    httpGet,
-    logger,
-} from './utils';
+import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 const { merge } = require('lodash');
 const fs = require('fs');
-
 
 const IAxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json');
 const IAxelarGasReceiver = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json');
@@ -20,8 +14,6 @@ const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDep
 const AxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json');
 
 let serverInstance: any;
-
-
 
 export interface ChainCloneData {
     name: string;
@@ -31,7 +23,7 @@ export interface ChainCloneData {
     constAddressDeployer: string;
     tokenName: string;
     tokenSymbol: string;
-    tokens: { [key: string]: string; };
+    tokens: { [key: string]: string };
 }
 
 export const getFee = (source: string | Network, destination: string | Network, alias: string) => {
@@ -52,7 +44,6 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
 
 export async function createNetwork(options: NetworkOptions = {}) {
     if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
-        
         const info = require(options.dbPath + '/networkInfo.json');
         const ganacheOptions = {
             database: { dbPath: options.dbPath },
@@ -63,7 +54,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
                 networkId: info.chainId,
             },
             logging: { quiet: true },
-        }
+        };
         merge(ganacheOptions, options.ganacheOptions);
         const ganacheProvider = require('ganache').provider(ganacheOptions);
         const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
@@ -93,7 +84,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
             vmErrorsOnRPCResponse: true,
         },
         logging: { quiet: true },
-    }
+    };
     merge(ganacheOptions, options.ganacheOptions);
     chain.ganacheProvider = require('ganache').provider(ganacheOptions);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
@@ -108,7 +99,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await chain._deployGasReceiver();
     chain.tokens = {};
     chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
-    
+
     if (options.port) {
         chain.port = options.port;
         chain.server = server(chain).listen(chain.port, () => {
@@ -144,11 +135,11 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.threshold = info.threshold;
     chain.lastRelayedBlock = info.lastRelayedBlock;
     chain.tokens = info.tokens;
-    
+
     chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
     chain.gasReceiver = new Contract(info.gasReceiverAddress, IAxelarGasReceiver.abi, chain.provider);
     chain.usdc = await chain.getTokenContract('aUSDC');
-    
+
     logger.log(`Its gateway is deployed at ${chain.gateway.address} its aUSDC ${chain.usdc.address}.`);
 
     networks.push(chain);
@@ -214,10 +205,10 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     const KEY_ADMIN_EPOCH = keccak256(toUtf8Bytes('admin-epoch'));
     const adminEpoch = await gateway.getUint(KEY_ADMIN_EPOCH);
     const PREFIX_ADMIN_THRESHOLD = keccak256(toUtf8Bytes('admin-threshold'));
-    const thresholdKey = keccak256(solidityPack(['bytes32', 'uint256'],[PREFIX_ADMIN_THRESHOLD, adminEpoch]));
+    const thresholdKey = keccak256(solidityPack(['bytes32', 'uint256'], [PREFIX_ADMIN_THRESHOLD, adminEpoch]));
     const oldThreshold = await gateway.getUint(thresholdKey);
     const oldAdminAddresses: string[] = [];
-    for(let i=0; i<oldThreshold; i++) {
+    for (let i = 0; i < oldThreshold; i++) {
         const PREFIX_ADMIN = keccak256(toUtf8Bytes('admin'));
         const adminKey = keccak256(solidityPack(['bytes32', 'uint256', 'uint256'], [PREFIX_ADMIN, adminEpoch, i]));
         const address = await gateway.getAddress(adminKey);
@@ -235,9 +226,9 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
             networkId: chain.chainId,
             vmErrorsOnRPCResponse: true,
         },
-        fork: {url: chainInfo.rpc}, 
+        fork: { url: chainInfo.rpc },
         logging: { quiet: true },
-    }
+    };
     merge(ganacheOptions, options.ganacheOptions);
     chain.ganacheProvider = require('ganache').provider(ganacheOptions);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
@@ -309,4 +300,3 @@ export function getDepositAddress(
     }
     return httpGet(`http:/localhost:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${alias}`);
 }
-
