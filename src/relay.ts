@@ -1,4 +1,3 @@
-
 'use strict';
 
 import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
@@ -56,45 +55,43 @@ const IAxelarExecutable = require('../artifacts/@axelar-network/axelar-cgp-solid
 
 const ROLE_OWNER = 1;
 
-const getAliasFromSymbol = (tokens: {[key: string]: string}, symbol: string) => {
-    for(const alias in tokens) {
-        if(tokens[alias] == symbol) return alias;
+const getAliasFromSymbol = (tokens: { [key: string]: string }, symbol: string) => {
+    for (const alias in tokens) {
+        if (tokens[alias] == symbol) return alias;
     }
     return '';
-}
+};
 
 const updateGasLogs = async (from: Network, blockNumber: number) => {
     let filter = from.gasReceiver.filters.GasPaidForContractCall();
-    let newGasLogs: any = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber))
-        .map((log) => log.args);
-    for(const gasLog of newGasLogs) {
+    let newGasLogs: any = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
+    for (const gasLog of newGasLogs) {
         gasLogs.push(gasLog);
     }
-    
+
     filter = from.gasReceiver.filters.NativeGasPaidForContractCall();
     newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
         return { ...log.args, gasToken: AddressZero };
     });
-    for(const gasLog of newGasLogs) {
+    for (const gasLog of newGasLogs) {
         gasLogs.push(gasLog);
     }
 
     filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
-    newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber))
-        .map((log) => log.args)
-    for(const gasLog of newGasLogs) {
+    newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
+    for (const gasLog of newGasLogs) {
         gasLogs.push(gasLog);
     }
     filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
     newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
         return { ...log.args, gasToken: AddressZero };
     });
-    for(const gasLog of newGasLogs) {
+    for (const gasLog of newGasLogs) {
         gasLogs.push(gasLog);
     }
-}
+};
 
-const updateDepositAddresses = async (from: Network, blockNumber: number, relayData: RelayData, commands: {[key: string]: Command[]}) => {
+const updateDepositAddresses = async (from: Network, blockNumber: number, relayData: RelayData, commands: { [key: string]: Command[] }) => {
     for (const address in depositAddresses[from.name]) {
         const data = depositAddresses[from.name][address];
         const tokenSymbol = from.tokens[data.alias];
@@ -134,9 +131,9 @@ const updateDepositAddresses = async (from: Network, blockNumber: number, relayD
             await (await token.connect(wallet).transfer(from.ownerWallet.address, balance)).wait();
         }
     }
-}
+};
 
-const updateTokenSent = async(from: Network, blockNumber: number, relayData: RelayData, commands: {[key: string]: Command[]}) => {
+const updateTokenSent = async (from: Network, blockNumber: number, relayData: RelayData, commands: { [key: string]: Command[] }) => {
     const filter = from.gateway.filters.TokenSent();
     const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
     for (let log of logsFrom) {
@@ -165,11 +162,11 @@ const updateTokenSent = async(from: Network, blockNumber: number, relayData: Rel
             )
         );
     }
-}
+};
 
-const updateCallContract = async(from: Network, blockNumber: number, relayData: RelayData, commands: {[key: string]: Command[]}) => {
-    const  filter = from.gateway.filters.ContractCall();
-    const  logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
+const updateCallContract = async (from: Network, blockNumber: number, relayData: RelayData, commands: { [key: string]: Command[] }) => {
+    const filter = from.gateway.filters.ContractCall();
+    const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
     for (let log of logsFrom) {
         const args: any = log.args;
         if (commands[args.destinationChain] == null) continue;
@@ -198,9 +195,14 @@ const updateCallContract = async(from: Network, blockNumber: number, relayData: 
             )
         );
     }
-}
+};
 
-const updateCallContractWithToken = async(from: Network, blockNumber: number, relayData: RelayData, commands: {[key: string]: Command[]}) => {
+const updateCallContractWithToken = async (
+    from: Network,
+    blockNumber: number,
+    relayData: RelayData,
+    commands: { [key: string]: Command[] }
+) => {
     const filter = from.gateway.filters.ContractCallWithToken();
     const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
     for (let log of logsFrom) {
@@ -253,7 +255,7 @@ const updateCallContractWithToken = async(from: Network, blockNumber: number, re
             )
         );
     }
-}
+};
 
 const executeCommands = async (to: Network, commands: Command[]) => {
     const data = arrayify(
@@ -270,7 +272,7 @@ const executeCommands = async (to: Network, commands: Command[]) => {
     );
     const signedData = await getSignedExecuteInput(data, to.operatorWallet);
     return await (await to.gateway.connect(to.ownerWallet).execute(signedData, { gasLimit: BigInt(1e7) })).wait();
-}
+};
 const postExecute = async (to: Network, commands: Command[], execution: any) => {
     for (const command of commands) {
         if (command.post == null) continue;
@@ -319,7 +321,7 @@ const postExecute = async (to: Network, commands: Command[], execution: any) => 
             logger.log(e);
         }
     }
-}
+};
 
 //This function relays all the messages between the tracked networks.
 export const relay = async () => {
@@ -343,10 +345,10 @@ export const relay = async () => {
         await updateTokenSent(from, blockNumber, relayData, commands);
         await updateCallContract(from, blockNumber, relayData, commands);
         await updateCallContractWithToken(from, blockNumber, relayData, commands);
-        
+
         from.lastRelayedBlock = blockNumber;
     }
-    
+
     for (const to of networks) {
         const toExecute = commands[to.name];
         if (toExecute.length == 0) continue;

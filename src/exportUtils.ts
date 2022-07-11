@@ -1,13 +1,11 @@
 'use strict';
 
 import { ethers } from 'ethers';
-import {
-    setJSON,
-} from './utils';
+import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
 const fs = require('fs');
 import { RelayData, relay, gasLogs, gasLogsWithToken } from './relay';
-import { createNetwork, forkNetwork, listen, stopAll} from './networkUtils';
+import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
 
 let interval: any;
@@ -23,23 +21,12 @@ export interface CreateLocalOptions {
     callback?: (network: Network, info: any) => Promise<null>;
 }
 
-export interface ChainCloneData {
-    name: string;
-    gateway: string;
-    rpc: string;
-    gasReceiver: string;
-    constAddressDeployer: string;
-    tokenName: string;
-    tokenSymbol: string;
-    tokens: { [key: string]: string; };
-}
-
 export interface CloneLocalOptions {
     chainOutputPath?: string;
     accountsToFund?: string[];
     fundAmount?: string;
     env?: string;
-    chains?: string[]
+    chains?: string[];
     relayInterval?: number;
     port?: number;
     networkOptions?: NetworkOptions;
@@ -60,12 +47,10 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     const chains_local: Record<string, any>[] = [];
     let i = 0;
     for (const name of options.chains!) {
-        const chain = await createNetwork({ 
-            name: name, 
+        const chain = await createNetwork({
+            name: name,
             seed: name,
-            ganacheOptions: {
-
-            }
+            ganacheOptions: {},
         });
         const testnet = testnetInfo.find((info: any) => {
             return info.name == name;
@@ -115,19 +100,20 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         chains: [],
         port: 8500,
         relayInterval: 2000,
-        networkOptions: {}
+        networkOptions: {},
     } as CloneLocalOptions;
     for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
     const chains_local: Record<string, any>[] = [];
-    if(options.env != 'mainnet' && options.env != 'testnet') {
+    if (options.env != 'mainnet' && options.env != 'testnet') {
         throw new Error('need to specify mainnet or testnet');
     }
     const chainsRaw = options.env == 'mainnet' ? mainnetInfo : testnetInfo;
 
-    const chains = options.chains?.length == 0 ? 
-        chainsRaw : 
-        chainsRaw.filter((chain: any) => options.chains?.find(name => name == chain.name) != null);
-    
+    const chains =
+        options.chains?.length == 0
+            ? chainsRaw
+            : chainsRaw.filter((chain: any) => options.chains?.find((name) => name == chain.name) != null);
+
     let i = 0;
     for (const chain of chains) {
         const network = await forkNetwork(chain, options.networkOptions);
@@ -142,7 +128,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
             tokenName: chain?.tokenName,
             tokenSymbol: chain?.tokenSymbol,
         };
-        
+
         chains_local.push(info);
         const [user] = network.userWallets;
         for (const account of options.accountsToFund!) {

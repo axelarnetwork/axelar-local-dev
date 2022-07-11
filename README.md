@@ -62,6 +62,10 @@ This module exports the following types:
   - `port`: Port to listen to. Defaults to `8500`.
   - `afterRelay`: A function `(relayData: RelayData) => void` which will be called after each relay. Mainly to be used for debugging.
   - `callback`: A function `(network: Network, info: any) => Promise<null>` that will be called right after setting up each network. Use this to setup additional features, like deploying contracts that already exist on testnet/mainnet.
+- `CloneLocalOptions`: An extension of `CreateLocalOptions` that includes:
+  - `env`: a `string` whose value is either `mainnet` or `testnet` depending which network we are supposed to fork from.
+  - `chains`: These now act as a filter for which chains to fork. Defaults to all the chains.
+  - `networkInfo`: The `NetworkInfo` (see below) which overwrites the default parameters. Can be used to set the chainId which can be used to fool metamask into using actual dApps!
 - `Network`: This object type is used to handle most functionality within the module. It has the following properties:
   - `name`: The name of the network.
   - `chainId`: The chainId of the network.
@@ -83,6 +87,15 @@ This module exports the following types:
   - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
   - `chainId`: The chainId of the network, defaults to `n`.
   - `seed`: A seed that determines the addresses of funded accounts and contract addresses.
+- `ChainCloneData`: Data needed to for a network. `mainnetInfo` and `testnetInfo` can both be used as `ChainCloneData`.
+  - `name`: Name of the network to create.
+    `gateway`: The (preexisting) address of the gateway.
+    `rpc`: A url to an RPC to connect to the chain to fork.
+    `gasReceiver`: The (preexisting) address of the gasReceiver.
+    `constAddressDeployer`: The (preexisting) address of the constAddressDeployer.;
+    `tokenName`: The name of the native token on this chain.
+    `tokenSymbol`: The symbol of the native token on this chain.
+    `tokens`: An object with all the registered axelar tokens
 - `NetworkSetup`: This type is used as an input to setup networks and can include the following. All but `ownerKey` are optional.
   - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
   - `chainId`: The chainId of the network, defaults to `n`.
@@ -108,6 +121,7 @@ This module exports the following types:
 The following is exported by this module.
 
 - `createAndExport(CreateLocalOptions)`: Creates and sets up a number of networks, and listens for RPC for all of them on a single port.
+- `forkAndExport(CloneLocalOptions)`: Like the above but forks either mainnet or testnet. Takes longer and spams RPCs so only use if you need something else deployed.
 - `createNetwork(NetworkOptions)`: Creates a new `Network`. 
 - `getNetwork(urlOrProvider, NetworkInfo=null)`: Return `Network` hosted elsewhere into this instance.
 - `setupNetwork(urlOrProvider, NetworkSetup)`: Deploy the gateway and USDC Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `NetworkSetup` is `ownerKey` which is a wallet of a funded account.

@@ -1,6 +1,5 @@
-
 import { createAndExport, forkAndExport } from './exportUtils';
-import { relay } from './relay'
+import { relay } from './relay';
 import { deployContract, defaultAccounts, setJSON, setLogger } from './utils';
 import { testnetInfo, mainnetInfo } from './info';
 import { networks } from './Network';
@@ -26,7 +25,7 @@ export const utils = {
     setLogger,
 };
 
-export { 
+export {
     ChainCloneData,
     getFee,
     getGasPrice,
@@ -39,10 +38,10 @@ export {
     stop,
     stopAll,
     getDepositAddress,
-    networks, 
-    testnetInfo, 
-    mainnetInfo, 
-    relay, 
-    createAndExport, 
+    networks,
+    testnetInfo,
+    mainnetInfo,
+    relay,
+    createAndExport,
     forkAndExport,
 };
