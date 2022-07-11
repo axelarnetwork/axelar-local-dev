@@ -63,9 +63,9 @@ This module exports the following types:
   - `afterRelay`: A function `(relayData: RelayData) => void` which will be called after each relay. Mainly to be used for debugging.
   - `callback`: A function `(network: Network, info: any) => Promise<null>` that will be called right after setting up each network. Use this to setup additional features, like deploying contracts that already exist on testnet/mainnet.
 - `CloneLocalOptions`: An extension of `CreateLocalOptions` that includes:
-  - `env`: a `string` whose value is either `mainnet` or `testnet` depending which network we are supposed to fork from.
+  - `env`: a `string` whose value is either `mainnet` or `testnet`, or an `array` of `ChainCloneData`.
   - `chains`: These now act as a filter for which chains to fork. Defaults to all the chains.
-  - `networkInfo`: The `NetworkInfo` (see below) which overwrites the default parameters. Can be used to set the chainId which can be used to fool metamask into using actual dApps!
+  - `networkInfo`: The `NetworkInfo` (see below) which overwrites the default parameters.
 - `Network`: This object type is used to handle most functionality within the module. It has the following properties:
   - `name`: The name of the network.
   - `chainId`: The chainId of the network.
@@ -91,6 +91,7 @@ This module exports the following types:
   - `name`: Name of the network to create.
     `gateway`: The (preexisting) address of the gateway.
     `rpc`: A url to an RPC to connect to the chain to fork.
+    `chainId`: The chain id, as a `Number`.
     `gasReceiver`: The (preexisting) address of the gasReceiver.
     `constAddressDeployer`: The (preexisting) address of the constAddressDeployer.;
     `tokenName`: The name of the native token on this chain.

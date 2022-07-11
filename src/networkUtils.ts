@@ -19,6 +19,7 @@ export interface ChainCloneData {
     name: string;
     gateway: string;
     rpc: string;
+    chainId: number;
     gasReceiver: string;
     constAddressDeployer: string;
     tokenName: string;
@@ -195,7 +196,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     }
     const chain: Network = new Network();
     chain.name = options.name != null ? options.name : chainInfo.name != null ? chainInfo.name : `Chain ${networks.length + 1}`;
-    chain.chainId = options.chainId! || networks.length + 2500;
+    chain.chainId = options.chainId! || chainInfo.chainId! || networks.length + 2500;
     logger.log(`Forking ${chain.name} with a chainId of ${chain.chainId}...`);
     const accounts = defaultAccounts(20, options.seed!);
 

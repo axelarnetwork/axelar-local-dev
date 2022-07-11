@@ -25,7 +25,7 @@ export interface CloneLocalOptions {
     chainOutputPath?: string;
     accountsToFund?: string[];
     fundAmount?: string;
-    env?: string;
+    env?: string | any;
     chains?: string[];
     relayInterval?: number;
     port?: number;
@@ -105,9 +105,9 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
     const chains_local: Record<string, any>[] = [];
     if (options.env != 'mainnet' && options.env != 'testnet') {
-        throw new Error('need to specify mainnet or testnet');
+        console.log(`Forking ${options.env.length} chains from custom data.`)
     }
-    const chainsRaw = options.env == 'mainnet' ? mainnetInfo : testnetInfo;
+    const chainsRaw = options.env == 'mainnet' ? mainnetInfo : options.env == 'testnet' ? testnetInfo: options.env;
 
     const chains =
         options.chains?.length == 0
