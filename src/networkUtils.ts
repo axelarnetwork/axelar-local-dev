@@ -140,9 +140,9 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
     chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
     chain.gasReceiver = new Contract(info.gasReceiverAddress, IAxelarGasReceiver.abi, chain.provider);
-    chain.usdc = await chain.getTokenContract('aUSDC');
+    //chain.usdc = await chain.getTokenContract('aUSDC');
 
-    logger.log(`Its gateway is deployed at ${chain.gateway.address} its aUSDC ${chain.usdc.address}.`);
+    logger.log(`Its gateway is deployed at ${chain.gateway.address}.`);
 
     networks.push(chain);
     return chain;
