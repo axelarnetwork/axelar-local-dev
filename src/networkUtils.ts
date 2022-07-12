@@ -137,6 +137,7 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.lastRelayedBlock = info.lastRelayedBlock;
     chain.tokens = info.tokens;
 
+    chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
     chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
     chain.gasReceiver = new Contract(info.gasReceiverAddress, IAxelarGasReceiver.abi, chain.provider);
     chain.usdc = await chain.getTokenContract('aUSDC');
