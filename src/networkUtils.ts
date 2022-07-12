@@ -99,7 +99,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await chain._deployGateway();
     await chain._deployGasReceiver();
     chain.tokens = {};
-    chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
+    //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
 
     if (options.port) {
         chain.port = options.port;
@@ -185,7 +185,7 @@ export async function setupNetwork(urlOrProvider: string | providers.Provider, o
     await chain._deployGateway();
     await chain._deployGasReceiver();
     chain.tokens = {};
-    chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
+    //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
     networks.push(chain);
     return chain;
 }

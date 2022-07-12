@@ -62,7 +62,7 @@ This module exports the following types:
   - `port`: Port to listen to. Defaults to `8500`.
   - `afterRelay`: A function `(relayData: RelayData) => void` which will be called after each relay. Mainly to be used for debugging.
   - `callback`: A function `(network: Network, info: any) => Promise<null>` that will be called right after setting up each network. Use this to setup additional features, like deploying contracts that already exist on testnet/mainnet.
-- `CloneLocalOptions`: An extension of `CreateLocalOptions` that includes:
+- `CloneLocalOptions`: An extension of `CreateLocalOptions` that also includes:
   - `env`: a `string` whose value is either `mainnet` or `testnet`, or an `array` of `ChainCloneData`.
   - `chains`: These now act as a filter for which chains to fork. Defaults to all the chains.
   - `networkInfo`: The `NetworkInfo` (see below) which overwrites the default parameters.

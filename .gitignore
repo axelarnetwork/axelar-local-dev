@@ -10,6 +10,7 @@ examples/metamask/abi/**.json
 ./quick.json
 local.json
 temp.js
+temp2.js
 
 #Hardhat files
 cache
