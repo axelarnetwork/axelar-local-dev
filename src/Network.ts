@@ -242,6 +242,17 @@ export class Network {
         };
         return info;
     }
+
+    getCloneInfo() {
+        return {
+            name: this.name,
+            chainId: this.chainId,
+            gateway: this.gateway.address,
+            gasReceiver: this.gasReceiver.address,
+            constAddressDeployer: this.constAddressDeployer.address,
+            tokens: this.tokens,
+        }
+    }
 }
 
 export class RemoteNetwork extends Network {
