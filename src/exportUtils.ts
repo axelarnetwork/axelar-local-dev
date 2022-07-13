@@ -107,7 +107,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     const chains =
         options.chains?.length == 0
             ? chainsRaw
-            : chainsRaw.filter((chain: any) => options.chains?.find((name) => name == chain.name) != null);
+            : chainsRaw.filter((chain: any) => options.chains?.find((name) => name.toLocaleLowerCase() == chain.name.toLocaleLowerCase()) != null);
 
     let i = 0;
     for (const chain of chains) {
