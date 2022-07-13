@@ -114,7 +114,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         const network = await forkNetwork(chain, options.networkOptions);
 
 
-        const info = chain.getCloneInfo() as any;
+        const info = network.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
         info.tokenName = chain?.tokenName,
         info.tokenSymbol =  chain?.tokenSymbol,
