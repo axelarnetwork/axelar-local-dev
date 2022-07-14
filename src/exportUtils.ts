@@ -3,7 +3,6 @@
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
-const fs = require('fs');
 import { RelayData, relay, gasLogs, gasLogsWithToken } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
@@ -79,11 +78,6 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         if (options.afterRelay) options.afterRelay(relayData);
     }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath!);
-
-    process.on('SIGINT', function () {
-        fs.unlinkSync(options.chainOutputPath);
-        process.exit();
-    });
 }
 
 export async function forkAndExport(options: CloneLocalOptions = {}) {
@@ -138,11 +132,6 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         if (options.afterRelay) options.afterRelay(relayData);
     }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath!);
-
-    process.on('SIGINT', function () {
-        fs.unlinkSync(options.chainOutputPath);
-        process.exit();
-    });
 }
 
 export async function destroyExported() {
