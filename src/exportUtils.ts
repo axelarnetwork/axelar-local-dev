@@ -107,14 +107,14 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     const chains =
         options.chains?.length == 0
             ? chainsRaw
-            : chainsRaw.filter((chain: any) => options.chains?.find((name) => name == chain.name) != null);
+            : chainsRaw.filter((chain: any) => options.chains?.find((name) => name.toLocaleLowerCase() == chain.name.toLocaleLowerCase()) != null);
 
     let i = 0;
     for (const chain of chains) {
         const network = await forkNetwork(chain, options.networkOptions);
 
 
-        const info = chain.getCloneInfo() as any;
+        const info = network.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
         info.tokenName = chain?.tokenName,
         info.tokenSymbol =  chain?.tokenSymbol,
