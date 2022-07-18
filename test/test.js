@@ -72,7 +72,6 @@ describe('create', () => {
     });
 
     afterEach(async () => {
-        expect(await chain.gateway.tokenAddresses('aUSDC')).to.equal(chain.usdc.address);
         await (await chain.gasReceiver.connect(chain.ownerWallet).collectFees(chain.ownerWallet.address, [])).wait();
         stopAll();
     });
@@ -84,6 +83,7 @@ describe('token', () => {
     beforeEach(async () => {
         chain = await createNetwork();
         [user] = chain.userWallets;
+        chain.usdc = await chain.deployToken('Axelar Wrapped USDC', 'aUSDC', 6, 0);
     });
     afterEach(async () => {
         stopAll();
@@ -113,8 +113,10 @@ describe('relay', async () => {
     beforeEach(async () => {
         chain1 = await createNetwork({ seed: 1 });
         [user1] = chain1.userWallets;
+        chain1.usdc = await chain1.deployToken('Axelar Wrapped USDC', 'aUSDC', 6, 0);
         chain2 = await createNetwork({ seed: 2 });
         [user2] = chain2.userWallets;
+        chain2.usdc = await chain2.deployToken('Axelar Wrapped USDC', 'aUSDC', 6, 0);
     });
     afterEach(async () => {
         stopAll();
