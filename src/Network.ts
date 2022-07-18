@@ -174,7 +174,7 @@ export class Network {
         logger.log(`Deployed at ${this.constAddressDeployer.address}`);
         return this.constAddressDeployer;
     }
-    async deployToken(name: string, symbol: string, decimals: number, cap: BigInt, alias: string = symbol, address: string = ADDRESS_ZERO) {
+    async deployToken(name: string, symbol: string, decimals: number, cap: BigInt, address: string = ADDRESS_ZERO, alias: string = symbol) {
         logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(
             defaultAbiCoder.encode(
