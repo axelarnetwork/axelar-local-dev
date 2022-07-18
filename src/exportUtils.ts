@@ -56,10 +56,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         });
         const info = chain.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
-        info.tokenName = testnet?.tokenName,
-        info.tokenSymbol =  testnet?.tokenSymbol,
-
-        chains_local.push(info);
+        (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), chains_local.push(info);
         const [user] = chain.userWallets;
         for (const account of options.accountsToFund!) {
             await user
@@ -94,26 +91,24 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
     const chains_local: Record<string, any>[] = [];
     if (options.env != 'mainnet' && options.env != 'testnet') {
-        console.log(`Forking ${options.env.length} chains from custom data.`)
+        console.log(`Forking ${options.env.length} chains from custom data.`);
     }
-    const chainsRaw = options.env == 'mainnet' ? mainnetInfo : options.env == 'testnet' ? testnetInfo: options.env;
+    const chainsRaw = options.env == 'mainnet' ? mainnetInfo : options.env == 'testnet' ? testnetInfo : options.env;
 
     const chains =
         options.chains?.length == 0
             ? chainsRaw
-            : chainsRaw.filter((chain: any) => options.chains?.find((name) => name.toLocaleLowerCase() == chain.name.toLocaleLowerCase()) != null);
+            : chainsRaw.filter(
+                  (chain: any) => options.chains?.find((name) => name.toLocaleLowerCase() == chain.name.toLocaleLowerCase()) != null
+              );
 
     let i = 0;
     for (const chain of chains) {
         const network = await forkNetwork(chain, options.networkOptions);
 
-
         const info = network.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
-        info.tokenName = chain?.tokenName,
-        info.tokenSymbol =  chain?.tokenSymbol,
-
-        chains_local.push(info);
+        (info.tokenName = chain?.tokenName), (info.tokenSymbol = chain?.tokenSymbol), chains_local.push(info);
         const [user] = network.userWallets;
         for (const account of options.accountsToFund!) {
             await user

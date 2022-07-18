@@ -251,7 +251,7 @@ export class Network {
             gasReceiver: this.gasReceiver.address,
             constAddressDeployer: this.constAddressDeployer.address,
             tokens: this.tokens,
-        }
+        };
     }
 }
 

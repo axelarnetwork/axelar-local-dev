@@ -317,12 +317,18 @@ describe('relay', async () => {
     });
 });
 describe('forking', async () => {
+    afterEach(async () => {
+        stopAll();
+    });
     it('should fork Avalanche mainnet', async () => {
-        return;
         const chainName = 'Avalanche';
         const chains = mainnetInfo;
-        const avalance = chains.find((chain) => chain.name == chainName);
-        const chain = await forkNetwork(avalance);
+        const avalance = chains.find((chain) => chain.name === chainName);
+        const chain = await forkNetwork(avalance, {
+            ganacheOptions: {
+                fork: { deleteCache: true },
+            },
+        });
         const tokenAddress = await chain.gateway.tokenAddresses('axlUSDC');
         chain.usdc = new Contract(tokenAddress, BurnableMintableCappedERC20.abi, chain.provider);
         expect(await chain.usdc.name()).to.equal('Axelar Wrapped USDC');
@@ -334,11 +340,13 @@ describe('forking', async () => {
     it('should fork Avalanche and Ethereum and send some USDC back and forth', async () => {
         const chains = mainnetInfo;
         const alias = 'uusdc';
+
         for (const chainName of ['Avalanche', 'Ethereum']) {
-            const chainInfo = chains.find((chain) => chain.name == chainName);
+            const chainInfo = chains.find((chain) => chain.name === chainName);
             const chain = await forkNetwork(chainInfo);
             chain.usdc = await chain.getTokenContract(alias);
         }
+        
         const avalanche = networks[0];
         const ethereum = networks[1];
 
@@ -347,6 +355,7 @@ describe('forking', async () => {
         const amount1 = BigInt(100e6);
         const fee1 = BigInt(getFee(avalanche, ethereum));
         await avalanche.giveToken(userAvalanche.address, alias, amount1);
+        expect(BigInt(await avalanche.usdc.balanceOf(userAvalanche.address))).to.equal(amount1);
         await (await avalanche.usdc.connect(userAvalanche).approve(avalanche.gateway.address, amount1)).wait();
         await (
             await avalanche.gateway.connect(userAvalanche).sendToken(ethereum.name, userEthereum.address, avalanche.tokens[alias], amount1)
@@ -354,7 +363,6 @@ describe('forking', async () => {
 
         await relay();
         expect(BigInt(await ethereum.usdc.balanceOf(userEthereum.address))).to.equal(BigInt(amount1 - fee1));
-
         const amount2 = amount1 - fee1;
         const fee2 = BigInt(getFee(ethereum, avalanche));
         await (await ethereum.usdc.connect(userEthereum).approve(ethereum.gateway.address, amount2)).wait();
