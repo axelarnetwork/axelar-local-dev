@@ -206,7 +206,7 @@ export class Network {
         return new Contract(address, BurnableMintableCappedERC20.abi, this.provider);
     }
     async giveToken(address: string, alias: string, amount: BigInt) {
-        const symbol = this.tokens[alias];
+        const symbol = this.tokens[alias] || alias;
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
