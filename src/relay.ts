@@ -80,14 +80,14 @@ const updateGasLogs = async (from: Network, blockNumber: number) => {
     filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
     newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
     for (const gasLog of newGasLogs) {
-        gasLogs.push(gasLog);
+        gasLogsWithToken.push(gasLog);
     }
     filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
     newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
         return { ...log.args, gasToken: AddressZero };
     });
     for (const gasLog of newGasLogs) {
-        gasLogs.push(gasLog);
+        gasLogsWithToken.push(gasLog);
     }
 };
 
