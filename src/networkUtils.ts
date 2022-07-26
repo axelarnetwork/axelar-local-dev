@@ -228,7 +228,10 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
             networkId: chain.chainId,
             vmErrorsOnRPCResponse: true,
         },
-        fork: { url: chainInfo.rpc },
+        fork: { 
+            url: chainInfo.rpc, 
+            deleteCache: true,
+        },
         logging: { quiet: true },
     };
     merge(ganacheOptions, options.ganacheOptions);

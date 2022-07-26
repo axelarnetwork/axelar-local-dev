@@ -284,6 +284,7 @@ const postExecute = async (to: Network, commands: Command[], execution: any) => 
         )
             continue;
         const fromName = command.data[0];
+        const from = networks.find(network => network.name == fromName);
         const payed =
             command.name == 'approveContractCall'
                 ? gasLogs.find((log: any) => {
@@ -298,7 +299,8 @@ const postExecute = async (to: Network, commands: Command[], execution: any) => 
                       if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
                       if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
                       if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                      if (log.symbol != command.data[4]) return false;
+                      const alias = getAliasFromSymbol(from!.tokens, log.symbol);
+                      if (to.tokens[alias] != command.data[4]) return false;
                       if (log.amount - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
                       return true;
                   });
