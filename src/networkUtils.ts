@@ -229,13 +229,12 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
             vmErrorsOnRPCResponse: true,
         },
         fork: { 
-            url: chainInfo.rpc, 
-            deleteCache: true,
+            url: chainInfo.rpc,
         },
         logging: { quiet: true },
     };
-    merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = require('ganache').provider(ganacheOptions);
+    const merged = merge(ganacheOptions, options.ganacheOptions);
+    chain.ganacheProvider = require('ganache').provider(merged);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
