@@ -141,6 +141,7 @@ const updateTokenSent = async (from: Network, blockNumber: number, relayData: Re
         const alias = getAliasFromSymbol(from.tokens, args.symbol);
         const fee = getFee(from, args.destinationChain, alias);
         if (args.amount <= fee) continue;
+        const amountOut = args.amount.sub(fee);
         const commandId = getLogID(from.name, log);
         const to = networks.find((chain: Network) => chain.name == args.destinationChain);
         const destinationTokenSymbol = to!.tokens[alias];
@@ -151,13 +152,13 @@ const updateTokenSent = async (from: Network, blockNumber: number, relayData: Re
             amountIn: args.amount,
             fee: fee,
             alias: alias,
-            amountOut: args.amount - fee,
+            amountOut: amountOut,
         };
         commands[args.destinationChain].push(
             new Command(
                 commandId,
                 'mintToken',
-                [destinationTokenSymbol, args.destinationAddress, BigInt(args.amount - fee)],
+                [destinationTokenSymbol, args.destinationAddress, amountOut],
                 ['string', 'address', 'uint256']
             )
         );
