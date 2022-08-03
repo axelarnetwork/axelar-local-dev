@@ -25,7 +25,7 @@ async function main() {
     name: "Ethereum",
   });
   // deploy eth token
-  await eth.deployToken("USDC", "aUSDC", 6, BigInt(100000e6));
+  await eth.deployToken("USDC", "aUSDC", 6, BigInt(100_000e6));
 
   // create avalanche network
   const avalanche = await createNetwork({
