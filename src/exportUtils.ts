@@ -17,7 +17,7 @@ export interface CreateLocalOptions {
     relayInterval?: number;
     port?: number;
     afterRelay?: (relayData: RelayData) => void;
-    callback?: (network: Network, info: any) => Promise<null>;
+    callback?: (network: Network, info: any) => Promise<void>;
 }
 
 export interface CloneLocalOptions {
