@@ -174,7 +174,7 @@ describe('relay', async () => {
     });
     describe('call contract', async () => {
         let ex1, ex2;
-        const Executable = require('../build/Executable.json');
+        const Executable = require('../artifacts/src/contracts/test/Executable.sol/Executable.json');
 
         const message = 'hello there executables!';
         const payload = defaultAbiCoder.encode(['string'], [message]);
@@ -233,7 +233,7 @@ describe('relay', async () => {
     });
     describe('call contract with token', async () => {
         let ex1, ex2;
-        const Executable = require('../build/ExecutableWithToken.json');
+        const Executable = require('../artifacts/src/contracts/test/ExecutableWithToken.sol/ExecutableWithToken.json');
 
         const message = 'hello there executables!';
         const amount = 1234255675;
@@ -264,7 +264,7 @@ describe('relay', async () => {
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(user1.address);
-            expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
         });
         it('should pay for gas and call a contract manually', async () => {
             await await chain1.gasReceiver
@@ -281,7 +281,7 @@ describe('relay', async () => {
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(user1.address);
-            expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
         });
         it('should call a contract through the sibling and fulfill the call', async () => {
             await (await chain1.usdc.connect(user1).approve(ex1.address, amount)).wait();
@@ -297,7 +297,7 @@ describe('relay', async () => {
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(ex1.address);
-            expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
         });
         it('shouldhave the sibling pay for gas and make the call', async () => {
             await (await chain1.usdc.connect(user1).approve(ex1.address, amount)).wait();
@@ -312,7 +312,7 @@ describe('relay', async () => {
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(ex1.address);
-            expect(await chain2.usdc.balanceOf(user2.address)).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
         });
     });
 });
@@ -346,7 +346,7 @@ describe('forking', async () => {
             const chain = await forkNetwork(chainInfo);
             chain.usdc = await chain.getTokenContract(alias);
         }
-        
+
         const avalanche = networks[0];
         const ethereum = networks[1];
 

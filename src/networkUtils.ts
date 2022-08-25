@@ -1,7 +1,7 @@
 'use strict';
 
 import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
-const { defaultAbiCoder, keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
+const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
@@ -10,7 +10,7 @@ const fs = require('fs');
 
 const IAxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json');
 const IAxelarGasReceiver = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json');
-const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
+const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
 const AxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json');
 
 let serverInstance: any;
@@ -228,7 +228,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
             networkId: chain.chainId,
             vmErrorsOnRPCResponse: true,
         },
-        fork: { 
+        fork: {
             url: chainInfo.rpc,
         },
         logging: { quiet: true },

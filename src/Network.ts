@@ -11,12 +11,11 @@ const AxelarGatewayProxy = require('../artifacts/@axelar-network/axelar-cgp-soli
 const AxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IAxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json');
 const BurnableMintableCappedERC20 = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
-const Auth = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarAuthMultisig.sol/AxelarAuthMultisig.json');
+const Auth = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
 const AxelarGasReceiver = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json');
 const AxelarGasReceiverProxy = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasServiceProxy.sol/AxelarGasServiceProxy.json');
-const ConstAddressDeployer = require('axelar-utils-solidity/dist/ConstAddressDeployer.json');
+const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
 
-const ROLE_OWNER = 1;
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 export const networks: Network[] = [];
@@ -107,7 +106,7 @@ export class Network {
             )
         );
         const auth = await deployContract(this.ownerWallet, Auth, [
-            [defaultAbiCoder.encode(['address[]', 'uint256'], [[this.operatorWallet.address], 1])],
+            [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [[this.operatorWallet.address], [1], 1])],
         ]);
         const tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
         const gateway = await deployContract(this.ownerWallet, AxelarGateway, [auth.address, tokenDeployer.address]);
@@ -133,7 +132,7 @@ export class Network {
             )
         );
         const auth = await deployContract(this.ownerWallet, Auth, [
-            [defaultAbiCoder.encode(['address[]', 'uint256'], [[this.operatorWallet.address], 1])],
+            [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [[this.operatorWallet.address], [1], 1])],
         ]);
         const tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
         const gateway = await deployContract(this.ownerWallet, AxelarGateway, [auth.address, tokenDeployer.address]);
@@ -149,10 +148,8 @@ export class Network {
     async _deployGasReceiver(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
         const gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, []);
-        const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy, [
-            gasReceiver.address,
-            defaultAbiCoder.encode(['address', 'address'], [this.ownerWallet.address, this.gateway.address]),
-        ]);
+        const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy);
+        await gasReceiverProxy.init(gasReceiver.address, this.ownerWallet.address, '0x');
 
         this.gasReceiver = new Contract(gasReceiverProxy.address, AxelarGasReceiver.abi, this.provider);
         logger.log(`Deployed at ${this.gasReceiver.address}`);
@@ -209,10 +206,9 @@ export class Network {
         const symbol = this.tokens[alias] || alias;
         const data = arrayify(
             defaultAbiCoder.encode(
-                ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
+                ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
                 [
                     this.chainId,
-                    ROLE_OWNER,
                     [getRandomID()],
                     ['mintToken'],
                     [defaultAbiCoder.encode(['string', 'address', 'uint256'], [symbol, address, amount])],
