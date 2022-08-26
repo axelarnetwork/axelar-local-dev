@@ -1,0 +1,19 @@
+# Modules
+node_modules
+
+# dotenv environment variables file
+.env
+.env.test
+
+# Logs
+logs
+*.log
+
+# Optional npm cache directory
+.npm
+
+# builder cache
+.cache
+
+# workflows
+.github
