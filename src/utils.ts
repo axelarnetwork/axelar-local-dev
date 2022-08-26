@@ -4,7 +4,6 @@ import { ethers, ContractFactory, BigNumber, Wallet } from 'ethers';
 const { defaultAbiCoder, id, arrayify, keccak256 } = ethers.utils;
 import http from 'http';
 const { outputJsonSync } = require('fs-extra');
-const { sortBy } = require('lodash');
 
 export const logger = { log: console.log };
 
@@ -18,16 +17,8 @@ export function bigNumberToNumber(bigNumber: BigNumber) {
 
 export async function getSignedExecuteInput(data: any, wallet: Wallet) {
     const signature = await wallet.signMessage(arrayify(keccak256(data)));
-    const signData = defaultAbiCoder.encode(['address[]', 'bytes[]'], [[wallet.address], [signature]]);
+    const signData = defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256', 'bytes[]'], [[wallet.address], [1], 1, [signature]]);
     return defaultAbiCoder.encode(['bytes', 'bytes'], [data, signData]);
-}
-export async function getSignedMultisigExecuteInput(data: any, wallets: Wallet[]) {
-    const sorted = sortBy(wallets, (wallet: Wallet) => wallet.address.toLowerCase());
-    const signatures = [];
-    for (const wallet of sorted) {
-        signatures.push(await wallet.signMessage(arrayify(keccak256(data))));
-    }
-    return defaultAbiCoder.encode(['bytes', 'bytes[]'], [data, signatures]);
 }
 
 export const getRandomID = () => id(getRandomInt(1e10).toString());

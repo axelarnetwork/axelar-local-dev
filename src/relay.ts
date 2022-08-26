@@ -1,21 +1,10 @@
 'use strict';
 
-import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
-const { defaultAbiCoder, arrayify, keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
+import { ethers, Wallet, Contract } from 'ethers';
+const { defaultAbiCoder, arrayify } = ethers.utils;
 const AddressZero = ethers.constants.AddressZero;
-import {
-    getSignedExecuteInput,
-    getRandomID,
-    getLogID,
-    defaultAccounts,
-    setJSON,
-    httpGet,
-    deployContract,
-    logger,
-    setLogger,
-} from './utils';
-import server from './server';
-import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
+import { getSignedExecuteInput, getRandomID, getLogID, logger } from './utils';
+import { Network, networks } from './Network';
 import { getFee, getGasPrice, depositAddresses } from './networkUtils';
 
 export interface RelayData {
@@ -52,8 +41,6 @@ export const gasLogs: any[] = [];
 export const gasLogsWithToken: any[] = [];
 
 const IAxelarExecutable = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json');
-
-const ROLE_OWNER = 1;
 
 const getAliasFromSymbol = (tokens: { [key: string]: string }, symbol: string) => {
     for (const alias in tokens) {
@@ -261,14 +248,8 @@ const updateCallContractWithToken = async (
 const executeCommands = async (to: Network, commands: Command[]) => {
     const data = arrayify(
         defaultAbiCoder.encode(
-            ['uint256', 'uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-            [
-                to.chainId,
-                ROLE_OWNER,
-                commands.map((com) => com.commandId),
-                commands.map((com) => com.name),
-                commands.map((com) => com.encodedData),
-            ]
+            ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
+            [to.chainId, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)]
         )
     );
     const signedData = await getSignedExecuteInput(data, to.operatorWallet);
@@ -285,7 +266,7 @@ const postExecute = async (to: Network, commands: Command[], execution: any) => 
         )
             continue;
         const fromName = command.data[0];
-        const from = networks.find(network => network.name == fromName);
+        const from = networks.find((network) => network.name == fromName);
         const payed =
             command.name == 'approveContractCall'
                 ? gasLogs.find((log: any) => {

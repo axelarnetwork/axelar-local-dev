@@ -1,7 +1,4 @@
 node_modules
-.env
-coverage
-coverage.json
 typechain
 examples/metamask/chain*.json
 examples/metamask/abi/**.json
@@ -37,6 +34,7 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+coverage.json
 *.lcov
 
 # nyc test coverage
@@ -118,3 +116,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Build
+artifacts
