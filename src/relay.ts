@@ -253,7 +253,7 @@ const executeCommands = async (to: Network, commands: Command[]) => {
         )
     );
     const signedData = await getSignedExecuteInput(data, to.operatorWallet);
-    return await (await to.gateway.connect(to.ownerWallet).execute(signedData, { gasLimit: BigInt(1e7) })).wait();
+    return await (await to.gateway.connect(to.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
 };
 const postExecute = async (to: Network, commands: Command[], execution: any) => {
     for (const command of commands) {
