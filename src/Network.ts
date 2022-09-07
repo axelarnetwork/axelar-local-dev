@@ -190,7 +190,7 @@ export class Network {
             )
         );
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(1e7) })).wait();
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
         let tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(tokenAddress, BurnableMintableCappedERC20.abi, this.ownerWallet);
         logger.log(`Deployed at ${tokenContract.address}`);
@@ -217,7 +217,7 @@ export class Network {
         );
 
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(1e7) })).wait();
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
     }
 
     getInfo() {
