@@ -18,6 +18,8 @@ import {
     getDepositAddress,
 } from './networkUtils';
 
+export * from './aptosNetworkUtils';
+
 export const utils = {
     deployContract,
     defaultAccounts,
