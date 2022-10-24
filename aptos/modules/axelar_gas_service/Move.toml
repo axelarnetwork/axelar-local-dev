@@ -1,0 +1,6 @@
+[package]
+name = "axelar_gas_service"
+version = "0.0.2"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "main"}
