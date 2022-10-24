@@ -345,36 +345,31 @@ const relayEvm = async () => {
     return relayData;
 };
 
-let currentAptosTxVersion = 0;
+let currentGasServiceSequence = 0;
+let currentGatewaySequence = 0;
+let isFirstRun = true;
 
-const updateAptosTxVersion = async () => {
-    const txs = await aptosNetwork.getTransactions({ limit: 1 });
-    if (txs.length == 0) return;
-    const lastTx = txs[0];
-    currentAptosTxVersion = (lastTx as any).version;
-    console.log('currentTxVersion', currentAptosTxVersion);
+const getLatestEventSequence = (gatewayEvents: any[]) => {
+    if (gatewayEvents.length == 0) return null;
+
+    return parseInt(gatewayEvents[gatewayEvents.length - 1].sequence_number);
 };
 
 const relayAptosToEvm = async () => {
     if (!aptosNetwork) return;
-    if (currentAptosTxVersion === 0) {
-        await updateAptosTxVersion();
-    }
 
     const axelarEventAddress = aptosNetwork.owner.address();
 
-    const filterOnlyNewEvents = (event: any) => {
-        if (event.version) {
-            const versionNumber = parseInt(event.version);
-            return versionNumber > currentAptosTxVersion;
-        }
-        return false;
-    };
-
     // Fetch gateway events
     const gatewayEvents = await aptosNetwork
-        .getEventsByEventHandle(axelarEventAddress, `${axelarEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events')
-        .then((events) => events.filter((event) => filterOnlyNewEvents(event)));
+        .getEventsByEventHandle(axelarEventAddress, `${axelarEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events', {
+            start: currentGatewaySequence && currentGatewaySequence + 1,
+            limit: 100,
+        })
+        .then((events) => {
+            currentGatewaySequence = getLatestEventSequence(events) || currentGatewaySequence;
+            return events;
+        });
     console.log('contractCallEvents', gatewayEvents);
 
     // Fetch gas service events
@@ -382,12 +377,16 @@ const relayAptosToEvm = async () => {
         .getEventsByEventHandle(
             axelarEventAddress,
             `${axelarEventAddress}::axelar_gas_service::GasServiceEventStore`,
-            'native_gas_paid_for_contract_call_events'
+            'native_gas_paid_for_contract_call_events',
+            { start: currentGasServiceSequence && currentGasServiceSequence + 1, limit: 100 }
         )
-        .then((events) => events.filter((event) => filterOnlyNewEvents(event)));
+        .then((events) => {
+            currentGasServiceSequence = getLatestEventSequence(events) || currentGasServiceSequence;
+            return events;
+        });
+    console.log('currentGasServiceSequence', currentGasServiceSequence);
+    console.log('currentGatewaySequence', currentGatewaySequence);
     console.log('gatewayCallEvents', gasServiceEvents);
-
-    await updateAptosTxVersion();
 };
 
 const relayEvmToAptos = async () => {};
