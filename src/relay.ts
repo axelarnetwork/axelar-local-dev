@@ -350,7 +350,6 @@ let currentAptosTxVersion = 0;
 const updateAptosTxVersion = async () => {
     const txs = await aptosNetwork.getTransactions({ limit: 1 });
     if (txs.length == 0) return;
-    console.log('tx', txs);
     const lastTx = txs[0];
     currentAptosTxVersion = (lastTx as any).version;
     console.log('currentTxVersion', currentAptosTxVersion);
@@ -362,7 +361,7 @@ const relayAptosToEvm = async () => {
         await updateAptosTxVersion();
     }
 
-    const gatewayEventAddress = aptosNetwork.owner.address();
+    const axelarEventAddress = aptosNetwork.owner.address();
 
     const filterOnlyNewEvents = (event: any) => {
         if (event.version) {
@@ -372,17 +371,21 @@ const relayAptosToEvm = async () => {
         return false;
     };
 
-    // Fetch contract call events
-    const contractCallEvents = await aptosNetwork
-        .getEventsByEventHandle(gatewayEventAddress, `${gatewayEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events')
-        .then((events) => events.filter((event) => filterOnlyNewEvents(event)));
-    console.log('contractCallEvents', contractCallEvents);
-
     // Fetch gateway events
-    const gatewayCallEvents = await aptosNetwork
-        .getEventsByEventHandle(gatewayEventAddress, `${gatewayEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events')
+    const gatewayEvents = await aptosNetwork
+        .getEventsByEventHandle(axelarEventAddress, `${axelarEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events')
         .then((events) => events.filter((event) => filterOnlyNewEvents(event)));
-    console.log('gatewayCallEvents', gatewayCallEvents);
+    console.log('contractCallEvents', gatewayEvents);
+
+    // Fetch gas service events
+    const gasServiceEvents = await aptosNetwork
+        .getEventsByEventHandle(
+            axelarEventAddress,
+            `${axelarEventAddress}::axelar_gas_service::GasServiceEventStore`,
+            'native_gas_paid_for_contract_call_events'
+        )
+        .then((events) => events.filter((event) => filterOnlyNewEvents(event)));
+    console.log('gatewayCallEvents', gasServiceEvents);
 
     await updateAptosTxVersion();
 };
