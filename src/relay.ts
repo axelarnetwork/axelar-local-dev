@@ -6,6 +6,7 @@ const AddressZero = ethers.constants.AddressZero;
 import { getSignedExecuteInput, getRandomID, getLogID, logger } from './utils';
 import { Network, networks } from './Network';
 import { getFee, getGasPrice, depositAddresses } from './networkUtils';
+import { aptosNetwork } from './aptosNetworkUtils';
 
 export interface RelayData {
     depositAddress: any;
@@ -308,7 +309,7 @@ const postExecute = async (to: Network, commands: Command[], execution: any) => 
 };
 
 //This function relays all the messages between the tracked networks.
-export const relay = async () => {
+const relayEvm = async () => {
     const relayData: RelayData = {
         depositAddress: {},
         sendToken: {},
@@ -342,4 +343,29 @@ export const relay = async () => {
         await postExecute(to, toExecute, execution);
     }
     return relayData;
+};
+
+let currentAptosTxVersion = 1;
+
+const relayAptosToEvm = async () => {
+    if (!aptosNetwork) return;
+    const txs = await aptosNetwork.getTransactions({ limit: 1 });
+    console.log('tx', txs);
+
+    const gatewayEventAddress = aptosNetwork.owner.address();
+    const events = await aptosNetwork.getEventsByEventHandle(
+        gatewayEventAddress,
+        `${gatewayEventAddress}::axelar_gateway::GatewayEventStore`,
+        'contract_call_events'
+    );
+
+    console.log('events', events);
+};
+
+const relayEvmToAptos = async () => {};
+
+export const relay = async () => {
+    await relayAptosToEvm();
+    await relayEvmToAptos();
+    return relayEvm();
 };
