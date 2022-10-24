@@ -345,21 +345,46 @@ const relayEvm = async () => {
     return relayData;
 };
 
-let currentAptosTxVersion = 1;
+let currentAptosTxVersion = 0;
+
+const updateAptosTxVersion = async () => {
+    const txs = await aptosNetwork.getTransactions({ limit: 1 });
+    if (txs.length == 0) return;
+    console.log('tx', txs);
+    const lastTx = txs[0];
+    currentAptosTxVersion = (lastTx as any).version;
+    console.log('currentTxVersion', currentAptosTxVersion);
+};
 
 const relayAptosToEvm = async () => {
     if (!aptosNetwork) return;
-    const txs = await aptosNetwork.getTransactions({ limit: 1 });
-    console.log('tx', txs);
+    if (currentAptosTxVersion === 0) {
+        await updateAptosTxVersion();
+    }
 
     const gatewayEventAddress = aptosNetwork.owner.address();
-    const events = await aptosNetwork.getEventsByEventHandle(
-        gatewayEventAddress,
-        `${gatewayEventAddress}::axelar_gateway::GatewayEventStore`,
-        'contract_call_events'
-    );
 
-    console.log('events', events);
+    const filterOnlyNewEvents = (event: any) => {
+        if (event.version) {
+            const versionNumber = parseInt(event.version);
+            return versionNumber > currentAptosTxVersion;
+        }
+        return false;
+    };
+
+    // Fetch contract call events
+    const contractCallEvents = await aptosNetwork
+        .getEventsByEventHandle(gatewayEventAddress, `${gatewayEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events')
+        .then((events) => events.filter((event) => filterOnlyNewEvents(event)));
+    console.log('contractCallEvents', contractCallEvents);
+
+    // Fetch gateway events
+    const gatewayCallEvents = await aptosNetwork
+        .getEventsByEventHandle(gatewayEventAddress, `${gatewayEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events')
+        .then((events) => events.filter((event) => filterOnlyNewEvents(event)));
+    console.log('gatewayCallEvents', gatewayCallEvents);
+
+    await updateAptosTxVersion();
 };
 
 const relayEvmToAptos = async () => {};
