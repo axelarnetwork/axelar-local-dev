@@ -345,14 +345,13 @@ const relayEvm = async () => {
     return relayData;
 };
 
-let currentGasServiceSequence = 0;
-let currentGatewaySequence = 0;
-let isFirstRun = true;
+let currentGasServiceSequence = -1;
+let currentGatewaySequence = -1;
 
-const getLatestEventSequence = (gatewayEvents: any[]) => {
-    if (gatewayEvents.length == 0) return null;
+const getLatestEventSequence = (events: any[]) => {
+    if (events.length == 0) return null;
 
-    return parseInt(gatewayEvents[gatewayEvents.length - 1].sequence_number);
+    return parseInt(events[events.length - 1].sequence_number);
 };
 
 const relayAptosToEvm = async () => {
@@ -363,14 +362,22 @@ const relayAptosToEvm = async () => {
     // Fetch gateway events
     const gatewayEvents = await aptosNetwork
         .getEventsByEventHandle(axelarEventAddress, `${axelarEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events', {
-            start: currentGatewaySequence && currentGatewaySequence + 1,
+            start: currentGatewaySequence === -1 ? 0 : currentGatewaySequence + 1,
             limit: 100,
         })
         .then((events) => {
-            currentGatewaySequence = getLatestEventSequence(events) || currentGatewaySequence;
+            const lastSequence = getLatestEventSequence(events);
+            if (lastSequence !== null) {
+                currentGatewaySequence = lastSequence;
+            } else if (lastSequence === 0) {
+                currentGatewaySequence++;
+            }
             return events;
         });
-    console.log('contractCallEvents', gatewayEvents);
+
+    if (gatewayEvents.length > 0) {
+        console.log('gatewayEvents', gatewayEvents);
+    }
 
     // Fetch gas service events
     const gasServiceEvents = await aptosNetwork
@@ -378,15 +385,21 @@ const relayAptosToEvm = async () => {
             axelarEventAddress,
             `${axelarEventAddress}::axelar_gas_service::GasServiceEventStore`,
             'native_gas_paid_for_contract_call_events',
-            { start: currentGasServiceSequence && currentGasServiceSequence + 1, limit: 100 }
+            { start: currentGasServiceSequence === -1 ? 0 : currentGasServiceSequence + 1, limit: 100 }
         )
         .then((events) => {
-            currentGasServiceSequence = getLatestEventSequence(events) || currentGasServiceSequence;
+            const lastSequence = getLatestEventSequence(events);
+            if (lastSequence !== null) {
+                currentGasServiceSequence = lastSequence;
+            } else if (lastSequence === 0) {
+                currentGasServiceSequence++;
+            }
             return events;
         });
-    console.log('currentGasServiceSequence', currentGasServiceSequence);
-    console.log('currentGatewaySequence', currentGatewaySequence);
-    console.log('gatewayCallEvents', gasServiceEvents);
+
+    if (gasServiceEvents.length > 0) {
+        console.log('gasServiceEvents', gasServiceEvents);
+    }
 };
 
 const relayEvmToAptos = async () => {};
