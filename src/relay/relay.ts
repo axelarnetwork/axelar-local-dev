@@ -3,10 +3,13 @@
 import { ethers, Wallet, Contract } from 'ethers';
 const { defaultAbiCoder, arrayify } = ethers.utils;
 const AddressZero = ethers.constants.AddressZero;
-import { getSignedExecuteInput, getRandomID, getLogID, logger } from './utils';
-import { Network, networks } from './Network';
-import { getFee, getGasPrice, depositAddresses } from './networkUtils';
-import { aptosNetwork } from './aptosNetworkUtils';
+import { getSignedExecuteInput, getRandomID, getEVMLogID as getEVMLogID, logger, getAptosLogID } from '../utils';
+import { Network, networks } from '../Network';
+import { getFee, getGasPrice, depositAddresses } from '../networkUtils';
+import { aptosNetwork } from '../aptosNetworkUtils';
+import { Command } from './command';
+import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
+import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
 
 export interface RelayData {
     depositAddress: any;
@@ -15,33 +18,9 @@ export interface RelayData {
     callContractWithToken: any;
 }
 
-//An internal class for handling axelar commands.
-class Command {
-    commandId: string;
-    name: string;
-    data: any[];
-    encodedData: string;
-    post: ((options: any) => Promise<void>) | undefined;
-    constructor(
-        commandId: string,
-        name: string,
-        data: any[],
-        dataSignature: string[],
-        post: ((options: any) => Promise<void>) | undefined = undefined
-    ) {
-        this.commandId = commandId;
-        this.name = name;
-        this.data = data;
-        this.encodedData = defaultAbiCoder.encode(dataSignature, data);
-        this.post = post;
-    }
-}
-
 // Constants used in the encironment to relay
 export const gasLogs: any[] = [];
 export const gasLogsWithToken: any[] = [];
-
-const IAxelarExecutable = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json');
 
 const getAliasFromSymbol = (tokens: { [key: string]: string }, symbol: string) => {
     for (const alias in tokens) {
@@ -79,6 +58,23 @@ const updateGasLogs = async (from: Network, blockNumber: number) => {
     }
 };
 
+const updateGasLogsAptos = async () => {
+    const events = await aptosNetwork.queryPayGasContractCallEvents();
+
+    for (const event of events) {
+        const args: NativeGasPaidForContractCallArgs = {
+            sourceAddress: event.data.source_address,
+            destinationAddress: event.data.destination_address,
+            gasFeeAmount: event.data.gas_fee_amount,
+            destinationChain: event.data.destination_chain,
+            payloadHash: event.data.payload_hash,
+            refundAddress: event.data.refund_address,
+        };
+
+        gasLogs.push(args);
+    }
+};
+
 const updateDepositAddresses = async (from: Network, blockNumber: number, relayData: RelayData, commands: { [key: string]: Command[] }) => {
     for (const address in depositAddresses[from.name]) {
         const data = depositAddresses[from.name][address];
@@ -108,7 +104,7 @@ const updateDepositAddresses = async (from: Network, blockNumber: number, relayD
             const wallet = new Wallet(data.privateKey, from.provider);
             if (Number(await from.provider.getBalance(address)) == 0) {
                 // Create a transaction object
-                let tx = {
+                const tx = {
                     to: address,
                     // Convert currency unit from ether to wei
                     value: BigInt(1e16),
@@ -124,13 +120,13 @@ const updateDepositAddresses = async (from: Network, blockNumber: number, relayD
 const updateTokenSent = async (from: Network, blockNumber: number, relayData: RelayData, commands: { [key: string]: Command[] }) => {
     const filter = from.gateway.filters.TokenSent();
     const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
-    for (let log of logsFrom) {
+    for (const log of logsFrom) {
         const args: any = log.args;
         const alias = getAliasFromSymbol(from.tokens, args.symbol);
         const fee = getFee(from, args.destinationChain, alias);
         if (args.amount <= fee) continue;
         const amountOut = args.amount.sub(fee);
-        const commandId = getLogID(from.name, log);
+        const commandId = getEVMLogID(from.name, log);
         const to = networks.find((chain: Network) => chain.name == args.destinationChain);
         const destinationTokenSymbol = to!.tokens[alias];
 
@@ -153,14 +149,14 @@ const updateTokenSent = async (from: Network, blockNumber: number, relayData: Re
     }
 };
 
-const updateCallContract = async (from: Network, blockNumber: number, relayData: RelayData, commands: { [key: string]: Command[] }) => {
+const updateCallContractEVM = async (from: Network, blockNumber: number, relayData: RelayData, commands: { [key: string]: Command[] }) => {
     const filter = from.gateway.filters.ContractCall();
     const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
-    for (let log of logsFrom) {
+    for (const log of logsFrom) {
         const args: any = log.args;
         if (commands[args.destinationChain] == null) continue;
-        const commandId = getLogID(from.name, log);
-        relayData.callContract[commandId] = {
+        const commandId = getEVMLogID(from.name, log);
+        const contractCallArgs: CallContractArgs = {
             from: from.name,
             to: args.destinationChain,
             sourceAddress: args.sender,
@@ -168,21 +164,29 @@ const updateCallContract = async (from: Network, blockNumber: number, relayData:
             payload: args.payload,
             payloadHash: args.payloadHash,
         };
-        commands[args.destinationChain].push(
-            new Command(
-                commandId,
-                'approveContractCall',
-                [from.name, args.sender, args.destinationContractAddress, args.payloadHash],
-                ['string', 'string', 'address', 'bytes32'],
-                async (options: any) => {
-                    const to = networks.find((chain) => chain.name == args.destinationChain);
-                    const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to!.relayerWallet);
-                    relayData.callContract[commandId].execution = (
-                        await (await contract.execute(commandId, from.name, args.sender, args.payload, options)).wait()
-                    ).transactionHash;
-                }
-            )
-        );
+        relayData.callContract[commandId] = contractCallArgs;
+        const command = Command.createContractCallCommand(commandId, relayData, contractCallArgs);
+        commands[args.destinationChain].push(command);
+    }
+};
+
+const updateCallContractAptos = async (relayData: RelayData, commands: { [key: string]: Command[] }) => {
+    const events = await aptosNetwork.queryContractCallEvents();
+
+    console.log('gatewayEvents', events);
+    for (const event of events) {
+        const commandId = getAptosLogID('aptos', event);
+        const contractCallArgs: CallContractArgs = {
+            from: 'aptos',
+            to: event.data.destination_chain,
+            sourceAddress: event.data.sender,
+            destinationContractAddress: event.data.destination_contract_address,
+            payload: event.data.payload,
+            payloadHash: event.data.payloadHash,
+        };
+        relayData.callContract[commandId] = contractCallArgs;
+        const command = Command.createContractCallCommand(commandId, relayData, contractCallArgs);
+        commands[event.data.destination_chain].push(command);
     }
 };
 
@@ -194,14 +198,14 @@ const updateCallContractWithToken = async (
 ) => {
     const filter = from.gateway.filters.ContractCallWithToken();
     const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
-    for (let log of logsFrom) {
+    for (const log of logsFrom) {
         const args: any = log.args;
         const alias = getAliasFromSymbol(from.tokens, args.symbol);
         const fee = getFee(from, args.destinationChain, alias);
         if (args.amount < fee) continue;
         const amountOut = args.amount.sub(fee);
         if (amountOut < 0) continue;
-        const commandId = getLogID(from.name, log);
+        const commandId = getEVMLogID(from.name, log);
 
         const to = networks.find((chain: Network) => chain.name == args.destinationChain);
         const destinationTokenSymbol = to!.tokens[alias];
@@ -317,7 +321,7 @@ const relayEvm = async () => {
         callContractWithToken: {},
     };
     const commands: { [key: string]: Command[] } = {};
-    for (let to of networks) {
+    for (const to of networks) {
         commands[to.name] = [];
     }
 
@@ -328,7 +332,7 @@ const relayEvm = async () => {
         await updateGasLogs(from, blockNumber);
         await updateDepositAddresses(from, blockNumber, relayData, commands);
         await updateTokenSent(from, blockNumber, relayData, commands);
-        await updateCallContract(from, blockNumber, relayData, commands);
+        await updateCallContractEVM(from, blockNumber, relayData, commands);
         await updateCallContractWithToken(from, blockNumber, relayData, commands);
 
         from.lastRelayedBlock = blockNumber;
@@ -345,77 +349,41 @@ const relayEvm = async () => {
     return relayData;
 };
 
-let currentGasServiceSequence = -1;
-let currentGatewaySequence = -1;
-
-const getLatestEventSequence = (events: any[]) => {
-    if (events.length == 0) return null;
-
-    return parseInt(events[events.length - 1].sequence_number);
-};
-
 const relayAptosToEvm = async () => {
     if (!aptosNetwork) return;
+    const relayData: RelayData = {
+        depositAddress: {},
+        sendToken: {},
+        callContract: {},
+        callContractWithToken: {},
+    };
+    const commands: { [key: string]: Command[] } = {};
 
-    const axelarEventAddress = aptosNetwork.owner.address();
+    updateGasLogsAptos();
+    updateCallContractAptos(relayData, commands);
 
-    // Fetch gateway events
-    const gatewayEvents = await aptosNetwork
-        .getEventsByEventHandle(axelarEventAddress, `${axelarEventAddress}::axelar_gateway::GatewayEventStore`, 'contract_call_events', {
-            start: currentGatewaySequence === -1 ? 0 : currentGatewaySequence + 1,
-            limit: 100,
-        })
-        .then((events) => {
-            const lastSequence = getLatestEventSequence(events);
-            if (lastSequence !== null) {
-                currentGatewaySequence = lastSequence;
-            } else if (lastSequence === 0) {
-                currentGatewaySequence++;
-            }
-            return events;
-        });
+    console.log(commands);
+    for (const to of networks) {
+        const toExecute = commands[to.name];
+        if (toExecute.length == 0) continue;
 
-    if (gatewayEvents.length > 0) {
-        console.log('gatewayEvents', gatewayEvents);
+        const execution = await executeCommands(to, toExecute);
+
+        await postExecute(to, toExecute, execution);
     }
-
-    // Fetch gas service events
-    const gasServiceEvents = await aptosNetwork
-        .getEventsByEventHandle(
-            axelarEventAddress,
-            `${axelarEventAddress}::axelar_gas_service::GasServiceEventStore`,
-            'native_gas_paid_for_contract_call_events',
-            { start: currentGasServiceSequence === -1 ? 0 : currentGasServiceSequence + 1, limit: 100 }
-        )
-        .then((events) => {
-            const lastSequence = getLatestEventSequence(events);
-            if (lastSequence !== null) {
-                currentGasServiceSequence = lastSequence;
-            } else if (lastSequence === 0) {
-                currentGasServiceSequence++;
-            }
-            return events;
-        });
-
-    if (gasServiceEvents.length > 0) {
-        console.log('gasServiceEvents', gasServiceEvents);
-    }
-
     // Filtered only legit events
-    const validContractCallEvents = gatewayEvents.filter((contractCallEvent: any) => {
-        return !!gasServiceEvents.find((payGasEvent: any) => {
-            payGasEvent.version === contractCallEvent.version &&
-                payGasEvent.destination_chain === contractCallEvent.destination_chain &&
-                payGasEvent.destination_address === contractCallEvent.destination_contract_address &&
-                payGasEvent.payload_hash === contractCallEvent.payload_hash &&
-                payGasEvent.source_address === contractCallEvent.sender &&
-                payGasEvent.gas_fee_amount &&
-                payGasEvent.gas_fee_amount !== '0';
-        });
-    });
-    console.log('validContractCallEvents', validContractCallEvents);
-
-    // Make a call to the destination chain
+    // const validContractCallEvents = gatewayEvents.filter((contractCallEvent: any) => {
+    //     return !!gasServiceEvents.find((payGasEvent: any) => {
+    //         payGasEvent.version === contractCallEvent.version &&
+    //             payGasEvent.destination_chain === contractCallEvent.destination_chain &&
+    //             payGasEvent.destination_address === contractCallEvent.destination_contract_address &&
+    //             payGasEvent.payload_hash === contractCallEvent.payload_hash &&
+    //             payGasEvent.source_address === contractCallEvent.sender &&
+    //             payGasEvent.gas_fee_amount &&
+    //             payGasEvent.gas_fee_amount !== '0';
+    //     });
+    // });
+    // console.log('validContractCallEvents', validContractCallEvents);
 };
 
 const relayEvmToAptos = async () => {};

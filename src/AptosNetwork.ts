@@ -1,35 +1,90 @@
 import { AptosAccount, AptosClient, HexString, TxnBuilderTypes } from 'aptos';
 import fs from 'fs';
 import path from 'path';
-// const { privateKey } = require("../secret.json");
 
+interface QueryOptions {
+    start?: number;
+    limit?: number;
+}
 export class AptosNetwork extends AptosClient {
     public owner: AptosAccount;
+    public contractCallSequence: number;
+    public payContractCallSequence: number;
 
-    constructor(nodeUrl: string, privateKey?: string) {
+    constructor(nodeUrl: string) {
         super(nodeUrl);
-        this.owner = new AptosAccount(new HexString(privateKey || '').toUint8Array());
+        // WARNING: should not use the same account for production!
+        this.owner = new AptosAccount(new HexString('0x2a6f6988be264385fbfd552b8aa93451c6aac25d85786dd473fe7159f9320425').toUint8Array());
+        this.contractCallSequence = -1;
+        this.payContractCallSequence = -1;
     }
 
-    private async deploy(contractName: string) {
-        const modulePath = `../aptos/modules/${contractName}/build/${contractName}`;
+    private async deploy(modulePath: string, compiledModules: string[]) {
         const packageMetadata = fs.readFileSync(path.join(__dirname, modulePath, 'package-metadata.bcs'));
-        const moduleData = fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', `${contractName}.mv`));
+        const moduleDatas = compiledModules.map((module: string) => {
+            return fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', module));
+        });
 
-        const txnHash = await this.publishPackage(this.owner, new HexString(packageMetadata.toString('hex')).toUint8Array(), [
-            new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array()),
-        ]);
+        const txnHash = await this.publishPackage(
+            this.owner,
+            new HexString(packageMetadata.toString('hex')).toUint8Array(),
+            moduleDatas.map((moduleData: any) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array()))
+        );
 
         await this.waitForTransaction(txnHash, { checkSuccess: true });
 
         return txnHash;
     }
 
-    deployGateway() {
-        return this.deploy('axelar_gateway');
+    deployAxelarFrameworkModules() {
+        return this.deploy('../aptos/modules/axelar-framework/build/AxelarFramework', ['axelar_gateway.mv', 'axelar_gas_service.mv']);
     }
 
-    deployGasService() {
-        return this.deploy('axelar_gas_service');
+    // implement function to fetch current contract call sequence
+    async updateContractCallSequence() {
+        const events = await this.queryContractCallEvents({ limit: 1000 });
+
+        const lastSequence = this.getLatestEventSequence(events);
+        if (lastSequence === null) return;
+
+        console.log(events);
+        this.contractCallSequence = lastSequence;
     }
+
+    // implement function to fetch current pay gas contract call sequence
+    async updatePayGasContractCallSequence() {
+        const events = await this.queryPayGasContractCallEvents({ limit: 1000 });
+
+        const lastSequence = this.getLatestEventSequence(events);
+        if (lastSequence === null) return;
+
+        console.log(events);
+        this.payContractCallSequence = lastSequence;
+    }
+
+    queryContractCallEvents(options?: QueryOptions) {
+        const _options = options || { start: this.contractCallSequence === -1 ? 0 : this.contractCallSequence + 1, limit: 100 };
+        return this.getEventsByEventHandle(
+            this.owner.address(),
+            `${this.owner.address()}::axelar_gateway::GatewayEventStore`,
+            'contract_call_events',
+            _options
+        );
+    }
+
+    queryPayGasContractCallEvents(options?: QueryOptions) {
+        const _options = options || { start: this.payContractCallSequence === -1 ? 0 : this.payContractCallSequence + 1, limit: 100 };
+        return this.getEventsByEventHandle(
+            this.owner.address(),
+            `${this.owner.address()}::axelar_gas_service::GasServiceEventStore`,
+            'native_gas_paid_for_contract_call_events',
+            _options
+        );
+    }
+
+    private getLatestEventSequence = (events: any[]) => {
+        if (events.length == 0) return null;
+
+        return parseInt(events[events.length - 1].sequence_number);
+    };
 }

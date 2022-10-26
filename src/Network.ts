@@ -3,18 +3,18 @@
 import { ethers, Wallet, Contract, providers } from 'ethers';
 import { logger } from './utils';
 const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
-const { getSignedExecuteInput, getRandomID, deployContract } = require('./utils');
+import { getSignedExecuteInput, getRandomID, deployContract } from './utils';
 import http from 'http';
 
-const TokenDeployer = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/TokenDeployer.sol/TokenDeployer.json');
-const AxelarGatewayProxy = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
-const AxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json');
-const IAxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json');
-const BurnableMintableCappedERC20 = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
-const Auth = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
-const AxelarGasReceiver = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json');
-const AxelarGasReceiverProxy = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasServiceProxy.sol/AxelarGasServiceProxy.json');
-const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
+import TokenDeployer from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/TokenDeployer.sol/TokenDeployer.json';
+import AxelarGatewayProxy from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json';
+import AxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json';
+import IAxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json';
+import BurnableMintableCappedERC20 from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json';
+import Auth from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json';
+import AxelarGasReceiver from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json';
+import AxelarGasReceiverProxy from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasServiceProxy.sol/AxelarGasServiceProxy.json';
+import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
@@ -171,7 +171,7 @@ export class Network {
         logger.log(`Deployed at ${this.constAddressDeployer.address}`);
         return this.constAddressDeployer;
     }
-    async deployToken(name: string, symbol: string, decimals: number, cap: BigInt, address: string = ADDRESS_ZERO, alias: string = symbol) {
+    async deployToken(name: string, symbol: string, decimals: number, cap: bigint, address: string = ADDRESS_ZERO, alias: string = symbol) {
         logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(
             defaultAbiCoder.encode(
@@ -191,7 +191,7 @@ export class Network {
         );
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);
         await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
-        let tokenAddress = await this.gateway.tokenAddresses(symbol);
+        const tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(tokenAddress, BurnableMintableCappedERC20.abi, this.ownerWallet);
         logger.log(`Deployed at ${tokenContract.address}`);
         this.tokens[alias] = symbol;
@@ -202,7 +202,7 @@ export class Network {
         const address = await this.gateway.tokenAddresses(symbol);
         return new Contract(address, BurnableMintableCappedERC20.abi, this.provider);
     }
-    async giveToken(address: string, alias: string, amount: BigInt) {
+    async giveToken(address: string, alias: string, amount: bigint) {
         const symbol = this.tokens[alias] || alias;
         const data = arrayify(
             defaultAbiCoder.encode(
