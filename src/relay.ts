@@ -400,6 +400,22 @@ const relayAptosToEvm = async () => {
     if (gasServiceEvents.length > 0) {
         console.log('gasServiceEvents', gasServiceEvents);
     }
+
+    // Filtered only legit events
+    const validContractCallEvents = gatewayEvents.filter((contractCallEvent: any) => {
+        return !!gasServiceEvents.find((payGasEvent: any) => {
+            payGasEvent.version === contractCallEvent.version &&
+                payGasEvent.destination_chain === contractCallEvent.destination_chain &&
+                payGasEvent.destination_address === contractCallEvent.destination_contract_address &&
+                payGasEvent.payload_hash === contractCallEvent.payload_hash &&
+                payGasEvent.source_address === contractCallEvent.sender &&
+                payGasEvent.gas_fee_amount &&
+                payGasEvent.gas_fee_amount !== '0';
+        });
+    });
+    console.log('validContractCallEvents', validContractCallEvents);
+
+    // Make a call to the destination chain
 };
 
 const relayEvmToAptos = async () => {};
