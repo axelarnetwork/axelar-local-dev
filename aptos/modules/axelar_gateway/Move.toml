@@ -1,6 +1,0 @@
-[package]
-name = "axelar_gateway"
-version = "0.0.1"
-
-[dependencies]
-AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "main"}

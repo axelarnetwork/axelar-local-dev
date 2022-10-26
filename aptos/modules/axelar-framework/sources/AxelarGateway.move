@@ -1,4 +1,4 @@
-module axelar::axelar_gateway {
+module axelar_framework::axelar_gateway {
   use std::string;
   use std::signer;
   use aptos_framework::account;
@@ -24,7 +24,7 @@ module axelar::axelar_gateway {
   }
 
   public entry fun call_contract(sender: &signer, destination_chain: string::String, contract_address: string::String, payload: vector<u8>) acquires GatewayEventStore {
-    let gateway_call = borrow_global_mut<GatewayEventStore>(@axelar);
+    let gateway_call = borrow_global_mut<GatewayEventStore>(@axelar_framework);
 
     let source_address = signer::address_of(sender);
     event::emit_event<ContractCallEvent>(&mut gateway_call.contract_call_events, ContractCallEvent {
