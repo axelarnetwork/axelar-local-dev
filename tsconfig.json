@@ -5,13 +5,13 @@
         "lib": ["es2020", "dom"] /* Specify a set of bundled library declaration files that describe the target runtime environment. */,
 
         /* Modules */
-        "module": "commonjs" /* Specify what module code is generated. */,
+        "module": "CommonJS" /* Specify what module code is generated. */,
 
         /* Emit */
         "declaration": true /* Generate .d.ts files from TypeScript and JavaScript files in your project. */,
         "declarationMap": true /* Create sourcemaps for d.ts files. */,
         "sourceMap": true /* Create source map files for emitted JavaScript files. */,
-        "rootDirs": ["./src/ts", "./test"] /* Specify the root folder within your source files. */,
+        "rootDirs": ["./src", "./test"] /* Specify the root folder within your source files. */,
         "outDir": "./dist" /* Specify an output folder for all emitted files. */,
 
         /* Interop Constraints */

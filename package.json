@@ -36,7 +36,9 @@
         "lodash": "^4.17.21"
     },
     "devDependencies": {
+        "@babel/eslint-parser": "^7.19.1",
         "@types/node": "^18.7.13",
+        "@typescript-eslint/parser": "^5.41.0",
         "chai": "^4.3.6",
         "eslint": "^8.17.0",
         "eslint-config-richardpringle": "^2.0.0",
