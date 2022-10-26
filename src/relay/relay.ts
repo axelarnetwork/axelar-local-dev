@@ -60,6 +60,7 @@ const updateGasLogs = async (from: Network, blockNumber: number) => {
 
 const updateGasLogsAptos = async () => {
     const events = await aptosNetwork.queryPayGasContractCallEvents();
+    aptosNetwork.updatePayGasContractCallSequence(events);
 
     for (const event of events) {
         const args: NativeGasPaidForContractCallArgs = {
@@ -69,6 +70,7 @@ const updateGasLogsAptos = async () => {
             destinationChain: event.data.destination_chain,
             payloadHash: event.data.payload_hash,
             refundAddress: event.data.refund_address,
+            gasToken: AddressZero,
         };
 
         gasLogs.push(args);
@@ -172,8 +174,8 @@ const updateCallContractEVM = async (from: Network, blockNumber: number, relayDa
 
 const updateCallContractAptos = async (relayData: RelayData, commands: { [key: string]: Command[] }) => {
     const events = await aptosNetwork.queryContractCallEvents();
+    aptosNetwork.updateContractCallSequence(events);
 
-    console.log('gatewayEvents', events);
     for (const event of events) {
         const commandId = getAptosLogID('aptos', event);
         const contractCallArgs: CallContractArgs = {
@@ -182,7 +184,7 @@ const updateCallContractAptos = async (relayData: RelayData, commands: { [key: s
             sourceAddress: event.data.sender,
             destinationContractAddress: event.data.destination_contract_address,
             payload: event.data.payload,
-            payloadHash: event.data.payloadHash,
+            payloadHash: event.data.payload_hash,
         };
         relayData.callContract[commandId] = contractCallArgs;
         const command = Command.createContractCallCommand(commandId, relayData, contractCallArgs);
@@ -359,10 +361,14 @@ const relayAptosToEvm = async () => {
     };
     const commands: { [key: string]: Command[] } = {};
 
-    updateGasLogsAptos();
-    updateCallContractAptos(relayData, commands);
+    // init commands
+    for (const to of networks) {
+        commands[to.name] = [];
+    }
 
-    console.log(commands);
+    await updateGasLogsAptos();
+    await updateCallContractAptos(relayData, commands);
+
     for (const to of networks) {
         const toExecute = commands[to.name];
         if (toExecute.length == 0) continue;
@@ -371,19 +377,6 @@ const relayAptosToEvm = async () => {
 
         await postExecute(to, toExecute, execution);
     }
-    // Filtered only legit events
-    // const validContractCallEvents = gatewayEvents.filter((contractCallEvent: any) => {
-    //     return !!gasServiceEvents.find((payGasEvent: any) => {
-    //         payGasEvent.version === contractCallEvent.version &&
-    //             payGasEvent.destination_chain === contractCallEvent.destination_chain &&
-    //             payGasEvent.destination_address === contractCallEvent.destination_contract_address &&
-    //             payGasEvent.payload_hash === contractCallEvent.payload_hash &&
-    //             payGasEvent.source_address === contractCallEvent.sender &&
-    //             payGasEvent.gas_fee_amount &&
-    //             payGasEvent.gas_fee_amount !== '0';
-    //     });
-    // });
-    // console.log('validContractCallEvents', validContractCallEvents);
 };
 
 const relayEvmToAptos = async () => {};

@@ -35,17 +35,14 @@ export class Command {
             [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash],
             ['string', 'string', 'address', 'bytes32'],
             async (options: any) => {
-                const to = networks.find((chain) => chain.name == args.destinationContractAddress);
+                const to = networks.find((chain) => chain.name == args.to);
                 if (!to) return;
 
                 const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to.relayerWallet);
-                const tx = await contract.execute(
-                    commandId,
-                    args.from,
-                    args.sourceAddress,
-                    args.payload,
-                    options.then((tx: any) => tx.wait())
-                );
+                const tx = await contract
+                    .execute(commandId, args.from, args.sourceAddress, args.payload, options)
+                    .then((tx: any) => tx.wait());
+                console.log('Relayed!', tx);
                 relayData.callContract[commandId].execution = tx.transactionHash;
             }
         );

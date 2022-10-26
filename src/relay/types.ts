@@ -14,4 +14,5 @@ export interface NativeGasPaidForContractCallArgs {
     payloadHash: string;
     gasFeeAmount: string;
     refundAddress: string;
+    gasToken: string;
 }

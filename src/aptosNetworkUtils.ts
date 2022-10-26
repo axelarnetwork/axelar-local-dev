@@ -26,11 +26,11 @@ export async function createAptosNetwork(config?: AptosNetworkConfig) {
     console.log('Deployed Axelar Framework modules:', txHash);
 
     // update the sequence number
-    await aptosNetwork.updateContractCallSequence();
-    console.log('Seq CallContract', aptosNetwork.contractCallSequence);
+    const callContractEvents = await aptosNetwork.queryContractCallEvents({ limit: 1000 });
+    aptosNetwork.updateContractCallSequence(callContractEvents);
 
-    await aptosNetwork.updatePayGasContractCallSequence();
-    console.log('Seq PayGas', aptosNetwork.payContractCallSequence);
+    const payGasEvents = await aptosNetwork.queryPayGasContractCallEvents({ limit: 1000 });
+    aptosNetwork.updatePayGasContractCallSequence(payGasEvents);
 
     return aptosNetwork;
 }

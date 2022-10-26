@@ -40,26 +40,18 @@ export class AptosNetwork extends AptosClient {
         return this.deploy('../aptos/modules/axelar-framework/build/AxelarFramework', ['axelar_gateway.mv', 'axelar_gas_service.mv']);
     }
 
-    // implement function to fetch current contract call sequence
-    async updateContractCallSequence() {
-        const events = await this.queryContractCallEvents({ limit: 1000 });
-
+    updateContractCallSequence(events: any[]) {
         const lastSequence = this.getLatestEventSequence(events);
-        if (lastSequence === null) return;
-
-        console.log(events);
-        this.contractCallSequence = lastSequence;
+        if (lastSequence !== null) {
+            this.contractCallSequence = lastSequence;
+        }
     }
 
-    // implement function to fetch current pay gas contract call sequence
-    async updatePayGasContractCallSequence() {
-        const events = await this.queryPayGasContractCallEvents({ limit: 1000 });
-
+    updatePayGasContractCallSequence(events: any[]) {
         const lastSequence = this.getLatestEventSequence(events);
-        if (lastSequence === null) return;
-
-        console.log(events);
-        this.payContractCallSequence = lastSequence;
+        if (lastSequence !== null) {
+            this.payContractCallSequence = lastSequence;
+        }
     }
 
     queryContractCallEvents(options?: QueryOptions) {
