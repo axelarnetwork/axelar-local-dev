@@ -9,7 +9,7 @@
         "build-contract": "rm -rf src/artifacts && hardhat compile && mv artifacts src/artifacts",
         "build-aptos": "./aptos/build.sh",
         "build": "run-s build-contract build-aptos build-ts",
-        "prepare": "tsc",
+        "prepare": "run-s build",
         "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
     },
