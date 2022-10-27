@@ -19,6 +19,7 @@ import {
 
 export * from './relay';
 export * from './aptosNetworkUtils';
+export * from './utils';
 
 export const utils = {
     deployContract,

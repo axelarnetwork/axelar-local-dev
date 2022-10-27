@@ -5,9 +5,10 @@
     "main": "dist/index.js",
     "scripts": {
         "test": "npx hardhat test",
-        "build": "rm -rf dist && tsc",
-        "build-contract": "rm -rf src/artifacts && npx hardhat compile && mv artifacts src/artifacts",
+        "build-ts": "rm -rf dist && tsc",
+        "build-contract": "rm -rf src/artifacts && hardhat compile && mv artifacts src/artifacts",
         "build-aptos": "./aptos/build.sh",
+        "build": "run-s build-contract build-aptos build-ts",
         "prepare": "tsc",
         "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
@@ -48,6 +49,7 @@
         "hardhat": "^2.9.9",
         "hardhat-gas-reporter": "^1.0.8",
         "mocha": "^10.0.0",
+        "npm-run-all": "^4.1.5",
         "prettier": "^2.6.2",
         "prettier-plugin-solidity": "^1.0.0-beta.19",
         "solhint": "^3.3.7",

@@ -42,7 +42,6 @@ export class Command {
                 const tx = await contract
                     .execute(commandId, args.from, args.sourceAddress, args.payload, options)
                     .then((tx: any) => tx.wait());
-                console.log('Relayed!', tx);
                 relayData.callContract[commandId].execution = tx.transactionHash;
             }
         );
