@@ -6,7 +6,7 @@ const AddressZero = ethers.constants.AddressZero;
 import { getSignedExecuteInput, getRandomID, getEVMLogID as getEVMLogID, logger, getAptosLogID } from '../utils';
 import { Network, networks } from '../Network';
 import { getFee, getGasPrice, depositAddresses } from '../networkUtils';
-import { aptosNetwork } from '../aptosNetworkUtils';
+import { aptosNetwork } from '../aptos';
 import { Command } from './command';
 import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';

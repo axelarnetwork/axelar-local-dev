@@ -18,7 +18,7 @@ import {
 } from './networkUtils';
 
 export * from './relay';
-export * from './aptosNetworkUtils';
+export * from './aptos';
 export * from './utils';
 
 export const utils = {
