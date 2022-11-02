@@ -37,7 +37,7 @@ export class AptosNetwork extends AptosClient {
             console.log(tx.vm_status);
         }
 
-        return tx.hash;
+        return tx;
     }
 
     getOwnerBalance() {
