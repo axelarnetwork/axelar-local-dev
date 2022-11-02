@@ -22,8 +22,8 @@ export async function createAptosNetwork(config?: AptosNetworkConfig) {
     await faucet.fundAccount(aptosNetwork.owner.address(), 1e10);
 
     // deploy axelar framework modules
-    const txHash = await aptosNetwork.deployAxelarFrameworkModules();
-    console.log('Deployed Axelar Framework modules:', txHash);
+    const tx = await aptosNetwork.deployAxelarFrameworkModules();
+    console.log('Deployed Axelar Framework modules:', tx.hash);
 
     // update the sequence number
     const callContractEvents = await aptosNetwork.queryContractCallEvents({ limit: 1000 });

@@ -3,6 +3,7 @@ module axelar_framework::gateway {
     use std::signer;
     use aptos_std::table::{Self, Table};
     use aptos_std::string::String;
+    use aptos_std::aptos_hash::keccak256;
     use axelar_framework::executable_registry::{Self, ExecuteCapability};
     use aptos_framework::account;
     use aptos_framework::event::{Self, EventHandle};
@@ -15,6 +16,7 @@ module axelar_framework::gateway {
         destinationChain: String,
         destinationAddress: String,
         payload: vector<u8>,
+        payloadHash: vector<u8>
     }
     struct OutgoingContractCallsState has key {
         events: EventHandle<OutgoingContractCall>,
@@ -80,7 +82,8 @@ module axelar_framework::gateway {
                 sourceAddress,
                 destinationChain,
                 destinationAddress,
-                payload
+                payload,
+                payloadHash: keccak256(payload),
             }
         )
     }

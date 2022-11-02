@@ -180,15 +180,15 @@ const updateCallContractAptos = async (relayData: RelayData, commands: { [key: s
         const commandId = getAptosLogID('aptos', event);
         const contractCallArgs: CallContractArgs = {
             from: 'aptos',
-            to: event.data.destination_chain,
-            sourceAddress: event.data.sender,
-            destinationContractAddress: event.data.destination_contract_address,
+            to: event.data.destinationChain,
+            sourceAddress: event.data.sourceAddress,
+            destinationContractAddress: event.data.destinationAddress,
             payload: event.data.payload,
-            payloadHash: event.data.payload_hash,
+            payloadHash: event.data.payloadHash,
         };
         relayData.callContract[commandId] = contractCallArgs;
         const command = Command.createContractCallCommand(commandId, relayData, contractCallArgs);
-        commands[event.data.destination_chain].push(command);
+        commands[contractCallArgs.to].push(command);
     }
 };
 

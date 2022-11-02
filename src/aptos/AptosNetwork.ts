@@ -70,8 +70,8 @@ export class AptosNetwork extends AptosClient {
         const _options = options || { start: this.contractCallSequence === -1 ? 0 : this.contractCallSequence + 1, limit: 100 };
         return this.getEventsByEventHandle(
             this.owner.address(),
-            `${this.owner.address()}::axelar_gateway::GatewayEventStore`,
-            'contract_call_events',
+            `${this.owner.address()}::gateway::OutgoingContractCallsState`,
+            'events',
             _options
         );
     }
