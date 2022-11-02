@@ -6,7 +6,6 @@ module axelar_framework::axelar_gas_service {
   use aptos_framework::aptos_coin::{AptosCoin};
   use aptos_framework::coin::{Self};
 
-
   struct GasServiceEventStore has key {
     native_gas_paid_for_contract_call_events: event::EventHandle<NativeGasPaidForContractCallEvent>,
   }
