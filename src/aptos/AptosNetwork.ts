@@ -1,4 +1,4 @@
-import { AptosAccount, AptosClient, HexString, TxnBuilderTypes } from 'aptos';
+import { AptosAccount, AptosClient, CoinClient, HexString, TxnBuilderTypes } from 'aptos';
 import fs from 'fs';
 import path from 'path';
 
@@ -31,13 +31,25 @@ export class AptosNetwork extends AptosClient {
             moduleDatas.map((moduleData: any) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array()))
         );
 
-        await this.waitForTransaction(txnHash, { checkSuccess: true });
+        const tx: any = await this.waitForTransactionWithResult(txnHash);
 
-        return txnHash;
+        if (tx.vm_status !== 'Executed successfully') {
+            console.log(tx.vm_status);
+        }
+
+        return tx.hash;
+    }
+
+    getOwnerBalance() {
+        return new CoinClient(this).checkBalance(this.owner);
     }
 
     deployAxelarFrameworkModules() {
-        return this.deploy('../aptos/modules/axelar-framework/build/AxelarFramework', ['axelar_gateway.mv', 'axelar_gas_service.mv']);
+        return this.deploy('../../aptos/modules/axelar-framework/build/AxelarFramework', [
+            'axelar_gas_service.mv',
+            'executable_registry.mv',
+            'gateway.mv',
+        ]);
     }
 
     updateContractCallSequence(events: any[]) {
