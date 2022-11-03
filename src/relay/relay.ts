@@ -10,6 +10,7 @@ import { aptosNetwork } from '../aptos';
 import { Command } from './command';
 import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
+import { HexString } from 'aptos';
 
 export interface RelayData {
     depositAddress: any;
@@ -167,7 +168,12 @@ const updateCallContractEVM = async (from: Network, blockNumber: number, relayDa
             payloadHash: args.payloadHash,
         };
         relayData.callContract[commandId] = contractCallArgs;
-        const command = Command.createContractCallCommand(commandId, relayData, contractCallArgs);
+        let command;
+        if (args.destinationChain.toLowerCase() == 'aptos') {
+            command = Command.createAptosContractCallCommand(commandId, relayData, contractCallArgs);
+        } else {
+            command = Command.createEVMContractCallCommand(commandId, relayData, contractCallArgs);
+        }
         commands[args.destinationChain].push(command);
     }
 };
@@ -187,7 +193,7 @@ const updateCallContractAptos = async (relayData: RelayData, commands: { [key: s
             payloadHash: event.data.payloadHash,
         };
         relayData.callContract[commandId] = contractCallArgs;
-        const command = Command.createContractCallCommand(commandId, relayData, contractCallArgs);
+        const command = Command.createEVMContractCallCommand(commandId, relayData, contractCallArgs);
         commands[contractCallArgs.to].push(command);
     }
 };
@@ -262,6 +268,7 @@ const executeCommands = async (to: Network, commands: Command[]) => {
     const signedData = await getSignedExecuteInput(data, to.operatorWallet);
     return await (await to.gateway.connect(to.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
 };
+
 const postExecute = async (to: Network, commands: Command[], execution: any) => {
     for (const command of commands) {
         if (command.post == null) continue;
@@ -315,18 +322,52 @@ const postExecute = async (to: Network, commands: Command[], execution: any) => 
 };
 
 //This function relays all the messages between the tracked networks.
-const relayEvm = async () => {
-    const relayData: RelayData = {
-        depositAddress: {},
-        sendToken: {},
-        callContract: {},
-        callContractWithToken: {},
-    };
-    const commands: { [key: string]: Command[] } = {};
+const relayToEvm = async (commands: { [key: string]: Command[] }) => {
     for (const to of networks) {
-        commands[to.name] = [];
-    }
+        const toExecute = commands[to.name];
+        if (toExecute.length == 0) continue;
 
+        const execution = await executeCommands(to, toExecute);
+        await postExecute(to, toExecute, execution);
+    }
+};
+
+const relayAptosToEvm = async (commands: { [key: string]: Command[] }) => {
+    if (!aptosNetwork) return;
+
+    await relayToEvm(commands);
+};
+
+async function executeAptosCommands(commands: Command[]) {
+    if (!aptosNetwork) return;
+    for (const command of commands) {
+        console.log('CommandID', command.commandId);
+        const commandId = new HexString(command.commandId).toUint8Array();
+        const payloadHash = new HexString(command.data[3]).toUint8Array();
+        const approveTx = await aptosNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
+        console.log('Approved at Aptos:', approveTx.hash);
+    }
+}
+
+async function postAptosExecute(commands: Command[]) {
+    if (!aptosNetwork) return;
+    for (const command of commands) {
+        if (!command.post) continue;
+
+        await command.post({});
+    }
+}
+
+const relayToAptos = async (commands: { [key: string]: Command[] }) => {
+    const toExecute = commands['aptos'];
+    if (toExecute?.length == 0) return;
+
+    await executeAptosCommands(toExecute);
+
+    await postAptosExecute(toExecute);
+};
+
+const updateEvmStates = async (relayData: RelayData, commands: { [key: string]: Command[] }) => {
     for (const from of networks) {
         const blockNumber = await from.provider.getBlockNumber();
         if (blockNumber <= from.lastRelayedBlock) continue;
@@ -339,50 +380,41 @@ const relayEvm = async () => {
 
         from.lastRelayedBlock = blockNumber;
     }
-
-    for (const to of networks) {
-        const toExecute = commands[to.name];
-        if (toExecute.length == 0) continue;
-
-        const execution = await executeCommands(to, toExecute);
-
-        await postExecute(to, toExecute, execution);
-    }
-    return relayData;
 };
 
-const relayAptosToEvm = async () => {
-    if (!aptosNetwork) return;
-    const relayData: RelayData = {
+const updateAptosStates = async (relayData: RelayData, commands: { [key: string]: Command[] }) => {
+    await updateGasLogsAptos();
+    await updateCallContractAptos(relayData, commands);
+};
+
+export const relay = async () => {
+    const evmCommands: { [key: string]: Command[] } = {};
+    const aptosCommands: { [key: string]: Command[] } = {};
+    for (const to of networks) {
+        evmCommands[to.name] = [];
+        aptosCommands[to.name] = [];
+    }
+    evmCommands['aptos'] = [];
+
+    const evmRelayData: RelayData = {
         depositAddress: {},
         sendToken: {},
         callContract: {},
         callContractWithToken: {},
     };
-    const commands: { [key: string]: Command[] } = {};
+    const aptosRelayData: RelayData = {
+        depositAddress: {},
+        sendToken: {},
+        callContract: {},
+        callContractWithToken: {},
+    };
 
-    // init commands
-    for (const to of networks) {
-        commands[to.name] = [];
-    }
+    await updateEvmStates(evmRelayData, evmCommands);
+    await relayToAptos(evmCommands);
+    await relayToEvm(evmCommands);
 
-    await updateGasLogsAptos();
-    await updateCallContractAptos(relayData, commands);
+    await updateAptosStates(aptosRelayData, aptosCommands);
+    await relayAptosToEvm(aptosCommands);
 
-    for (const to of networks) {
-        const toExecute = commands[to.name];
-        if (toExecute.length == 0) continue;
-
-        const execution = await executeCommands(to, toExecute);
-
-        await postExecute(to, toExecute, execution);
-    }
-};
-
-const relayEvmToAptos = async () => {};
-
-export const relay = async () => {
-    await relayAptosToEvm();
-    await relayEvmToAptos();
-    return relayEvm();
+    return evmRelayData;
 };

@@ -86,6 +86,54 @@ export class AptosNetwork extends AptosClient {
         );
     }
 
+    public async approveContractCall(
+        commandId: Uint8Array,
+        sourceChain: string,
+        sourceAddress: string,
+        destinationAddress: string,
+        payloadHash: Uint8Array
+    ) {
+        const data = await this.generateTransaction(this.owner.address(), {
+            function: `${this.owner.address()}::gateway::approve_contract_call`,
+            type_arguments: [],
+            arguments: [commandId, sourceChain, sourceAddress, destinationAddress, payloadHash],
+        });
+        const bcsTxn = await this.signTransaction(this.owner, data);
+        const pendingTxn = await this.submitTransaction(bcsTxn);
+
+        const tx: any = await this.waitForTransactionWithResult(pendingTxn.hash);
+
+        return {
+            hash: pendingTxn.hash,
+            success: tx.success,
+            vmStatus: tx.vm_status,
+        };
+    }
+
+    public async execute(
+        commandId: Uint8Array,
+        sourceChain: string,
+        sourceAddress: string,
+        destinationAddress: string,
+        payload: Uint8Array
+    ) {
+        const data = await this.generateTransaction(this.owner.address(), {
+            function: `${destinationAddress}::execute`,
+            type_arguments: [],
+            arguments: [commandId, sourceChain, sourceAddress, payload],
+        });
+        const bcsTxn = await this.signTransaction(this.owner, data);
+        const pendingTxn = await this.submitTransaction(bcsTxn);
+
+        const tx: any = await this.waitForTransactionWithResult(pendingTxn.hash, { checkSuccess: true });
+
+        return {
+            hash: pendingTxn.hash,
+            success: tx.success,
+            vmStatus: tx.vm_status,
+        };
+    }
+
     private getLatestEventSequence = (events: any[]) => {
         if (events.length == 0) return null;
 

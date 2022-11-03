@@ -6,6 +6,8 @@ import { Network, networks } from '../Network';
 import { RelayData } from './relay';
 import { CallContractArgs } from './types';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
+import { aptosNetwork } from '../aptos';
+import { HexString } from 'aptos';
 
 //An internal class for handling axelar commands.
 export class Command {
@@ -24,11 +26,11 @@ export class Command {
         this.commandId = commandId;
         this.name = name;
         this.data = data;
-        this.encodedData = defaultAbiCoder.encode(dataSignature, data);
+        this.encodedData = name === 'approve_contract_call' ? '' : defaultAbiCoder.encode(dataSignature, data);
         this.post = post;
     }
 
-    static createContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
+    static createEVMContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
         return new Command(
             commandId,
             'approveContractCall',
@@ -43,6 +45,26 @@ export class Command {
                     .execute(commandId, args.from, args.sourceAddress, args.payload, options)
                     .then((tx: any) => tx.wait());
                 relayData.callContract[commandId].execution = tx.transactionHash;
+            }
+        );
+    };
+
+    static createAptosContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
+        return new Command(
+            commandId,
+            'approve_contract_call',
+            [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.payload],
+            [],
+            async () => {
+                const tx = await aptosNetwork.execute(
+                    new HexString(commandId).toUint8Array(),
+                    args.from,
+                    args.sourceAddress,
+                    args.destinationContractAddress,
+                    new HexString(args.payload).toUint8Array()
+                );
+
+                relayData.callContract[commandId].execution = tx.hash;
             }
         );
     };
