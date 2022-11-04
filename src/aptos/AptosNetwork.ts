@@ -48,6 +48,7 @@ export class AptosNetwork extends AptosClient {
         return this.deploy('../../aptos/modules/axelar-framework/build/AxelarFramework', [
             'axelar_gas_service.mv',
             'executable_registry.mv',
+            'address_utils.mv',
             'gateway.mv',
         ]);
     }
