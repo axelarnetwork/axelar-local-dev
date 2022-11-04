@@ -6,8 +6,6 @@ module axelar_framework::gateway {
     use aptos_std::table::{Self, Table};
     use aptos_std::string::{String, sub_string, bytes, utf8};
     use aptos_std::aptos_hash::keccak256;
-    use aptos_std::debug;
-    use aptos_framework::util;
     use axelar_framework::executable_registry::{Self, ExecuteCapability};
     use aptos_framework::account;
     use aptos_framework::event::{Self, EventHandle};
