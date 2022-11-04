@@ -322,7 +322,7 @@ const postExecute = async (to: Network, commands: Command[], execution: any) => 
 };
 
 //This function relays all the messages between the tracked networks.
-const relayToEvm = async (commands: { [key: string]: Command[] }) => {
+const relayEvmToEvm = async (commands: { [key: string]: Command[] }) => {
     for (const to of networks) {
         const toExecute = commands[to.name];
         if (toExecute.length == 0) continue;
@@ -335,17 +335,15 @@ const relayToEvm = async (commands: { [key: string]: Command[] }) => {
 const relayAptosToEvm = async (commands: { [key: string]: Command[] }) => {
     if (!aptosNetwork) return;
 
-    await relayToEvm(commands);
+    await relayEvmToEvm(commands);
 };
 
 async function executeAptosCommands(commands: Command[]) {
     if (!aptosNetwork) return;
     for (const command of commands) {
-        console.log('CommandID', command.commandId);
         const commandId = new HexString(command.commandId).toUint8Array();
         const payloadHash = new HexString(command.data[3]).toUint8Array();
-        const approveTx = await aptosNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
-        console.log('Approved at Aptos:', approveTx.hash);
+        await aptosNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
     }
 }
 
@@ -358,7 +356,7 @@ async function postAptosExecute(commands: Command[]) {
     }
 }
 
-const relayToAptos = async (commands: { [key: string]: Command[] }) => {
+const relayEvmToAptos = async (commands: { [key: string]: Command[] }) => {
     const toExecute = commands['aptos'];
     if (toExecute?.length == 0) return;
 
@@ -410,8 +408,8 @@ export const relay = async () => {
     };
 
     await updateEvmStates(evmRelayData, evmCommands);
-    await relayToAptos(evmCommands);
-    await relayToEvm(evmCommands);
+    await relayEvmToAptos(evmCommands);
+    await relayEvmToEvm(evmCommands);
 
     await updateAptosStates(aptosRelayData, aptosCommands);
     await relayAptosToEvm(aptosCommands);
