@@ -3,7 +3,7 @@
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
-import { RelayData, gasLogs, gasLogsWithToken, relay } from './relay';
+import { RelayData, evmRelayer } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
 
@@ -42,7 +42,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         port: 8500,
         relayInterval: 2000,
     } as CreateLocalOptions;
-    for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
+    for (const option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
     const chains_local: Record<string, any>[] = [];
     let i = 0;
     for (const name of options.chains!) {
@@ -71,8 +71,8 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     }
     listen(options.port!);
     interval = setInterval(async () => {
-        const relayData = await relay();
-        if (options.afterRelay) options.afterRelay(relayData);
+        await evmRelayer.relay();
+        if (options.afterRelay) options.afterRelay(evmRelayer.relayData);
     }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath!);
 }
@@ -88,7 +88,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         relayInterval: 2000,
         networkOptions: {},
     } as CloneLocalOptions;
-    for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
+    for (const option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
     const chains_local: Record<string, any>[] = [];
     if (options.env != 'mainnet' && options.env != 'testnet') {
         console.log(`Forking ${options.env.length} chains from custom data.`);
@@ -123,8 +123,8 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     }
     listen(options.port!);
     interval = setInterval(async () => {
-        const relayData = await relay();
-        if (options.afterRelay) options.afterRelay(relayData);
+        await evmRelayer.relay();
+        if (options.afterRelay) options.afterRelay(evmRelayer.relayData);
     }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath!);
 }
@@ -134,6 +134,6 @@ export async function destroyExported() {
     if (interval) {
         clearInterval(interval);
     }
-    gasLogs.length = 0;
-    gasLogsWithToken.length = 0;
+    evmRelayer.contractCallGasEvents.length = 0;
+    evmRelayer.contractCallWithTokenGasEvents.length = 0;
 }

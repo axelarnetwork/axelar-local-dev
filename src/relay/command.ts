@@ -1,10 +1,9 @@
 'use strict';
 
-import { ethers, Wallet, Contract } from 'ethers';
-const { defaultAbiCoder, arrayify } = ethers.utils;
-import { Network, networks } from '../Network';
-import { RelayData } from './relay';
-import { CallContractArgs } from './types';
+import { ethers, Contract } from 'ethers';
+const { defaultAbiCoder } = ethers.utils;
+import { networks } from '../Network';
+import { CallContractArgs, RelayData } from './types';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
 import { aptosNetwork } from '../aptos';
 import { HexString } from 'aptos';

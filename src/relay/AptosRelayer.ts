@@ -1,27 +1,22 @@
-import { AptosNetwork } from '../aptos';
 import { Relayer } from './Relayer';
 import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
 import { ethers } from 'ethers';
 import { getAptosLogID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
-import { Network } from '../Network';
-import { getFee, getGasPrice } from '../networkUtils';
+import { Network, networks } from '../Network';
+import { getGasPrice } from '../networkUtils';
+import { aptosNetwork } from '../aptos';
 const AddressZero = ethers.constants.AddressZero;
 
-class AptosRelayer extends Relayer {
-    public aptosNetwork: AptosNetwork;
-    public evmNetworks: Network[];
+const evmNetworks = networks;
 
-    constructor(aptosNetwork: AptosNetwork, evmNetworks: Network[]) {
+export class AptosRelayer extends Relayer {
+    constructor() {
         super();
-        this.aptosNetwork = aptosNetwork;
-        this.evmNetworks = evmNetworks;
-
         for (const to of evmNetworks) {
             this.commands[to.name] = [];
         }
-        this.commands['aptos'] = [];
     }
 
     async updateEvents(): Promise<void> {
@@ -31,17 +26,17 @@ class AptosRelayer extends Relayer {
     }
 
     async execute() {
-        for (const to of this.evmNetworks) {
+        for (const to of evmNetworks) {
             const commands = this.commands[to.name];
             if (commands.length == 0) continue;
 
-            const execution = await this.submitGatewayExecute(to, commands);
+            const execution = await this.executeEvmGateway(to, commands);
 
-            await this.submitExecutableExecute(to, commands, execution);
+            await this.executeEvmExecutable(to, commands, execution);
         }
     }
 
-    private async submitGatewayExecute(to: Network, commands: Command[]): Promise<void> {
+    private async executeEvmGateway(to: Network, commands: Command[]): Promise<void> {
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -56,19 +51,16 @@ class AptosRelayer extends Relayer {
             .then((tx: any) => tx.wait());
     }
 
-    private async submitExecutableExecute(to: Network, commands: Command[], execution: any): Promise<void> {
+    private async executeEvmExecutable(to: Network, commands: Command[], execution: any): Promise<void> {
         for (const command of commands) {
             if (command.post == null) continue;
 
             if (
                 !execution.events.find((event: any) => {
-                    return event.event == 'Executed' && event.args[0] == command.commandId;
+                    return event.event === 'Executed' && event.args[0] == command.commandId;
                 })
             )
                 continue;
-            const fromName = command.data[0];
-            const from = this.evmNetworks.find((network) => network.name == fromName);
-            if (!from) continue;
 
             const payed =
                 command.name == 'approveContractCall'
@@ -79,16 +71,7 @@ class AptosRelayer extends Relayer {
                           if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
                           return true;
                       })
-                    : this.contractCallWithTokenGasEvents.find((log: any) => {
-                          if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                          if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                          if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                          if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                          const alias = this.getAliasFromSymbol(from.tokens, log.symbol);
-                          if (to.tokens[alias] != command.data[4]) return false;
-                          if (log.amount - getFee(fromName, to, command.data[4]) != command.data[5]) return false;
-                          return true;
-                      });
+                    : false;
 
             if (!payed) continue;
             if (command.name == 'approveContractCall') {
@@ -99,7 +82,7 @@ class AptosRelayer extends Relayer {
                 this.contractCallWithTokenGasEvents.splice(index, 1);
             }
             try {
-                const cost = getGasPrice(fromName, to, payed.gasToken);
+                const cost = getGasPrice();
                 const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
                 await command.post({
                     gasLimit: BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost)),
@@ -111,8 +94,8 @@ class AptosRelayer extends Relayer {
     }
 
     private async updateGasEvents() {
-        const events = await this.aptosNetwork.queryPayGasContractCallEvents();
-        this.aptosNetwork.updatePayGasContractCallSequence(events);
+        const events = await aptosNetwork.queryPayGasContractCallEvents();
+        aptosNetwork.updatePayGasContractCallSequence(events);
 
         for (const event of events) {
             const args: NativeGasPaidForContractCallArgs = {
@@ -130,8 +113,8 @@ class AptosRelayer extends Relayer {
     }
 
     private async updateCallContractEvents() {
-        const events = await this.aptosNetwork.queryContractCallEvents();
-        this.aptosNetwork.updateContractCallSequence(events);
+        const events = await aptosNetwork.queryContractCallEvents();
+        aptosNetwork.updateContractCallSequence(events);
 
         for (const event of events) {
             const commandId = getAptosLogID('aptos', event);
@@ -147,12 +130,5 @@ class AptosRelayer extends Relayer {
             const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
             this.commands[contractCallArgs.to].push(command);
         }
-    }
-
-    private getAliasFromSymbol(tokens: { [key: string]: string }, symbol: string) {
-        for (const alias in tokens) {
-            if (tokens[alias] == symbol) return alias;
-        }
-        return '';
     }
 }

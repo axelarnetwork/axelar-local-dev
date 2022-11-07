@@ -1,4 +1,5 @@
 import { FaucetClient } from 'aptos';
+import { evmRelayer } from '../relay';
 import { AptosNetwork } from './AptosNetwork';
 
 export let aptosNetwork: AptosNetwork;

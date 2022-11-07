@@ -27,10 +27,10 @@ export interface ChainCloneData {
     tokens: { [key: string]: string };
 }
 
-export const getFee = (source: string | Network, destination: string | Network, alias: string) => {
+export const getFee = () => {
     return 1e6;
 };
-export const getGasPrice = (source: string | Network, destination: string | Network, tokenOnSource: string) => {
+export const getGasPrice = () => {
     return 1;
 };
 

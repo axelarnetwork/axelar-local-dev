@@ -1,3 +1,5 @@
+import { Command } from './Command';
+
 export interface CallContractArgs {
     from: string;
     to: string;
@@ -16,3 +18,12 @@ export interface NativeGasPaidForContractCallArgs {
     refundAddress: string;
     gasToken: string;
 }
+
+export interface RelayData {
+    depositAddress: any;
+    sendToken: any;
+    callContract: any;
+    callContractWithToken: any;
+}
+
+export type RelayCommand = { [key: string]: Command[] };

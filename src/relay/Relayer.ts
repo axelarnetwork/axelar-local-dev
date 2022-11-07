@@ -1,7 +1,7 @@
 import { RelayCommand, RelayData } from './types';
 
 export abstract class Relayer {
-    protected relayData: RelayData = {
+    public relayData: RelayData = {
         depositAddress: {},
         sendToken: {},
         callContract: {},
@@ -10,16 +10,13 @@ export abstract class Relayer {
 
     protected commands: RelayCommand = {};
 
-    protected contractCallGasEvents: any[] = [];
+    public contractCallGasEvents: any[] = [];
 
-    protected contractCallWithTokenGasEvents: any[] = [];
+    public contractCallWithTokenGasEvents: any[] = [];
 
     abstract updateEvents(): Promise<void>;
 
     abstract execute(): Promise<void>;
-    // abstract submitGatewayExecute(): Promise<any>;
-
-    // abstract submitExecutableExecute(): Promise<any>;
 
     async relay() {
         // Update all events at the source chains
