@@ -12,19 +12,13 @@ import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/
 import { HexString } from 'aptos';
 const AddressZero = ethers.constants.AddressZero;
 
-const evmNetworks = networks;
-
 export class EvmRelayer extends Relayer {
     constructor() {
         super();
-        for (const to of evmNetworks) {
-            this.commands[to.name] = [];
-        }
-        this.commands['aptos'] = [];
     }
 
     async updateEvents(): Promise<void> {
-        for (const from of evmNetworks) {
+        for (const from of networks) {
             const blockNumber = await from.provider.getBlockNumber();
             if (blockNumber <= from.lastRelayedBlock) continue;
 
@@ -44,7 +38,7 @@ export class EvmRelayer extends Relayer {
     }
 
     private async executeEvm() {
-        for (const to of evmNetworks) {
+        for (const to of networks) {
             const commands = this.commands[to.name];
             if (commands.length == 0) continue;
 
@@ -105,7 +99,7 @@ export class EvmRelayer extends Relayer {
             )
                 continue;
             const fromName = command.data[0];
-            const from = evmNetworks.find((network) => network.name == fromName);
+            const from = networks.find((network) => network.name == fromName);
             if (!from) continue;
 
             const payed =
@@ -213,7 +207,7 @@ export class EvmRelayer extends Relayer {
             if (args.amount <= fee) continue;
             const amountOut = args.amount.sub(fee);
             const commandId = getEVMLogID(from.name, log);
-            const to = evmNetworks.find((chain: Network) => chain.name == args.destinationChain);
+            const to = networks.find((chain: Network) => chain.name == args.destinationChain);
             if (!to) return;
             const destinationTokenSymbol = to.tokens[alias];
 
@@ -248,7 +242,7 @@ export class EvmRelayer extends Relayer {
             if (amountOut < 0) continue;
             const commandId = getEVMLogID(from.name, log);
 
-            const to = evmNetworks.find((chain: Network) => chain.name == args.destinationChain);
+            const to = networks.find((chain: Network) => chain.name == args.destinationChain);
             if (!to) return;
             const destinationTokenSymbol = to.tokens[alias];
 
@@ -271,7 +265,7 @@ export class EvmRelayer extends Relayer {
                     [from.name, args.sender, args.destinationContractAddress, args.payloadHash, destinationTokenSymbol, amountOut],
                     ['string', 'string', 'address', 'bytes32', 'string', 'uint256'],
                     async (options: any) => {
-                        const to = evmNetworks.find((chain) => chain.name == args.destinationChain);
+                        const to = networks.find((chain) => chain.name == args.destinationChain);
                         const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to!.relayerWallet);
                         this.relayData.callContractWithToken[commandId].execution = (
                             await (
@@ -299,7 +293,7 @@ export class EvmRelayer extends Relayer {
             const token = await from.getTokenContract(tokenSymbol);
             const fee = getFee();
             const balance = await token.balanceOf(address);
-            const to = evmNetworks.find((chain: Network) => chain.name == data.destinationChain);
+            const to = networks.find((chain: Network) => chain.name == data.destinationChain);
             const destinationTokenSymbol = to!.tokens[data.alias];
             if (balance > fee) {
                 const commandId = getRandomID();

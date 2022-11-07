@@ -9,14 +9,9 @@ import { getGasPrice } from '../networkUtils';
 import { aptosNetwork } from '../aptos';
 const AddressZero = ethers.constants.AddressZero;
 
-const evmNetworks = networks;
-
 export class AptosRelayer extends Relayer {
     constructor() {
         super();
-        for (const to of evmNetworks) {
-            this.commands[to.name] = [];
-        }
     }
 
     async updateEvents(): Promise<void> {
@@ -26,7 +21,7 @@ export class AptosRelayer extends Relayer {
     }
 
     async execute() {
-        for (const to of evmNetworks) {
+        for (const to of networks) {
             const commands = this.commands[to.name];
             if (commands.length == 0) continue;
 
