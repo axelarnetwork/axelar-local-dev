@@ -25,7 +25,7 @@ const {
 
 setLogger((...args) => {});
 
-const BurnableMintableCappedERC20 = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
+const BurnableMintableCappedERC20 = require('../dist/artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
 const { keccak256, toUtf8Bytes } = require('ethers/lib/utils');
 
 describe('create', () => {
