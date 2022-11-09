@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 'use strict';
 
 const chai = require('chai');
@@ -21,12 +22,14 @@ const {
     forkNetwork,
     mainnetInfo,
     networks,
-} = require('../dist/index');
+} = require('../dist');
 
 setLogger((...args) => {});
 
 const BurnableMintableCappedERC20 = require('../dist/artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
 const { keccak256, toUtf8Bytes } = require('ethers/lib/utils');
+
+jest.setTimeout(300000);
 
 describe('create', () => {
     let chain;
@@ -58,7 +61,7 @@ describe('create', () => {
             wallet: { accounts },
             chain: {
                 chainId: 3000,
-                netwrokId: 3000,
+                networkId: 3000,
             },
             logging: { quiet: true },
         });
@@ -66,9 +69,7 @@ describe('create', () => {
         chain = await setupNetwork(`http://localhost:${port}`, {
             ownerKey: accounts[0].secretKey,
         });
-        after(async () => {
-            await blank.close();
-        });
+        await blank.close();
     });
 
     afterEach(async () => {
@@ -107,7 +108,7 @@ describe('token', () => {
     });
 });
 
-describe('relay', async () => {
+describe('relay', () => {
     let chain1, chain2;
     let user1, user2;
     beforeEach(async () => {
@@ -121,7 +122,7 @@ describe('relay', async () => {
     afterEach(async () => {
         stopAll();
     });
-    describe('deposit address', async () => {
+    describe('deposit address', () => {
         it('should generate a deposit address', async () => {
             const depositAddress = getDepositAddress(chain1, chain2, user2.address, 'aUSDC');
             const amount = BigInt(12423532412);
@@ -161,7 +162,7 @@ describe('relay', async () => {
             expect(BigInt(await chain2.usdc.balanceOf(user2.address))).to.equal(amount - fee);
         });
     });
-    describe('send token', async () => {
+    describe('send token', () => {
         it('should send some usdc over', async () => {
             const amount = BigInt(1e8);
             const fee = BigInt(getFee(chain1, chain2, 'aUSDC'));
@@ -172,9 +173,9 @@ describe('relay', async () => {
             expect(BigInt(await chain2.usdc.balanceOf(user2.address))).to.equal(amount - fee);
         });
     });
-    describe('call contract', async () => {
+    describe('call contract', () => {
         let ex1, ex2;
-        const Executable = require('../artifacts/src/contracts/test/Executable.sol/Executable.json');
+        const Executable = require('../src/artifacts/src/contracts/test/Executable.sol/Executable.json');
 
         const message = 'hello there executables!';
         const payload = defaultAbiCoder.encode(['string'], [message]);
@@ -231,9 +232,9 @@ describe('relay', async () => {
             expect(await ex2.sourceAddress()).to.equal(ex1.address);
         });
     });
-    describe('call contract with token', async () => {
+    describe('call contract with token', () => {
         let ex1, ex2;
-        const Executable = require('../artifacts/src/contracts/test/ExecutableWithToken.sol/ExecutableWithToken.json');
+        const Executable = require('../src/artifacts/src/contracts/test/ExecutableWithToken.sol/ExecutableWithToken.json');
 
         const message = 'hello there executables!';
         const amount = 1234255675;
@@ -316,7 +317,8 @@ describe('relay', async () => {
         });
     });
 });
-describe('forking', async () => {
+
+describe.skip('forking', () => {
     afterEach(async () => {
         stopAll();
     });
