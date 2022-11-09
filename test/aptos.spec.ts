@@ -1,7 +1,7 @@
 import { HexString } from 'aptos';
 import { AptosNetwork } from '../src/aptos';
 
-describe('aptos', () => {
+describe.skip('aptos', () => {
     const client = new AptosNetwork('http://localhost:8080');
 
     it('should be able to deploy axelar framework modules', async () => {
