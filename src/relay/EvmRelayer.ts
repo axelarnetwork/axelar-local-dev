@@ -3,7 +3,7 @@ import { Relayer } from './Relayer';
 import { CallContractArgs } from './types';
 import { Contract, ethers, Wallet } from 'ethers';
 import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
-import { Command } from './Command';
+import { Command } from './command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
 import { depositAddresses } from '../networkUtils';
 import { Network, networks } from '../Network';

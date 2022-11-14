@@ -2,7 +2,7 @@ import { AptosRelayer } from './AptosRelayer';
 import { EvmRelayer } from './EvmRelayer';
 import { aptosNetwork } from '../aptos';
 
-export * from './Command';
+export * from './command';
 export * from './types';
 
 export const aptosRelayer = new AptosRelayer();

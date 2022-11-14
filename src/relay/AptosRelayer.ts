@@ -2,7 +2,7 @@ import { Relayer } from './Relayer';
 import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
 import { ethers } from 'ethers';
 import { getAptosLogID, getSignedExecuteInput, logger } from '../utils';
-import { Command } from './Command';
+import { Command } from './command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
 import { Network, networks } from '../Network';
 import { getGasPrice } from '../networkUtils';
