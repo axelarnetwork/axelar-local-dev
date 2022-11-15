@@ -4,7 +4,6 @@ module axelar_framework::gateway {
     use aptos_std::table::{Self, Table};
     use aptos_std::string::{String, sub_string, bytes};
     use aptos_std::aptos_hash::keccak256;
-    use axelar_framework::executable_registry::{Self, ExecuteCapability};
     use axelar_framework::address_utils::{addressToString};
     use aptos_framework::account;
     use aptos_framework::event::{Self, EventHandle};
@@ -35,8 +34,14 @@ module axelar_framework::gateway {
         table: Table<vector<u8>, IncomingContractCall>,
     }
 
-    /// There is no message present
-    const ENO_MESSAGE: u64 = 0;
+    /// Command Id does not exist.
+    const MISSING_COMMAND_ID_MESSAGE: u64 = 0;
+
+    /// Command Id already executed.
+    const ALREADY_EXECUTED_MESSAGE: u64 = 1;
+
+    /// Invalid destination address.
+    const INVALID_DESTINATION_MESSAGE: u64 = 2;
 
     fun init_module(account: &signer) {
         move_to(account, IncomingContractCallsState {
@@ -48,35 +53,14 @@ module axelar_framework::gateway {
         });
     }
 
-    public fun register_executable(account: &signer): ExecuteCapability {
-        executable_registry::register_executable(account)
-    }
-
-    public entry fun call_contract_as_contract(
-        contract: &mut ExecuteCapability,
-        destinationChain: String,
-        destinationAddress: String,
-        payload: vector<u8>,
-    ) acquires OutgoingContractCallsState {
-        call_contract(executable_registry::address_of(contract), destinationChain, destinationAddress, payload);
-    }
-
-    public entry fun call_contract_as_signer(
+    public entry fun call_contract(
         signer: &signer,
         destinationChain: String,
         destinationAddress: String,
         payload: vector<u8>,
     ) acquires OutgoingContractCallsState {
-        call_contract(signer::address_of(signer), destinationChain, destinationAddress, payload);
-    }
-
-    fun call_contract(
-        sourceAddress: address,
-        destinationChain: String,
-        destinationAddress: String,
-        payload: vector<u8>,
-    ) acquires OutgoingContractCallsState {
         let state = borrow_global_mut<OutgoingContractCallsState>(@axelar_framework);
+        let sourceAddress = signer::address_of(signer);
         event::emit_event(
             &mut state.events,
             OutgoingContractCall {
@@ -107,17 +91,17 @@ module axelar_framework::gateway {
     }
 
     public fun validate_contract_call(
-        executable: &mut ExecuteCapability,
+        contract: &signer,
         commandId: vector<u8>,
-    ): IncomingContractCall acquires IncomingContractCallsState {
+    ): (String, String, vector<u8>) acquires IncomingContractCallsState {
         let contract_calls = borrow_global_mut<IncomingContractCallsState>(@axelar_framework);
-        assert!(table::contains<vector<u8>, IncomingContractCall>(&contract_calls.table, commandId), error::not_found(ENO_MESSAGE));
+        assert!(table::contains<vector<u8>, IncomingContractCall>(&contract_calls.table, commandId), error::not_found(MISSING_COMMAND_ID_MESSAGE));
         let contractCall = table::borrow_mut<vector<u8>, IncomingContractCall>(&mut contract_calls.table, commandId);
         let destAddress = sub_string(&contractCall.destinationAddress, 2, 66);
-        let executableAddress = addressToString(executable_registry::address_of(executable));
-        assert!(*bytes(&destAddress) == *bytes(&executableAddress), error::not_found(ENO_MESSAGE));
-        assert!(contractCall.status == TO_EXECUTE, error::not_found(ENO_MESSAGE));
+        let executableAddress = addressToString(signer::address_of(contract));
+        assert!(*bytes(&destAddress) == *bytes(&executableAddress), error::permission_denied(INVALID_DESTINATION_MESSAGE));
+        assert!(contractCall.status == TO_EXECUTE, error::already_exists(ALREADY_EXECUTED_MESSAGE));
         contractCall.status = EXECUTED;
-        *contractCall
+        (contractCall.sourceChain, contractCall.sourceAddress, contractCall.payloadHash)
     }
 }

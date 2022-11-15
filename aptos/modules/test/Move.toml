@@ -1,9 +1,11 @@
 [package]
-name = "AxelarFramework"
+name = "HelloWorld"
 version = "0.0.2"
 
 [addresses]
 axelar_framework = "0xaa09992b537ea8f661acd0a7f1b4954f48d177a20f8c3ab6d28361fa0d4cabe2"
+hello_world = "0x8ac1b8ff9583ac8e661c7f0ee462698c57bb7fc454f587e3fa25a57f9406acc0"
 
 [dependencies]
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "main"}
+AxelarFramework = { local = "../axelar-framework" }

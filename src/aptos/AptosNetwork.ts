@@ -1,4 +1,4 @@
-import { AptosAccount, AptosClient, CoinClient, HexString, TxnBuilderTypes } from 'aptos';
+import { AptosAccount, AptosClient, CoinClient, HexString, TxnBuilderTypes, BCS, MaybeHexString } from 'aptos';
 import fs from 'fs';
 import path from 'path';
 
@@ -10,6 +10,7 @@ export class AptosNetwork extends AptosClient {
     public owner: AptosAccount;
     public contractCallSequence: number;
     public payContractCallSequence: number;
+    public resourceAddress: MaybeHexString;
 
     constructor(nodeUrl: string) {
         super(nodeUrl);
@@ -17,26 +18,44 @@ export class AptosNetwork extends AptosClient {
         this.owner = new AptosAccount(new HexString('0x2a6f6988be264385fbfd552b8aa93451c6aac25d85786dd473fe7159f9320425').toUint8Array());
         this.contractCallSequence = -1;
         this.payContractCallSequence = -1;
+        this.resourceAddress = '0xaa09992b537ea8f661acd0a7f1b4954f48d177a20f8c3ab6d28361fa0d4cabe2';
     }
 
-    private async deploy(modulePath: string, compiledModules: string[]) {
+    private async deploy(modulePath: string, compiledModules: string[], seed: string | undefined = undefined) {
         const packageMetadata = fs.readFileSync(path.join(__dirname, modulePath, 'package-metadata.bcs'));
         const moduleDatas = compiledModules.map((module: string) => {
             return fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', module));
         });
+        
+        let txHash;
+        
+        if(seed) {
+            const data = await this.generateTransaction(this.owner.address(), {
+                function: `0x1::resource_account::create_resource_account_and_publish_package`,
+                type_arguments: [],
+                arguments: [
+                    seed, 
+                    packageMetadata,
+                    moduleDatas,
+                ],
+            });
+            
+            const bcsTxn = await this.signTransaction(this.owner, data);
+            txHash = (await this.submitTransaction(bcsTxn)).hash;
 
-        const txnHash = await this.publishPackage(
-            this.owner,
-            new HexString(packageMetadata.toString('hex')).toUint8Array(),
-            moduleDatas.map((moduleData: any) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array()))
-        );
 
-        const tx: any = await this.waitForTransactionWithResult(txnHash);
-
-        if (tx.vm_status !== 'Executed successfully') {
-            console.log(tx.vm_status);
+        } else {
+            txHash = await this.publishPackage(
+                this.owner,
+                new HexString(packageMetadata.toString('hex')).toUint8Array(),
+                moduleDatas.map((moduleData: any) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array()))
+            );
         }
 
+        const tx: any = await this.waitForTransactionWithResult(txHash);
+        if (tx.vm_status !== 'Executed successfully') {
+            console.log(`Error: ${tx.vm_status}`);
+        }
         return tx;
     }
 
@@ -47,10 +66,9 @@ export class AptosNetwork extends AptosClient {
     deployAxelarFrameworkModules() {
         return this.deploy('../../aptos/modules/axelar-framework/build/AxelarFramework', [
             'axelar_gas_service.mv',
-            'executable_registry.mv',
             'address_utils.mv',
             'gateway.mv',
-        ]);
+        ], '0x123');
     }
 
     updateContractCallSequence(events: any[]) {
@@ -70,8 +88,8 @@ export class AptosNetwork extends AptosClient {
     queryContractCallEvents(options?: QueryOptions) {
         const _options = options || { start: this.contractCallSequence === -1 ? 0 : this.contractCallSequence + 1, limit: 100 };
         return this.getEventsByEventHandle(
-            this.owner.address(),
-            `${this.owner.address()}::gateway::OutgoingContractCallsState`,
+            this.resourceAddress,
+            `${this.resourceAddress}::gateway::OutgoingContractCallsState`,
             'events',
             _options
         );
@@ -80,8 +98,8 @@ export class AptosNetwork extends AptosClient {
     queryPayGasContractCallEvents(options?: QueryOptions) {
         const _options = options || { start: this.payContractCallSequence === -1 ? 0 : this.payContractCallSequence + 1, limit: 100 };
         return this.getEventsByEventHandle(
-            this.owner.address(),
-            `${this.owner.address()}::axelar_gas_service::GasServiceEventStore`,
+            this.resourceAddress,
+            `${this.resourceAddress}::axelar_gas_service::GasServiceEventStore`,
             'native_gas_paid_for_contract_call_events',
             _options
         );
@@ -95,7 +113,7 @@ export class AptosNetwork extends AptosClient {
         payloadHash: Uint8Array
     ) {
         const data = await this.generateTransaction(this.owner.address(), {
-            function: `${this.owner.address()}::gateway::approve_contract_call`,
+            function: `${this.resourceAddress}::gateway::approve_contract_call`,
             type_arguments: [],
             arguments: [commandId, sourceChain, sourceAddress, destinationAddress, payloadHash],
         });

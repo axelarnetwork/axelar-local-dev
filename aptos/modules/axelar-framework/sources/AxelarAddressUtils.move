@@ -1,7 +1,7 @@
 module axelar_framework::address_utils {
   use std::bcs;
   use std::vector;
-  use aptos_std::string::{String, utf8, bytes, sub_string};
+  use aptos_std::string::{String, utf8};
 
   public fun addressToString(input: address): String {
     let bytes = bcs::to_bytes<address>(&input);
