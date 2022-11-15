@@ -131,15 +131,13 @@ export class AptosNetwork extends AptosClient {
 
     public async execute(
         commandId: Uint8Array,
-        sourceChain: string,
-        sourceAddress: string,
         destinationAddress: string,
         payload: Uint8Array
     ) {
         const data = await this.generateTransaction(this.owner.address(), {
             function: `${destinationAddress}::execute`,
             type_arguments: [],
-            arguments: [commandId, sourceChain, sourceAddress, payload],
+            arguments: [commandId, payload],
         });
         const bcsTxn = await this.signTransaction(this.owner, data);
         const pendingTxn = await this.submitTransaction(bcsTxn);

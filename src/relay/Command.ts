@@ -57,10 +57,8 @@ export class Command {
             async () => {
                 const tx = await aptosNetwork.execute(
                     new HexString(commandId).toUint8Array(),
-                    args.from,
-                    args.sourceAddress,
                     args.destinationContractAddress,
-                    new HexString(args.payload).toUint8Array()
+                    new HexString(args.payload).toUint8Array(),
                 );
 
                 relayData.callContract[commandId].execution = tx.hash;
