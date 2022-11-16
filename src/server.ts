@@ -67,6 +67,7 @@ function rpcError(id: any, code: any, msg: any) {
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export default function (networkOrList: Network | Network[], logger = { log: function (...args: any) {} }) {
     const server: Server = createServer(function (request: IncomingMessage, response: ServerResponse) {
         const method = request.method;
@@ -112,7 +113,7 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                         return;
                     }
                     const n = parseInt(first!);
-                    if (n == NaN || n < 0 || n >= networkOrList.length) {
+                    if (Number.isNaN(n) || n < 0 || n >= networkOrList.length) {
                         badRequest();
                         return;
                     }
@@ -123,7 +124,8 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
 
                 switch (method) {
                     case 'POST':
-                        var payload;
+                        // eslint-disable-next-line no-case-declarations
+                        let payload;
                         try {
                             payload = JSON.parse(body);
                         } catch (e) {
