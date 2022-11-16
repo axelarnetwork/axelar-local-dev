@@ -3,8 +3,8 @@ module axelar_framework::axelar_gas_service {
   use std::signer;
   use aptos_framework::account;
   use aptos_framework::event;
-  use aptos_framework::aptos_coin::{AptosCoin};
-  use aptos_framework::coin::{Self};
+  use aptos_framework::aptos_coin::AptosCoin;
+  use aptos_framework::coin;
 
   struct GasServiceEventStore has key {
     native_gas_paid_for_contract_call_events: event::EventHandle<NativeGasPaidForContractCallEvent>,
@@ -23,6 +23,7 @@ module axelar_framework::axelar_gas_service {
     move_to<GasServiceEventStore>(account, GasServiceEventStore {
       native_gas_paid_for_contract_call_events: account::new_event_handle<NativeGasPaidForContractCallEvent>(account),
     });
+    coin::register<AptosCoin>(account);
   }
 
   public entry fun payNativeGasForContractCall(sender: &signer, destination_chain: string::String, destination_address: string::String, payload_hash: vector<u8>, fee_amount: u64, refund_address: address) acquires GasServiceEventStore {
