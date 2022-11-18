@@ -23,9 +23,9 @@ export class AptosNetwork extends AptosClient {
     }
 
     async deploy(modulePath: string, compiledModules: string[], seed: MaybeHexString | undefined = undefined) {
-        const packageMetadata = fs.readFileSync(path.join(__dirname, modulePath, 'package-metadata.bcs'));
+        const packageMetadata = fs.readFileSync(path.join(modulePath, 'package-metadata.bcs'));
         const moduleDatas = compiledModules.map((module: string) => {
-            return fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', module));
+            return fs.readFileSync(path.join(modulePath, 'bytecode_modules', module));
         });
         
         let txHash;
@@ -65,7 +65,7 @@ export class AptosNetwork extends AptosClient {
     }
 
     deployAxelarFrameworkModules() {
-        return this.deploy('../../aptos/modules/axelar-framework/build/AxelarFramework', [
+        return this.deploy('./aptos/modules/axelar-framework/build/AxelarFramework', [
             'axelar_gas_service.mv',
             'address_utils.mv',
             'gateway.mv',
