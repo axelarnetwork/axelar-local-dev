@@ -161,9 +161,7 @@ export class AptosNetwork extends AptosClient {
     static getResourceAccountAddress(sourceAddress: MaybeHexString, seed: MaybeHexString): HexString {
         seed = HexString.ensure(seed);
         const source = BCS.bcsToBytes(TxnBuilderTypes.AccountAddress.fromHex(sourceAddress));
-        console.log(source);
         const bytes = new Uint8Array([...source, ...seed.toUint8Array(), 255]);
-        console.log(bytes);
         const hash = sha3Hash.create();
         hash.update(bytes);
 
