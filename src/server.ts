@@ -112,7 +112,7 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                         return;
                     }
                     const n = parseInt(first!);
-                    if (n == NaN || n < 0 || n >= networkOrList.length) {
+                    if (Number.isNaN(n) || n < 0 || n >= networkOrList.length) {
                         badRequest();
                         return;
                     }

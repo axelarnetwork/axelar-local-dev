@@ -1,6 +1,7 @@
 import { AptosAccount, AptosClient, CoinClient, HexString, TxnBuilderTypes, BCS, MaybeHexString } from 'aptos';
 import fs from 'fs';
 import path from 'path';
+import { sha3_256 as sha3Hash } from "@noble/hashes/sha3";
 
 interface QueryOptions {
     start?: number;
@@ -156,4 +157,15 @@ export class AptosNetwork extends AptosClient {
 
         return parseInt(events[events.length - 1].sequence_number);
     };
+
+    static getResourceAccountAddress(sourceAddress: MaybeHexString, seed: Uint8Array): HexString {
+        const source = BCS.bcsToBytes(TxnBuilderTypes.AccountAddress.fromHex(sourceAddress));
+        console.log(source);
+        const bytes = new Uint8Array([...source, ...seed, 255]);
+        console.log(bytes);
+        const hash = sha3Hash.create();
+        hash.update(bytes);
+
+        return HexString.fromUint8Array(hash.digest());
+    }
 }
