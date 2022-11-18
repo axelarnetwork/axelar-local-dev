@@ -22,7 +22,7 @@ export class AptosNetwork extends AptosClient {
         this.resourceAddress = '0xe2a20d8c426eb04d882e20e78399b24123905d9f1adf95a292832805965e263a';
     }
 
-    private async deploy(modulePath: string, compiledModules: string[], seed: MaybeHexString | undefined = undefined) {
+    async deploy(modulePath: string, compiledModules: string[], seed: MaybeHexString | undefined = undefined) {
         const packageMetadata = fs.readFileSync(path.join(__dirname, modulePath, 'package-metadata.bcs'));
         const moduleDatas = compiledModules.map((module: string) => {
             return fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', module));
