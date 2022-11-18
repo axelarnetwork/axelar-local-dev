@@ -19,10 +19,10 @@ export class AptosNetwork extends AptosClient {
         this.owner = new AptosAccount(new HexString('0x2a6f6988be264385fbfd552b8aa93451c6aac25d85786dd473fe7159f9320425').toUint8Array());
         this.contractCallSequence = -1;
         this.payContractCallSequence = -1;
-        this.resourceAddress = '0xaa09992b537ea8f661acd0a7f1b4954f48d177a20f8c3ab6d28361fa0d4cabe2';
+        this.resourceAddress = '0xe2a20d8c426eb04d882e20e78399b24123905d9f1adf95a292832805965e263a';
     }
 
-    private async deploy(modulePath: string, compiledModules: string[], seed: string | undefined = undefined) {
+    private async deploy(modulePath: string, compiledModules: string[], seed: MaybeHexString | undefined = undefined) {
         const packageMetadata = fs.readFileSync(path.join(__dirname, modulePath, 'package-metadata.bcs'));
         const moduleDatas = compiledModules.map((module: string) => {
             return fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', module));
@@ -35,7 +35,7 @@ export class AptosNetwork extends AptosClient {
                 function: `0x1::resource_account::create_resource_account_and_publish_package`,
                 type_arguments: [],
                 arguments: [
-                    seed, 
+                    HexString.ensure(seed).toUint8Array(), 
                     packageMetadata,
                     moduleDatas,
                 ],
@@ -69,7 +69,7 @@ export class AptosNetwork extends AptosClient {
             'axelar_gas_service.mv',
             'address_utils.mv',
             'gateway.mv',
-        ], '0x123');
+        ], '0x1234');
     }
 
     updateContractCallSequence(events: any[]) {
@@ -158,10 +158,11 @@ export class AptosNetwork extends AptosClient {
         return parseInt(events[events.length - 1].sequence_number);
     };
 
-    static getResourceAccountAddress(sourceAddress: MaybeHexString, seed: Uint8Array): HexString {
+    static getResourceAccountAddress(sourceAddress: MaybeHexString, seed: MaybeHexString): HexString {
+        seed = HexString.ensure(seed);
         const source = BCS.bcsToBytes(TxnBuilderTypes.AccountAddress.fromHex(sourceAddress));
         console.log(source);
-        const bytes = new Uint8Array([...source, ...seed, 255]);
+        const bytes = new Uint8Array([...source, ...seed.toUint8Array(), 255]);
         console.log(bytes);
         const hash = sha3Hash.create();
         hash.update(bytes);
