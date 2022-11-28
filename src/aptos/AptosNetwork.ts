@@ -65,7 +65,7 @@ export class AptosNetwork extends AptosClient {
     }
 
     deployAxelarFrameworkModules() {
-        return this.deploy(path.join(__dirname, '../../node_modules/@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework'), [
+        return this.deploy(path.join('node_modules/@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework'), [
             'axelar_gas_service.mv',
             'address_utils.mv',
             'gateway.mv',
