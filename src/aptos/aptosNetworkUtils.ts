@@ -35,3 +35,7 @@ export async function createAptosNetwork(config?: AptosNetworkConfig) {
 
     return aptosNetwork;
 }
+
+export async function loadAptosNetwork(nodeUrl: string = 'http://localhost:8080') {
+    aptosNetwork = new AptosNetwork(nodeUrl);
+}
