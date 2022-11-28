@@ -36,7 +36,8 @@
         "ethers": "^5.6.5",
         "fs-extra": "^10.1.0",
         "ganache": "^7.1.0",
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "npm-run-all": "^4.1.5"
     },
     "devDependencies": {
         "@babel/eslint-parser": "^7.19.1",
@@ -54,7 +55,6 @@
         "hardhat": "^2.9.9",
         "hardhat-gas-reporter": "^1.0.8",
         "jest": "^29.2.2",
-        "npm-run-all": "^4.1.5",
         "prettier": "^2.6.2",
         "prettier-plugin-solidity": "^1.0.0-beta.19",
         "solhint": "^3.3.7",
