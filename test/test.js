@@ -58,7 +58,7 @@ describe('create', () => {
             wallet: { accounts },
             chain: {
                 chainId: 3000,
-                netwrokId: 3000,
+                networkId: 3000,
             },
             logging: { quiet: true },
         });
@@ -323,8 +323,8 @@ describe('forking', async () => {
     it('should fork Avalanche mainnet', async () => {
         const chainName = 'Avalanche';
         const chains = mainnetInfo;
-        const avalance = chains.find((chain) => chain.name === chainName);
-        const chain = await forkNetwork(avalance, {
+        const avalanche = chains.find((chain) => chain.name === chainName);
+        const chain = await forkNetwork(avalanche, {
             ganacheOptions: {
                 fork: { deleteCache: true },
             },
@@ -335,7 +335,7 @@ describe('forking', async () => {
         const address = new Wallet(keccak256(toUtf8Bytes('random'))).address;
         await chain.giveToken(address, 'uusdc', 1234);
         expect(Number(await chain.usdc.balanceOf(address))).to.equal(1234);
-        expect(chain.gateway.address).to.equal(avalance.gateway);
+        expect(chain.gateway.address).to.equal(avalanche.gateway);
     });
     it('should fork Avalanche and Ethereum and send some USDC back and forth', async () => {
         const chains = mainnetInfo;
