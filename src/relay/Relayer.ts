@@ -28,5 +28,9 @@ export abstract class Relayer {
         await this.updateEvents();
 
         await this.execute();
+
+        this.commands = {};
+        this.contractCallGasEvents = [];
+        this.contractCallWithTokenGasEvents = [];
     }
 }
