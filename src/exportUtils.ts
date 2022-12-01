@@ -33,6 +33,7 @@ export interface CloneLocalOptions {
     callback?: (network: Network, info: any) => Promise<null>;
 }
 
+let relaying = false;
 export async function createAndExport(options: CreateLocalOptions = {}) {
     const defaultOptions = {
         chainOutputPath: './local.json',
@@ -71,11 +72,14 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     }
     listen(options.port!);
     interval = setInterval(async () => {
+        if (relaying) return;
+        relaying = true;
         await relay();
         if (options.afterRelay) {
             options.afterRelay(evmRelayer.relayData);
             options.afterRelay(aptosRelayer.relayData);
         }
+        relaying = false;
     }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath!);
 }
