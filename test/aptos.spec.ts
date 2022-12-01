@@ -57,7 +57,7 @@ describe('aptos', () => {
         if (!approveTx.success) {
             console.log(`Error: ${approveTx.vmStatus}`);
         }
-        const data = await client.generateTransaction(client.owner.address(), {
+        const tx = await client.submitTransactionAndWait(client.owner.address(), {
             function: `${client.owner.address()}::hello_world::execute`,
             type_arguments: [],
             arguments: [
@@ -65,11 +65,6 @@ describe('aptos', () => {
                 payload
             ],
         });
-        
-        const bcsTxn = await client.signTransaction(client.owner, data);
-        const pendingTxn = await client.submitTransaction(bcsTxn);
-
-        const tx: any = await client.waitForTransactionWithResult(pendingTxn.hash);
         
         if (tx.vm_status !== 'Executed successfully') {
             console.log(`Error: ${tx.vm_status}`);

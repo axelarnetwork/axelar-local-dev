@@ -3,6 +3,18 @@ import fs from 'fs';
 import path from 'path';
 import { sha3_256 as sha3Hash } from "@noble/hashes/sha3";
 
+declare type EntryFunctionPayload = {
+    function: string;
+    /**
+     * Type arguments of the function
+     */
+    type_arguments: Array<string>;
+    /**
+     * Arguments of the function
+     */
+    arguments: Array<any>;
+};
+
 interface QueryOptions {
     start?: number;
     limit?: number;
@@ -35,13 +47,16 @@ export class AptosNetwork extends AptosClient {
     }
 
     async isGatewayDeployed(): Promise<boolean> {
-        const resources = await this.getAccountResources(this.owner.address());
-        const resource_accounts = resources.find((resource) => resource.type == '0x1::resource_account::Container');
-        if(!resource_accounts) return false;
-        const data : any = resource_accounts.data;
-        const gateway = data.store.data.find((entry : any) => entry.key == this.resourceAddress);
-        return gateway != null;
-        
+        try {
+            const resources = await this.getAccountResources(this.owner.address());
+            const resource_accounts = resources.find((resource) => resource.type == '0x1::resource_account::Container');
+            if(!resource_accounts) return false;
+            const data : any = resource_accounts.data;
+            const gateway = data.store.data.find((entry : any) => entry.key == this.resourceAddress);
+            return gateway != null;
+        } catch(e) {
+            return false;
+        }
     }
 
     async deploy(modulePath: string, compiledModules: string[], seed: MaybeHexString | undefined = undefined) {
@@ -135,18 +150,13 @@ export class AptosNetwork extends AptosClient {
         destinationAddress: string,
         payloadHash: Uint8Array
     ) {
-        const data = await this.generateTransaction(this.owner.address(), {
+        const tx = await this.submitTransactionAndWait(this.owner.address(), {
             function: `${this.resourceAddress}::gateway::approve_contract_call`,
             type_arguments: [],
             arguments: [commandId, sourceChain, sourceAddress, destinationAddress, payloadHash],
         });
-        const bcsTxn = await this.signTransaction(this.owner, data);
-        const pendingTxn = await this.submitTransaction(bcsTxn);
-
-        const tx: any = await this.waitForTransactionWithResult(pendingTxn.hash);
-
         return {
-            hash: pendingTxn.hash,
+            hash: tx.hash,
             success: tx.success,
             vmStatus: tx.vm_status,
         };
@@ -157,21 +167,24 @@ export class AptosNetwork extends AptosClient {
         destinationAddress: string,
         payload: Uint8Array
     ) {
-        const data = await this.generateTransaction(this.owner.address(), {
+        const tx = await this.submitTransactionAndWait(this.owner.address(), {
             function: `${destinationAddress}::execute`,
             type_arguments: [],
             arguments: [commandId, payload],
         });
-        const bcsTxn = await this.signTransaction(this.owner, data);
-        const pendingTxn = await this.submitTransaction(bcsTxn);
-
-        const tx: any = await this.waitForTransactionWithResult(pendingTxn.hash, { checkSuccess: true });
 
         return {
-            hash: pendingTxn.hash,
+            hash: tx.hash,
             success: tx.success,
             vmStatus: tx.vm_status,
         };
+    }
+
+    public async submitTransactionAndWait(to: MaybeHexString, txData: EntryFunctionPayload): Promise<any>{
+        const rawTx = await this.generateTransaction(to, txData);
+        const signedTx = await this.signTransaction(this.owner, rawTx);
+        const aptosTx = await this.submitTransaction(signedTx);
+        return(await this.waitForTransactionWithResult(aptosTx.hash));
     }
 
     private getLatestEventSequence = (events: any[]) => {
