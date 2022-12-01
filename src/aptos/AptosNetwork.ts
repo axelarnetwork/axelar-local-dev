@@ -20,6 +20,10 @@ export class AptosNetwork extends AptosClient {
         this.contractCallSequence = -1;
         this.payContractCallSequence = -1;
         this.resourceAddress = '0xe2a20d8c426eb04d882e20e78399b24123905d9f1adf95a292832805965e263a';
+        
+        this.queryContractCallEvents().then(events => {if (events) this.updateContractCallSequence(events);});
+        this.queryPayGasContractCallEvents().then(events => {if (events) this.updatePayGasContractCallSequence(events);});
+
     }
 
     async deploy(modulePath: string, compiledModules: string[], seed: MaybeHexString | undefined = undefined) {
