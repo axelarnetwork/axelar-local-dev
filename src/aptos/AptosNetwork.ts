@@ -21,9 +21,27 @@ export class AptosNetwork extends AptosClient {
         this.payContractCallSequence = -1;
         this.resourceAddress = '0xe2a20d8c426eb04d882e20e78399b24123905d9f1adf95a292832805965e263a';
         
-        this.queryContractCallEvents().then(events => {if (events) this.updateContractCallSequence(events);});
-        this.queryPayGasContractCallEvents().then(events => {if (events) this.updatePayGasContractCallSequence(events);});
+        this.isGatewayDeployed().then(result => {
+            if(result) {
+                this.queryContractCallEvents().then(events => {
+                    if (events) this.updateContractCallSequence(events);
+                });
+                this.queryPayGasContractCallEvents().then(events => {
+                    if (events) this.updatePayGasContractCallSequence(events);
+                });
+                
+            }
+        })
+    }
 
+    async isGatewayDeployed(): Promise<boolean> {
+        const resources = await this.getAccountResources(this.owner.address());
+        const resource_accounts = resources.find((resource) => resource.type == '0x1::resource_account::Container');
+        if(!resource_accounts) return false;
+        const data : any = resource_accounts.data;
+        const gateway = data.store.data.find((entry : any) => entry.key == this.resourceAddress);
+        return gateway != null;
+        
     }
 
     async deploy(modulePath: string, compiledModules: string[], seed: MaybeHexString | undefined = undefined) {
