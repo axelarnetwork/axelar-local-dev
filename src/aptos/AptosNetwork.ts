@@ -180,8 +180,8 @@ export class AptosNetwork extends AptosClient {
         };
     }
 
-    public async submitTransactionAndWait(to: MaybeHexString, txData: EntryFunctionPayload): Promise<any>{
-        const rawTx = await this.generateTransaction(to, txData);
+    public async submitTransactionAndWait(from: MaybeHexString, txData: EntryFunctionPayload): Promise<any>{
+        const rawTx = await this.generateTransaction(from, txData);
         const signedTx = await this.signTransaction(this.owner, rawTx);
         const aptosTx = await this.submitTransaction(signedTx);
         return(await this.waitForTransactionWithResult(aptosTx.hash));
