@@ -15,7 +15,7 @@
   {
     "name": "Avalanche",
     "chainId": 43114,
-    "rpc": "https://api.avax.network/ext/bc/C/rpc",
+    "rpc": "https://avalanche-mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
     "gateway": "0x5029C0EFf6C34351a0CEc334542cDb22c7928f78",
     "gasReceiver": "0xB53C693544363912D2A034f70D9d98808D5E192a",
     "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
