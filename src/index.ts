@@ -1,5 +1,4 @@
 import { createAndExport, forkAndExport } from './exportUtils';
-import { relay } from './relay';
 import { deployContract, defaultAccounts, setJSON, setLogger } from './utils';
 import { testnetInfo, mainnetInfo } from './info';
 import { networks } from './Network';
@@ -17,6 +16,10 @@ import {
     stopAll,
     getDepositAddress,
 } from './networkUtils';
+
+export * from './relay';
+export * from './aptos';
+export * from './utils';
 
 export const utils = {
     deployContract,
@@ -41,7 +44,6 @@ export {
     networks,
     testnetInfo,
     mainnetInfo,
-    relay,
     createAndExport,
     forkAndExport,
 };

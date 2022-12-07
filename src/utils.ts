@@ -3,7 +3,7 @@
 import { ethers, ContractFactory, BigNumber, Wallet } from 'ethers';
 const { defaultAbiCoder, id, arrayify, keccak256 } = ethers.utils;
 import http from 'http';
-const { outputJsonSync } = require('fs-extra');
+import { outputJsonSync } from 'fs-extra';
 
 export const logger = { log: console.log };
 
@@ -22,9 +22,13 @@ export async function getSignedExecuteInput(data: any, wallet: Wallet) {
 }
 
 export const getRandomID = () => id(getRandomInt(1e10).toString());
-export const getLogID = (chain: string, log: any) => {
-    return id(chain + ':' + log.blockNumber + ':' + log.transactionIndex + ':' + log.logIndex);
+export const getEVMLogID = (chain: string, log: any) => {
+    return id(chain + ':' + log.blockNumber + ':' + log.transactionIndex + ':' + log.logIndex + ':' + new Date().getMilliseconds());
 };
+export const getAptosLogID = (chain: string, event: any) => {
+    return id(chain + ':' + event.guid.account_address + ':' + event.version + ':' + event.sequence_number);
+};
+
 export const defaultAccounts = (n: number, seed = '') => {
     const balance = BigInt(1e30);
     const privateKeys = [];
@@ -36,7 +40,7 @@ export const defaultAccounts = (n: number, seed = '') => {
     return privateKeys.map((secretKey) => ({ balance, secretKey }));
 };
 
-export const deployContract = async (wallet: Wallet, contractJson: any, args = [], options = {}) => {
+export const deployContract = async (wallet: Wallet, contractJson: any, args: any[] = [], options = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
     const contract = await factory.deploy(...args, { ...options });
