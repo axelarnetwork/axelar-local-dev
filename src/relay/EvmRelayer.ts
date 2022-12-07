@@ -101,7 +101,6 @@ export class EvmRelayer extends Relayer {
             const fromName = command.data[0];
             const from = networks.find((network) => network.name == fromName);
             if (!from) continue;
-
             const payed =
                 command.name == 'approveContractCall'
                     ? this.contractCallGasEvents.find((log: any) => {
@@ -118,7 +117,7 @@ export class EvmRelayer extends Relayer {
                           if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
                           const alias = this.getAliasFromSymbol(from.tokens, log.symbol);
                           if (to.tokens[alias] != command.data[4]) return false;
-                          if (log.amount - getFee() != command.data[5]) return false;
+                          if (BigInt(log.amount) != BigInt(command.data[5])) return false;
                           return true;
                       });
 
@@ -236,10 +235,7 @@ export class EvmRelayer extends Relayer {
         for (const log of logsFrom) {
             const args: any = log.args;
             const alias = this.getAliasFromSymbol(from.tokens, args.symbol);
-            const fee = getFee();
-            if (args.amount < fee) continue;
-            const amountOut = args.amount.sub(fee);
-            if (amountOut < 0) continue;
+            const amountOut = args.amount;
             const commandId = getEVMLogID(from.name, log);
 
             const to = networks.find((chain: Network) => chain.name == args.destinationChain);
@@ -255,7 +251,6 @@ export class EvmRelayer extends Relayer {
                 payloadHash: args.payloadHash,
                 alias: alias,
                 amountIn: args.amount,
-                fee: fee,
                 amountOut: amountOut,
             };
             this.commands[args.destinationChain].push(

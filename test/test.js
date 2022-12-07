@@ -32,7 +32,7 @@ const { keccak256, toUtf8Bytes } = require('ethers/lib/utils');
 jest.setTimeout(300000);
 
 describe('create', () => {
-    let chain;
+    let chain, blank;
     it('should create a Network from no params', async () => {
         chain = await createNetwork();
     });
@@ -55,9 +55,9 @@ describe('create', () => {
         chain = await getNetwork(`http://localhost:${port}`);
     });
     it('should deploy a network on a preexisting chain', async () => {
-        const port = 8500;
+        const port = 8600;
         const accounts = defaultAccounts(20);
-        const blank = require('ganache').server({
+        blank = require('ganache').server({
             wallet: { accounts },
             chain: {
                 chainId: 3000,
@@ -65,16 +65,16 @@ describe('create', () => {
             },
             logging: { quiet: true },
         });
-        blank.listen(port);
+        await blank.listen(port);
         chain = await setupNetwork(`http://localhost:${port}`, {
             ownerKey: accounts[0].secretKey,
         });
-        await blank.close();
     });
 
     afterEach(async () => {
         await (await chain.gasReceiver.connect(chain.ownerWallet).collectFees(chain.ownerWallet.address, [])).wait();
         stopAll();
+        if(blank) await blank.close();
     });
 });
 
@@ -199,9 +199,9 @@ describe('relay', () => {
             expect(await ex2.sourceAddress()).to.equal(user1.address);
         });
         it('should pay for gas and call a contract manually', async () => {
-            await await chain1.gasReceiver
+            await (await chain1.gasReceiver
                 .connect(user1)
-                .payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, { value: 1e6 });
+                .payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, { value: 1e6 })).wait();
             await (await chain1.gateway.connect(user1).callContract(chain2.name, ex2.address, payload)).wait();
             await relay();
 
@@ -238,7 +238,6 @@ describe('relay', () => {
 
         const message = 'hello there executables!';
         const amount = 1234255675;
-        const fee = getFee(chain1, chain2, 'aUSDC');
         let payload;
 
         beforeEach(async () => {
@@ -258,14 +257,14 @@ describe('relay', () => {
             const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
             const args = (await chain2.gateway.queryFilter(filter))[0].args;
             await (
-                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'aUSDC', amount - fee)
+                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'aUSDC', amount)
             ).wait();
 
             expect(await ex1.value()).to.equal('');
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(user1.address);
-            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount);
         });
         it('should pay for gas and call a contract manually', async () => {
             await await chain1.gasReceiver
@@ -282,7 +281,7 @@ describe('relay', () => {
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(user1.address);
-            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount);
         });
         it('should call a contract through the sibling and fulfill the call', async () => {
             await (await chain1.usdc.connect(user1).approve(ex1.address, amount)).wait();
@@ -291,16 +290,16 @@ describe('relay', () => {
             const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
             const args = (await chain2.gateway.queryFilter(filter))[0].args;
             await (
-                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'aUSDC', amount - fee)
+                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'aUSDC', amount)
             ).wait();
 
             expect(await ex1.value()).to.equal(message);
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(ex1.address);
-            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount);
         });
-        it('shouldhave the sibling pay for gas and make the call', async () => {
+        it('should have the sibling pay for gas and make the call', async () => {
             await (await chain1.usdc.connect(user1).approve(ex1.address, amount)).wait();
             await (
                 await ex1.connect(user1).setAndSend(chain2.name, message, user2.address, 'aUSDC', amount, {
@@ -313,7 +312,7 @@ describe('relay', () => {
             expect(await ex2.value()).to.equal(message);
             expect(await ex2.sourceChain()).to.equal(chain1.name);
             expect(await ex2.sourceAddress()).to.equal(ex1.address);
-            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount - fee);
+            expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount);
         });
     });
 });
