@@ -14,25 +14,25 @@ export async function createAptosNetwork(config?: AptosNetworkConfig) {
         nodeUrl: 'http://localhost:8080',
         faucetUrl: 'http://localhost:8081',
     };
-    aptosNetwork = new AptosNetwork(nodeUrl);
+    const loadingAptosNetwork = new AptosNetwork(nodeUrl);
 
     // fund the account with faucet
     const faucet = new FaucetClient(nodeUrl, faucetUrl);
 
     // fund the deployer address
-    await faucet.fundAccount(aptosNetwork.owner.address(), 1e10);
+    await faucet.fundAccount(loadingAptosNetwork.owner.address(), 1e10);
 
     // deploy axelar framework modules
-    const tx = await aptosNetwork.deployAxelarFrameworkModules();
+    const tx = await loadingAptosNetwork.deployAxelarFrameworkModules();
     console.log('Deployed Axelar Framework modules:', tx.hash);
 
     // update the sequence number
-    const callContractEvents = await aptosNetwork.queryContractCallEvents({ limit: 1000 });
-    aptosNetwork.updateContractCallSequence(callContractEvents);
+    const callContractEvents = await loadingAptosNetwork.queryContractCallEvents({ limit: 1000 });
+    loadingAptosNetwork.updateContractCallSequence(callContractEvents);
 
-    const payGasEvents = await aptosNetwork.queryPayGasContractCallEvents({ limit: 1000 });
-    aptosNetwork.updatePayGasContractCallSequence(payGasEvents);
-
+    const payGasEvents = await loadingAptosNetwork.queryPayGasContractCallEvents({ limit: 1000 });
+    loadingAptosNetwork.updatePayGasContractCallSequence(payGasEvents);
+    aptosNetwork = loadingAptosNetwork;
     return aptosNetwork;
 }
 
