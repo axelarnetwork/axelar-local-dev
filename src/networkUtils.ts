@@ -7,6 +7,7 @@ import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 import { merge } from 'lodash';
 import fs from 'fs';
+import http from 'http'
 
 import IAxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json';
 import IAxelarGasReceiver from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json';
@@ -303,4 +304,14 @@ export function getDepositAddress(
         return address;
     }
     return httpGet(`http:/localhost:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${alias}`);
+}
+
+export async function checkIfEndpointValid(endpoint: string) {
+  return new Promise((resolve) => {
+    http.get(endpoint, () => {
+      resolve(true);
+    }).on('error', () => {
+      resolve(false)
+    });
+  });
 }

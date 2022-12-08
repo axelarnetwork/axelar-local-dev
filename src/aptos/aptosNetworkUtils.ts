@@ -1,4 +1,5 @@
 import { FaucetClient } from 'aptos';
+import { checkIfEndpointValid } from '../networkUtils';
 import { evmRelayer } from '../relay';
 import { AptosNetwork } from './AptosNetwork';
 
@@ -14,6 +15,10 @@ export async function createAptosNetwork(config?: AptosNetworkConfig) {
         nodeUrl: 'http://localhost:8080',
         faucetUrl: 'http://localhost:8081',
     };
+
+    if(!await checkIfEndpointValid(nodeUrl)) return;
+    if(!await checkIfEndpointValid(faucetUrl)) return;
+
     aptosNetwork = new AptosNetwork(nodeUrl);
 
     // fund the account with faucet
@@ -36,6 +41,6 @@ export async function createAptosNetwork(config?: AptosNetworkConfig) {
     return aptosNetwork;
 }
 
-export async function loadAptosNetwork(nodeUrl: string = 'http://localhost:8080') {
+export async function loadAptosNetwork(nodeUrl = 'http://localhost:8080') {
     aptosNetwork = new AptosNetwork(nodeUrl);
 }

@@ -77,10 +77,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         await relay();
         if (options.afterRelay) {
             options.afterRelay(evmRelayer.relayData);
-
-            if(aptosRelayer) {
             options.afterRelay(aptosRelayer.relayData);
-            }
         }
         relaying = false;
     }, options.relayInterval);
