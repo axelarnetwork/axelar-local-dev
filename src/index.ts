@@ -44,6 +44,4 @@ export {
     networks,
     testnetInfo,
     mainnetInfo,
-    createAndExport,
-    forkAndExport,
 };
