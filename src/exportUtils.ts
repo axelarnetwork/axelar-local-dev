@@ -74,7 +74,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     interval = setInterval(async () => {
         if (relaying) return;
         relaying = true;
-        await relay();
+        await relay().catch(() => undefined);
         if (options.afterRelay) {
             options.afterRelay(evmRelayer.relayData);
             options.afterRelay(aptosRelayer.relayData);
