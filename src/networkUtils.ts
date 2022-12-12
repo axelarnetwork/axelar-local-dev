@@ -6,6 +6,7 @@ import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 import { merge } from 'lodash';
+import ganache from 'ganache';
 import fs from 'fs';
 
 import IAxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json';
@@ -45,6 +46,7 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
 
 export async function createNetwork(options: NetworkOptions = {}) {
     if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const info = require(options.dbPath + '/networkInfo.json');
         const ganacheOptions = {
             database: { dbPath: options.dbPath },
@@ -57,7 +59,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
             logging: { quiet: true },
         };
         merge(ganacheOptions, options.ganacheOptions);
-        const ganacheProvider = require('ganache').provider(ganacheOptions);
+        const ganacheProvider = ganache.provider(ganacheOptions) as unknown as ethers.providers.ExternalProvider;
         const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
         chain.ganacheProvider = ganacheProvider;
         if (options.port) {
@@ -70,9 +72,9 @@ export async function createNetwork(options: NetworkOptions = {}) {
     }
     const chain: Network = new Network();
     chain.name = options.name != null ? options.name : `Chain ${networks.length + 1}`;
-    chain.chainId = options.chainId! || networks.length + 2500;
+    chain.chainId = options.chainId || networks.length + 2500;
     logger.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
-    const accounts = defaultAccounts(20, options.seed!);
+    const accounts = defaultAccounts(20, options.seed);
 
     const ganacheOptions = {
         database: { dbPath: options.dbPath },
@@ -87,7 +89,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
         logging: { quiet: true },
     };
     merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = require('ganache').provider(ganacheOptions);
+    chain.ganacheProvider = ganache.provider(ganacheOptions);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
@@ -197,9 +199,9 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     }
     const chain: Network = new Network();
     chain.name = options.name != null ? options.name : chainInfo.name != null ? chainInfo.name : `Chain ${networks.length + 1}`;
-    chain.chainId = options.chainId! || chainInfo.chainId! || networks.length + 2500;
+    chain.chainId = options.chainId || chainInfo.chainId || networks.length + 2500;
     logger.log(`Forking ${chain.name} with a chainId of ${chain.chainId}...`);
-    const accounts = defaultAccounts(20, options.seed!);
+    const accounts = defaultAccounts(20, options.seed);
 
     //This section gets the admin accounts so we can unlock them in our fork to upgrade the gateway to a 'localized' version
     const forkProvider = getDefaultProvider(chainInfo.rpc);
@@ -234,7 +236,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
         logging: { quiet: true },
     };
     const merged = merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = require('ganache').provider(merged);
+    chain.ganacheProvider = ganache.provider(merged);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
@@ -263,9 +265,15 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
 }
 
 export async function stop(network: string | Network) {
-    if (typeof network == 'string') network = networks.find((chain) => chain.name == network)!;
-    if (network.server != null) await network.server.close();
-    networks.splice(networks.indexOf(network), 1);
+    if (typeof network === 'string') {
+       const _network = networks.find((chain) => chain.name === network);
+       if(!_network) return;
+       networks.splice(networks.indexOf(_network), 1);
+    }
+    else if (network.server != null) {
+      await network.server.close();
+       networks.splice(networks.indexOf(network), 1);
+    }
 }
 
 export async function stopAll() {
