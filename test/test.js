@@ -24,7 +24,7 @@ const {
     networks,
 } = require('../dist');
 
-setLogger((...args) => {});
+setLogger((...args) => undefined);
 
 const BurnableMintableCappedERC20 = require('../dist/artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
 const { keccak256, toUtf8Bytes } = require('ethers/lib/utils');
@@ -74,7 +74,7 @@ describe('create', () => {
     afterEach(async () => {
         await (await chain.gasReceiver.connect(chain.ownerWallet).collectFees(chain.ownerWallet.address, [])).wait();
         stopAll();
-        if(blank) await blank.close();
+        if (blank) await blank.close();
     });
 });
 
@@ -199,9 +199,11 @@ describe('relay', () => {
             expect(await ex2.sourceAddress()).to.equal(user1.address);
         });
         it('should pay for gas and call a contract manually', async () => {
-            await (await chain1.gasReceiver
-                .connect(user1)
-                .payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, { value: 1e6 })).wait();
+            await (
+                await chain1.gasReceiver
+                    .connect(user1)
+                    .payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, { value: 1e6 })
+            ).wait();
             await (await chain1.gateway.connect(user1).callContract(chain2.name, ex2.address, payload)).wait();
             await relay();
 
@@ -256,9 +258,7 @@ describe('relay', () => {
             await relay();
             const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
             const args = (await chain2.gateway.queryFilter(filter))[0].args;
-            await (
-                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'aUSDC', amount)
-            ).wait();
+            await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'aUSDC', amount)).wait();
 
             expect(await ex1.value()).to.equal('');
             expect(await ex2.value()).to.equal(message);
@@ -289,9 +289,7 @@ describe('relay', () => {
             await relay();
             const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
             const args = (await chain2.gateway.queryFilter(filter))[0].args;
-            await (
-                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'aUSDC', amount)
-            ).wait();
+            await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'aUSDC', amount)).wait();
 
             expect(await ex1.value()).to.equal(message);
             expect(await ex2.value()).to.equal(message);
