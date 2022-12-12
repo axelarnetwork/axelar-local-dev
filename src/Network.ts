@@ -217,7 +217,7 @@ export class Network {
         );
 
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
+        return this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) }).then((tx: any) => tx.wait());
     }
 
     getInfo() {
