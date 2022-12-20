@@ -63,5 +63,18 @@
     "tokens": {
       "uusdc": "axlUSDC"
     }
+  },
+  {
+    "name": "Arbitrum",
+    "chainId": 42161,
+    "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+    "rpc": "https://arb1.arbitrum.io/rpc",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
+    "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
+    "tokenName": "Ether",
+    "tokenSymbol": "ETH",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
   }
 ]
