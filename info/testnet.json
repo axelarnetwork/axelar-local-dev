@@ -76,5 +76,18 @@
     "tokens": {
       "uusdc": "aUSDC"
     }
+  },
+  {
+    "name": "Arbitrum",
+    "chainId": 421613,
+    "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+    "rpc": "https://goerli-rollup.arbitrum.io/rpc",
+    "gasReceiver": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+    "constAddressDeployer": "0x617179a15fEAa53Fa82ae80b0fc3E85b7359a748",
+    "tokenName": "Ether",
+    "tokenSymbol": "ETH",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
   }
 ]
