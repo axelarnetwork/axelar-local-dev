@@ -40,7 +40,7 @@ export class EvmRelayer extends Relayer {
     private async executeEvm() {
         for (const to of networks) {
             const commands = this.commands[to.name];
-            if (commands.length == 0) continue;
+            if (commands?.length == 0) continue;
 
             const execution = await this.executeEvmGateway(to, commands);
             await this.executeEvmExecutable(to, commands, execution);
