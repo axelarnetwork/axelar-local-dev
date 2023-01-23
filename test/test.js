@@ -2,6 +2,7 @@
 'use strict';
 
 const chai = require('chai');
+const fs = require('fs');
 const {
     utils: { defaultAbiCoder },
     Contract,
@@ -22,6 +23,7 @@ const {
     forkNetwork,
     mainnetInfo,
     networks,
+    createAndExport,
 } = require('../dist');
 
 setLogger((...args) => {});
@@ -74,7 +76,36 @@ describe('create', () => {
     afterEach(async () => {
         await (await chain.gasReceiver.connect(chain.ownerWallet).collectFees(chain.ownerWallet.address, [])).wait();
         stopAll();
-        if(blank) await blank.close();
+        if (blank) await blank.close();
+    });
+});
+
+describe('createAndExport', () => {
+    beforeEach(() => {
+        // fs remove local.json file
+        fs.unlinkSync('./local.json');
+    });
+
+    it('should create a Network and export it to a file with websocket', async () => {
+        await createAndExport({
+            chains: ['Moonbeam'],
+        });
+        const chains = JSON.parse(fs.readFileSync('./local.json', 'utf8'));
+        const chain = chains[0];
+        expect(chain).to.eql({
+            name: 'Moonbeam',
+            chainId: 2500,
+            gateway: '0xD9C3b5474f1ec7578E3549BAd3ce266bAa5c2D3c',
+            gasReceiver: '0x5737A424F8e9A0dbA8701A4cDaB8E425F9031b33',
+            constAddressDeployer: '0x69aeB7Dc4f2A86873Dae8D753DE89326Cf90a77a',
+            rpc: 'http://localhost:8500/0',
+            ws: 'http://localhost:8501',
+            tokenName: 'DEV',
+            tokenSymbol: 'DEV',
+        });
+    });
+    afterEach(async () => {
+        stopAll();
     });
 });
 
@@ -199,9 +230,11 @@ describe('relay', () => {
             expect(await ex2.sourceAddress()).to.equal(user1.address);
         });
         it('should pay for gas and call a contract manually', async () => {
-            await (await chain1.gasReceiver
-                .connect(user1)
-                .payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, { value: 1e6 })).wait();
+            await (
+                await chain1.gasReceiver
+                    .connect(user1)
+                    .payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, { value: 1e6 })
+            ).wait();
             await (await chain1.gateway.connect(user1).callContract(chain2.name, ex2.address, payload)).wait();
             await relay();
 
@@ -256,9 +289,7 @@ describe('relay', () => {
             await relay();
             const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
             const args = (await chain2.gateway.queryFilter(filter))[0].args;
-            await (
-                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'aUSDC', amount)
-            ).wait();
+            await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, user1.address, payload, 'aUSDC', amount)).wait();
 
             expect(await ex1.value()).to.equal('');
             expect(await ex2.value()).to.equal(message);
@@ -289,9 +320,7 @@ describe('relay', () => {
             await relay();
             const filter = chain2.gateway.filters.ContractCallApprovedWithMint();
             const args = (await chain2.gateway.queryFilter(filter))[0].args;
-            await (
-                await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'aUSDC', amount)
-            ).wait();
+            await (await ex2.connect(user2).executeWithToken(args.commandId, chain1.name, ex1.address, payload, 'aUSDC', amount)).wait();
 
             expect(await ex1.value()).to.equal(message);
             expect(await ex2.value()).to.equal(message);
