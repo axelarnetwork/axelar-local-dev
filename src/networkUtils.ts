@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 'use strict';
 
 import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
@@ -44,6 +45,7 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
 }
 
 export async function createNetwork(options: NetworkOptions = {}) {
+    console.log('createNetwork', options);
     if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
         const info = require(options.dbPath + '/networkInfo.json');
         const ganacheOptions = {
@@ -86,8 +88,17 @@ export async function createNetwork(options: NetworkOptions = {}) {
         },
         logging: { quiet: true },
     };
-    merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = require('ganache').provider(ganacheOptions);
+    const mergedOptions = merge(ganacheOptions, options.ganacheOptions);
+    console.log('ganacheOptions', mergedOptions);
+    chain.ganacheProvider = require('ganache').provider(mergedOptions);
+    if (mergedOptions.server) {
+        const _server = require('ganache').server({
+            ws: true,
+            port: mergedOptions.server.port,
+        });
+        _server.listen(mergedOptions.server.port);
+    }
+    // server.listen(8501, () => {});
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
@@ -98,7 +109,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
-    chain.tokens = {};
+
     //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
 
     if (options.port) {
