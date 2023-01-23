@@ -44,7 +44,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         port: 8500,
         relayInterval: 2000,
     };
-    const _options = { ...options, ...defaultOptions };
+    const _options = { ...defaultOptions, ...options };
     const chains_local: Record<string, any>[] = [];
     let i = 0;
     for (const name of _options.chains) {
@@ -82,7 +82,6 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         if (_options.callback) await _options.callback(chain, info);
         i++;
     }
-    console.log('listening port:', _options.port);
     listen(_options.port);
     interval = setInterval(async () => {
         if (relaying) return;

@@ -45,7 +45,6 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
 }
 
 export async function createNetwork(options: NetworkOptions = {}) {
-    console.log('createNetwork', options);
     if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
         const info = require(options.dbPath + '/networkInfo.json');
         const ganacheOptions = {
@@ -89,7 +88,6 @@ export async function createNetwork(options: NetworkOptions = {}) {
         logging: { quiet: true },
     };
     const mergedOptions = merge(ganacheOptions, options.ganacheOptions);
-    console.log('ganacheOptions', mergedOptions);
     chain.ganacheProvider = require('ganache').provider(mergedOptions);
     if (mergedOptions.server) {
         const _server = require('ganache').server({
