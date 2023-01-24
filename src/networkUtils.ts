@@ -44,77 +44,61 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
     return serverInstance.listen(port, callback);
 }
 
-export async function createNetwork(options: NetworkOptions = {}) {
+function getGanacheProvider(chain: Network, ganacheOptions: any, accounts?: any, dbPath?: string, port?: number) {
     const ganache = require('ganache');
-    console.log('createNetwork Options', options);
-    // if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
-    //     const info = require(options.dbPath + '/networkInfo.json');
-    //     const ganacheOptions = {
-    //         database: { dbPath: options.dbPath },
-    //         ...options.ganacheOptions,
-    //         chain: {
-    //             vmErrorsOnRPCResponse: true,
-    //             chainId: info.chainId,
-    //             networkId: info.chainId,
-    //         },
-    //         logging: { quiet: true },
-    //     };
-    //     merge(ganacheOptions, options.ganacheOptions);
-    //     const ganacheProvider = ganache.provider(ganacheOptions);
-    //     const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
-    //     chain.ganacheProvider = ganacheProvider;
-    //     if (options.port) {
-    //         chain.port = options.port;
-    //         chain.server = server(chain).listen(chain.port, () => {
-    //             logger.log(`Serving ${chain.name} on port ${chain.port}`);
-    //         });
-    //     }
-    //     return chain;
-    // }
-    const chain: Network = new Network();
-    chain.name = options.name != null ? options.name : `Chain ${networks.length + 1}`;
-    chain.chainId = options.chainId! || networks.length + 2500;
-    logger.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
-    const accounts = defaultAccounts(20, options.seed);
 
-    const ganacheOptions = {
-        database: { dbPath: options.dbPath },
-        wallet: {
-            accounts: accounts,
-        },
-        chain: {
-            chainId: chain.chainId,
-            networkId: chain.chainId,
-            vmErrorsOnRPCResponse: true,
-        },
-        logging: { quiet: true },
-    };
-    const mergedOptions = merge(ganacheOptions, options.ganacheOptions);
-
-    // console.log('mergedOptions: ', mergedOptions);
-    chain.ganacheProvider = ganache.provider(mergedOptions);
-
-    if (mergedOptions.server) {
+    if (port) {
         const _server = ganache.server({
             ws: true,
-            port: mergedOptions.server.port,
+            port,
             accounts,
             debug: false,
             networkId: chain.chainId,
             chainId: chain.chainId,
-            logger: { log: () => {} },
+            logger: { log: () => undefined },
         });
-        _server.listen(mergedOptions.server.port);
-        console.log('listening on port:', mergedOptions.server.port);
-        chain.ganacheProvider = _server.provider;
+        _server.listen(port);
+        return _server.provider;
+    } else {
+        const defaultGanacheOptions = {
+            database: { dbPath },
+            wallet: {
+                accounts,
+            },
+            chain: {
+                chainId: chain.chainId,
+                networkId: chain.chainId,
+                vmErrorsOnRPCResponse: true,
+            },
+            logging: { quiet: true },
+        };
+        const mergedOptions = merge(defaultGanacheOptions, ganacheOptions);
+        return ganache.provider(mergedOptions);
     }
-    // const accounts = await chain.ganacheProvider.request({
-    //     method: 'eth_accounts',
-    //     params: [],
-    // });
+}
 
+export async function createNetwork(options: NetworkOptions = {}) {
+    if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
+        const info = require(options.dbPath + '/networkInfo.json');
+        const ganacheProvider = getGanacheProvider(info, options.ganacheOptions, null, options.dbPath);
+        const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
+        chain.ganacheProvider = ganacheProvider;
+        if (options.port) {
+            chain.port = options.port;
+            chain.server = server(chain).listen(chain.port, () => {
+                logger.log(`Serving ${chain.name} on port ${chain.port}`);
+            });
+        }
+        return chain;
+    }
+
+    const chain: Network = new Network();
+    chain.name = options.name != null ? options.name : `Chain ${networks.length + 1}`;
+    chain.chainId = options.chainId || networks.length + 2500;
+    logger.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
+    const accounts = defaultAccounts(20, options.seed);
+    chain.ganacheProvider = getGanacheProvider(chain, options.ganacheOptions, accounts, options.dbPath, options.port);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
-    // console.log(accounts);
     const wallets = accounts.map((x: any) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
     [chain.ownerWallet, chain.operatorWallet, chain.relayerWallet] = wallets;
@@ -125,8 +109,6 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await chain._deployGateway();
     await chain._deployGasReceiver();
     chain.tokens = {};
-
-    //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
 
     if (options.port) {
         chain.port = options.port;
