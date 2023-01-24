@@ -49,7 +49,6 @@ function getGanacheProvider(chain: Network, ganacheOptions: any, accounts?: any,
 
     if (ganacheOptions.server) {
         const port = ganacheOptions.server.port;
-        console.log('use ganache server');
         const _server = ganache.server({
             ws: true,
             port: ganacheOptions.server.port,
