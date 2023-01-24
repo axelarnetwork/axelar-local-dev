@@ -44,13 +44,15 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
     return serverInstance.listen(port, callback);
 }
 
-function getGanacheProvider(chain: Network, ganacheOptions: any, accounts?: any, dbPath?: string, port?: number) {
+function getGanacheProvider(chain: Network, ganacheOptions: any, accounts?: any, dbPath?: string) {
     const ganache = require('ganache');
 
-    if (port) {
+    if (ganacheOptions.server) {
+        const port = ganacheOptions.server.port;
+        console.log('use ganache server');
         const _server = ganache.server({
             ws: true,
-            port,
+            port: ganacheOptions.server.port,
             accounts,
             debug: false,
             networkId: chain.chainId,
@@ -97,7 +99,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     chain.chainId = options.chainId || networks.length + 2500;
     logger.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
     const accounts = defaultAccounts(20, options.seed);
-    chain.ganacheProvider = getGanacheProvider(chain, options.ganacheOptions, accounts, options.dbPath, options.port);
+    chain.ganacheProvider = getGanacheProvider(chain, options.ganacheOptions, accounts, options.dbPath);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x: any) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
