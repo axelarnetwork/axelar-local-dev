@@ -48,12 +48,13 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     const chains_local: Record<string, any>[] = [];
     let i = 0;
     for (const name of _options.chains) {
-        const wsPort = _options.port + i + 1;
+        const wsPort = _options.port + i;
         const chain = await createNetwork({
             name: name,
             seed: name,
             ganacheOptions: {
                 server: _options.ws && {
+                    ws: true,
                     port: wsPort,
                 },
             },
@@ -63,8 +64,8 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         });
         const info = {
             ...chain.getCloneInfo(),
-            rpc: `http://localhost:${_options.port}/${i}`,
-            ws: `http://localhost:${wsPort}`,
+            rpc: `http://localhost:${_options.port}`,
+            ws: `ws://localhost:${wsPort}`,
             tokenName: testnet?.tokenName,
             tokenSymbol: testnet?.tokenSymbol,
         };
@@ -75,14 +76,14 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             await user
                 .sendTransaction({
                     to: account,
-                    value: options.fundAmount,
+                    value: _options.fundAmount,
                 })
                 .then((tx) => tx.wait());
         }
         if (_options.callback) await _options.callback(chain, info);
         i++;
     }
-    listen(_options.port);
+    // listen(_options.port);
     interval = setInterval(async () => {
         if (relaying) return;
         relaying = true;
@@ -93,7 +94,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         }
         relaying = false;
     }, _options.relayInterval);
-    setJSON(chains_local, _options.chainOutputPath!);
+    setJSON(chains_local, _options.chainOutputPath);
 }
 
 export async function forkAndExport(options: CloneLocalOptions = {}) {
