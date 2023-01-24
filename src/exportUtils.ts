@@ -46,21 +46,23 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     };
     const _options = { ...defaultOptions, ...options };
     const chains_local: Record<string, any>[] = [];
-    let i = 0;
-    for (const name of _options.chains) {
+
+    for (let i = 0; i < _options.chains.length; i++) {
         const wsPort = _options.port + i;
+        const ganacheOptions = {
+            server: _options.ws && {
+                ws: true,
+                port: wsPort,
+            },
+        };
+        const name = _options.chains[i];
         const chain = await createNetwork({
             name: name,
             seed: name,
-            ganacheOptions: {
-                server: _options.ws && {
-                    ws: true,
-                    port: wsPort,
-                },
-            },
+            ganacheOptions,
         });
         const testnet = testnetInfo.find((info: any) => {
-            return info.name == name;
+            return info.name === name;
         });
         const info = {
             ...chain.getCloneInfo(),
@@ -81,7 +83,6 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
                 .then((tx) => tx.wait());
         }
         if (_options.callback) await _options.callback(chain, info);
-        i++;
     }
     // listen(_options.port);
     interval = setInterval(async () => {
@@ -94,6 +95,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         }
         relaying = false;
     }, _options.relayInterval);
+
     setJSON(chains_local, _options.chainOutputPath);
 }
 
