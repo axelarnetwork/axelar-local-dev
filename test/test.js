@@ -82,13 +82,16 @@ describe('create', () => {
 
 describe('createAndExport', () => {
     beforeEach(() => {
-        // fs remove local.json file
-        fs.unlinkSync('./local.json');
+        // fs remove local.json file if exist
+        if (fs.existsSync('./local.json')) {
+            fs.unlinkSync('./local.json');
+        }
     });
 
     it('should create a Network and export it to a file with websocket', async () => {
         await createAndExport({
             chains: ['Moonbeam'],
+            ws: true,
         });
         const chains = JSON.parse(fs.readFileSync('./local.json', 'utf8'));
         const chain = chains[0];
@@ -98,9 +101,10 @@ describe('createAndExport', () => {
             gateway: '0xD9C3b5474f1ec7578E3549BAd3ce266bAa5c2D3c',
             gasReceiver: '0x5737A424F8e9A0dbA8701A4cDaB8E425F9031b33',
             constAddressDeployer: '0x69aeB7Dc4f2A86873Dae8D753DE89326Cf90a77a',
-            rpc: 'http://localhost:8500/0',
-            ws: 'http://localhost:8501',
+            rpc: 'http://localhost:8500',
+            ws: 'ws://localhost:8500',
             tokenName: 'DEV',
+            tokens: {},
             tokenSymbol: 'DEV',
         });
     });
