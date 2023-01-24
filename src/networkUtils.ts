@@ -75,6 +75,7 @@ function getGanacheProvider(chain: Network, ganacheOptions: any, accounts?: any,
             logging: { quiet: true },
         };
         const mergedOptions = merge(defaultGanacheOptions, ganacheOptions);
+
         return ganache.provider(mergedOptions);
     }
 }
@@ -112,13 +113,13 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await chain._deployGasReceiver();
     chain.tokens = {};
 
-    if (options.port) {
+    if (!options.ganacheOptions.server && options.port) {
         chain.port = options.port;
         chain.server = server(chain).listen(chain.port, () => {
             logger.log(`Serving ${chain.name} on port ${chain.port}`);
         });
     }
-    if (options.dbPath) {
+    if (!options.ganacheOptions.server && options.dbPath) {
         setJSON(chain.getInfo(), options.dbPath + '/networkInfo.json');
     }
     networks.push(chain);

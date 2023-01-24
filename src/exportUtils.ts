@@ -64,10 +64,11 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         const testnet = testnetInfo.find((info: any) => {
             return info.name === name;
         });
+        const rpc = _options.ws ? `http://localhost:${wsPort}` : `http://localhost:${_options.port}/${i}`;
         const info = {
             ...chain.getCloneInfo(),
-            rpc: `http://localhost:${_options.port}/${i}`,
-            ws: `ws://localhost:${wsPort}`,
+            rpc,
+            ws: _options.ws && `ws://localhost:${wsPort}`,
             tokenName: testnet?.tokenName,
             tokenSymbol: testnet?.tokenSymbol,
         };
@@ -84,7 +85,9 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         }
         if (_options.callback) await _options.callback(chain, info);
     }
-    // listen(_options.port);
+    if (!_options.ws) {
+        listen(_options.port);
+    }
     interval = setInterval(async () => {
         if (relaying) return;
         relaying = true;
