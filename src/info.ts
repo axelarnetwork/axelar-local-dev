@@ -1,2 +1,7 @@
-export const testnetInfo = require('../info/testnet.json');
-export const mainnetInfo = require('../info/mainnet.json');
+import testnetInfo from '../info/testnet.json';
+import mainnetInfo from '../info/mainnet.json';
+
+export {
+  testnetInfo,
+  mainnetInfo
+}
