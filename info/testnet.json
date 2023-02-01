@@ -89,5 +89,44 @@
     "tokens": {
       "uusdc": "axlUSDC"
     }
+  },
+  {
+    "name": "Celo",
+    "chainId": 44787,
+    "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+    "rpc": "https://alfajores-forno.celo-testnet.org/",
+    "gasReceiver": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+    "constAddressDeployer": "0x98b2920d53612483f91f12ed7754e51b4a77919e",
+    "tokenName": "Celo",
+    "tokenSymbol": "CELO",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
+  },
+  {
+    "name": "Kava",
+    "chainId": 2221,
+    "gateway": "0xC8D18F85cB0Cee5C95eC29c69DeaF6cea972349c",
+    "rpc": "https://evm.testnet.kava.io",
+    "gasReceiver": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+    "constAddressDeployer": "0x98b2920d53612483f91f12ed7754e51b4a77919e",
+    "tokenName": "Kava",
+    "tokenSymbol": "KAVA",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
+  },
+  {
+    "name": "Aurora",
+    "chainId": 2221,
+    "gateway": "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
+    "rpc": "https://testnet.aurora.dev/",
+    "gasReceiver": "0xA2C84547Db9732B27D45c06218DDAEFcc71e452D",
+    "constAddressDeployer": "0x98b2920d53612483f91f12ed7754e51b4a77919e",
+    "tokenName": "Aurora",
+    "tokenSymbol": "AURORA",
+    "tokens": {
+      "uusdc": "axlUSDC"
+    }
   }
 ]
