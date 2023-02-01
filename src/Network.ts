@@ -244,7 +244,9 @@ export class Network {
             name: this.name,
             chainId: this.chainId,
             gateway: this.gateway.address,
-            gasReceiver: this.gasReceiver.address,
+            AxelarGasService: {
+              address: this.gasReceiver.address
+            },
             constAddressDeployer: this.constAddressDeployer.address,
             tokens: this.tokens,
         };
