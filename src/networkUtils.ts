@@ -6,6 +6,7 @@ import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import server from './server';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 import { merge } from 'lodash';
+import ganache from 'ganache';
 import fs from 'fs';
 
 import IAxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json';
@@ -20,10 +21,15 @@ export interface ChainCloneData {
     gateway: string;
     rpc: string;
     chainId: number;
-    gasReceiver: string;
     constAddressDeployer: string;
     tokenName: string;
     tokenSymbol: string;
+    AxelarGasService: {
+      address: string;
+    },
+    AxelarDepositService: {
+      address: string;
+    },
     tokens: { [key: string]: string };
 }
 
@@ -57,7 +63,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
             logging: { quiet: true },
         };
         merge(ganacheOptions, options.ganacheOptions);
-        const ganacheProvider = require('ganache').provider(ganacheOptions);
+        const ganacheProvider = ganache.provider(ganacheOptions) as any;
         const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
         chain.ganacheProvider = ganacheProvider;
         if (options.port) {
@@ -87,7 +93,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
         logging: { quiet: true },
     };
     merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = require('ganache').provider(ganacheOptions);
+    chain.ganacheProvider = ganache.provider(ganacheOptions);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
@@ -197,9 +203,9 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     }
     const chain: Network = new Network();
     chain.name = options.name != null ? options.name : chainInfo.name != null ? chainInfo.name : `Chain ${networks.length + 1}`;
-    chain.chainId = options.chainId! || chainInfo.chainId! || networks.length + 2500;
+    chain.chainId = options.chainId || chainInfo.chainId || networks.length + 2500;
     logger.log(`Forking ${chain.name} with a chainId of ${chain.chainId}...`);
-    const accounts = defaultAccounts(20, options.seed!);
+    const accounts = defaultAccounts(20, options.seed);
 
     //This section gets the admin accounts so we can unlock them in our fork to upgrade the gateway to a 'localized' version
     const forkProvider = getDefaultProvider(chainInfo.rpc);
@@ -234,7 +240,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
         logging: { quiet: true },
     };
     const merged = merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = require('ganache').provider(merged);
+    chain.ganacheProvider = ganache.provider(merged);
     chain.provider = new providers.Web3Provider(chain.ganacheProvider);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
@@ -245,9 +251,9 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.constAddressDeployer = new Contract(chainInfo.constAddressDeployer, ConstAddressDeployer.abi, chain.provider);
     chain.gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, chain.provider);
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
-    chain.gasReceiver = new Contract(chainInfo.gasReceiver, IAxelarGasReceiver.abi, chain.provider);
+    chain.gasReceiver = new Contract(chainInfo.AxelarGasService.address, IAxelarGasReceiver.abi, chain.provider);
 
-    chain.tokens = chainInfo.tokens;
+    chain.tokens = {};
 
     if (options.port) {
         chain.port = options.port;
