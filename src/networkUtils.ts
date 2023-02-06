@@ -24,8 +24,9 @@ export interface ChainCloneData {
     constAddressDeployer: string;
     tokenName: string;
     tokenSymbol: string;
+    gasService: string;
     AxelarGasService: {
-      address: string;
+      address: string
     },
     AxelarDepositService: {
       address: string;
@@ -145,7 +146,7 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
 
     chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
     chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
-    chain.gasReceiver = new Contract(info.gasReceiverAddress, IAxelarGasReceiver.abi, chain.provider);
+    chain.gasService = new Contract(info.gasReceiverAddress, IAxelarGasReceiver.abi, chain.provider);
     //chain.usdc = await chain.getTokenContract('aUSDC');
 
     logger.log(`Its gateway is deployed at ${chain.gateway.address}.`);
@@ -251,7 +252,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.constAddressDeployer = new Contract(chainInfo.constAddressDeployer, ConstAddressDeployer.abi, chain.provider);
     chain.gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, chain.provider);
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
-    chain.gasReceiver = new Contract(chainInfo.AxelarGasService.address, IAxelarGasReceiver.abi, chain.provider);
+    chain.gasService = new Contract(chainInfo.AxelarGasService.address, IAxelarGasReceiver.abi, chain.provider);
 
     chain.tokens = {};
 
