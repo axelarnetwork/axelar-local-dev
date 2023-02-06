@@ -8,6 +8,7 @@
     "tokenName": "Ether",
     "tokenSymbol": "ETH",
     "wrappedSymbol": "WETH",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
@@ -33,6 +34,7 @@
     "tokenName": "Avax",
     "tokenSymbol": "AVAX",
     "wrappedSymbol": "WAVAX",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
@@ -58,6 +60,7 @@
     "tokenName": "Fantom",
     "tokenSymbol": "FTM",
     "wrappedSymbol": "WFTM",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
@@ -83,6 +86,7 @@
     "tokenName": "Matic",
     "tokenSymbol": "MATIC",
     "wrappedSymbol": "WMATIC",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
@@ -97,6 +101,9 @@
       "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
       "implementation": "0xd883C8bA523253c93d97b6C7a5087a7B5ff23d79",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
+    },
+    "gasOptions": {
+      "gasLimit": 6e6
     }
   },
   {
@@ -108,6 +115,7 @@
     "tokenName": "Glimmer",
     "tokenSymbol": "GLMR",
     "wrappedSymbol": "WGLMR",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
@@ -133,6 +141,7 @@
     "tokenName": "Binance Coin",
     "tokenSymbol": "BNB",
     "wrappedSymbol": "WBNB",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
@@ -158,6 +167,7 @@
     "tokenName": "Eth",
     "tokenSymbol": "ETH",
     "wrappedSymbol": "WETH",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
@@ -182,6 +192,7 @@
     "constAddressDeployer": "0x98b2920d53612483f91f12ed7754e51b4a77919e",
     "tokenName": "Eth",
     "tokenSymbol": "ETH",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
@@ -196,6 +207,9 @@
       "address": "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955",
       "implementation": "0xBeE52844E35985c1B6729A6B88980209358F9979",
       "deployer": "0xd55cd98cdE61c3CcE1286F9aF50cDbF16f5dba5b"
+    },
+    "gasOptions": {
+      "gasLimit": 20e6
     }
   },
   {
@@ -206,6 +220,7 @@
     "constAddressDeployer": "0x98b2920d53612483f91f12ed7754e51b4a77919e",
     "tokenName": "Celo",
     "tokenSymbol": "CELO",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
@@ -230,6 +245,7 @@
     "constAddressDeployer": "0x98b2920d53612483f91f12ed7754e51b4a77919e",
     "tokenName": "Kava",
     "tokenSymbol": "KAVA",
+    "gasReceiver": "0x2d5d7d31F671F86C782533cc367F14109a082712",
     "AxelarGasService": {
       "salt": "AxelarGasService",
       "collector": "0x345662ABfE0E257E23552A434D02Ef274cCb6A90",
