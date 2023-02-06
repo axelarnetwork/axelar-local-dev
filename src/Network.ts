@@ -147,7 +147,7 @@ export class Network {
     }
     async _deployGasReceiver(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
-        const gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, []);
+        const gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, [this.ownerWallet.address]);
         const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy);
         await gasReceiverProxy.init(gasReceiver.address, this.ownerWallet.address, '0x');
 
