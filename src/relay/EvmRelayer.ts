@@ -142,27 +142,27 @@ export class EvmRelayer extends Relayer {
     }
 
     private async updateGasEvents(from: Network, blockNumber: number) {
-        let filter = from.gasReceiver.filters.GasPaidForContractCall();
-        let newGasLogs: any = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
+        let filter = from.gasService.filters.GasPaidForContractCall();
+        let newGasLogs: any = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
         for (const gasLog of newGasLogs) {
             this.contractCallGasEvents.push(gasLog);
         }
 
-        filter = from.gasReceiver.filters.NativeGasPaidForContractCall();
-        newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
+        filter = from.gasService.filters.NativeGasPaidForContractCall();
+        newGasLogs = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
             return { ...log.args, gasToken: AddressZero };
         });
         for (const gasLog of newGasLogs) {
             this.contractCallGasEvents.push(gasLog);
         }
 
-        filter = from.gasReceiver.filters.GasPaidForContractCallWithToken();
-        newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
+        filter = from.gasService.filters.GasPaidForContractCallWithToken();
+        newGasLogs = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
         for (const gasLog of newGasLogs) {
             this.contractCallWithTokenGasEvents.push(gasLog);
         }
-        filter = from.gasReceiver.filters.NativeGasPaidForContractCallWithToken();
-        newGasLogs = (await from.gasReceiver.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
+        filter = from.gasService.filters.NativeGasPaidForContractCallWithToken();
+        newGasLogs = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
             return { ...log.args, gasToken: AddressZero };
         });
         for (const gasLog of newGasLogs) {

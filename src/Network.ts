@@ -70,7 +70,7 @@ export class Network {
     threshold: number;
     lastRelayedBlock: number;
     gateway: Contract;
-    gasReceiver: Contract;
+    gasService: Contract;
     constAddressDeployer: Contract;
     isRemote: boolean | undefined;
     url: string | undefined;
@@ -90,7 +90,7 @@ export class Network {
         this.threshold = networkish.threshold;
         this.lastRelayedBlock = networkish.lastRelayedBlock;
         this.gateway = networkish.gateway;
-        this.gasReceiver = networkish.gasReceiver;
+        this.gasService = networkish.gasService;
         this.constAddressDeployer = networkish.constAddressDeployer;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
@@ -147,13 +147,13 @@ export class Network {
     }
     async _deployGasReceiver(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
-        const gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, [this.ownerWallet.address]);
+        const gasService = await deployContract(this.ownerWallet, AxelarGasReceiver, [this.ownerWallet.address]);
         const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy);
-        await gasReceiverProxy.init(gasReceiver.address, this.ownerWallet.address, '0x');
+        await gasReceiverProxy.init(gasService.address, this.ownerWallet.address, '0x');
 
-        this.gasReceiver = new Contract(gasReceiverProxy.address, AxelarGasReceiver.abi, this.provider);
-        logger.log(`Deployed at ${this.gasReceiver.address}`);
-        return this.gasReceiver;
+        this.gasService = new Contract(gasReceiverProxy.address, AxelarGasReceiver.abi, this.provider);
+        logger.log(`Deployed at ${this.gasService.address}`);
+        return this.gasService;
     }
     async _deployConstAddressDeployer(): Promise<Contract> {
         logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
@@ -232,7 +232,7 @@ export class Network {
             threshold: this.threshold,
             lastRelayedBlock: this.lastRelayedBlock,
             gatewayAddress: this.gateway.address,
-            gasReceiverAddress: this.gasReceiver.address,
+            gasReceiverAddress: this.gasService.address,
             constAddressDeployerAddress: this.constAddressDeployer.address,
             tokens: this.tokens,
         };
@@ -244,7 +244,7 @@ export class Network {
             name: this.name,
             chainId: this.chainId,
             gateway: this.gateway.address,
-            gasReceiver: this.gasReceiver.address,
+            gasService: this.gasService.address,
             constAddressDeployer: this.constAddressDeployer.address,
             tokens: this.tokens,
         };
