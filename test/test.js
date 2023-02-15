@@ -22,12 +22,12 @@ const {
     forkNetwork,
     mainnetInfo,
     networks,
-} = require('../dist/src/index.js');
+} = require('../dist');
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 setLogger((...args) => {});
 
-const BurnableMintableCappedERC20 = require('../dist/src/artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
+const BurnableMintableCappedERC20 = require('../dist/artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
 const { keccak256, toUtf8Bytes } = require('ethers/lib/utils');
 
 jest.setTimeout(300000);
@@ -73,7 +73,7 @@ describe('create', () => {
     });
 
     afterEach(async () => {
-        await (await chain.gasReceiver.connect(chain.ownerWallet).collectFees(chain.ownerWallet.address, [])).wait();
+        await (await chain.gasService.connect(chain.ownerWallet).collectFees(chain.ownerWallet.address, [], [])).wait();
         stopAll();
         if(blank) await blank.close();
     });
@@ -181,8 +181,8 @@ describe('relay', () => {
         const message = 'hello there executables!';
         const payload = defaultAbiCoder.encode(['string'], [message]);
         beforeEach(async () => {
-            ex1 = await deployContract(user1, Executable, [chain1.gateway.address, chain1.gasReceiver.address]);
-            ex2 = await deployContract(user2, Executable, [chain2.gateway.address, chain1.gasReceiver.address]);
+            ex1 = await deployContract(user1, Executable, [chain1.gateway.address, chain1.gasService.address]);
+            ex2 = await deployContract(user2, Executable, [chain2.gateway.address, chain1.gasService.address]);
 
             await await ex1.connect(user1).addSibling(chain2.name, ex2.address);
             await await ex2.connect(user2).addSibling(chain1.name, ex1.address);
@@ -200,7 +200,7 @@ describe('relay', () => {
             expect(await ex2.sourceAddress()).to.equal(user1.address);
         });
         it('should pay for gas and call a contract manually', async () => {
-            await (await chain1.gasReceiver
+            await (await chain1.gasService
                 .connect(user1)
                 .payNativeGasForContractCall(user1.address, chain2.name, ex2.address, payload, user1.address, { value: 1e6 })).wait();
             await (await chain1.gateway.connect(user1).callContract(chain2.name, ex2.address, payload)).wait();
@@ -243,8 +243,8 @@ describe('relay', () => {
 
         beforeEach(async () => {
             payload = defaultAbiCoder.encode(['string', 'address'], [message, user2.address]);
-            ex1 = await deployContract(user1, Executable, [chain1.gateway.address, chain1.gasReceiver.address]);
-            ex2 = await deployContract(user2, Executable, [chain2.gateway.address, chain1.gasReceiver.address]);
+            ex1 = await deployContract(user1, Executable, [chain1.gateway.address, chain1.gasService.address]);
+            ex2 = await deployContract(user2, Executable, [chain2.gateway.address, chain1.gasService.address]);
 
             await await ex1.connect(user1).addSibling(chain2.name, ex2.address);
             await await ex2.connect(user2).addSibling(chain1.name, ex1.address);
@@ -268,7 +268,7 @@ describe('relay', () => {
             expect((await chain2.usdc.balanceOf(user2.address)).toNumber()).to.equal(amount);
         });
         it('should pay for gas and call a contract manually', async () => {
-            await await chain1.gasReceiver
+            await await chain1.gasService
                 .connect(user1)
                 .payNativeGasForContractCallWithToken(user1.address, chain2.name, ex2.address, payload, 'aUSDC', amount, user1.address, {
                     value: 1e6,
