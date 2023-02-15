@@ -69,7 +69,7 @@ describe('relay', () => {
                 { attachedDeposit: '0' }
             );
 
-            evmContract = await deployContract(evmUser, Executable, [evmClient.gateway.address, evmClient.gasReceiver.address]);
+            evmContract = await deployContract(evmUser, Executable, [evmClient.gateway.address, evmClient.gasService.address]);
             await await evmContract.connect(evmUser).addSibling('near', nearContract.accountId);
         });
 
