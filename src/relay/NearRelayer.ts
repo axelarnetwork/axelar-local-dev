@@ -52,10 +52,6 @@ export class NearRelayer extends Relayer {
     private async updateCallContractEvents() {
         const events = nearNetwork.queryContractCallEvents();
 
-        /**
-         *
-         *   {"standard":"axelar_near","version":"1.0.0","event":"contract_call_event","data":{"address":"axelar_auth_weighted.test.near","destination_chain":"Polygon","destination_contract_address":"0xb7900E8Ec64A1D1315B6D4017d4b1dcd36E6Ea88","payload_hash":"0xcead85dcdfcdc3f9aa5aa82658669488859283d53026229b179f017824d15a1f","payload":"0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c80000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"}}
-         */
         for (const event of events) {
             const commandId = getNearLogID('near', event);
             const contractCallArgs: CallContractArgs = {
