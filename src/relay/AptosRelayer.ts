@@ -1,12 +1,12 @@
-import { Relayer } from './Relayer';
-import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
 import { ethers } from 'ethers';
-import { getAptosLogID, getSignedExecuteInput, logger } from '../utils';
-import { Command } from './Command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
+import { aptosNetwork } from '../aptos';
 import { Network, networks } from '../Network';
 import { getGasPrice } from '../networkUtils';
-import { aptosNetwork } from '../aptos';
+import { getAptosLogID, getSignedExecuteInput, logger } from '../utils';
+import { Command } from './Command';
+import { Relayer } from './Relayer';
+import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
 const AddressZero = ethers.constants.AddressZero;
 
 export class AptosRelayer extends Relayer {
@@ -113,6 +113,7 @@ export class AptosRelayer extends Relayer {
 
         for (const event of events) {
             const commandId = getAptosLogID('aptos', event);
+
             const contractCallArgs: CallContractArgs = {
                 from: 'aptos',
                 to: event.data.destinationChain,
@@ -120,6 +121,8 @@ export class AptosRelayer extends Relayer {
                 destinationContractAddress: event.data.destinationAddress,
                 payload: event.data.payload,
                 payloadHash: event.data.payloadHash,
+                transactionHash: '',
+                sourceEventIndex: 0,
             };
             this.relayData.callContract[commandId] = contractCallArgs;
             const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);

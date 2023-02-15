@@ -7,6 +7,8 @@ export interface CallContractArgs {
     destinationContractAddress: string;
     payload: string;
     payloadHash: string;
+    transactionHash: string;
+    sourceEventIndex: number;
 }
 
 export interface CallContractWithTokenArgs {

@@ -1,9 +1,9 @@
 'use strict';
 
-import { ethers, ContractFactory, BigNumber, Wallet } from 'ethers';
-const { defaultAbiCoder, id, arrayify, keccak256 } = ethers.utils;
-import http from 'http';
+import { BigNumber, ContractFactory, ethers, Wallet } from 'ethers';
 import { outputJsonSync } from 'fs-extra';
+import http from 'http';
+const { defaultAbiCoder, id, arrayify, keccak256 } = ethers.utils;
 
 export const logger = { log: console.log };
 
@@ -27,6 +27,10 @@ export const getEVMLogID = (chain: string, log: any) => {
 };
 export const getAptosLogID = (chain: string, event: any) => {
     return id(chain + ':' + event.guid.account_address + ':' + event.version + ':' + event.sequence_number);
+};
+
+export const getNearLogID = (chain: string, event: any) => {
+    return id(chain + ':' + event.standard + ':' + event.version + ':' + new Date().getMilliseconds());
 };
 
 export const defaultAccounts = (n: number, seed = '') => {

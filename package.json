@@ -9,7 +9,9 @@
         "build-ts": "rm -rf dist && tsc",
         "build-contract": "rm -rf src/artifacts && hardhat compile && mv artifacts src/artifacts",
         "build-aptos": "./aptos/build.sh",
-        "build": "run-s build-contract build-aptos build-ts",
+        "build-near": "cd ./src/near/contracts/test/near-axelar-contract-call-example && ./build.sh",
+        "copy-near-wasm": "mkdir -p dist/src/near/contracts && cp -r src/near/contracts/axelar_auth_gateway.wasm dist/src/near/contracts",
+        "build": "run-s build-contract build-aptos build-near build-ts copy-near-wasm",
         "prepare": "run-s build",
         "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
@@ -37,6 +39,7 @@
         "fs-extra": "^10.1.0",
         "ganache": "^7.1.0",
         "lodash": "^4.17.21",
+        "near-workspaces": "^3.2.2",
         "npm-run-all": "^4.1.5"
     },
     "devDependencies": {
