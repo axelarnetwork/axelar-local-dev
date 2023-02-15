@@ -252,7 +252,7 @@ async function main() {
     );
 
     // Deploy Executable contract for EVM
-    const evmContract = await deployContract(evmUser, Executable, [evmClient.gateway.address, evmClient.gasReceiver.address]);
+    const evmContract = await deployContract(evmUser, Executable, [evmClient.gateway.address, evmClient.gasService.address]);
 
     // Add NEAR contract as sibling for EVM contract
     await await evmContract.connect(evmUser).addSibling('near', nearContract.accountId);
@@ -260,7 +260,7 @@ async function main() {
     // Call NEAR contract from EVM
     console.log('Sending message from EVM to NEAR...');
 
-    let value = 'Hello from Eth!';
+    let value = 'Hello from EVM!';
 
     // Call set method on EVM contract
     await (await evmContract.connect(evmUser).set('near', value)).wait();
@@ -284,7 +284,7 @@ async function main() {
     // Call EVM contract from NEAR
     console.log('Sending message from NEAR to EVM...');
 
-    value = 'Hello from Near!';
+    value = 'Hello from NEAR!';
 
     // Call set method on NEAR contract
     await nearClient.callContract(
@@ -322,13 +322,13 @@ Within the console logs after running the example above you would see something 
 ```
 Sending message from EVM to NEAR...
 
-    NEAR value: Hello from Eth!
+    NEAR value: Hello from EVM!
     NEAR source chain: Chain 1
     NEAR source address: 0x5B34876FFB1656710fb963ecD199C6f173c29267
 
 Sending message from NEAR to EVM...
 
-    EVM value: Hello from Near!
+    EVM value: Hello from NEAR!
     EVM source chain: near
     EVM source address: near_executable.test.near
 ```
