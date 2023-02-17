@@ -94,12 +94,12 @@ export class EvmRelayer extends Relayer {
         for (const command of commands) {
             if (command.post == null) continue;
 
-            const fromName = command.data[0];
+            const fromName = command.data[1];
             const from = networks.find((network) => network.name == fromName);
             if (!from) continue;
 
             const payed = this.expressContractCallWithTokenGasEvents.find((log: any) => {
-                if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
+                if (log.sourceAddress.toLowerCase() != command.data[0].toLowerCase()) return false;
                 if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
                 if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
                 if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
@@ -118,16 +118,18 @@ export class EvmRelayer extends Relayer {
                 const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
                 const gasLimit = BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost));
 
-                to.expressService.callWithToken(
-                    ethers.constants.HashZero,
-                    payed.sourceChain,
-                    payed.sourceAddress,
-                    payed.destinationAddress,
-                    payed.payload,
-                    payed.symbol,
-                    payed.amount,
-                    { gasLimit }
-                );
+                to.expressService
+                    .connect(to.ownerWallet)
+                    .callWithToken(
+                        ethers.constants.HashZero,
+                        payed.sourceChain,
+                        payed.sourceAddress,
+                        payed.destinationAddress,
+                        payed.payload,
+                        payed.symbol,
+                        payed.amount,
+                        { gasLimit }
+                    );
             } catch (e) {
                 logger.log(e);
             }
@@ -146,15 +148,9 @@ export class EvmRelayer extends Relayer {
                 this.relayData.callContractWithToken[command.commandId];
 
             try {
-                to.expressService.callWithToken(
-                    command.commandId,
-                    from.name,
-                    sourceAddress,
-                    destinationContractAddress,
-                    payload,
-                    alias,
-                    amountIn
-                );
+                to.expressService
+                    .connect(to.ownerWallet)
+                    .callWithToken(command.commandId, from.name, sourceAddress, destinationContractAddress, payload, alias, amountIn);
             } catch (e) {
                 logger.log(e);
             }
