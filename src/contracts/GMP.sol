@@ -17,5 +17,6 @@ import { GMPExpressServiceProxy } from '@axelar-network/axelar-cgp-solidity/cont
 import { IAxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol';
 import { ExpressExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/ExpressExecutable.sol';
 import { ExpressRegistry } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/ExpressRegistry.sol';
+import { ExpressProxyDeployer } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/ExpressProxyDeployer.sol';
 // import { ExpressProxy } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/ExpressProxy.sol';
 // import { ExpressProxyDeployer } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/ExpressProxyDeployer.sol';

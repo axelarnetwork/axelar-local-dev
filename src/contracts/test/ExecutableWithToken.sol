@@ -10,11 +10,11 @@ contract ExecutableWithToken is AxelarExecutable {
     string public value;
     string public sourceChain;
     string public sourceAddress;
-    IAxelarGasService public immutable gasReceiver;
+    IAxelarGasService public immutable gasService;
     mapping(string => string) public siblings;
 
-    constructor(address gateway_, address gasReceiver_) AxelarExecutable(gateway_) {
-        gasReceiver = IAxelarGasService(gasReceiver_);
+    constructor(address gateway_, address gasService_) AxelarExecutable(gateway_) {
+        gasService = IAxelarGasService(gasService_);
     }
 
     //Call this function on setup to tell this contract who it's sibling contracts are.
@@ -33,7 +33,7 @@ contract ExecutableWithToken is AxelarExecutable {
         value = value_;
         bytes memory payload = abi.encode(value_, destinationAddress);
         if (msg.value > 0) {
-            gasReceiver.payNativeGasForContractCallWithToken{ value: msg.value }(
+            gasService.payNativeGasForContractCallWithToken{ value: msg.value }(
                 address(this),
                 chain,
                 siblings[chain],
