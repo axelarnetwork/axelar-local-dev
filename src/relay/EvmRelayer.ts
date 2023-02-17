@@ -23,6 +23,7 @@ export class EvmRelayer extends Relayer {
             if (blockNumber <= from.lastRelayedBlock) continue;
 
             await this.updateGasEvents(from, blockNumber);
+            await this.updateExpressGasEvents(from, blockNumber);
             await this.updateDepositAddresses(from, blockNumber);
             await this.updateTokenSentEvent(from, blockNumber);
             await this.updateCallContractEvents(from, blockNumber);
@@ -41,8 +42,9 @@ export class EvmRelayer extends Relayer {
         for (const to of networks) {
             const commands = this.commands[to.name];
             if (!commands || commands?.length == 0) continue;
-
+            await this.executeEvmExpress(to, commands);
             const execution = await this.executeEvmGateway(to, commands);
+            await this.completeEvmExpress(to, commands);
             await this.executeEvmExecutable(to, commands, execution);
         }
     }
@@ -86,6 +88,77 @@ export class EvmRelayer extends Relayer {
             .connect(to.ownerWallet)
             .execute(signedData, { gasLimit: BigInt(8e6) })
             .then((tx: any) => tx.wait());
+    }
+
+    private async executeEvmExpress(to: Network, commands: Command[]): Promise<void> {
+        for (const command of commands) {
+            if (command.post == null) continue;
+
+            const fromName = command.data[0];
+            const from = networks.find((network) => network.name == fromName);
+            if (!from) continue;
+
+            const payed = this.expressContractCallWithTokenGasEvents.find((log: any) => {
+                if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
+                if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
+                if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
+                if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
+                const alias = this.getAliasFromSymbol(from.tokens, log.symbol);
+                if (to.tokens[alias] != command.data[4]) return false;
+                if (BigInt(log.amount) != BigInt(command.data[5])) return false;
+                return true;
+            });
+
+            if (!payed) continue;
+            const index = this.expressContractCallWithTokenGasEvents.indexOf(payed);
+            this.expressContractCallWithTokenGasEvents.splice(index, 1);
+
+            try {
+                const cost = getGasPrice();
+                const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
+                const gasLimit = BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost));
+
+                to.expressService.callWithToken(
+                    ethers.constants.HashZero,
+                    payed.sourceChain,
+                    payed.sourceAddress,
+                    payed.destinationAddress,
+                    payed.payload,
+                    payed.symbol,
+                    payed.amount,
+                    { gasLimit }
+                );
+            } catch (e) {
+                logger.log(e);
+            }
+        }
+    }
+
+    private async completeEvmExpress(to: Network, commands: Command[]): Promise<void> {
+        for (const command of commands) {
+            if (command.post == null) continue;
+
+            const fromName = command.data[0];
+            const from = networks.find((network) => network.name == fromName);
+            if (!from) continue;
+
+            const { sourceAddress, destinationContractAddress, payload, alias, amountIn } =
+                this.relayData.callContractWithToken[command.commandId];
+
+            try {
+                to.expressService.callWithToken(
+                    command.commandId,
+                    from.name,
+                    sourceAddress,
+                    destinationContractAddress,
+                    payload,
+                    alias,
+                    amountIn
+                );
+            } catch (e) {
+                logger.log(e);
+            }
+        }
     }
 
     private async executeEvmExecutable(to: Network, commands: Command[], execution: any): Promise<void> {
@@ -167,6 +240,21 @@ export class EvmRelayer extends Relayer {
         });
         for (const gasLog of newGasLogs) {
             this.contractCallWithTokenGasEvents.push(gasLog);
+        }
+    }
+
+    private async updateExpressGasEvents(from: Network, blockNumber: number) {
+        let filter = from.gasService.filters.GasPaidForExpressCallWithToken();
+        let newGasLogs: any = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
+        for (const gasLog of newGasLogs) {
+            this.expressContractCallWithTokenGasEvents.push(gasLog);
+        }
+        filter = from.gasService.filters.NativeGasPaidForExpressCallWithToken();
+        newGasLogs = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
+            return { ...log.args, gasToken: AddressZero };
+        });
+        for (const gasLog of newGasLogs) {
+            this.expressContractCallWithTokenGasEvents.push(gasLog);
         }
     }
 

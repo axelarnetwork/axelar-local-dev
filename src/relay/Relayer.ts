@@ -10,13 +10,11 @@ export abstract class Relayer {
     };
 
     protected commands: RelayCommand = {};
-
     public contractCallGasEvents: any[] = [];
-
     public contractCallWithTokenGasEvents: any[] = [];
-
+    public expressContractCallGasEvents: any[] = [];
+    public expressContractCallWithTokenGasEvents: any[] = [];
     abstract updateEvents(): Promise<void>;
-
     abstract execute(): Promise<void>;
 
     async relay() {
