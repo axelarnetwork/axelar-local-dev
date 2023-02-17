@@ -9,6 +9,19 @@ export interface CallContractArgs {
     payloadHash: string;
 }
 
+export interface CallContractWithTokenArgs {
+    from: string;
+    to: string;
+    sourceAddress: string;
+    destinationContractAddress: string;
+    payload: string;
+    payloadHash: string;
+    alias: string;
+    destinationTokenSymbol: string;
+    amountIn: string;
+    amountOut: string;
+}
+
 export interface NativeGasPaidForContractCallArgs {
     sourceAddress: string;
     destinationChain: string;

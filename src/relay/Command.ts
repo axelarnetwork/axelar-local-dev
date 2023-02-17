@@ -3,7 +3,7 @@
 import { ethers, Contract } from 'ethers';
 const { defaultAbiCoder } = ethers.utils;
 import { networks } from '../Network';
-import { CallContractArgs, RelayData } from './types';
+import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types';
 import { IAxelarExecutable } from '../contracts';
 import { aptosNetwork } from '../aptos';
 import { HexString } from 'aptos';
@@ -44,6 +44,33 @@ export class Command {
                     .execute(commandId, args.from, args.sourceAddress, args.payload, options)
                     .then((tx: any) => tx.wait());
                 relayData.callContract[commandId].execution = tx.transactionHash;
+            }
+        );
+    };
+
+    static createEVMContractCallWithTokenCommand = (commandId: string, relayData: RelayData, args: CallContractWithTokenArgs) => {
+        return new Command(
+            commandId,
+            'approveContractCallWithMint',
+            [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.destinationTokenSymbol, args.amountOut],
+            ['string', 'string', 'address', 'bytes32', 'string', 'uint256'],
+            async (options: any) => {
+                const to = networks.find((chain) => chain.name == args.to);
+                if (!to) return;
+
+                const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to.relayerWallet);
+                const receipt = await contract
+                    .executeWithToken(
+                        commandId,
+                        args.from,
+                        args.sourceAddress,
+                        args.payload,
+                        args.destinationTokenSymbol,
+                        args.amountOut,
+                        options
+                    )
+                    .then((tx: any) => tx.wait());
+                relayData.callContractWithToken[commandId].execution = receipt.transactionHash;
             }
         );
     };
