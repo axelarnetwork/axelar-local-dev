@@ -2,21 +2,12 @@
 
 import { ethers, Wallet, Contract, providers } from 'ethers';
 import { logger } from './utils';
-const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
 import { getSignedExecuteInput, getRandomID, deployContract } from './utils';
+import { AxelarGateway, AxelarGatewayProxy, IAxelarGateway, Auth, TokenDeployer, AxelarGasReceiver } from './contracts';
 import http from 'http';
 
-import TokenDeployer from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/TokenDeployer.sol/TokenDeployer.json';
-import AxelarGatewayProxy from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json';
-import AxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json';
-import IAxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json';
-import BurnableMintableCappedERC20 from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json';
-import Auth from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json';
-import AxelarGasReceiver from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json';
-import AxelarGasReceiverProxy from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasServiceProxy.sol/AxelarGasServiceProxy.json';
-import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json';
-
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
 
 export const networks: Network[] = [];
 export interface NetworkOptions {
@@ -171,6 +162,17 @@ export class Network {
         logger.log(`Deployed at ${this.constAddressDeployer.address}`);
         return this.constAddressDeployer;
     }
+
+    async deployExpressServiceContract(): Promise<Contract> {
+        logger.log(`Deploying the Express Service Contract for ${this.name}... `);
+        const expressServiceContract = await deployContract(this.ownerWallet, ExpressServiceContract, [
+            this.gateway.address,
+            this.gasService.address,
+        ]);
+        logger.log(`Deployed at ${expressServiceContract.address}`);
+        return expressServiceContract;
+    }
+
     async deployToken(name: string, symbol: string, decimals: number, cap: bigint, address: string = ADDRESS_ZERO, alias: string = symbol) {
         logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(

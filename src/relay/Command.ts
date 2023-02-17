@@ -4,7 +4,7 @@ import { ethers, Contract } from 'ethers';
 const { defaultAbiCoder } = ethers.utils;
 import { networks } from '../Network';
 import { CallContractArgs, RelayData } from './types';
-import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
+import { IAxelarExecutable } from '../contracts';
 import { aptosNetwork } from '../aptos';
 import { HexString } from 'aptos';
 
@@ -58,7 +58,7 @@ export class Command {
                 const tx = await aptosNetwork.execute(
                     new HexString(commandId).toUint8Array(),
                     args.destinationContractAddress,
-                    new HexString(args.payload).toUint8Array(),
+                    new HexString(args.payload).toUint8Array()
                 );
 
                 relayData.callContract[commandId].execution = tx.hash;

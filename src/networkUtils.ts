@@ -1,18 +1,15 @@
 'use strict';
 
-import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
-const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
-import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import server from './server';
-import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
-import { merge } from 'lodash';
 import ganache from 'ganache';
 import fs from 'fs';
+import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
+import { merge } from 'lodash';
+import { defaultAccounts, setJSON, httpGet, logger } from './utils';
+import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
+import { IAxelarGateway, IAxelarGasService, AxelarGateway, ConstAddressDeployer } from './contracts';
 
-import IAxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json';
-import IAxelarGasReceiver from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json';
-import AxelarGateway from './artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json';
-import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json';
+const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 
 let serverInstance: any;
 
@@ -26,11 +23,11 @@ export interface ChainCloneData {
     tokenSymbol: string;
     gasService: string;
     AxelarGasService: {
-      address: string
-    },
+        address: string;
+    };
     AxelarDepositService: {
-      address: string;
-    },
+        address: string;
+    };
     tokens: { [key: string]: string };
 }
 
@@ -146,7 +143,7 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
 
     chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
     chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
-    chain.gasService = new Contract(info.gasReceiverAddress, IAxelarGasReceiver.abi, chain.provider);
+    chain.gasService = new Contract(info.gasReceiverAddress, IAxelarGasService.abi, chain.provider);
     //chain.usdc = await chain.getTokenContract('aUSDC');
 
     logger.log(`Its gateway is deployed at ${chain.gateway.address}.`);
@@ -252,7 +249,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.constAddressDeployer = new Contract(chainInfo.constAddressDeployer, ConstAddressDeployer.abi, chain.provider);
     chain.gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, chain.provider);
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
-    chain.gasService = new Contract(chainInfo.AxelarGasService.address, IAxelarGasReceiver.abi, chain.provider);
+    chain.gasService = new Contract(chainInfo.AxelarGasService.address, IAxelarGasService.abi, chain.provider);
 
     chain.tokens = {};
 

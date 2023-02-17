@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 
 import { IERC20 } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol';
 import { IAxelarGasService } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol';
-import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executables/AxelarExecutable.sol';
+import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol';
 
 contract ExecutableWithToken is AxelarExecutable {
     string public value;
@@ -49,7 +49,7 @@ contract ExecutableWithToken is AxelarExecutable {
         gateway.callContractWithToken(chain, siblings[chain], payload, symbol, amount);
     }
 
-    /*Handles calls created by setAndSend. Updates this contract's value 
+    /*Handles calls created by setAndSend. Updates this contract's value
     and gives the token received to the destination specified at the source chain. */
     function _executeWithToken(
         string calldata sourceChain_,

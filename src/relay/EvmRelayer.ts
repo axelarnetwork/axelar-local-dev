@@ -1,3 +1,4 @@
+import { HexString } from 'aptos';
 import { aptosNetwork } from '../aptos';
 import { Relayer } from './Relayer';
 import { CallContractArgs } from './types';
@@ -8,8 +9,7 @@ import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
 import { depositAddresses } from '../networkUtils';
 import { Network, networks } from '../Network';
 import { getFee, getGasPrice } from '../networkUtils';
-import IAxelarExecutable from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
-import { HexString } from 'aptos';
+import { IAxelarExecutable } from '../contracts';
 const AddressZero = ethers.constants.AddressZero;
 
 export class EvmRelayer extends Relayer {
@@ -104,22 +104,22 @@ export class EvmRelayer extends Relayer {
             const payed =
                 command.name == 'approveContractCall'
                     ? this.contractCallGasEvents.find((log: any) => {
-                        if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                        if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                        if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                        if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                        return true;
-                    })
+                          if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
+                          if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
+                          if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
+                          if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
+                          return true;
+                      })
                     : this.contractCallWithTokenGasEvents.find((log: any) => {
-                        if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                        if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                        if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                        if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                        const alias = this.getAliasFromSymbol(from.tokens, log.symbol);
-                        if (to.tokens[alias] != command.data[4]) return false;
-                        if (BigInt(log.amount) != BigInt(command.data[5])) return false;
-                        return true;
-                    });
+                          if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
+                          if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
+                          if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
+                          if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
+                          const alias = this.getAliasFromSymbol(from.tokens, log.symbol);
+                          if (to.tokens[alias] != command.data[4]) return false;
+                          if (BigInt(log.amount) != BigInt(command.data[5])) return false;
+                          return true;
+                      });
 
             if (!payed) continue;
             if (command.name == 'approveContractCall') {
