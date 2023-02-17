@@ -3,7 +3,19 @@
 import { ethers, Wallet, Contract, providers } from 'ethers';
 import { logger } from './utils';
 import { getSignedExecuteInput, getRandomID, deployContract } from './utils';
-import { AxelarGateway, AxelarGatewayProxy, IAxelarGateway, Auth, TokenDeployer, AxelarGasReceiver } from './contracts';
+import {
+    AxelarGateway,
+    AxelarGatewayProxy,
+    IAxelarGateway,
+    Auth,
+    TokenDeployer,
+    AxelarGasReceiver,
+    BurnableMintableCappedERC20,
+    AxelarGasReceiverProxy,
+    ConstAddressDeployer,
+    GMPExpressService,
+    GMPExpressProxyDeployer,
+} from './contracts';
 import http from 'http';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -31,6 +43,8 @@ export interface NetworkInfo {
     lastRelayedBlock: number;
     gatewayAddress: string;
     gasReceiverAddress: string;
+    expressServiceAddress: string;
+    expressProxyDeployerAddress: string;
     constAddressDeployerAddress: string;
     tokens: { [key: string]: string };
 }
@@ -63,6 +77,8 @@ export class Network {
     gateway: Contract;
     gasService: Contract;
     constAddressDeployer: Contract;
+    expressService: Contract;
+    expressProxyDeployer: Contract;
     isRemote: boolean | undefined;
     url: string | undefined;
     ganacheProvider: any;
@@ -83,6 +99,8 @@ export class Network {
         this.gateway = networkish.gateway;
         this.gasService = networkish.gasService;
         this.constAddressDeployer = networkish.constAddressDeployer;
+        this.expressService = networkish.expressService;
+        this.expressProxyDeployer = networkish.expressProxyDeployer;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
         this.tokens = networkish.tokens;
@@ -165,12 +183,17 @@ export class Network {
 
     async deployExpressServiceContract(): Promise<Contract> {
         logger.log(`Deploying the Express Service Contract for ${this.name}... `);
-        const expressServiceContract = await deployContract(this.ownerWallet, ExpressServiceContract, [
+        const expressProxyDeployer = await deployContract(this.ownerWallet, GMPExpressProxyDeployer, [this.gateway.address]);
+        const expressService = await deployContract(this.ownerWallet, GMPExpressService, [
             this.gateway.address,
             this.gasService.address,
+            expressProxyDeployer.address,
+            this.ownerWallet.address,
         ]);
-        logger.log(`Deployed at ${expressServiceContract.address}`);
-        return expressServiceContract;
+        this.expressService = new Contract(expressService.address, GMPExpressService.abi, this.provider);
+        this.expressProxyDeployer = new Contract(expressProxyDeployer.address, GMPExpressProxyDeployer.abi, this.provider);
+        logger.log(`Deployed ExpressService at ${expressService.address}`);
+        return expressService;
     }
 
     async deployToken(name: string, symbol: string, decimals: number, cap: bigint, address: string = ADDRESS_ZERO, alias: string = symbol) {
@@ -235,6 +258,8 @@ export class Network {
             lastRelayedBlock: this.lastRelayedBlock,
             gatewayAddress: this.gateway.address,
             gasReceiverAddress: this.gasService.address,
+            expressProxyDeployerAddress: this.expressProxyDeployer.address,
+            expressServiceAddress: this.expressService.address,
             constAddressDeployerAddress: this.constAddressDeployer.address,
             tokens: this.tokens,
         };

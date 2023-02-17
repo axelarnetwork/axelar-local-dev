@@ -102,6 +102,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await chain._deployConstAddressDeployer();
     await chain._deployGateway();
     await chain._deployGasReceiver();
+    await chain.deployExpressServiceContract();
     chain.tokens = {};
     //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
 

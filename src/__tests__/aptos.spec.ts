@@ -1,5 +1,5 @@
 import { HexString, TxnBuilderTypes } from 'aptos';
-import { createAptosNetwork } from '../src/aptos';
+import { createAptosNetwork } from '../aptos';
 import fs from 'fs';
 import path from 'path';
 import { ethers } from 'ethers';
@@ -53,7 +53,7 @@ describe('aptos', () => {
             '0x8ac1b8ff9583ac8e661c7f0ee462698c57bb7fc454f587e3fa25a57f9406acc0',
         ];
         const approveTx = await client.approveContractCall(commandId, args[0], args[1], args[2], payloadHash);
-        
+
         if (!approveTx.success) {
             console.log(`Error: ${approveTx.vmStatus}`);
         }
@@ -61,11 +61,11 @@ describe('aptos', () => {
             function: `${client.owner.address()}::hello_world::execute`,
             type_arguments: [],
             arguments: [
-                commandId, 
+                commandId,
                 payload
             ],
         });
-        
+
         if (tx.vm_status !== 'Executed successfully') {
             console.log(`Error: ${tx.vm_status}`);
         }
