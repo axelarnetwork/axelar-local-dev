@@ -46,7 +46,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         callback: callback || null,
         relayInterval: relayInterval || 2000,
     };
-    const chains_local: Record<string, any>[] = [];
+    const localChains: Record<string, any>[] = [];
     let i = 0;
     for (const name of _options.chains) {
         const chain = await createNetwork({
@@ -59,7 +59,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         });
         const info = chain.getCloneInfo() as any;
         info.rpc = `http://localhost:${_options.port}/${i}`;
-        (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), chains_local.push(info);
+        (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), localChains.push(info);
         const [user] = chain.userWallets;
         for (const account of _options.accountsToFund) {
             await user
@@ -83,7 +83,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         }
         relaying = false;
     }, _options.relayInterval);
-    setJSON(chains_local, _options.chainOutputPath);
+    setJSON(localChains, _options.chainOutputPath);
 }
 
 export async function forkAndExport(options: CloneLocalOptions = {}) {

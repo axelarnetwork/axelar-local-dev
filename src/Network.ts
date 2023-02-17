@@ -274,6 +274,14 @@ export class Network {
             gasService: this.gasService.address,
             constAddressDeployer: this.constAddressDeployer.address,
             tokens: this.tokens,
+            GMPExpressService: {
+                expressOperator: this.ownerWallet.address,
+                salt: 'GMPExpressService',
+                address: this.expressService.address,
+                implementation: this.expressService.address,
+                deployer: this.ownerWallet.address,
+                proxyDeployer: this.expressProxyDeployer.address,
+            },
         };
     }
 }
