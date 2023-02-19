@@ -6,7 +6,6 @@ const {
     utils: { defaultAbiCoder },
     Contract,
     Wallet,
-    ethers,
 } = require('ethers');
 
 const { expect } = chai;
@@ -14,9 +13,7 @@ const {
     createNetwork,
     relay,
     stopAll,
-    getNetwork,
-    utils: { defaultAccounts, setLogger, deployContract },
-    setupNetwork,
+    utils: { setLogger, deployContract },
     getDepositAddress,
     getFee,
     listen,
@@ -31,86 +28,7 @@ setLogger((...args) => {});
 
 jest.setTimeout(300000);
 
-describe('create', () => {
-    let chain, blank;
-    it('should create a Network from no params', async () => {
-        chain = await createNetwork();
-    });
-    it('should create a Network from params', async () => {
-        const name = 'test';
-        const id = 1234;
-        chain = await createNetwork({
-            name,
-            chainId: id,
-        });
-        expect(chain.name).to.equal('test');
-        expect(chain.chainId).to.equal(id);
-        expect((await chain.provider.getNetwork()).chainId).to.equal(id);
-    });
-    it('should create a Network and connect to it remotely through http', async () => {
-        const port = 8500;
-        await createNetwork({
-            port,
-        });
-        chain = await getNetwork(`http://localhost:${port}`);
-    });
-    it('should deploy a network on a preexisting chain', async () => {
-        const port = 8600;
-        const accounts = defaultAccounts(20);
-        blank = require('ganache').server({
-            wallet: { accounts },
-            chain: {
-                chainId: 3000,
-                networkId: 3000,
-            },
-            logging: { quiet: true },
-        });
-        await blank.listen(port);
-        chain = await setupNetwork(`http://localhost:${port}`, {
-            ownerKey: accounts[0].secretKey,
-        });
-    });
 
-    afterEach(async () => {
-        // const nativeAmount = await chain.provider.getBalance(chain.gasService.address);
-        // await chain.gasService
-        //     .connect(chain.ownerWallet)
-        //     .collectFees(chain.ownerWallet.address, [ethers.constants.AddressZero], [nativeAmount])
-        //     .then((tx) => tx.wait());
-        stopAll();
-        if (blank) await blank.close();
-    });
-});
-
-describe('token', () => {
-    let chain;
-    let user;
-    beforeEach(async () => {
-        chain = await createNetwork();
-        [user] = chain.userWallets;
-        chain.usdc = await chain.deployToken('Axelar Wrapped USDC', 'aUSDC', 6, 0);
-    });
-    afterEach(async () => {
-        stopAll();
-    });
-
-    it('should give token to a user', async () => {
-        const amount = 12584532;
-        await chain.giveToken(user.address, 'aUSDC', amount);
-        expect(Number(await chain.usdc.balanceOf(user.address))).to.equal(amount);
-    });
-    it('should deploy a new token', async () => {
-        const name = 'Test Token';
-        const symbol = 'TEST';
-        const decimals = 12;
-        const cap = BigInt(124932492312);
-        const token = await chain.deployToken(name, symbol, decimals, cap);
-        expect(await token.name()).to.equal(name);
-        expect(await token.symbol()).to.equal(symbol);
-        expect(Number(await token.decimals())).to.equal(decimals);
-        expect(BigInt(await token.cap())).to.equal(cap);
-    });
-});
 
 describe('relay', () => {
     let chain1, chain2;

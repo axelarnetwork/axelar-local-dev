@@ -49,15 +49,15 @@ export interface NetworkInfo {
     tokens: { [key: string]: string };
 }
 export interface NetworkSetup {
-    name: string | undefined;
-    chainId: number | undefined;
-    userKeys: Wallet[] | undefined;
+    name?: string;
+    chainId?: number;
+    userKeys?: Wallet[];
     ownerKey: Wallet;
-    operatorKey: Wallet | undefined;
-    relayerKey: Wallet | undefined;
-    adminKeys: Wallet[] | undefined;
-    threshold: number | undefined;
-    lastRelayedBlock: number | undefined;
+    operatorKey?: Wallet;
+    relayerKey?: Wallet;
+    adminKeys?: Wallet[];
+    threshold?: number;
+    lastRelayedBlock?: number;
 }
 
 /*
@@ -105,7 +105,7 @@ export class Network {
         this.url = networkish.url;
         this.tokens = networkish.tokens;
     }
-    async _deployGateway(): Promise<Contract> {
+    async deployGateway(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gateway for ${this.name}... `);
 
         const params = arrayify(
@@ -154,7 +154,7 @@ export class Network {
         logger.log(`Upgraded ${this.gateway.address}`);
         return this.gateway;
     }
-    async _deployGasReceiver(): Promise<Contract> {
+    async deployGasReceiver(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
         const gasService = await deployContract(this.ownerWallet, AxelarGasReceiver, [this.ownerWallet.address]);
         const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy);
@@ -164,7 +164,7 @@ export class Network {
         logger.log(`Deployed at ${this.gasService.address}`);
         return this.gasService;
     }
-    async _deployConstAddressDeployer(): Promise<Contract> {
+    async deployConstAddressDeployer(): Promise<Contract> {
         logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
         const constAddressDeployerDeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
         const deployerWallet = new Wallet(constAddressDeployerDeployerPrivateKey, this.provider);
