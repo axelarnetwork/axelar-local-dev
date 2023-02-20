@@ -262,7 +262,10 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
     chain.gasService = new Contract(chainInfo.AxelarGasService.address, IAxelarGasService.abi, chain.provider);
 
-    chain.tokens = {};
+    chain.tokens = {
+        uusdc: chain.name === 'Ethereum' ? 'USDC' : 'axlUSDC',
+        uausdc: 'aUSDC',
+    };
 
     if (options.port) {
         chain.port = options.port;

@@ -222,13 +222,16 @@ export class Network {
         this.tokens[alias] = symbol;
         return tokenContract;
     }
+
     async getTokenContract(alias: string) {
         const symbol = this.tokens[alias];
         const address = await this.gateway.tokenAddresses(symbol);
         return new Contract(address, BurnableMintableCappedERC20.abi, this.provider);
     }
+
     async giveToken(address: string, alias: string, amount: bigint) {
         const symbol = this.tokens[alias] || alias;
+        console.log(`Giving ${amount} ${symbol} to ${address}... `);
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
