@@ -102,9 +102,9 @@ This module exports the following types:
   - `chainId`: The chainId of the network.
   - `provider`: The `ethers.Provider` for the network.
   - `userWallets`: A list of funded `ethers.Wallet` objects.
-  - `gateway`: An `ethets.Contract` object corresponding to the Axelar Gateway on the network.
-  - `gasReceiver`: An `ethets.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
-  - `ust`: An `ethets.Contract` object corresponding to the IERC20 of the Axelar Wrapped UST on this network.
+  - `gateway`: An `ethers.Contract` object corresponding to the Axelar Gateway on the network.
+  - `gasReceiver`: An `ethers.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
+  - `ust`: An `ethers.Contract` object corresponding to the IERC20 of the Axelar Wrapped UST on this network.
   - `ownerWallet`, `operatorWallet`, `relayerWallet`, `adminWallets` `threshold` `lastRelayedBlock`: These are for configuring the gateway and relaying.
   - `deployToken(name, symbol, decimals, cap)`: Deploys a new token on the network. For a token to be supported properly it needs to be deployed on all created networks.
   - `getTokenContract(sybmol)`: Returns an `ethers.Contract` linked to the ERC20 token represented by `symbol`.
