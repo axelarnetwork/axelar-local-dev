@@ -55,7 +55,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             ganacheOptions: {},
         });
         const testnet = testnetInfo.find((info: any) => {
-            return info.name == name;
+            return info.name === name;
         });
         const info = chain.getCloneInfo() as any;
         info.rpc = `http://localhost:${_options.port}/${i}`;
@@ -70,6 +70,19 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
                 .then((tx) => tx.wait());
         }
         if (_options.callback) await _options.callback(chain, info);
+        if (Object.keys(chain.tokens).length > 0) {
+            // Check if there is a USDC token.
+            const alias = Object.keys(chain.tokens).find((alias) => alias.toLowerCase().includes('usdc'));
+
+            // If there is no USDC token, return.
+            if (!alias) return;
+
+            // Get the symbol of the USDC token.
+            const symbol = chain.tokens[alias];
+
+            // Mint 1e12 USDC tokens to the GMPExpressService contract.
+            await chain.giveToken(info.GMPExpressService.address, symbol, BigInt(1e18));
+        }
         i++;
     }
     listen(_options.port);
@@ -114,7 +127,6 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     let i = 0;
     for (const chain of chains) {
         const network = await forkNetwork(chain, options.networkOptions);
-
         const info = network.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
         (info.tokenName = chain?.tokenName), (info.tokenSymbol = chain?.tokenSymbol), chains_local.push(info);
