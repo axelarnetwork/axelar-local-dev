@@ -2,7 +2,7 @@ import { HexString } from 'aptos';
 import { aptosNetwork } from '../aptos';
 import { Relayer } from './Relayer';
 import { CallContractArgs, CallContractWithTokenArgs } from './types';
-import { Contract, ethers, Wallet } from 'ethers';
+import { Contract, ContractTransaction, ethers, Wallet } from 'ethers';
 import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
@@ -41,7 +41,7 @@ export class EvmRelayer extends Relayer {
     private async executeEvm() {
         for (const to of networks) {
             const commands = this.commands[to.name];
-            if (!commands || commands?.length == 0) continue;
+            if (!commands || commands?.length === 0) continue;
             await this.executeEvmExpress(to, commands);
             const execution = await this.executeEvmGateway(to, commands).catch((e: any) => {
                 logger.log(e);
@@ -53,7 +53,7 @@ export class EvmRelayer extends Relayer {
 
     private async executeAptos() {
         const toExecute = this.commands['aptos'];
-        if (toExecute?.length == 0) return;
+        if (toExecute?.length === 0) return;
 
         await this.executeAptosGateway(toExecute);
         await this.executeAptosExecutable(toExecute);
@@ -97,16 +97,17 @@ export class EvmRelayer extends Relayer {
             if (command.post == null) continue;
 
             const fromName = command.data[0];
-            const from = networks.find((network) => network.name == fromName);
+            const from = networks.find((network) => network.name === fromName);
             if (!from) continue;
 
             const payed = this.expressContractCallWithTokenGasEvents.find((log: any) => {
-                if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
+                // console.log(log, command);
+                if (log.sourceAddress.toLowerCase() !== command.data[1].toLowerCase()) return false;
+                if (log.destinationChain.toLowerCase() !== to.name.toLowerCase()) return false;
+                if (log.destinationAddress.toLowerCase() !== command.data[2].toLowerCase()) return false;
+                if (log.payloadHash.toLowerCase() !== command.data[3].toLowerCase()) return false;
                 const alias = this.getAliasFromSymbol(from.tokens, log.symbol);
-                if (to.tokens[alias] != command.data[4]) return false;
+                if (to.tokens[alias] !== command.data[4]) return false;
                 if (!command.data[5].eq(log.amount)) return false;
                 return true;
             });
@@ -122,7 +123,7 @@ export class EvmRelayer extends Relayer {
                 await to.expressService
                     .connect(to.ownerWallet)
                     .callWithToken(
-                        ethers.constants.HashZero,
+                        command.commandId || ethers.constants.HashZero,
                         fromName,
                         payed.sourceAddress,
                         payed.destinationAddress,
@@ -131,8 +132,9 @@ export class EvmRelayer extends Relayer {
                         payed.amount,
                         { gasLimit }
                     )
-                    .then((tx: any) => tx.wait());
+                    .then((tx: ContractTransaction) => tx.wait());
             } catch (e) {
+                console.log(e);
                 logger.log(e);
             }
         }
@@ -415,7 +417,7 @@ export class EvmRelayer extends Relayer {
 
     private getAliasFromSymbol(tokens: { [key: string]: string }, symbol: string) {
         for (const alias in tokens) {
-            if (tokens[alias] == symbol) return alias;
+            if (tokens[alias] === symbol) return alias;
         }
         return '';
     }
