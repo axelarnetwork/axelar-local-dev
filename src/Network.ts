@@ -128,7 +128,7 @@ export class Network {
 
     async _upgradeGateway(oldAdminAddresses: string[] | undefined = undefined, oldThreshold: number = this.threshold): Promise<Contract> {
         const adminWallets =
-            oldAdminAddresses != undefined
+            oldAdminAddresses !== undefined
                 ? oldAdminAddresses.map((address: string) => (this.provider as any).getSigner(address))
                 : this.adminWallets;
 
@@ -231,6 +231,7 @@ export class Network {
 
     async giveToken(address: string, alias: string, amount: bigint) {
         const symbol = this.tokens[alias] || alias;
+        console.log(`Giving ${amount} ${symbol} to ${address}... `);
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
