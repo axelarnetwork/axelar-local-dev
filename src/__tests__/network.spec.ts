@@ -5,17 +5,10 @@ import { getNetwork, setupNetwork, stopAll } from '..';
 import { Network } from '../Network';
 import { createNetwork } from '../networkUtils';
 import { defaultAccounts, setLogger } from '../utils';
-
-const chai = require('chai');
-const {
-    utils: { defaultAbiCoder },
-    Contract,
-    Wallet,
-} = require('ethers');
+import { Wallet } from 'ethers';
+import chai from 'chai';
 
 const { expect } = chai;
-// const {} = require('../Network');
-
 setLogger(() => null);
 
 jest.setTimeout(300000);

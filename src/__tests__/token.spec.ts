@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 ('use strict');
+import chai from 'chai';
 import { Network } from '../Network';
 import { Wallet } from 'ethers';
-import {} from '../contracts';
 import { createNetwork, setLogger, stopAll } from '../';
-
-const chai = require('chai');
 
 const { expect } = chai;
 
