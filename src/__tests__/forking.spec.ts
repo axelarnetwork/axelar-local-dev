@@ -2,7 +2,7 @@
 'use strict';
 
 import chai from 'chai';
-import { Contract, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 const { expect } = chai;
 import { relay, stopAll, setLogger, forkNetwork, mainnetInfo, networks, getFee } from '../';
 import { keccak256, toUtf8Bytes } from 'ethers/lib/utils';
