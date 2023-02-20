@@ -281,7 +281,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
 }
 
 export async function stop(network: string | Network) {
-    if (typeof network == 'string') network = networks.find((chain) => chain.name == network)!;
+    if (typeof network === 'string') network = networks.find((chain) => chain.name == network)!;
     if (network.server != null) await network.server.close();
     networks.splice(networks.indexOf(network), 1);
 }

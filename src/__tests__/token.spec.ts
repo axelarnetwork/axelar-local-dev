@@ -2,7 +2,7 @@
 ('use strict');
 import chai from 'chai';
 import { Network } from '../Network';
-import { Wallet } from 'ethers';
+import { Contract, Wallet } from 'ethers';
 import { createNetwork, setLogger, stopAll } from '../';
 
 const { expect } = chai;
@@ -13,7 +13,7 @@ jest.setTimeout(300000);
 
 describe('token', () => {
     let chain: Network;
-    let usdc: any;
+    let usdc: Contract;
     let user: Wallet;
     beforeEach(async () => {
         chain = await createNetwork();
