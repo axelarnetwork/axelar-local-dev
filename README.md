@@ -104,7 +104,6 @@ This module exports the following types:
   - `userWallets`: A list of funded `ethers.Wallet` objects.
   - `gateway`: An `ethers.Contract` object corresponding to the Axelar Gateway on the network.
   - `gasReceiver`: An `ethers.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
-  - `ust`: An `ethers.Contract` object corresponding to the IERC20 of the Axelar Wrapped UST on this network.
   - `ownerWallet`, `operatorWallet`, `relayerWallet`, `adminWallets` `threshold` `lastRelayedBlock`: These are for configuring the gateway and relaying.
   - `deployToken(name, symbol, decimals, cap)`: Deploys a new token on the network. For a token to be supported properly it needs to be deployed on all created networks.
   - `getTokenContract(sybmol)`: Returns an `ethers.Contract` linked to the ERC20 token represented by `symbol`.
@@ -123,7 +122,7 @@ This module exports the following types:
     `gateway`: The (preexisting) address of the gateway.
     `rpc`: A url to an RPC to connect to the chain to fork.
     `chainId`: The chain id, as a `Number`.
-    `gasReceiver`: The (preexisting) address of the gasReceiver.
+    `gasService`: The (preexisting) address of the gasService.
     `constAddressDeployer`: The (preexisting) address of the constAddressDeployer.;
     `tokenName`: The name of the native token on this chain.
     `tokenSymbol`: The symbol of the native token on this chain.
@@ -146,7 +145,7 @@ This module exports the following types:
   - `lastRelayedBlock`: The last block that events were replayed up to.
   - `gatewayAddress`: The address of the Axelar gateway.
   - `usdcAddress`: The address of USDC.
-  - `gasReceiverAddress`: The address of the `gasReceiver` contract.
+  - `gasReceiverAddress`: The address of the `gasService` contract.
   - `constAddressDeployerAddress`: The address of the `constAddressDeployer` contract.
 
 
@@ -154,7 +153,7 @@ The following is exported by this module.
 
 - `createAndExport(CreateLocalOptions)`: Creates and sets up a number of networks, and listens for RPC for all of them on a single port.
 - `forkAndExport(CloneLocalOptions)`: Like the above but forks either mainnet or testnet. Takes longer and spams RPCs so only use if you need something else deployed.
-- `createNetwork(NetworkOptions)`: Creates a new `Network`. 
+- `createNetwork(NetworkOptions)`: Creates a new `Network`.
 - `getNetwork(urlOrProvider, NetworkInfo=null)`: Return `Network` hosted elsewhere into this instance.
 - `setupNetwork(urlOrProvider, NetworkSetup)`: Deploy the gateway and USDC Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `NetworkSetup` is `ownerKey` which is a wallet of a funded account.
 - `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).

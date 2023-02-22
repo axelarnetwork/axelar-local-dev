@@ -31,7 +31,7 @@ export const getAptosLogID = (chain: string, event: any) => {
 
 export const defaultAccounts = (n: number, seed = '') => {
     const balance = BigInt(1e30);
-    const privateKeys = [];
+    const privateKeys: string[] = [];
     let key = keccak256(defaultAbiCoder.encode(['string'], [seed]));
     for (let i = 0; i < n; i++) {
         privateKeys.push(key);

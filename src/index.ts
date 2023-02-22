@@ -1,6 +1,7 @@
 import { deployContract, defaultAccounts, setJSON, setLogger } from './utils';
 import { testnetInfo, mainnetInfo } from './info';
 import { networks } from './Network';
+import * as compiledContracts from './contracts';
 import {
     ChainCloneData,
     getFee,
@@ -27,6 +28,8 @@ export const utils = {
     setJSON,
     setLogger,
 };
+
+export const contracts = compiledContracts;
 
 export {
     ChainCloneData,

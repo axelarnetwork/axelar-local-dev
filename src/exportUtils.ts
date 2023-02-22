@@ -35,53 +35,68 @@ export interface CloneLocalOptions {
 
 let relaying = false;
 export async function createAndExport(options: CreateLocalOptions = {}) {
-    const defaultOptions = {
-        chainOutputPath: './local.json',
-        accountsToFund: [],
-        fundAmount: ethers.utils.parseEther('100').toString(),
-        chains: ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
-        port: 8500,
-        relayInterval: 2000,
-    } as CreateLocalOptions;
-    for (const option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
-    const chains_local: Record<string, any>[] = [];
+    const { accountsToFund, afterRelay, callback, chainOutputPath, chains, fundAmount, port, relayInterval } = options;
+    const _options = {
+        chainOutputPath: chainOutputPath || './local.json',
+        accountsToFund: accountsToFund || [],
+        fundAmount: fundAmount || ethers.utils.parseEther('100').toString(),
+        chains: chains || ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
+        port: port || 8500,
+        afterRelay: afterRelay || null,
+        callback: callback || null,
+        relayInterval: relayInterval || 2000,
+    };
+    const localChains: Record<string, any>[] = [];
     let i = 0;
-    for (const name of options.chains!) {
+    for (const name of _options.chains) {
         const chain = await createNetwork({
             name: name,
             seed: name,
             ganacheOptions: {},
         });
         const testnet = testnetInfo.find((info: any) => {
-            return info.name == name;
+            return info.name === name;
         });
         const info = chain.getCloneInfo() as any;
-        info.rpc = `http://localhost:${options.port}/${i}`;
-        (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), chains_local.push(info);
+        info.rpc = `http://localhost:${_options.port}/${i}`;
+        (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), localChains.push(info);
         const [user] = chain.userWallets;
-        for (const account of options.accountsToFund!) {
+        for (const account of _options.accountsToFund) {
             await user
                 .sendTransaction({
                     to: account,
-                    value: options.fundAmount,
+                    value: _options.fundAmount,
                 })
                 .then((tx) => tx.wait());
         }
-        if (options.callback) await options.callback(chain, info);
+        if (_options.callback) await _options.callback(chain, info);
+        if (Object.keys(chain.tokens).length > 0) {
+            // Check if there is a USDC token.
+            const alias = Object.keys(chain.tokens).find((alias) => alias.toLowerCase().includes('usdc'));
+
+            // If there is no USDC token, return.
+            if (!alias) return;
+
+            // Get the symbol of the USDC token.
+            const symbol = chain.tokens[alias];
+
+            // Mint 1e12 USDC tokens to the GMPExpressService contract.
+            await chain.giveToken(info.GMPExpressService.address, symbol, BigInt(1e18));
+        }
         i++;
     }
-    listen(options.port!);
+    listen(_options.port);
     interval = setInterval(async () => {
         if (relaying) return;
         relaying = true;
         await relay().catch(() => undefined);
-        if (options.afterRelay) {
-            options.afterRelay(evmRelayer.relayData);
-            options.afterRelay(aptosRelayer.relayData);
+        if (_options.afterRelay) {
+            _options.afterRelay(evmRelayer.relayData);
+            _options.afterRelay(aptosRelayer.relayData);
         }
         relaying = false;
-    }, options.relayInterval);
-    setJSON(chains_local, options.chainOutputPath!);
+    }, _options.relayInterval);
+    setJSON(localChains, _options.chainOutputPath);
 }
 
 export async function forkAndExport(options: CloneLocalOptions = {}) {
@@ -112,7 +127,6 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     let i = 0;
     for (const chain of chains) {
         const network = await forkNetwork(chain, options.networkOptions);
-
         const info = network.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
         (info.tokenName = chain?.tokenName), (info.tokenSymbol = chain?.tokenSymbol), chains_local.push(info);
