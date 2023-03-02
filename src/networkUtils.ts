@@ -14,6 +14,7 @@ import {
     AxelarGateway,
     ConstAddressDeployer,
     GMPExpressProxyDeployer,
+    Create3Deployer,
 } from './contracts';
 
 const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
@@ -26,6 +27,7 @@ export interface ChainCloneData {
     rpc: string;
     chainId: number;
     constAddressDeployer: string;
+    create3Deployer: string;
     tokenName: string;
     tokenSymbol: string;
     gasService: string;
@@ -107,6 +109,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     chain.threshold = 3;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain.deployConstAddressDeployer();
+    await chain.deployCreate3Deployer();
     await chain.deployGateway();
     await chain.deployGasReceiver();
     await chain.deployExpressServiceContract();
@@ -150,6 +153,7 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.tokens = info.tokens;
 
     chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
+    chain.create3Deployer = new Contract(info.create3DeployerAddress, Create3Deployer.abi, chain.provider);
     chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
     chain.gasService = new Contract(info.gasReceiverAddress, IAxelarGasService.abi, chain.provider);
     chain.expressService = new Contract(info.expressServiceAddress, GMPExpressService.abi, chain.provider);
@@ -197,6 +201,7 @@ export async function setupNetwork(urlOrProvider: string | providers.Provider, o
     chain.threshold = options.threshold != null ? options.threshold : 1;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     await chain.deployConstAddressDeployer();
+    await chain.deployCreate3Deployer();
     await chain.deployGateway();
     await chain.deployGasReceiver();
     await chain.deployExpressServiceContract();
@@ -258,6 +263,9 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.threshold = 3;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
     chain.constAddressDeployer = new Contract(chainInfo.constAddressDeployer, ConstAddressDeployer.abi, chain.provider);
+    // Delete the line below and uncomment the line after when we deploy create3Deployer
+    await chain.deployCreate3Deployer();
+    //chain.create3Deployer = new Contract(chainInfo.create3Deployer, Create3Deployer.abi, chain.provider);
     chain.gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, chain.provider);
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
     chain.gasService = new Contract(chainInfo.AxelarGasService.address, IAxelarGasService.abi, chain.provider);
