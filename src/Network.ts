@@ -13,6 +13,7 @@ import {
     BurnableMintableCappedERC20,
     AxelarGasReceiverProxy,
     ConstAddressDeployer,
+    Create3Deployer,
     GMPExpressService,
     GMPExpressProxyDeployer,
 } from './contracts';
@@ -46,6 +47,7 @@ export interface NetworkInfo {
     expressServiceAddress: string;
     expressProxyDeployerAddress: string;
     constAddressDeployerAddress: string;
+    create3DeployerAddress: string;
     tokens: { [key: string]: string };
 }
 export interface NetworkSetup {
@@ -77,6 +79,7 @@ export class Network {
     gateway: Contract;
     gasService: Contract;
     constAddressDeployer: Contract;
+    create3Deployer: Contract;
     expressService: Contract;
     expressProxyDeployer: Contract;
     isRemote: boolean | undefined;
@@ -99,6 +102,7 @@ export class Network {
         this.gateway = networkish.gateway;
         this.gasService = networkish.gasService;
         this.constAddressDeployer = networkish.constAddressDeployer;
+        this.create3Deployer = networkish.create3Deployer;
         this.expressService = networkish.expressService;
         this.expressProxyDeployer = networkish.expressProxyDeployer;
         this.isRemote = networkish.isRemote;
@@ -179,6 +183,22 @@ export class Network {
         this.constAddressDeployer = new Contract(constAddressDeployer.address, ConstAddressDeployer.abi, this.provider);
         logger.log(`Deployed at ${this.constAddressDeployer.address}`);
         return this.constAddressDeployer;
+    }
+    async deployCreate3Deployer(): Promise<Contract> {
+        logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
+        const create3DeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
+        const deployerWallet = new Wallet(create3DeployerPrivateKey, this.provider);
+        await this.ownerWallet
+            .sendTransaction({
+                to: deployerWallet.address,
+                value: BigInt(1e18),
+            })
+            .then((tx) => tx.wait());
+        const create3Deployer = await deployContract(deployerWallet, Create3Deployer, []);
+
+        this.create3Deployer = new Contract(create3Deployer.address, Create3Deployer.abi, this.provider);
+        logger.log(`Deployed at ${this.constAddressDeployer.address}`);
+        return this.create3Deployer;
     }
 
     async deployExpressServiceContract(): Promise<Contract> {
@@ -263,6 +283,7 @@ export class Network {
             expressProxyDeployerAddress: this.expressProxyDeployer.address,
             expressServiceAddress: this.expressService.address,
             constAddressDeployerAddress: this.constAddressDeployer.address,
+            create3DeployerAddress: this.create3Deployer.address,
             tokens: this.tokens,
         };
         return info;

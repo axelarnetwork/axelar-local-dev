@@ -24,6 +24,7 @@ function validateNetwork(network: Network) {
     // contracts
     expect(network.gasService).to.not.be.undefined;
     expect(network.constAddressDeployer).to.not.be.undefined;
+    expect(network.create3Deployer).to.not.be.undefined;
     expect(network.gateway).to.not.be.undefined;
     expect(network.expressService).to.not.be.undefined;
     expect(network.expressProxyDeployer).to.not.be.undefined;
