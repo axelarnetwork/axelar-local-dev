@@ -296,6 +296,7 @@ export class Network {
             gateway: this.gateway.address,
             gasService: this.gasService.address,
             constAddressDeployer: this.constAddressDeployer.address,
+            create3Deployer: this.create3Deployer.address,
             tokens: this.tokens,
             GMPExpressService: {
                 expressOperator: this.ownerWallet.address,
