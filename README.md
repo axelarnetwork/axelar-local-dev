@@ -10,7 +10,7 @@ npm install axelarnetwork/axelar-local-dev
 
 ## Examples
 
-See [axelar-local-gmp-examples repo](https://github.com/axelarnetwork/axelar-local-gmp-examples/) for example use of this local development environment.
+See [axelar-examples repo](https://github.com/axelarnetwork/axelar-examples/) for example use of this local development environment.
 
 ## Simple use
 
