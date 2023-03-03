@@ -10,6 +10,7 @@ import GMPExpressService from '../artifacts/@axelar-network/axelar-cgp-solidity/
 import GMPExpressServiceProxy from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gmp-express/GMPExpressServiceProxy.sol/GMPExpressServiceProxy.json';
 import IAxelarGasService from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json';
 import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json';
+import Create3Deployer from '@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
 import GMPExpressProxyDeployer from '../artifacts/@axelar-network/axelar-gmp-sdk-solidity/contracts/express/ExpressProxyDeployer.sol/ExpressProxyDeployer.json';
 
@@ -25,6 +26,7 @@ export {
     GMPExpressService,
     GMPExpressServiceProxy,
     ConstAddressDeployer,
+    Create3Deployer,
     IAxelarGasService,
     IAxelarExecutable,
     GMPExpressProxyDeployer,
