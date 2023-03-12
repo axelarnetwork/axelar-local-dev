@@ -1,11 +1,11 @@
 import { Contract, Wallet } from 'ethers';
 import { NearAccount } from 'near-workspaces';
 import path from 'path';
-import { createNearNetwork, NearNetwork } from '../src/near';
-import { Network } from '../src/Network';
-import { createNetwork, stopAll } from '../src/networkUtils';
-import { relay } from '../src/relay';
-import { deployContract } from '../src/utils';
+import { createNearNetwork, NearNetwork } from '../near';
+import { Network } from '../Network';
+import { createNetwork, stopAll } from '../networkUtils';
+import { relay } from '../relay';
+import { deployContract } from '../utils';
 
 jest.setTimeout(120000);
 
@@ -48,14 +48,14 @@ describe('relay', () => {
         evmUser = evmClient.userWallets[0];
     });
 
-    describe('near to evm', () => {
+    describe('near to evm - evm to near', () => {
         let nearContract: NearAccount;
         let evmContract: Contract;
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Executable = require('../src/artifacts/src/contracts/test/Executable.sol/Executable.json');
+        const Executable = require('../artifacts/src/contracts/test/Executable.sol/Executable.json');
 
-        const nearWasmFilePath = path.join(path.resolve(__dirname), '../src/near/contracts/test/near_axelar_contract_call_example.wasm');
+        const nearWasmFilePath = path.join(path.resolve(__dirname), '../near/contracts/test/near_axelar_contract_call_example.wasm');
 
         beforeEach(async () => {
             nearContract = await nearClient.createAccountAndDeployContract('near_axelar_example_contract_call', nearWasmFilePath, 200);
