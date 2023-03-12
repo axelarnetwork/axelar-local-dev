@@ -8,7 +8,7 @@
         "test": "jest",
         "build-ts": "rm -rf dist && tsc",
         "build-contract": "rm -rf src/artifacts && hardhat compile && mv artifacts src/artifacts",
-        "build-aptos": "",
+        "build-aptos": "./aptos/build.sh",
         "build-near": "cd ./src/near/contracts/test/near-axelar-contract-call-example && ./build.sh",
         "copy-near-wasm": "cp ./node_modules/@axelar-network/axelar-cgp-near/out/axelar_auth_gateway.wasm src/near/contracts/ && mkdir -p dist/near/contracts && cp -r src/near/contracts/axelar_auth_gateway.wasm dist/near/contracts",
         "build": "run-s build-contract build-aptos build-near build-ts copy-near-wasm",
