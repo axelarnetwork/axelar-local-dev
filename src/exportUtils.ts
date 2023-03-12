@@ -3,7 +3,7 @@
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
-import { RelayData, evmRelayer, aptosRelayer, relay } from './relay';
+import { RelayData, evmRelayer, aptosRelayer, relay, nearRelayer } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
 
@@ -90,9 +90,10 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         if (relaying) return;
         relaying = true;
         await relay().catch(() => undefined);
-        if (_options.afterRelay) {
-            _options.afterRelay(evmRelayer.relayData);
-            _options.afterRelay(aptosRelayer.relayData);
+        if (options.afterRelay) {
+            options.afterRelay(evmRelayer.relayData);
+            options.afterRelay(aptosRelayer.relayData);
+            options.afterRelay(nearRelayer.relayData);
         }
         relaying = false;
     }, _options.relayInterval);
@@ -158,4 +159,5 @@ export async function destroyExported() {
     evmRelayer.contractCallGasEvents.length = 0;
     evmRelayer.contractCallWithTokenGasEvents.length = 0;
     aptosRelayer.contractCallGasEvents.length = 0;
+    nearRelayer.contractCallGasEvents.length = 0;
 }
