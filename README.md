@@ -17,50 +17,61 @@ See [axelar-examples repo](https://github.com/axelarnetwork/axelar-examples/) fo
 The following script shows a simple example of how to use this module to create two test blockchains and send some UST from one to the other.
 
 ```typescript
-import { createNetwork, relay } from '@axelar-network/axelar-local-dev';
+import { createNetwork, relay } from "@axelar-network/axelar-local-dev";
 
 async function main() {
-    // create eth network
-    const eth = await createNetwork({
-        name: 'Ethereum',
-    });
-    // deploy eth token
-    await eth.deployToken('USDC', 'aUSDC', 6, BigInt(100_000e6));
+  // create eth network
+  const eth = await createNetwork({
+    name: "Ethereum",
+  });
+  // deploy eth token
+  await eth.deployToken("USDC", "aUSDC", 6, BigInt(100_000e6));
 
-    // create avalanche network
-    const avalanche = await createNetwork({
-        name: 'Avalanche',
-    });
-    // deploy avalanche token
-    await avalanche.deployToken('USDC', 'aUSDC', 6, BigInt(100_000e6));
+  // create avalanche network
+  const avalanche = await createNetwork({
+    name: "Avalanche",
+  });
+  // deploy avalanche token
+  await avalanche.deployToken("USDC", "aUSDC", 6, BigInt(100_000e6));
 
-    // extract user accounts
-    const [ethUserWallet] = eth.userWallets;
-    const [avalancheUserWallet] = avalanche.userWallets;
+  // extract user accounts
+  const [ethUserWallet] = eth.userWallets;
+  const [avalancheUserWallet] = avalanche.userWallets;
 
-    // mint tokens on source chain
-    await eth.giveToken(ethUserWallet.address, 'aUSDC', BigInt(100e6));
+  // mint tokens on source chain
+  await eth.giveToken(ethUserWallet.address, "aUSDC", BigInt(100e6));
 
-    // extract token contracts
-    const usdcEthContract = await eth.getTokenContract('aUSDC');
-    const usdcAvalancheContract = await avalanche.getTokenContract('aUSDC');
+  // extract token contracts
+  const usdcEthContract = await eth.getTokenContract("aUSDC");
+  const usdcAvalancheContract = await avalanche.getTokenContract("aUSDC");
 
-    // approve gateway to use token on source chain
-    const ethApproveTx = await usdcEthContract.connect(ethUserWallet).approve(eth.gateway.address, 100e6);
-    await ethApproveTx.wait();
+  // approve gateway to use token on source chain
+  const ethApproveTx = await usdcEthContract
+    .connect(ethUserWallet)
+    .approve(eth.gateway.address, 100e6);
+  await ethApproveTx.wait();
 
-    // ask gateway on source chain to send tokens to destination chain
-    const ethGatewayTx = await eth.gateway.connect(ethUserWallet).sendToken(avalanche.name, avalancheUserWallet.address, 'aUSDC', 100e6);
-    await ethGatewayTx.wait();
+  // ask gateway on source chain to send tokens to destination chain
+  const ethGatewayTx = await eth.gateway
+    .connect(ethUserWallet)
+    .sendToken(avalanche.name, avalancheUserWallet.address, "aUSDC", 100e6);
+  await ethGatewayTx.wait();
 
-    // relay transactions
-    await relay();
+  // relay transactions
+  await relay();
 
-    console.log((await usdcEthContract.balanceOf(ethUserWallet.address)) / 1e6, 'aUSDC');
-    console.log((await usdcAvalancheContract.balanceOf(avalancheUserWallet.address)) / 1e6, 'aUSDC');
+  console.log(
+    (await usdcEthContract.balanceOf(ethUserWallet.address)) / 1e6,
+    "aUSDC"
+  );
+  console.log(
+    (await usdcAvalancheContract.balanceOf(avalancheUserWallet.address)) / 1e6,
+    "aUSDC"
+  );
 }
 
 main();
+
 ```
 
 Simply run `node <path to the above script>` to test it. Additional examples are present in the `examples` directory and can be run with:
@@ -73,86 +84,87 @@ node node_modules/@axelar-network/axelar-local-dev/examples/<example_dir>/<file_
 
 This module exports the following types:
 
--   `CreateLocalOptions`: Options to setup multiple local chains using `createAndExport` (see below). All are optional.
-    -   `chainOutputPath`: A path to save a json file with all the information for the chains that are setup.
-    -   `accountsToFund`: A list of addresses to fund.
-    -   `fundAmount`: A string representing the amount of ether to fund accounts with. Defaults to `100 ETH`.
-    -   `chains`: A list with all of the chain names (also determines the number of created networks). Defaults to `["Moonbeam", "Avalanche", "Fantom", "Ethereum", "Polygon"]`.
-    -   `relayInterval`?: amount of time between relay of events in miliseconds. Defaults to `2000`.
-    -   `port`: Port to listen to. Defaults to `8500`.
-    -   `afterRelay`: A function `(relayData: RelayData) => void` which will be called after each relay. Mainly to be used for debugging.
-    -   `callback`: A function `(network: Network, info: any) => Promise<null>` that will be called right after setting up each network. Use this to setup additional features, like deploying contracts that already exist on testnet/mainnet.
--   `CloneLocalOptions`: An extension of `CreateLocalOptions` that also includes:
-    -   `env`: a `string` whose value is either `mainnet` or `testnet`, or an `array` of `ChainCloneData`.
-    -   `chains`: These now act as a filter for which chains to fork. Defaults to all the chains.
-    -   `networkInfo`: The `NetworkInfo` (see below) which overwrites the default parameters.
--   `Network`: This object type is used to handle most functionality within the module. It has the following properties:
-    -   `name`: The name of the network.
-    -   `chainId`: The chainId of the network.
-    -   `provider`: The `ethers.Provider` for the network.
-    -   `userWallets`: A list of funded `ethers.Wallet` objects.
-    -   `gateway`: An `ethers.Contract` object corresponding to the Axelar Gateway on the network.
-    -   `gasReceiver`: An `ethers.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
-    -   `ownerWallet`, `operatorWallet`, `relayerWallet`, `adminWallets` `threshold` `lastRelayedBlock`: These are for configuring the gateway and relaying.
-    -   `deployToken(name, symbol, decimals, cap)`: Deploys a new token on the network. For a token to be supported properly it needs to be deployed on all created networks.
-    -   `getTokenContract(sybmol)`: Returns an `ethers.Contract` linked to the ERC20 token represented by `symbol`.
-    -   `giveToken(address, symbol, amount)`: Gives `amount` of `symbol` token to `address`.
-    -   `getInfo()`: Returns an object with all the information about the `Network`.
-    -   `relay()`: This method is either equivalent to calling the local instance of this module's `relay()` (see below) or, for remote networks, the host's instance of `relay()`.
--   `NetworkOptions` This type is used as an input to create networks and can include the following. All are optional.
-    -   `ganacheOptions`: Additional options to be passed into `require(ganache).provider`.
-    -   `dbPath`: Where to save/find the db for a network already created. Will not save unless specified.
-    -   `port`: Which port to listen to for this network. Will not listen to any port unless specified.
-    -   `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
-    -   `chainId`: The chainId of the network, defaults to `n`.
-    -   `seed`: A seed that determines the addresses of funded accounts and contract addresses.
--   `ChainCloneData`: Data needed to for a network. `mainnetInfo` and `testnetInfo` can both be used as `ChainCloneData`.
-    -   `name`: Name of the network to create.
-        `gateway`: The (preexisting) address of the gateway.
-        `rpc`: A url to an RPC to connect to the chain to fork.
-        `chainId`: The chain id, as a `Number`.
-        `gasService`: The (preexisting) address of the gasService.
-        `constAddressDeployer`: The (preexisting) address of the constAddressDeployer.;
-        `tokenName`: The name of the native token on this chain.
-        `tokenSymbol`: The symbol of the native token on this chain.
-        `tokens`: An object with all the registered axelar tokens
--   `NetworkSetup`: This type is used as an input to setup networks and can include the following. All but `ownerKey` are optional.
-    -   `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
-    -   `chainId`: The chainId of the network, defaults to `n`.
-    -   `ownerKey`: A funded `ethers.Wallet` that will be used for deployments.
-    -   `userKeys`: A list funded `ethers.Wallet`.
-    -   `operatorKey`, `relayerKey`, `adminKeys`, `threshold`: Optional info for gateway setup.
--   `NetworkInfo`: Information of a chain, used to get an already setup network. They can be obtained by `getInfo()` for any existing network.
-    -   `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
-    -   `chainId`: The chainId of the network, defaults to `n`.
-    -   `userKeys`: The user private keys.
-    -   `ownerKey`: The owner private key.
-    -   `operatorKey`: The operator private key.
-    -   `relayerKey`: The relayer private key.
-    -   `adminKeys`: The admin private key.
-    -   `threshold`: The threshold of signers on the gateway.
-    -   `lastRelayedBlock`: The last block that events were replayed up to.
-    -   `gatewayAddress`: The address of the Axelar gateway.
-    -   `usdcAddress`: The address of USDC.
-    -   `gasReceiverAddress`: The address of the `gasService` contract.
-    -   `constAddressDeployerAddress`: The address of the `constAddressDeployer` contract.
+- `CreateLocalOptions`: Options to setup multiple local chains using `createAndExport` (see below). All are optional.
+  - `chainOutputPath`: A path to save a json file with all the information for the chains that are setup.
+  - `accountsToFund`: A list of addresses to fund.
+  - `fundAmount`: A string representing the amount of ether to fund accounts with. Defaults to `100 ETH`.
+  - `chains`: A list with all of the chain names (also determines the number of created networks). Defaults to `["Moonbeam", "Avalanche", "Fantom", "Ethereum", "Polygon"]`.
+  - `relayInterval`?: amount of time between relay of events in miliseconds. Defaults to `2000`.
+  - `port`: Port to listen to. Defaults to `8500`.
+  - `afterRelay`: A function `(relayData: RelayData) => void` which will be called after each relay. Mainly to be used for debugging.
+  - `callback`: A function `(network: Network, info: any) => Promise<null>` that will be called right after setting up each network. Use this to setup additional features, like deploying contracts that already exist on testnet/mainnet.
+- `CloneLocalOptions`: An extension of `CreateLocalOptions` that also includes:
+  - `env`: a `string` whose value is either `mainnet` or `testnet`, or an `array` of `ChainCloneData`.
+  - `chains`: These now act as a filter for which chains to fork. Defaults to all the chains.
+  - `networkInfo`: The `NetworkInfo` (see below) which overwrites the default parameters.
+- `Network`: This object type is used to handle most functionality within the module. It has the following properties:
+  - `name`: The name of the network.
+  - `chainId`: The chainId of the network.
+  - `provider`: The `ethers.Provider` for the network.
+  - `userWallets`: A list of funded `ethers.Wallet` objects.
+  - `gateway`: An `ethers.Contract` object corresponding to the Axelar Gateway on the network.
+  - `gasReceiver`: An `ethers.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
+  - `ownerWallet`, `operatorWallet`, `relayerWallet`, `adminWallets` `threshold` `lastRelayedBlock`: These are for configuring the gateway and relaying.
+  - `deployToken(name, symbol, decimals, cap)`: Deploys a new token on the network. For a token to be supported properly it needs to be deployed on all created networks.
+  - `getTokenContract(sybmol)`: Returns an `ethers.Contract` linked to the ERC20 token represented by `symbol`.
+  - `giveToken(address, symbol, amount)`: Gives `amount` of `symbol` token to `address`.
+  - `getInfo()`: Returns an object with all the information about the `Network`.
+  - `relay()`: This method is either equivalent to calling the local instance of this module's `relay()` (see below) or, for remote networks, the host's instance of `relay()`.
+- `NetworkOptions` This type is used as an input to create networks and can include the following. All are optional.
+  - `ganacheOptions`: Additional options to be passed into `require(ganache).provider`.
+  - `dbPath`: Where to save/find the db for a network already created. Will not save unless specified.
+  - `port`: Which port to listen to for this network. Will not listen to any port unless specified.
+  - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
+  - `chainId`: The chainId of the network, defaults to `n`.
+  - `seed`: A seed that determines the addresses of funded accounts and contract addresses.
+- `ChainCloneData`: Data needed to for a network. `mainnetInfo` and `testnetInfo` can both be used as `ChainCloneData`.
+  - `name`: Name of the network to create.
+    `gateway`: The (preexisting) address of the gateway.
+    `rpc`: A url to an RPC to connect to the chain to fork.
+    `chainId`: The chain id, as a `Number`.
+    `gasService`: The (preexisting) address of the gasService.
+    `constAddressDeployer`: The (preexisting) address of the constAddressDeployer.;
+    `tokenName`: The name of the native token on this chain.
+    `tokenSymbol`: The symbol of the native token on this chain.
+    `tokens`: An object with all the registered axelar tokens
+- `NetworkSetup`: This type is used as an input to setup networks and can include the following. All but `ownerKey` are optional.
+  - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
+  - `chainId`: The chainId of the network, defaults to `n`.
+  - `ownerKey`: A funded `ethers.Wallet` that will be used for deployments.
+  - `userKeys`: A list funded `ethers.Wallet`.
+  - `operatorKey`, `relayerKey`, `adminKeys`, `threshold`: Optional info for gateway setup.
+- `NetworkInfo`: Information of a chain, used to get an already setup network. They can be obtained by `getInfo()` for any existing network.
+  - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
+  - `chainId`: The chainId of the network, defaults to `n`.
+  - `userKeys`: The user private keys.
+  - `ownerKey`: The owner private key.
+  - `operatorKey`: The operator private key.
+  - `relayerKey`: The relayer private key.
+  - `adminKeys`: The admin private key.
+  - `threshold`: The threshold of signers on the gateway.
+  - `lastRelayedBlock`: The last block that events were replayed up to.
+  - `gatewayAddress`: The address of the Axelar gateway.
+  - `usdcAddress`: The address of USDC.
+  - `gasReceiverAddress`: The address of the `gasService` contract.
+  - `constAddressDeployerAddress`: The address of the `constAddressDeployer` contract.
+
 
 The following is exported by this module.
 
--   `createAndExport(CreateLocalOptions)`: Creates and sets up a number of networks, and listens for RPC for all of them on a single port.
--   `forkAndExport(CloneLocalOptions)`: Like the above but forks either mainnet or testnet. Takes longer and spams RPCs so only use if you need something else deployed.
--   `createNetwork(NetworkOptions)`: Creates a new `Network`.
--   `getNetwork(urlOrProvider, NetworkInfo=null)`: Return `Network` hosted elsewhere into this instance.
--   `setupNetwork(urlOrProvider, NetworkSetup)`: Deploy the gateway and USDC Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `NetworkSetup` is `ownerKey` which is a wallet of a funded account.
--   `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).
--   `getAllNetworks(url)`: This will retreive all the networks served by `listen` called from a different instance.
--   `relay()`: A function that passes all the messages to all the gateways and calls the appropriate `IAxelarExecutable` contracts.
--   `getDepostiAddress(sourceNetwork, destinationNetwork, destinationAddress, symbol)`: This function generates a deposit address on `network1` that will route any funds of type `symbol` deposited there (minus some fee) to the `destinationAddress` in `network2`.
--   `getFee(sourceNetwork, destinationNetwork, symbol)`: returns the fee for transferring funds. Is set to a constant `1,000,000`.
--   `getGasPrice(sourceNetwork, destinationNetwork, tokenOnSource)`: returns the gas price to execute on `destinationChain`, to be payed in `sourceChain` in token specified by `tokenOnSource` (which is given as an address). `tokenOnSource=AddressZero` corresponds to the native token of the source chain. It always returns `1` but may change in the future.
--   `stop(network)`: Destroys the network and removes it from the list of tracked networks.
--   `stopAll()`: Stops all tracked networks.
--   `networks`: A list of all the `Network`s in this instance.
+- `createAndExport(CreateLocalOptions)`: Creates and sets up a number of networks, and listens for RPC for all of them on a single port.
+- `forkAndExport(CloneLocalOptions)`: Like the above but forks either mainnet or testnet. Takes longer and spams RPCs so only use if you need something else deployed.
+- `createNetwork(NetworkOptions)`: Creates a new `Network`.
+- `getNetwork(urlOrProvider, NetworkInfo=null)`: Return `Network` hosted elsewhere into this instance.
+- `setupNetwork(urlOrProvider, NetworkSetup)`: Deploy the gateway and USDC Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `NetworkSetup` is `ownerKey` which is a wallet of a funded account.
+- `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).
+- `getAllNetworks(url)`: This will retreive all the networks served by `listen` called from a different instance.
+- `relay()`: A function that passes all the messages to all the gateways and calls the appropriate `IAxelarExecutable` contracts.
+- `getDepostiAddress(sourceNetwork, destinationNetwork, destinationAddress, symbol)`: This function generates a deposit address on `network1` that will route any funds of type `symbol` deposited there (minus some fee) to the `destinationAddress` in `network2`.
+- `getFee(sourceNetwork, destinationNetwork, symbol)`: returns the fee for transferring funds. Is set to a constant `1,000,000`.
+- `getGasPrice(sourceNetwork, destinationNetwork, tokenOnSource)`: returns the gas price to execute on `destinationChain`, to be payed in `sourceChain` in token specified by `tokenOnSource` (which is given as an address). `tokenOnSource=AddressZero` corresponds to the native token of the source chain. It always returns `1` but may change in the future.
+- `stop(network)`: Destroys the network and removes it from the list of tracked networks.
+- `stopAll()`: Stops all tracked networks.
+- `networks`: A list of all the `Network`s in this instance.
 
 ## Smart Contracts
 
@@ -162,38 +174,38 @@ To use the Networks created you need to interact with the deployed `AxelarGatewa
 
 This contract exposes three functions to use:
 
--   `sendToken(string destinationChain, string destinationAddress, string symbol, uint256 amount)`: The `destinationChain` has to match the network name for the token to reach its destination after relaying. The `destinationAddress` is the human-readable version of the address, prefixed with `0x`. This is a `string` instead of an `address` because in the real world you can send token to non-evm chains that have other address formats as well. `tokenSymbol` has to match one of the tokens that are deployed in the network, by default just UST but additional tokens can be added (see `deployToken` under `Network`).
--   `callContract(string destinationChain, string contractDestinationAddress, bytes payload)`: See above for `destinationChain` and `contractDestinationAddress`. `payload` is the information passed to the contract on the destination chain. Use `abi.encode` to produce `payload`s.
--   `callContractWithToken(string destinationChain, string contractDestinationAddress, bytes payload, string symbol, uint256 amount)`: This is a combination of the above two functions, but the token has to arrive at the contract that is executing.
+- `sendToken(string destinationChain, string destinationAddress, string symbol, uint256 amount)`: The `destinationChain` has to match the network name for the token to reach its destination after relaying. The `destinationAddress` is the human-readable version of the address, prefixed with `0x`. This is a `string` instead of an `address` because in the real world you can send token to non-evm chains that have other address formats as well. `tokenSymbol` has to match one of the tokens that are deployed in the network, by default just UST but additional tokens can be added (see `deployToken` under `Network`).
+- `callContract(string destinationChain, string contractDestinationAddress, bytes payload)`: See above for `destinationChain` and `contractDestinationAddress`. `payload` is the information passed to the contract on the destination chain. Use `abi.encode` to produce `payload`s.
+- `callContractWithToken(string destinationChain, string contractDestinationAddress, bytes payload, string symbol, uint256 amount)`: This is a combination of the above two functions, but the token has to arrive at the contract that is executing.
 
 ### `IAxelarExecutable`
 
 This interface is to be implemented for a contract to be able to receive remote contract calls. There are two functions that can be overriden, but depending on the use you may only choose to override one of them only.
 
--   `_execute(string memory sourceChain, string memory sourceAddress, bytes calldata payload)`: This will automatically be called when Axelar relays all messages. `sourceChain` and `sourceAddress` can be used to validate who is making the contract call, and `payload` can be decoded with `abi.decode` to produce any data needed.
--   `_executeWithToken(string memory sourceChain, string memory sourceAddress, bytes calldata payload, string memory symbol, uinst256 amount)`: This is the same as above but it is guaranteed to have also received `amount` token specified by `symbol`. You can use \_getTokenAddress(symbol) to obtain the address of the ERC20 token received.
+- `_execute(string memory sourceChain, string memory sourceAddress, bytes calldata payload)`: This will automatically be called when Axelar relays all messages. `sourceChain` and `sourceAddress` can be used to validate who is making the contract call, and `payload` can be decoded with `abi.decode` to produce any data needed.
+- `_executeWithToken(string memory sourceChain, string memory sourceAddress, bytes calldata payload, string memory symbol, uinst256 amount)`: This is the same as above but it is guaranteed to have also received `amount` token specified by `symbol`. You can use \_getTokenAddress(symbol) to obtain the address of the ERC20 token received.
 
 ### `AxelarGasReceiver`
 
 This contract is automatically deployed and can be used to pay gas for the destination contract execution on the source chain. Smart contracts calling `callContract` and `callContractWithToken` should also handle paying for gas. It exposes [many functions](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/feat/gas-receiver/src/util/AxelarGasReceiver.sol), but the main ones are
 
--   `receiveGas(string destinationChain, string destinationAddress, bytes payload, address gasToken, uint256 gasAmount)`: Receives `gasAmount` of `gasToken` to execute the contract call specified. The execution will use a gasLimit of `gasAmount / getGasPrice(...)` (see [above](#functionality) for `getGasPrice`).
--   `receiveGasNative(string destinationChain, string destinationAddress, bytes payload)`: As above with the native token as the `gasToken` and `msg.value` as the `gasAmount`.
--   `receiveGasWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough, address gasToken, uint256 gasAmount)`, `receiveGasNtiveWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough)`: Similar to the above functions but they are for `callContractWithToken` instead of `callContract`.
--   `ReceiveGas(Native)AndCallRemote(WithToken)(...)`: There are four such functions that will also pass the call to the gateway after receiving gas, for convenience.
+- `receiveGas(string destinationChain, string destinationAddress, bytes payload, address gasToken, uint256 gasAmount)`: Receives `gasAmount` of `gasToken` to execute the contract call specified. The execution will use a gasLimit of `gasAmount / getGasPrice(...)` (see [above](#functionality) for `getGasPrice`).
+- `receiveGasNative(string destinationChain, string destinationAddress, bytes payload)`: As above with the native token as the `gasToken` and `msg.value` as the `gasAmount`.
+- `receiveGasWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough, address gasToken, uint256 gasAmount)`, `receiveGasNtiveWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough)`: Similar to the above functions but they are for `callContractWithToken` instead of `callContract`.
+- `ReceiveGas(Native)AndCallRemote(WithToken)(...)`: There are four such functions that will also pass the call to the gateway after receiving gas, for convenience.
 
 ## Aptos
 
 We also support a local develompent environment for aptos cross chain communication. This only supports general message passing. `AptosNetwork` is a generalization of `AptosClient` (avaliable in the `aptos` package) that includes (among others that are mainly used for intrnal purposes):
 
--   `getResourceAccountAddress(MaybeHexString sourceAddress, MaybeHexString seed)`: Predicts the aptos resource address for an account with a certain seed.
--   `deploy(string modulePath , string[] compiledModules, MaybeHexString seed)`: Deploy `compiledModules` found in `modulePath`. Seed is optional, if it is included then the modules are deployed as a resource.
--   `submitTransactionAndWait(MaybeHexString from, EntryFunctionPayload txData)`: A wrapper for aptos' submit transaction workflow, for ease of use.
+- `getResourceAccountAddress(MaybeHexString sourceAddress, MaybeHexString seed)`: Predicts the aptos resource address for an account with a certain seed.
+- `deploy(string modulePath , string[] compiledModules, MaybeHexString seed)`: Deploy `compiledModules` found in `modulePath`. Seed is optional, if it is included then the modules are deployed as a resource.
+- `submitTransactionAndWait(MaybeHexString from, EntryFunctionPayload txData)`: A wrapper for aptos' submit transaction workflow, for ease of use.
 
 Additionaly we export two utility functions
 
--   `createAptosNetwork(config?: {nodeUrl: string, faucetUrl: string})`: This funds the `owner` account and uses it to deploy the gateway module. `nodeUrl` defaults to `http://localhost:8080` and `faucetUrl` defaults to `http://localhost:8081`
--   `loadAptosNetwork(string nodeUrl)`: This loads the an preconfigured `AptosNetwork`. It is useful so that relaying works properly to said aptos network works properly.
+- `createAptosNetwork(config?: {nodeUrl: string, faucetUrl: string})`: This funds the `owner` account and uses it to deploy the gateway module. `nodeUrl` defaults to `http://localhost:8080` and `faucetUrl` defaults to `http://localhost:8081`
+- `loadAptosNetwork(string nodeUrl)`: This loads the an preconfigured `AptosNetwork`. It is useful so that relaying works properly to said aptos network works properly.
 
 `createAndExport` (see above) will try to also call `createAptosNetwork` so that realying works to aptos as well.
 
@@ -203,12 +215,12 @@ We support a local development enviroment for near cross chain communication. Cu
 
 NEAR local development enviroment is based on [near-workspaces-js](https://github.com/near/workspaces-js) and `NearNetwork` is an extension of `Worker` (available in [near-workspaces-js](https://github.com/near/workspaces-js) package). `NearNetwork` includes everything that `Worker` has and some additional funcionalities:
 
--   `createAccountAndDeployContract(accountId: string, contractWasmPath: string, nearAmount = 200)`: Allows user to quickly create a new NEAR account with a specified amount of NEAR (default - 200 NEAR) and deploy contract to it.
+- `createAccountAndDeployContract(accountId: string, contractWasmPath: string, nearAmount = 200)`: Allows user to quickly create a new NEAR account with a specified amount of NEAR (default - 200 NEAR) and deploy contract to it.
 
--   `callContract(account: NearAccount, contract: NearAccount, method: string, args: any, amount = 0)`: This method needs to be used to do any contract calls, it takes the account that will call the contract, contract that we want to call, method that we want to call, args and amount of NEAR that we wish to attach to the call.
+- `callContract(account: NearAccount, contract: NearAccount, method: string, args: any, amount = 0)`: This method needs to be used to do any contract calls, it takes the account that will call the contract, contract that we want to call, method that we want to call, args and amount of NEAR that we wish to attach to the call.
 
--   `stopNetwork()`: Needs to be called at the end of the script, so it stops the `near-sandbox` process which is a local mini-NEAR blockchain.
+- `stopNetwork()`: Needs to be called at the end of the script, so it stops the `near-sandbox` process which is a local mini-NEAR blockchain.
 
 Additionaly we export a utility function:
 
--   `createNearNetwork(config?: Config)`: Creates an instance of `NearNetwork` and starts the `near-sandbox` process. It can take a `Config` object as described in [near-workspaces-js](https://github.com/near/workspaces-js).
+- `createNearNetwork(config?: Config)`: Creates an instance of `NearNetwork` and starts the `near-sandbox` process. It can take a `Config` object as described in [near-workspaces-js](https://github.com/near/workspaces-js).
