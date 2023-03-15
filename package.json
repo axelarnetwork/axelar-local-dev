@@ -29,7 +29,7 @@
     },
     "homepage": "https://github.com/axelarnetwork/axelar-local-dev#readme",
     "dependencies": {
-        "@axelar-network/axelar-cgp-aptos": "^1.0.2",
+        "@axelar-network/axelar-cgp-aptos": "^1.0.3",
         "@axelar-network/axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#feat/forecaller-service",
         "@axelar-network/axelar-gmp-sdk-solidity": "^3.2.1",
         "aptos": "^1.3.16",
