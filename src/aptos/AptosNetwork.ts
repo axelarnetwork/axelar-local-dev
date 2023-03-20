@@ -32,7 +32,7 @@ export class AptosNetwork extends AptosClient {
         this.contractCallSequence = -1;
         this.payContractCallSequence = -1;
         this.resourceAddress = '0xe2a20d8c426eb04d882e20e78399b24123905d9f1adf95a292832805965e263a';
-        
+
         this.isGatewayDeployed().then(result => {
             if(result) {
                 this.queryContractCallEvents().then(events => {
@@ -41,7 +41,7 @@ export class AptosNetwork extends AptosClient {
                 this.queryPayGasContractCallEvents().then(events => {
                     if (events) this.updatePayGasContractCallSequence(events);
                 });
-                
+
             }
         })
     }
@@ -64,20 +64,20 @@ export class AptosNetwork extends AptosClient {
         const moduleDatas = compiledModules.map((module: string) => {
             return fs.readFileSync(path.join(modulePath, 'bytecode_modules', module));
         });
-        
+
         let txHash;
-        
+
         if(seed) {
             const data = await this.generateTransaction(this.owner.address(), {
                 function: `0x1::resource_account::create_resource_account_and_publish_package`,
                 type_arguments: [],
                 arguments: [
-                    HexString.ensure(seed).toUint8Array(), 
+                    HexString.ensure(seed).toUint8Array(),
                     packageMetadata,
                     moduleDatas,
                 ],
             });
-            
+
             const bcsTxn = await this.signTransaction(this.owner, data);
             txHash = (await this.submitTransaction(bcsTxn)).hash;
 
@@ -91,10 +91,10 @@ export class AptosNetwork extends AptosClient {
         }
 
         const tx: any = await this.waitForTransactionWithResult(txHash);
-        if (tx.vm_status !== 'Executed successfully') {
-            console.log(`Error: ${tx.vm_status}`);
-        }
-        return tx;
+		if (!tx.success) {
+			throw new Error(`Error: ${tx.vm_status}`);
+		}
+		return tx;
     }
 
     getOwnerBalance() {
