@@ -10,7 +10,7 @@ npm install axelarnetwork/axelar-local-dev
 
 ## Examples
 
-See [axelar-local-gmp-examples repo](https://github.com/axelarnetwork/axelar-local-gmp-examples/) for example use of this local development environment.
+See [axelar-examples repo](https://github.com/axelarnetwork/axelar-examples/) for example use of this local development environment.
 
 ## Simple use
 
@@ -102,9 +102,8 @@ This module exports the following types:
   - `chainId`: The chainId of the network.
   - `provider`: The `ethers.Provider` for the network.
   - `userWallets`: A list of funded `ethers.Wallet` objects.
-  - `gateway`: An `ethets.Contract` object corresponding to the Axelar Gateway on the network.
-  - `gasReceiver`: An `ethets.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
-  - `ust`: An `ethets.Contract` object corresponding to the IERC20 of the Axelar Wrapped UST on this network.
+  - `gateway`: An `ethers.Contract` object corresponding to the Axelar Gateway on the network.
+  - `gasReceiver`: An `ethers.Contract` object corresponding to the AxelarGasReceiver that receives gas for remote execution. It expects gas between the same two `relay()`s to funtion properly.
   - `ownerWallet`, `operatorWallet`, `relayerWallet`, `adminWallets` `threshold` `lastRelayedBlock`: These are for configuring the gateway and relaying.
   - `deployToken(name, symbol, decimals, cap)`: Deploys a new token on the network. For a token to be supported properly it needs to be deployed on all created networks.
   - `getTokenContract(sybmol)`: Returns an `ethers.Contract` linked to the ERC20 token represented by `symbol`.
@@ -123,7 +122,7 @@ This module exports the following types:
     `gateway`: The (preexisting) address of the gateway.
     `rpc`: A url to an RPC to connect to the chain to fork.
     `chainId`: The chain id, as a `Number`.
-    `gasReceiver`: The (preexisting) address of the gasReceiver.
+    `gasService`: The (preexisting) address of the gasService.
     `constAddressDeployer`: The (preexisting) address of the constAddressDeployer.;
     `tokenName`: The name of the native token on this chain.
     `tokenSymbol`: The symbol of the native token on this chain.
@@ -146,7 +145,7 @@ This module exports the following types:
   - `lastRelayedBlock`: The last block that events were replayed up to.
   - `gatewayAddress`: The address of the Axelar gateway.
   - `usdcAddress`: The address of USDC.
-  - `gasReceiverAddress`: The address of the `gasReceiver` contract.
+  - `gasReceiverAddress`: The address of the `gasService` contract.
   - `constAddressDeployerAddress`: The address of the `constAddressDeployer` contract.
 
 
@@ -154,7 +153,7 @@ The following is exported by this module.
 
 - `createAndExport(CreateLocalOptions)`: Creates and sets up a number of networks, and listens for RPC for all of them on a single port.
 - `forkAndExport(CloneLocalOptions)`: Like the above but forks either mainnet or testnet. Takes longer and spams RPCs so only use if you need something else deployed.
-- `createNetwork(NetworkOptions)`: Creates a new `Network`. 
+- `createNetwork(NetworkOptions)`: Creates a new `Network`.
 - `getNetwork(urlOrProvider, NetworkInfo=null)`: Return `Network` hosted elsewhere into this instance.
 - `setupNetwork(urlOrProvider, NetworkSetup)`: Deploy the gateway and USDC Token on a remote blockchain and return the corresponding `Network`. The only value that is required in `NetworkSetup` is `ownerKey` which is a wallet of a funded account.
 - `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).
@@ -194,3 +193,34 @@ This contract is automatically deployed and can be used to pay gas for the desti
 - `receiveGasNative(string destinationChain, string destinationAddress, bytes payload)`: As above with the native token as the `gasToken` and `msg.value` as the `gasAmount`.
 - `receiveGasWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough, address gasToken, uint256 gasAmount)`, `receiveGasNtiveWithToken(string destinationChain, string destinationAddress, bytes payload, string symbol, uint256 amountThrough)`: Similar to the above functions but they are for `callContractWithToken` instead of `callContract`.
 - `ReceiveGas(Native)AndCallRemote(WithToken)(...)`: There are four such functions that will also pass the call to the gateway after receiving gas, for convenience.
+
+## Aptos
+
+We also support a local develompent environment for aptos cross chain communication. This only supports general message passing. `AptosNetwork` is a generalization of `AptosClient` (avaliable in the `aptos` package) that includes (among others that are mainly used for intrnal purposes):
+
+- `getResourceAccountAddress(MaybeHexString sourceAddress, MaybeHexString seed)`: Predicts the aptos resource address for an account with a certain seed.
+- `deploy(string modulePath , string[] compiledModules, MaybeHexString seed)`: Deploy `compiledModules` found in `modulePath`. Seed is optional, if it is included then the modules are deployed as a resource.
+- `submitTransactionAndWait(MaybeHexString from, EntryFunctionPayload txData)`: A wrapper for aptos' submit transaction workflow, for ease of use.
+
+Additionaly we export two utility functions
+
+- `createAptosNetwork(config?: {nodeUrl: string, faucetUrl: string})`: This funds the `owner` account and uses it to deploy the gateway module. `nodeUrl` defaults to `http://localhost:8080` and `faucetUrl` defaults to `http://localhost:8081`
+- `loadAptosNetwork(string nodeUrl)`: This loads the an preconfigured `AptosNetwork`. It is useful so that relaying works properly to said aptos network works properly.
+
+`createAndExport` (see above) will try to also call `createAptosNetwork` so that realying works to aptos as well.
+
+## Near
+
+We support a local development enviroment for near cross chain communication. Currently we only support general message passing using NEAR and EVM (Aptos support is not implemented).
+
+NEAR local development enviroment is based on [near-workspaces-js](https://github.com/near/workspaces-js) and `NearNetwork` is an extension of `Worker` (available in [near-workspaces-js](https://github.com/near/workspaces-js) package). `NearNetwork` includes everything that `Worker` has and some additional funcionalities:
+
+- `createAccountAndDeployContract(accountId: string, contractWasmPath: string, nearAmount = 200)`: Allows user to quickly create a new NEAR account with a specified amount of NEAR (default - 200 NEAR) and deploy contract to it.
+
+- `callContract(account: NearAccount, contract: NearAccount, method: string, args: any, amount = 0)`: This method needs to be used to do any contract calls, it takes the account that will call the contract, contract that we want to call, method that we want to call, args and amount of NEAR that we wish to attach to the call.
+
+- `stopNetwork()`: Needs to be called at the end of the script, so it stops the `near-sandbox` process which is a local mini-NEAR blockchain.
+
+Additionaly we export a utility function:
+
+- `createNearNetwork(config?: Config)`: Creates an instance of `NearNetwork` and starts the `near-sandbox` process. It can take a `Config` object as described in [near-workspaces-js](https://github.com/near/workspaces-js).

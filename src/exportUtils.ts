@@ -3,7 +3,7 @@
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
-import { RelayData, relay, gasLogs, gasLogsWithToken } from './relay';
+import { RelayData, evmRelayer, aptosRelayer, relay, nearRelayer } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
 
@@ -33,48 +33,71 @@ export interface CloneLocalOptions {
     callback?: (network: Network, info: any) => Promise<null>;
 }
 
+let relaying = false;
 export async function createAndExport(options: CreateLocalOptions = {}) {
-    const defaultOptions = {
-        chainOutputPath: './local.json',
-        accountsToFund: [],
-        fundAmount: ethers.utils.parseEther('100').toString(),
-        chains: ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
-        port: 8500,
-        relayInterval: 2000,
-    } as CreateLocalOptions;
-    for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
-    const chains_local: Record<string, any>[] = [];
+    const { accountsToFund, afterRelay, callback, chainOutputPath, chains, fundAmount, port, relayInterval } = options;
+    const _options = {
+        chainOutputPath: chainOutputPath || './local.json',
+        accountsToFund: accountsToFund || [],
+        fundAmount: fundAmount || ethers.utils.parseEther('100').toString(),
+        chains: chains || ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
+        port: port || 8500,
+        afterRelay: afterRelay || null,
+        callback: callback || null,
+        relayInterval: relayInterval || 2000,
+    };
+    const localChains: Record<string, any>[] = [];
     let i = 0;
-    for (const name of options.chains!) {
+    for (const name of _options.chains) {
         const chain = await createNetwork({
             name: name,
             seed: name,
             ganacheOptions: {},
         });
         const testnet = testnetInfo.find((info: any) => {
-            return info.name == name;
+            return info.name === name;
         });
         const info = chain.getCloneInfo() as any;
-        info.rpc = `http://localhost:${options.port}/${i}`;
-        (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), chains_local.push(info);
+        info.rpc = `http://localhost:${_options.port}/${i}`;
+        (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), localChains.push(info);
         const [user] = chain.userWallets;
-        for (const account of options.accountsToFund!) {
+        for (const account of _options.accountsToFund) {
             await user
                 .sendTransaction({
                     to: account,
-                    value: options.fundAmount,
+                    value: _options.fundAmount,
                 })
                 .then((tx) => tx.wait());
         }
-        if (options.callback) await options.callback(chain, info);
+        if (_options.callback) await _options.callback(chain, info);
+        if (Object.keys(chain.tokens).length > 0) {
+            // Check if there is a USDC token.
+            const alias = Object.keys(chain.tokens).find((alias) => alias.toLowerCase().includes('usdc'));
+
+            // If there is no USDC token, return.
+            if (!alias) return;
+
+            // Get the symbol of the USDC token.
+            const symbol = chain.tokens[alias];
+
+            // Mint 1e12 USDC tokens to the GMPExpressService contract.
+            await chain.giveToken(info.GMPExpressService.address, symbol, BigInt(1e18));
+        }
         i++;
     }
-    listen(options.port!);
+    listen(_options.port);
     interval = setInterval(async () => {
-        const relayData = await relay();
-        if (options.afterRelay) options.afterRelay(relayData);
-    }, options.relayInterval);
-    setJSON(chains_local, options.chainOutputPath!);
+        if (relaying) return;
+        relaying = true;
+        await relay().catch(() => undefined);
+        if (options.afterRelay) {
+            options.afterRelay(evmRelayer.relayData);
+            options.afterRelay(aptosRelayer.relayData);
+            options.afterRelay(nearRelayer.relayData);
+        }
+        relaying = false;
+    }, _options.relayInterval);
+    setJSON(localChains, _options.chainOutputPath);
 }
 
 export async function forkAndExport(options: CloneLocalOptions = {}) {
@@ -88,7 +111,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         relayInterval: 2000,
         networkOptions: {},
     } as CloneLocalOptions;
-    for (var option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
+    for (const option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
     const chains_local: Record<string, any>[] = [];
     if (options.env != 'mainnet' && options.env != 'testnet') {
         console.log(`Forking ${options.env.length} chains from custom data.`);
@@ -105,7 +128,6 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     let i = 0;
     for (const chain of chains) {
         const network = await forkNetwork(chain, options.networkOptions);
-
         const info = network.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
         (info.tokenName = chain?.tokenName), (info.tokenSymbol = chain?.tokenSymbol), chains_local.push(info);
@@ -123,8 +145,8 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     }
     listen(options.port!);
     interval = setInterval(async () => {
-        const relayData = await relay();
-        if (options.afterRelay) options.afterRelay(relayData);
+        await evmRelayer.relay();
+        if (options.afterRelay) options.afterRelay(evmRelayer.relayData);
     }, options.relayInterval);
     setJSON(chains_local, options.chainOutputPath!);
 }
@@ -134,6 +156,8 @@ export async function destroyExported() {
     if (interval) {
         clearInterval(interval);
     }
-    gasLogs.length = 0;
-    gasLogsWithToken.length = 0;
+    evmRelayer.contractCallGasEvents.length = 0;
+    evmRelayer.contractCallWithTokenGasEvents.length = 0;
+    aptosRelayer.contractCallGasEvents.length = 0;
+    nearRelayer.contractCallGasEvents.length = 0;
 }

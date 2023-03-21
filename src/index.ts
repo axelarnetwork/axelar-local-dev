@@ -1,29 +1,29 @@
-import { createAndExport, forkAndExport } from './exportUtils';
-import { relay } from './relay';
-import { deployContract, defaultAccounts, setJSON, setLogger } from './utils';
-import { testnetInfo, mainnetInfo } from './info';
+import { mainnetInfo, testnetInfo } from './info';
 import { networks } from './Network';
+import * as compiledContracts from './contracts';
 import {
     ChainCloneData,
-    getFee,
-    getGasPrice,
-    listen,
     createNetwork,
     forkNetwork,
-    getNetwork,
     getAllNetworks,
+    getDepositAddress,
+    getFee,
+    getGasPrice,
+    getNetwork,
+    listen,
     setupNetwork,
     stop,
     stopAll,
-    getDepositAddress,
 } from './networkUtils';
+import { defaultAccounts, deployContract, setJSON, setLogger } from './utils';
 
-export const utils = {
-    deployContract,
-    defaultAccounts,
-    setJSON,
-    setLogger,
-};
+export * from './aptos';
+export * from './exportUtils';
+export * from './near';
+export * from './relay';
+export * from './utils';
+
+export const contracts = compiledContracts;
 
 export {
     ChainCloneData,
@@ -41,7 +41,11 @@ export {
     networks,
     testnetInfo,
     mainnetInfo,
-    relay,
-    createAndExport,
-    forkAndExport,
+};
+
+export const utils = {
+    deployContract,
+    defaultAccounts,
+    setJSON,
+    setLogger,
 };

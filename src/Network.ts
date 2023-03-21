@@ -2,21 +2,25 @@
 
 import { ethers, Wallet, Contract, providers } from 'ethers';
 import { logger } from './utils';
-const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
-const { getSignedExecuteInput, getRandomID, deployContract } = require('./utils');
+import { getSignedExecuteInput, getRandomID, deployContract } from './utils';
+import {
+    AxelarGateway,
+    AxelarGatewayProxy,
+    IAxelarGateway,
+    Auth,
+    TokenDeployer,
+    AxelarGasReceiver,
+    BurnableMintableCappedERC20,
+    AxelarGasReceiverProxy,
+    ConstAddressDeployer,
+    Create3Deployer,
+    GMPExpressService,
+    GMPExpressProxyDeployer,
+} from './contracts';
 import http from 'http';
 
-const TokenDeployer = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/TokenDeployer.sol/TokenDeployer.json');
-const AxelarGatewayProxy = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
-const AxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway.sol/AxelarGateway.json');
-const IAxelarGateway = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol/IAxelarGateway.json');
-const BurnableMintableCappedERC20 = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/BurnableMintableCappedERC20.sol/BurnableMintableCappedERC20.json');
-const Auth = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
-const AxelarGasReceiver = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json');
-const AxelarGasReceiverProxy = require('../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasServiceProxy.sol/AxelarGasServiceProxy.json');
-const ConstAddressDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json');
-
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
 
 export const networks: Network[] = [];
 export interface NetworkOptions {
@@ -40,19 +44,22 @@ export interface NetworkInfo {
     lastRelayedBlock: number;
     gatewayAddress: string;
     gasReceiverAddress: string;
+    expressServiceAddress: string;
+    expressProxyDeployerAddress: string;
     constAddressDeployerAddress: string;
+    create3DeployerAddress: string;
     tokens: { [key: string]: string };
 }
 export interface NetworkSetup {
-    name: string | undefined;
-    chainId: number | undefined;
-    userKeys: Wallet[] | undefined;
+    name?: string;
+    chainId?: number;
+    userKeys?: Wallet[];
     ownerKey: Wallet;
-    operatorKey: Wallet | undefined;
-    relayerKey: Wallet | undefined;
-    adminKeys: Wallet[] | undefined;
-    threshold: number | undefined;
-    lastRelayedBlock: number | undefined;
+    operatorKey?: Wallet;
+    relayerKey?: Wallet;
+    adminKeys?: Wallet[];
+    threshold?: number;
+    lastRelayedBlock?: number;
 }
 
 /*
@@ -70,8 +77,11 @@ export class Network {
     threshold: number;
     lastRelayedBlock: number;
     gateway: Contract;
-    gasReceiver: Contract;
+    gasService: Contract;
     constAddressDeployer: Contract;
+    create3Deployer: Contract;
+    expressService: Contract;
+    expressProxyDeployer: Contract;
     isRemote: boolean | undefined;
     url: string | undefined;
     ganacheProvider: any;
@@ -90,13 +100,16 @@ export class Network {
         this.threshold = networkish.threshold;
         this.lastRelayedBlock = networkish.lastRelayedBlock;
         this.gateway = networkish.gateway;
-        this.gasReceiver = networkish.gasReceiver;
+        this.gasService = networkish.gasService;
         this.constAddressDeployer = networkish.constAddressDeployer;
+        this.create3Deployer = networkish.create3Deployer;
+        this.expressService = networkish.expressService;
+        this.expressProxyDeployer = networkish.expressProxyDeployer;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
         this.tokens = networkish.tokens;
     }
-    async _deployGateway(): Promise<Contract> {
+    async deployGateway(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gateway for ${this.name}... `);
 
         const params = arrayify(
@@ -119,7 +132,7 @@ export class Network {
 
     async _upgradeGateway(oldAdminAddresses: string[] | undefined = undefined, oldThreshold: number = this.threshold): Promise<Contract> {
         const adminWallets =
-            oldAdminAddresses != undefined
+            oldAdminAddresses !== undefined
                 ? oldAdminAddresses.map((address: string) => (this.provider as any).getSigner(address))
                 : this.adminWallets;
 
@@ -145,17 +158,17 @@ export class Network {
         logger.log(`Upgraded ${this.gateway.address}`);
         return this.gateway;
     }
-    async _deployGasReceiver(): Promise<Contract> {
+    async deployGasReceiver(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
-        const gasReceiver = await deployContract(this.ownerWallet, AxelarGasReceiver, []);
+        const gasService = await deployContract(this.ownerWallet, AxelarGasReceiver, [this.ownerWallet.address]);
         const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy);
-        await gasReceiverProxy.init(gasReceiver.address, this.ownerWallet.address, '0x');
+        await gasReceiverProxy.init(gasService.address, this.ownerWallet.address, '0x');
 
-        this.gasReceiver = new Contract(gasReceiverProxy.address, AxelarGasReceiver.abi, this.provider);
-        logger.log(`Deployed at ${this.gasReceiver.address}`);
-        return this.gasReceiver;
+        this.gasService = new Contract(gasReceiverProxy.address, AxelarGasReceiver.abi, this.provider);
+        logger.log(`Deployed at ${this.gasService.address}`);
+        return this.gasService;
     }
-    async _deployConstAddressDeployer(): Promise<Contract> {
+    async deployConstAddressDeployer(): Promise<Contract> {
         logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
         const constAddressDeployerDeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
         const deployerWallet = new Wallet(constAddressDeployerDeployerPrivateKey, this.provider);
@@ -171,7 +184,39 @@ export class Network {
         logger.log(`Deployed at ${this.constAddressDeployer.address}`);
         return this.constAddressDeployer;
     }
-    async deployToken(name: string, symbol: string, decimals: number, cap: BigInt, address: string = ADDRESS_ZERO, alias: string = symbol) {
+    async deployCreate3Deployer(): Promise<Contract> {
+        logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
+        const create3DeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
+        const deployerWallet = new Wallet(create3DeployerPrivateKey, this.provider);
+        await this.ownerWallet
+            .sendTransaction({
+                to: deployerWallet.address,
+                value: BigInt(1e18),
+            })
+            .then((tx) => tx.wait());
+        const create3Deployer = await deployContract(deployerWallet, Create3Deployer, []);
+
+        this.create3Deployer = new Contract(create3Deployer.address, Create3Deployer.abi, this.provider);
+        logger.log(`Deployed at ${this.constAddressDeployer.address}`);
+        return this.create3Deployer;
+    }
+
+    async deployExpressServiceContract(): Promise<Contract> {
+        logger.log(`Deploying the Express Service Contract for ${this.name}... `);
+        const expressProxyDeployer = await deployContract(this.ownerWallet, GMPExpressProxyDeployer, [this.gateway.address]);
+        const expressService = await deployContract(this.ownerWallet, GMPExpressService, [
+            this.gateway.address,
+            this.gasService.address,
+            expressProxyDeployer.address,
+            this.ownerWallet.address,
+        ]);
+        this.expressService = new Contract(expressService.address, GMPExpressService.abi, this.provider);
+        this.expressProxyDeployer = new Contract(expressProxyDeployer.address, GMPExpressProxyDeployer.abi, this.provider);
+        logger.log(`Deployed ExpressService at ${expressService.address}`);
+        return expressService;
+    }
+
+    async deployToken(name: string, symbol: string, decimals: number, cap: bigint, address: string = ADDRESS_ZERO, alias: string = symbol) {
         logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(
             defaultAbiCoder.encode(
@@ -190,19 +235,21 @@ export class Network {
             )
         );
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(1e7) })).wait();
-        let tokenAddress = await this.gateway.tokenAddresses(symbol);
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
+        const tokenAddress = await this.gateway.tokenAddresses(symbol);
         const tokenContract = new Contract(tokenAddress, BurnableMintableCappedERC20.abi, this.ownerWallet);
         logger.log(`Deployed at ${tokenContract.address}`);
         this.tokens[alias] = symbol;
         return tokenContract;
     }
+
     async getTokenContract(alias: string) {
         const symbol = this.tokens[alias];
         const address = await this.gateway.tokenAddresses(symbol);
         return new Contract(address, BurnableMintableCappedERC20.abi, this.provider);
     }
-    async giveToken(address: string, alias: string, amount: BigInt) {
+
+    async giveToken(address: string, alias: string, amount: bigint) {
         const symbol = this.tokens[alias] || alias;
         const data = arrayify(
             defaultAbiCoder.encode(
@@ -217,7 +264,7 @@ export class Network {
         );
 
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);
-        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(1e7) })).wait();
+        await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
     }
 
     getInfo() {
@@ -232,8 +279,11 @@ export class Network {
             threshold: this.threshold,
             lastRelayedBlock: this.lastRelayedBlock,
             gatewayAddress: this.gateway.address,
-            gasReceiverAddress: this.gasReceiver.address,
+            gasReceiverAddress: this.gasService.address,
+            expressProxyDeployerAddress: this.expressProxyDeployer.address,
+            expressServiceAddress: this.expressService.address,
             constAddressDeployerAddress: this.constAddressDeployer.address,
+            create3DeployerAddress: this.create3Deployer.address,
             tokens: this.tokens,
         };
         return info;
@@ -244,9 +294,18 @@ export class Network {
             name: this.name,
             chainId: this.chainId,
             gateway: this.gateway.address,
-            gasReceiver: this.gasReceiver.address,
+            gasService: this.gasService.address,
             constAddressDeployer: this.constAddressDeployer.address,
+            create3Deployer: this.create3Deployer.address,
             tokens: this.tokens,
+            GMPExpressService: {
+                expressOperator: this.ownerWallet.address,
+                salt: 'GMPExpressService',
+                address: this.expressService.address,
+                implementation: this.expressService.address,
+                deployer: this.ownerWallet.address,
+                proxyDeployer: this.expressProxyDeployer.address,
+            },
         };
     }
 }

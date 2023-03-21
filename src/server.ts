@@ -67,17 +67,18 @@ function rpcError(id: any, code: any, msg: any) {
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export default function (networkOrList: Network | Network[], logger = { log: function (...args: any) {} }) {
-    var server: Server = createServer(function (request: IncomingMessage, response: ServerResponse) {
-        var method = request.method;
-        var chunks: any[] = [];
+    const server: Server = createServer(function (request: IncomingMessage, response: ServerResponse) {
+        const method = request.method;
+        const chunks: any[] = [];
 
         request
             .on('data', function (chunk) {
                 chunks.push(chunk);
             })
             .on('end', async function () {
-                var body = Buffer.concat(chunks).toString();
+                const body = Buffer.concat(chunks).toString();
                 // At this point, we have the headers, method, url and body, and can now
                 // do whatever we need to in order to respond to this request.
 
@@ -86,8 +87,8 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                     headers['Content-Type'] = 'text/plain';
                     sendResponse(response, 400, headers, '400 Bad Request');
                 };
-                var network;
-                let url = request.url?.split('/');
+                let network;
+                const url = request.url?.split('/');
                 if (!url) return;
                 url?.shift();
                 if (Array.isArray(networkOrList)) {
@@ -95,7 +96,7 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                         badRequest();
                         return;
                     }
-                    var first = url?.shift();
+                    const first = url?.shift();
                     if (first == 'info' && method == 'GET') {
                         headers['Content-Type'] = 'application/json';
                         sendResponse(response, 200, headers, JSON.stringify(networkOrList.length));
@@ -111,8 +112,8 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                         sendResponse(response, 200, headers, JSON.stringify(getDepositAddress(from, to, destinationAddress, symbol)));
                         return;
                     }
-                    var n = parseInt(first!);
-                    if (n == NaN || n < 0 || n >= networkOrList.length) {
+                    const n = parseInt(first!);
+                    if (Number.isNaN(n) || n < 0 || n >= networkOrList.length) {
                         badRequest();
                         return;
                     }
@@ -123,7 +124,8 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
 
                 switch (method) {
                     case 'POST':
-                        var payload;
+                        // eslint-disable-next-line no-case-declarations
+                        let payload;
                         try {
                             payload = JSON.parse(body);
                         } catch (e) {
@@ -134,8 +136,8 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                         // Log messages that come into the TestRPC via http
                         if (payload instanceof Array) {
                             // Batch request
-                            for (var i = 0; i < payload.length; i++) {
-                                var item = payload[i];
+                            for (let i = 0; i < payload.length; i++) {
+                                const item = payload[i];
                                 logger.log(item.method);
                             }
                         } else {

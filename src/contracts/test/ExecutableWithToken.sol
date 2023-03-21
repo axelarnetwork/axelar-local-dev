@@ -4,17 +4,17 @@ pragma solidity 0.8.9;
 
 import { IERC20 } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol';
 import { IAxelarGasService } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol';
-import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executables/AxelarExecutable.sol';
+import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol';
 
 contract ExecutableWithToken is AxelarExecutable {
     string public value;
     string public sourceChain;
     string public sourceAddress;
-    IAxelarGasService public immutable gasReceiver;
+    IAxelarGasService public immutable gasService;
     mapping(string => string) public siblings;
 
-    constructor(address gateway_, address gasReceiver_) AxelarExecutable(gateway_) {
-        gasReceiver = IAxelarGasService(gasReceiver_);
+    constructor(address gateway_, address gasService_) AxelarExecutable(gateway_) {
+        gasService = IAxelarGasService(gasService_);
     }
 
     //Call this function on setup to tell this contract who it's sibling contracts are.
@@ -33,7 +33,7 @@ contract ExecutableWithToken is AxelarExecutable {
         value = value_;
         bytes memory payload = abi.encode(value_, destinationAddress);
         if (msg.value > 0) {
-            gasReceiver.payNativeGasForContractCallWithToken{ value: msg.value }(
+            gasService.payNativeGasForContractCallWithToken{ value: msg.value }(
                 address(this),
                 chain,
                 siblings[chain],
@@ -49,7 +49,7 @@ contract ExecutableWithToken is AxelarExecutable {
         gateway.callContractWithToken(chain, siblings[chain], payload, symbol, amount);
     }
 
-    /*Handles calls created by setAndSend. Updates this contract's value 
+    /*Handles calls created by setAndSend. Updates this contract's value
     and gives the token received to the destination specified at the source chain. */
     function _executeWithToken(
         string calldata sourceChain_,
