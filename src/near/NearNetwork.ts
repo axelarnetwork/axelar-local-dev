@@ -39,9 +39,9 @@ export class NearNetwork extends Worker {
 
         this.operatorWallet = Wallet.createRandom();
 
-        const wasmFilePath = path.join(path.resolve(__dirname), './contracts/axelar_auth_gateway.wasm');
+        const wasmFilePath = path.join(path.resolve(__dirname), './contracts/axelar_cgp_near.wasm');
 
-        this.gatewayAccount = await this.createAccountAndDeployContract('near_axelar_auth_gateway', wasmFilePath, 200);
+        this.gatewayAccount = await this.createAccountAndDeployContract('axelar_cgp_near', wasmFilePath, 200);
 
         const operators = ethers.utils.defaultAbiCoder.encode(
             ['address[]', 'uint256[]', 'uint256'],
