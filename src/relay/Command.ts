@@ -7,6 +7,7 @@ import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types'
 import { IAxelarExecutable } from '../contracts';
 import { aptosNetwork } from '../aptos';
 import { HexString } from 'aptos';
+import { nearNetwork } from '../near';
 
 //An internal class for handling axelar commands.
 export class Command {
@@ -20,12 +21,13 @@ export class Command {
         name: string,
         data: any[],
         dataSignature: string[],
-        post: ((options: any) => Promise<void>) | undefined = undefined
+        post: ((options: any) => Promise<void>) | undefined = undefined,
+        chain: string | null = null
     ) {
         this.commandId = commandId;
         this.name = name;
         this.data = data;
-        this.encodedData = name === 'approve_contract_call' ? '' : defaultAbiCoder.encode(dataSignature, data);
+        this.encodedData = chain === 'aptos' && name === 'approve_contract_call' ? '' : defaultAbiCoder.encode(dataSignature, data);
         this.post = post;
     }
 
@@ -44,7 +46,8 @@ export class Command {
                     .execute(commandId, args.from, args.sourceAddress, args.payload, options)
                     .then((tx: any) => tx.wait());
                 relayData.callContract[commandId].execution = tx.transactionHash;
-            }
+            },
+            'evm'
         );
     };
 
@@ -89,7 +92,29 @@ export class Command {
                 );
 
                 relayData.callContract[commandId].execution = tx.hash;
-            }
+            },
+            'aptos'
+        );
+    };
+
+    static createNearContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
+        return new Command(
+            commandId,
+            'approveContractCall',
+            [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.transactionHash, args.sourceEventIndex],
+            ['string', 'string', 'string', 'bytes32', 'bytes32', 'uint256'],
+            async () => {
+                const tx = await nearNetwork.executeRemote(
+                    commandId,
+                    args.destinationContractAddress,
+                    args.from,
+                    args.sourceAddress,
+                    args.payload
+                );
+
+                relayData.callContract[commandId].execution = tx.transactionReceipt.hash;
+            },
+            'near'
         );
     };
 }

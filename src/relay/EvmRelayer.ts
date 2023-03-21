@@ -9,6 +9,8 @@ import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
 import { depositAddresses } from '../networkUtils';
 import { Network, networks } from '../Network';
 import { getFee, getGasPrice } from '../networkUtils';
+import { nearNetwork } from '../near';
+
 const AddressZero = ethers.constants.AddressZero;
 
 export class EvmRelayer extends Relayer {
@@ -35,6 +37,7 @@ export class EvmRelayer extends Relayer {
     async execute() {
         await this.executeEvm();
         await this.executeAptos();
+        await this.executeNear();
     }
 
     private async executeEvm() {
@@ -54,6 +57,29 @@ export class EvmRelayer extends Relayer {
 
         await this.executeAptosGateway(toExecute);
         await this.executeAptosExecutable(toExecute);
+    }
+
+    private async executeNear() {
+        const toExecute = this.commands['near'];
+        if (toExecute?.length == 0) return;
+
+        await this.executeNearGateway(toExecute);
+        await this.executeNearExecutable(toExecute);
+    }
+
+    private async executeNearGateway(commands: Command[]) {
+        if (!nearNetwork) return;
+
+        await nearNetwork.executeGateway(commands);
+    }
+
+    private async executeNearExecutable(commands: Command[]) {
+        if (!nearNetwork) return;
+
+        for (const command of commands) {
+            if (!command.post) continue;
+            await command.post({});
+        }
     }
 
     private async executeAptosGateway(commands: Command[]) {
@@ -282,6 +308,10 @@ export class EvmRelayer extends Relayer {
         const filter = from.gateway.filters.ContractCall();
         const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
         for (const log of logsFrom) {
+            const tx = await log.getTransaction();
+            const transactionHash = tx.hash;
+            const sourceEventIndex = log.logIndex;
+
             const args: any = log.args;
             if (this.commands[args.destinationChain] === null) continue;
             const commandId = getEVMLogID(from.name, log);
@@ -292,11 +322,15 @@ export class EvmRelayer extends Relayer {
                 destinationContractAddress: args.destinationContractAddress,
                 payload: args.payload,
                 payloadHash: args.payloadHash,
+                transactionHash,
+                sourceEventIndex,
             };
             this.relayData.callContract[commandId] = contractCallArgs;
             let command;
             if (args.destinationChain.toLowerCase() === 'aptos') {
                 command = Command.createAptosContractCallCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() == 'near') {
+                command = Command.createNearContractCallCommand(commandId, this.relayData, contractCallArgs);
             } else {
                 command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
             }
