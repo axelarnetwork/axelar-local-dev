@@ -30,6 +30,7 @@
         "url": "https://github.com/axelarnetwork/axelar-local-dev/issues"
     },
     "homepage": "https://github.com/axelarnetwork/axelar-local-dev#readme",
+    "files": ["dist"],
     "dependencies": {
         "@axelar-network/axelar-cgp-aptos": "^1.0.3",
         "@axelar-network/axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#feat/forecaller-service",
