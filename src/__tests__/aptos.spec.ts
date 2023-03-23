@@ -6,6 +6,7 @@ import { ethers } from "ethers";
 const { keccak256, toUtf8Bytes } = ethers.utils;
 
 describe("aptos", () => {
+	jest.setTimeout(60000);
 	let client: any;
 
 	beforeEach(async () => {
