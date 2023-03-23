@@ -8,10 +8,10 @@
         "test": "jest",
         "build-ts": "rm -rf dist && tsc",
         "build-contract": "rm -rf src/artifacts && hardhat compile && mv artifacts src/artifacts",
-        "build-aptos": "",
         "build-near": "cd ./src/near/contracts/test/near-axelar-contract-call-example && ./build.sh",
         "copy-near-wasm": "cp ./node_modules/@axelar-network/axelar-cgp-near/dist/axelar_cgp_near.wasm src/near/contracts/ && mkdir -p dist/near/contracts && cp -r src/near/contracts/axelar_cgp_near.wasm dist/near/contracts",
         "build": "run-s build-contract build-aptos build-near build-ts copy-near-wasm",
+        "build-aptos": "bash ./aptos/build.sh",
         "prepare": "run-s build",
         "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
@@ -30,9 +30,11 @@
         "url": "https://github.com/axelarnetwork/axelar-local-dev/issues"
     },
     "homepage": "https://github.com/axelarnetwork/axelar-local-dev#readme",
-    "files": ["dist"],
+    "files": [
+        "dist"
+    ],
     "dependencies": {
-        "@axelar-network/axelar-cgp-aptos": "^1.0.3",
+        "@axelar-network/axelar-cgp-aptos": "^1.0.4",
         "@axelar-network/axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#feat/forecaller-service",
         "@axelar-network/axelar-gmp-sdk-solidity": "^3.2.1",
         "@axelar-network/axelar-cgp-near": "^1.0.0",
