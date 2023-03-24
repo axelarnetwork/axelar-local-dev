@@ -1,4 +1,4 @@
-name: "publish to npm"
+name: "Publish to NPM"
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   publish-to-npm:
-    name: "Publish to npm"
+    name: "Publish to NPM"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,7 +15,12 @@ jobs:
         with:
           node-version: "16.x"
           registry-url: "https://registry.npmjs.org"
-      - run: npm install
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+            path: node_modules
+            key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - run: npm ci
       - run: npm run build
       - run: npm publish
         env:
