@@ -1,7 +1,7 @@
 import { AptosAccount, AptosClient, CoinClient, HexString, TxnBuilderTypes, BCS, MaybeHexString } from 'aptos';
 import fs from 'fs';
 import path from 'path';
-import { sha3_256 as sha3Hash } from "@noble/hashes/sha3";
+import { sha3_256 as sha3Hash } from '@noble/hashes/sha3';
 
 declare type EntryFunctionPayload = {
     function: string;
@@ -33,28 +33,27 @@ export class AptosNetwork extends AptosClient {
         this.payContractCallSequence = -1;
         this.resourceAddress = '0xe2a20d8c426eb04d882e20e78399b24123905d9f1adf95a292832805965e263a';
 
-        this.isGatewayDeployed().then(result => {
-            if(result) {
-                this.queryContractCallEvents().then(events => {
+        this.isGatewayDeployed().then((result) => {
+            if (result) {
+                this.queryContractCallEvents().then((events) => {
                     if (events) this.updateContractCallSequence(events);
                 });
-                this.queryPayGasContractCallEvents().then(events => {
+                this.queryPayGasContractCallEvents().then((events) => {
                     if (events) this.updatePayGasContractCallSequence(events);
                 });
-
             }
-        })
+        });
     }
 
     async isGatewayDeployed(): Promise<boolean> {
         try {
             const resources = await this.getAccountResources(this.owner.address());
             const resource_accounts = resources.find((resource) => resource.type == '0x1::resource_account::Container');
-            if(!resource_accounts) return false;
-            const data : any = resource_accounts.data;
-            const gateway = data.store.data.find((entry : any) => entry.key == this.resourceAddress);
+            if (!resource_accounts) return false;
+            const data: any = resource_accounts.data;
+            const gateway = data.store.data.find((entry: any) => entry.key == this.resourceAddress);
             return gateway != null;
-        } catch(e) {
+        } catch (e) {
             return false;
         }
     }
@@ -67,21 +66,15 @@ export class AptosNetwork extends AptosClient {
 
         let txHash;
 
-        if(seed) {
+        if (seed) {
             const data = await this.generateTransaction(this.owner.address(), {
                 function: `0x1::resource_account::create_resource_account_and_publish_package`,
                 type_arguments: [],
-                arguments: [
-                    HexString.ensure(seed).toUint8Array(),
-                    packageMetadata,
-                    moduleDatas,
-                ],
+                arguments: [HexString.ensure(seed).toUint8Array(), packageMetadata, moduleDatas],
             });
 
             const bcsTxn = await this.signTransaction(this.owner, data);
             txHash = (await this.submitTransaction(bcsTxn)).hash;
-
-
         } else {
             txHash = await this.publishPackage(
                 this.owner,
@@ -91,10 +84,10 @@ export class AptosNetwork extends AptosClient {
         }
 
         const tx: any = await this.waitForTransactionWithResult(txHash);
-		if (!tx.success) {
-			throw new Error(`Error: ${tx.vm_status}`);
-		}
-		return tx;
+        if (!tx.success) {
+            throw new Error(`Error: ${tx.vm_status}`);
+        }
+        return tx;
     }
 
     getOwnerBalance() {
@@ -102,11 +95,11 @@ export class AptosNetwork extends AptosClient {
     }
 
     deployAxelarFrameworkModules() {
-        return this.deploy(path.join('node_modules/@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework'), [
-            'axelar_gas_service.mv',
-            'address_utils.mv',
-            'gateway.mv',
-        ], '0x1234');
+        return this.deploy(
+            path.join('node_modules/@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework'),
+            ['axelar_gas_service.mv', 'address_utils.mv', 'gateway.mv'],
+            '0x1234'
+        );
     }
 
     updateContractCallSequence(events: any[]) {
@@ -162,11 +155,7 @@ export class AptosNetwork extends AptosClient {
         };
     }
 
-    public async execute(
-        commandId: Uint8Array,
-        destinationAddress: string,
-        payload: Uint8Array
-    ) {
+    public async execute(commandId: Uint8Array, destinationAddress: string, payload: Uint8Array) {
         const tx = await this.submitTransactionAndWait(this.owner.address(), {
             function: `${destinationAddress}::execute`,
             type_arguments: [],
@@ -180,11 +169,11 @@ export class AptosNetwork extends AptosClient {
         };
     }
 
-    public async submitTransactionAndWait(from: MaybeHexString, txData: EntryFunctionPayload): Promise<any>{
+    public async submitTransactionAndWait(from: MaybeHexString, txData: EntryFunctionPayload): Promise<any> {
         const rawTx = await this.generateTransaction(from, txData);
         const signedTx = await this.signTransaction(this.owner, rawTx);
         const aptosTx = await this.submitTransaction(signedTx);
-        return(await this.waitForTransactionWithResult(aptosTx.hash));
+        return this.waitForTransactionWithResult(aptosTx.hash);
     }
 
     private getLatestEventSequence = (events: any[]) => {
