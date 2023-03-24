@@ -15,6 +15,11 @@ jobs:
         with:
           node-version: "16.x"
           registry-url: "https://registry.npmjs.org"
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+            path: node_modules
+            key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       - run: npm run build
       - run: npm publish
