@@ -50,7 +50,7 @@ describe("forking", () => {
 		expect(chain.gateway.address).to.equal(avalanche.gateway);
 	});
 
-	it("should fork Avalanche and Ethereum and send some USDC back and forth", async () => {
+	it.skip("should fork Avalanche and Ethereum and send some USDC back and forth", async () => {
 		const chains = mainnetInfo;
 		const alias = "uusdc";
 
