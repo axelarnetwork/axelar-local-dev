@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "description": "",
     "main": "dist/index.js",
     "scripts": {
@@ -34,7 +34,7 @@
         "dist"
     ],
     "dependencies": {
-        "@axelar-network/axelar-cgp-aptos": "^1.0.4",
+        "@axelar-network/axelar-cgp-aptos": "^1.0.5",
         "@axelar-network/axelar-cgp-near": "^1.0.0",
         "@axelar-network/axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#feat/forecaller-service",
         "@axelar-network/axelar-gmp-sdk-solidity": "^3.2.1",
