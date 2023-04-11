@@ -6,8 +6,7 @@ examples/metamask/abi/**.json
 ./test.js
 ./quick.json
 local.json
-temp.js
-temp2.js
+src/types
 
 #Hardhat files
 cache
