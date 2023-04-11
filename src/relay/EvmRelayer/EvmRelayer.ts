@@ -1,19 +1,24 @@
 import { HexString } from 'aptos';
-import { aptosNetwork } from '../aptos';
-import { Relayer } from './Relayer';
-import { CallContractArgs, CallContractWithTokenArgs } from './types';
+import { aptosNetwork } from '../../aptos';
+import { Relayer } from '../Relayer';
+import { CallContractArgs, CallContractWithTokenArgs } from '../types';
 import { ContractReceipt, ContractTransaction, ethers, Wallet } from 'ethers';
-import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
-import { Command } from './Command';
+import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../../utils';
+import { Command } from '../Command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
-import { depositAddresses } from '../networkUtils';
-import { Network, networks } from '../Network';
-import { getFee, getGasPrice } from '../networkUtils';
-import { nearNetwork } from '../near';
+import { depositAddresses } from '../../networkUtils';
+import { Network, networks } from '../../Network';
+import { getFee, getGasPrice } from '../../networkUtils';
+import { nearNetwork } from '../../near';
+import { ContractCallGasEvent, ContractCallWithTokenGasEvent, GasReceipt } from './GasReceipt';
+import { ContractCallEventObject } from '../../types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
 
 const AddressZero = ethers.constants.AddressZero;
 
 export class EvmRelayer extends Relayer {
+    public override contractCallGasEvents: GasReceipt<ContractCallGasEvent>[] = [];
+    public override contractCallWithTokenGasEvents: GasReceipt<ContractCallWithTokenGasEvent>[] = [];
+
     constructor() {
         super();
     }
@@ -212,25 +217,36 @@ export class EvmRelayer extends Relayer {
         });
     }
 
-    private findMatchedGasEvent(command: Command, from: Network, to: Network) {
+    private findMatchedGasEvent(
+        command: Command,
+        from: Network,
+        to: Network
+    ): GasReceipt<ContractCallWithTokenGasEvent> | GasReceipt<ContractCallGasEvent> | undefined {
+      console.log("Find event for command", command.data)
         if (command.name === 'approveContractCall') {
-            return this.contractCallGasEvents.find((log: any) => {
-                if (log.sourceAddress.toLowerCase() !== command.data[1].toLowerCase()) return false;
-                if (log.destinationChain.toLowerCase() !== to.name.toLowerCase()) return false;
-                if (log.destinationAddress.toLowerCase() !== command.data[2].toLowerCase()) return false;
-                if (log.payloadHash.toLowerCase() !== command.data[3].toLowerCase()) return false;
-                return true;
+            return this.contractCallGasEvents.find((log) => {
+                const events = log.getEvents();
+                return events.find((event) => {
+                    if (event.sourceAddress.toLowerCase() !== command.data[1].toLowerCase()) return false;
+                    if (event.destinationChain.toLowerCase() !== to.name.toLowerCase()) return false;
+                    if (event.destinationAddress.toLowerCase() !== command.data[2].toLowerCase()) return false;
+                    if (event.payloadHash.toLowerCase() !== command.data[3].toLowerCase()) return false;
+                    return true;
+                });
             });
         } else {
-            return this.contractCallWithTokenGasEvents.find((log: any) => {
-                if (log.sourceAddress.toLowerCase() !== command.data[1].toLowerCase()) return false;
-                if (log.destinationChain.toLowerCase() !== to.name.toLowerCase()) return false;
-                if (log.destinationAddress.toLowerCase() !== command.data[2].toLowerCase()) return false;
-                if (log.payloadHash.toLowerCase() !== command.data[3].toLowerCase()) return false;
-                const alias = this.getAliasFromSymbol(from.tokens, log.symbol);
-                if (to.tokens[alias] !== command.data[4]) return false;
-                if (BigInt(log.amount) !== BigInt(command.data[5])) return false;
-                return true;
+            return this.contractCallWithTokenGasEvents.find((log) => {
+                const events = log.getEvents();
+                return events.find((event) => {
+                    if (event.sourceAddress.toLowerCase() !== command.data[1].toLowerCase()) return false;
+                    if (event.destinationChain.toLowerCase() !== to.name.toLowerCase()) return false;
+                    if (event.destinationAddress.toLowerCase() !== command.data[2].toLowerCase()) return false;
+                    if (event.payloadHash.toLowerCase() !== command.data[3].toLowerCase()) return false;
+                    const alias = this.getAliasFromSymbol(from.tokens, event.symbol);
+                    if (to.tokens[alias] !== command.data[4]) return false;
+                    if (!event.amount.eq(command.data[5])) return false;
+                    return true;
+                });
             });
         }
     }
@@ -260,7 +276,7 @@ export class EvmRelayer extends Relayer {
             const gasEventIndex =
                 command.name === 'approveContractCall'
                     ? this.contractCallGasEvents.indexOf(gasPaidEvent)
-                    : this.contractCallWithTokenGasEvents.indexOf(gasPaidEvent);
+                    : this.contractCallWithTokenGasEvents.indexOf(gasPaidEvent as GasReceipt<ContractCallWithTokenGasEvent>);
 
             try {
                 const cost = getGasPrice();
@@ -269,62 +285,75 @@ export class EvmRelayer extends Relayer {
                 const blockGasLimit = await from.provider.getBlock('latest').then((block) => block.gasLimit);
 
                 // Estimate the gas
-                const actualGasFee = await command.estimateGas?.()?.then((gas: any) => gas?.mul(cost));
-
-                // If the gas is not enough, remove the event
-                if (!actualGasFee || actualGasFee.gt(gasPaidEvent.gasFeeAmount)) {
-                    if (command.name === 'approveContractCall') {
-                        this.contractCallGasEvents.splice(gasEventIndex);
-                    } else {
-                        this.contractCallWithTokenGasEvents.splice(gasEventIndex);
-                    }
+                // const actualGasFee = await command.estimateGas?.()?.then((gas: any) => gas?.mul(cost));
+                if (command.name === 'approveContractCall') {
+                    this.contractCallGasEvents.splice(gasEventIndex);
                 } else {
-                    console.log('execute');
-                    const receipt: ContractReceipt = await command.post?.({
-                        gasLimit: blockGasLimit,
-                    });
+                    this.contractCallWithTokenGasEvents.splice(gasEventIndex);
+                }
 
-                    // check two-ways contract call
-                    if (receipt) {
-                        // log the logs
-                        console.log(receipt.events);
-                        const filter = to.gateway.filters.ContractCall();
-                        // get contract interface
-                        const contractInterface = to.gateway.interface;
+                const receipt: ContractReceipt = await command.post?.({
+                    gasLimit: blockGasLimit,
+                });
 
-                        const contractCallEventTopic = filter.topics?.[0];
-                        // find event matched with topic
-                        const contractCallEvent = receipt.events?.find((event) => event.topics?.[0] === contractCallEventTopic);
+                // check two-ways contract call
+                if (receipt) {
+                    // log the logs
+                    console.log(receipt.events);
+                    const filter = to.gateway.filters.ContractCall();
+                    // get contract interface
+                    const contractInterface = to.gateway.interface;
 
-                        if (contractCallEvent) {
+                    const contractCallEventTopic = filter.topics?.[0];
+                    // find event matched with topic
+
+                    if (!receipt.events) continue;
+
+                    let newGasPaidEvent: GasReceipt<ContractCallGasEvent> | undefined = undefined;
+                    let newGasWithTokenPaidEvent: GasReceipt<ContractCallWithTokenGasEvent>;
+
+                    for (const _event of receipt.events) {
+                        if (_event.topics?.[0] === contractCallEventTopic) {
                             // get destinationChain and destinationContract
-                            const { destinationChain, destinationContractAddress, payloadHash } = contractInterface.decodeEventLog(
+                            const contractCallEvent: ContractCallEventObject = contractInterface.decodeEventLog(
                                 'ContractCall',
-                                contractCallEvent.data,
-                                contractCallEvent.topics
-                            );
-                            console.log('Result', destinationChain, destinationContractAddress);
+                                _event.data,
+                                _event.topics
+                            ) as any;
+                            console.log('Result', contractCallEvent);
                             const args = this.relayData.callContract[command.commandId] as CallContractArgs;
-                            if (destinationChain === fromName && destinationContractAddress === args.sourceAddress) {
-                                console.log('Two-ways contract call detected');
-                                this.contractCallGasEvents.push({
-                                    ...gasPaidEvent,
-                                    sourceAddress: gasPaidEvent.destinationAddress,
-                                    destinationAddress: gasPaidEvent.sourceAddress,
-                                    destinationChain: fromName,
-                                    payloadHash,
-                                });
+                            // if (
+                            //     contractCallEvent.destinationChain === fromName &&
+                            //     contractCallEvent.destinationContractAddress === args.sourceAddress
+                            // ) {
+                            console.log('Linked contract call detected');
+                            const _gasEvent = gasPaidEvent.getEvents()[0];
+                            const _newGasPaidEvent = {
+                                ..._gasEvent,
+                                sourceAddress: contractCallEvent.sender,
+                                destinationAddress: contractCallEvent.destinationContractAddress,
+                                destinationChain: contractCallEvent.destinationChain,
+                                payloadHash: contractCallEvent.payloadHash,
+                                gasFeeAmount: gasPaidEvent.getAvailableGas().sub(receipt.gasUsed.mul(cost)),
+                            };
+                            if (!newGasPaidEvent) {
+                                newGasPaidEvent = new GasReceipt<ContractCallGasEvent>(_newGasPaidEvent);
+                            } else {
+                                newGasPaidEvent.addEvent(_newGasPaidEvent);
                             }
+                            console.log('new event', _newGasPaidEvent);
+                            this.contractCallGasEvents.push(newGasPaidEvent);
+                            // }
                         }
                     }
-                    if (command.name === 'approveContractCall') {
-                        this.contractCallGasEvents[gasEventIndex].gasFeeAmount =
-                            this.contractCallGasEvents[gasEventIndex].gasFeeAmount.sub(actualGasFee);
-                    } else {
-                        this.contractCallWithTokenGasEvents[gasEventIndex].gasFeeAmount =
-                            this.contractCallWithTokenGasEvents[gasEventIndex].gasFeeAmount.sub(actualGasFee);
-                    }
                 }
+                // if (command.name === 'approveContractCall') {
+                //     this.contractCallGasEvents[gasEventIndex].gasFeeAmount =
+                //         this.contractCallGasEvents[gasEventIndex].gasFeeAmount.sub(actualGasFee);
+                // } else {
+                //     this.contractCallWithTokenGasEvents[gasEventIndex].gasFeeAmount =
+                //         this.contractCallWithTokenGasEvents[gasEventIndex].gasFeeAmount.sub(actualGasFee);
+                // }
             } catch (e) {
                 logger.log(e);
             }
@@ -332,31 +361,39 @@ export class EvmRelayer extends Relayer {
     }
 
     private async updateGasEvents(from: Network, blockNumber: number) {
-        let filter = from.gasService.filters.GasPaidForContractCall();
-        let newGasLogs: any = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
-        for (const gasLog of newGasLogs) {
-            this.contractCallGasEvents.push(gasLog);
+        const gasPaidForContractCallFilter = from.gasService.filters.GasPaidForContractCall();
+        const gasPaidForContractCallLogs = (
+            await from.gasService.queryFilter(gasPaidForContractCallFilter, from.lastRelayedBlock + 1, blockNumber)
+        ).map((log) => log.args);
+        for (const gasLog of gasPaidForContractCallLogs) {
+            this.contractCallGasEvents.push(new GasReceipt(gasLog));
         }
 
-        filter = from.gasService.filters.NativeGasPaidForContractCall();
-        newGasLogs = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
+        const nativeGasPaidForContractCallFilter = from.gasService.filters.NativeGasPaidForContractCall();
+        const nativeGasPaidForContractCallLogs = (
+            await from.gasService.queryFilter(nativeGasPaidForContractCallFilter, from.lastRelayedBlock + 1, blockNumber)
+        ).map((log) => {
             return { ...log.args, gasToken: AddressZero };
         });
-        for (const gasLog of newGasLogs) {
-            this.contractCallGasEvents.push(gasLog);
+        for (const gasLog of nativeGasPaidForContractCallLogs) {
+            this.contractCallGasEvents.push(new GasReceipt(gasLog));
         }
 
-        filter = from.gasService.filters.GasPaidForContractCallWithToken();
-        newGasLogs = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => log.args);
-        for (const gasLog of newGasLogs) {
-            this.contractCallWithTokenGasEvents.push(gasLog);
+        const gasPaidForContractCallWithTokenFilter = from.gasService.filters.GasPaidForContractCallWithToken();
+        const gasPaidForContractCallWithToken = (
+            await from.gasService.queryFilter(gasPaidForContractCallWithTokenFilter, from.lastRelayedBlock + 1, blockNumber)
+        ).map((log) => log.args);
+        for (const gasLog of gasPaidForContractCallWithToken) {
+            this.contractCallWithTokenGasEvents.push(new GasReceipt(gasLog));
         }
-        filter = from.gasService.filters.NativeGasPaidForContractCallWithToken();
-        newGasLogs = (await from.gasService.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber)).map((log) => {
+        const nativeGasPaidForContractCallWithTokenFilter = from.gasService.filters.NativeGasPaidForContractCallWithToken();
+        const nativeGasPaidForContractCallWithToken = (
+            await from.gasService.queryFilter(nativeGasPaidForContractCallWithTokenFilter, from.lastRelayedBlock + 1, blockNumber)
+        ).map((log) => {
             return { ...log.args, gasToken: AddressZero };
         });
-        for (const gasLog of newGasLogs) {
-            this.contractCallWithTokenGasEvents.push(gasLog);
+        for (const gasLog of nativeGasPaidForContractCallWithToken) {
+            this.contractCallWithTokenGasEvents.push(new GasReceipt(gasLog));
         }
     }
 
