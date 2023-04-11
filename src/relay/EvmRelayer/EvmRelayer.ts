@@ -222,7 +222,6 @@ export class EvmRelayer extends Relayer {
         from: Network,
         to: Network
     ): GasReceipt<ContractCallWithTokenGasEvent> | GasReceipt<ContractCallGasEvent> | undefined {
-      console.log("Find event for command", command.data)
         if (command.name === 'approveContractCall') {
             return this.contractCallGasEvents.find((log) => {
                 const events = log.getEvents();
@@ -299,7 +298,6 @@ export class EvmRelayer extends Relayer {
                 // check two-ways contract call
                 if (receipt) {
                     // log the logs
-                    console.log(receipt.events);
                     const filter = to.gateway.filters.ContractCall();
                     // get contract interface
                     const contractInterface = to.gateway.interface;
@@ -320,13 +318,6 @@ export class EvmRelayer extends Relayer {
                                 _event.data,
                                 _event.topics
                             ) as any;
-                            console.log('Result', contractCallEvent);
-                            const args = this.relayData.callContract[command.commandId] as CallContractArgs;
-                            // if (
-                            //     contractCallEvent.destinationChain === fromName &&
-                            //     contractCallEvent.destinationContractAddress === args.sourceAddress
-                            // ) {
-                            console.log('Linked contract call detected');
                             const _gasEvent = gasPaidEvent.getEvents()[0];
                             const _newGasPaidEvent = {
                                 ..._gasEvent,
@@ -341,7 +332,6 @@ export class EvmRelayer extends Relayer {
                             } else {
                                 newGasPaidEvent.addEvent(_newGasPaidEvent);
                             }
-                            console.log('new event', _newGasPaidEvent);
                             this.contractCallGasEvents.push(newGasPaidEvent);
                             // }
                         }
