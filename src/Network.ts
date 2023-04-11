@@ -4,12 +4,9 @@ import { ethers, Wallet, Contract, providers } from 'ethers';
 import { logger } from './utils';
 import { getSignedExecuteInput, getRandomID, deployContract } from './utils';
 import {
-    AxelarGateway,
     AxelarGatewayProxy,
-    IAxelarGateway,
     Auth,
     TokenDeployer,
-    AxelarGasReceiver,
     BurnableMintableCappedERC20,
     AxelarGasReceiverProxy,
     ConstAddressDeployer,
@@ -17,6 +14,10 @@ import {
     GMPExpressService,
     GMPExpressProxyDeployer,
 } from './contracts';
+import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
+import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
+import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
+import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
 import http from 'http';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -76,8 +77,8 @@ export class Network {
     adminWallets: Wallet[];
     threshold: number;
     lastRelayedBlock: number;
-    gateway: Contract;
-    gasService: Contract;
+    gateway: AxelarGateway;
+    gasService: AxelarGasService;
     constAddressDeployer: Contract;
     create3Deployer: Contract;
     expressService: Contract;
@@ -122,10 +123,10 @@ export class Network {
             [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [[this.operatorWallet.address], [1], 1])],
         ]);
         const tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
-        const gateway = await deployContract(this.ownerWallet, AxelarGateway, [auth.address, tokenDeployer.address]);
+        const gateway = await deployContract(this.ownerWallet, AxelarGatewayFactory, [auth.address, tokenDeployer.address]);
         const proxy = await deployContract(this.ownerWallet, AxelarGatewayProxy, [gateway.address, params]);
         await (await auth.transferOwnership(proxy.address)).wait();
-        this.gateway = new Contract(proxy.address, IAxelarGateway.abi, this.provider);
+        this.gateway = AxelarGatewayFactory.connect(proxy.address, this.provider);
         logger.log(`Deployed at ${this.gateway.address}`);
         return this.gateway;
     }
@@ -148,7 +149,7 @@ export class Network {
             [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [[this.operatorWallet.address], [1], 1])],
         ]);
         const tokenDeployer = await deployContract(this.ownerWallet, TokenDeployer);
-        const gateway = await deployContract(this.ownerWallet, AxelarGateway, [auth.address, tokenDeployer.address]);
+        const gateway = await deployContract(this.ownerWallet, AxelarGatewayFactory, [auth.address, tokenDeployer.address]);
         const implementationCode = await this.provider.getCode(gateway.address);
         const implementationCodeHash = keccak256(implementationCode);
         for (let i = 0; i < oldThreshold; i++) {
@@ -160,11 +161,11 @@ export class Network {
     }
     async deployGasReceiver(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
-        const gasService = await deployContract(this.ownerWallet, AxelarGasReceiver, [this.ownerWallet.address]);
+        const gasService = await deployContract(this.ownerWallet, AxelarGasServiceFactory, [this.ownerWallet.address]);
         const gasReceiverProxy = await deployContract(this.ownerWallet, AxelarGasReceiverProxy);
         await gasReceiverProxy.init(gasService.address, this.ownerWallet.address, '0x');
 
-        this.gasService = new Contract(gasReceiverProxy.address, AxelarGasReceiver.abi, this.provider);
+        this.gasService = AxelarGasServiceFactory.connect(gasReceiverProxy.address, this.provider);
         logger.log(`Deployed at ${this.gasService.address}`);
         return this.gasService;
     }

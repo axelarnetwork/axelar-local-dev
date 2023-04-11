@@ -7,15 +7,9 @@ import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers'
 import { merge } from 'lodash';
 import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
-import {
-    IAxelarGateway,
-    IAxelarGasService,
-    GMPExpressService,
-    AxelarGateway,
-    ConstAddressDeployer,
-    GMPExpressProxyDeployer,
-    Create3Deployer,
-} from './contracts';
+import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
+import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
+import { GMPExpressService, ConstAddressDeployer, GMPExpressProxyDeployer, Create3Deployer } from './contracts';
 
 const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 
@@ -154,8 +148,8 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
 
     chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
     chain.create3Deployer = new Contract(info.create3DeployerAddress, Create3Deployer.abi, chain.provider);
-    chain.gateway = new Contract(info.gatewayAddress, IAxelarGateway.abi, chain.provider);
-    chain.gasService = new Contract(info.gasReceiverAddress, IAxelarGasService.abi, chain.provider);
+    chain.gateway = AxelarGatewayFactory.connect(info.gatewayAddress, chain.provider);
+    chain.gasService = AxelarGasServiceFactory.connect(info.gasReceiverAddress, chain.provider);
     chain.expressService = new Contract(info.expressServiceAddress, GMPExpressService.abi, chain.provider);
     chain.expressProxyDeployer = new Contract(info.expressProxyDeployerAddress, GMPExpressProxyDeployer.abi, chain.provider);
     //chain.usdc = await chain.getTokenContract('aUSDC');
@@ -223,12 +217,12 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
 
     //This section gets the admin accounts so we can unlock them in our fork to upgrade the gateway to a 'localized' version
     const forkProvider = getDefaultProvider(chainInfo.rpc);
-    const gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, forkProvider);
+    const gateway = AxelarGatewayFactory.connect(chainInfo.gateway, forkProvider);
     const KEY_ADMIN_EPOCH = keccak256(toUtf8Bytes('admin-epoch'));
     const adminEpoch = await gateway.getUint(KEY_ADMIN_EPOCH);
     const PREFIX_ADMIN_THRESHOLD = keccak256(toUtf8Bytes('admin-threshold'));
     const thresholdKey = keccak256(solidityPack(['bytes32', 'uint256'], [PREFIX_ADMIN_THRESHOLD, adminEpoch]));
-    const oldThreshold = await gateway.getUint(thresholdKey);
+    const oldThreshold = await gateway.getUint(thresholdKey).then((x) => x.toNumber());
     const oldAdminAddresses: string[] = [];
     for (let i = 0; i < oldThreshold; i++) {
         const PREFIX_ADMIN = keccak256(toUtf8Bytes('admin'));
@@ -266,9 +260,9 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     // Delete the line below and uncomment the line after when we deploy create3Deployer
     await chain.deployCreate3Deployer();
     //chain.create3Deployer = new Contract(chainInfo.create3Deployer, Create3Deployer.abi, chain.provider);
-    chain.gateway = new Contract(chainInfo.gateway, AxelarGateway.abi, chain.provider);
+    chain.gateway = AxelarGatewayFactory.connect(chainInfo.gateway, chain.provider);
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
-    chain.gasService = new Contract(chainInfo.AxelarGasService.address, IAxelarGasService.abi, chain.provider);
+    chain.gasService = AxelarGasServiceFactory.connect(chainInfo.AxelarGasService.address, chain.provider);
 
     chain.tokens = {
         uusdc: chain.name === 'Ethereum' ? 'USDC' : 'axlUSDC',
