@@ -292,11 +292,6 @@ export class EvmRelayer extends Relayer {
                     this.contractCallWithTokenGasEvents.splice(gasEventIndex);
                 }
 
-                // Estimate the gas
-                const actualGasFee = await command.estimateGas?.()?.then((gas: any) => gas?.mul(cost));
-                // if the actualGasFee is undefined, transaction is failed.
-                if (!actualGasFee) continue;
-
                 // Execute the command
                 const receipt: ContractReceipt = await command.post?.({
                     gasLimit: blockGasLimit,
@@ -370,13 +365,6 @@ export class EvmRelayer extends Relayer {
                         }
                     }
                 }
-                // if (command.name === 'approveContractCall') {
-                //     this.contractCallGasEvents[gasEventIndex].gasFeeAmount =
-                //         this.contractCallGasEvents[gasEventIndex].gasFeeAmount.sub(actualGasFee);
-                // } else {
-                //     this.contractCallWithTokenGasEvents[gasEventIndex].gasFeeAmount =
-                //         this.contractCallWithTokenGasEvents[gasEventIndex].gasFeeAmount.sub(actualGasFee);
-                // }
             } catch (e) {
                 logger.log(e);
             }
@@ -560,7 +548,6 @@ export class EvmRelayer extends Relayer {
                         'mintToken',
                         [destinationTokenSymbol, data.destinationAddress, balance - fee],
                         ['string', 'address', 'uint256'],
-                        to.name
                     )
                 );
                 const wallet = new Wallet(data.privateKey, from.provider);
