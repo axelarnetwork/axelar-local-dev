@@ -2,7 +2,7 @@ import { HexString } from 'aptos';
 import { aptosNetwork } from '../aptos';
 import { Relayer } from './Relayer';
 import { CallContractArgs, CallContractWithTokenArgs } from './types';
-import { BigNumber, ContractReceipt, ContractTransaction, ethers, Wallet } from 'ethers';
+import { ContractReceipt, ContractTransaction, ethers, Wallet } from 'ethers';
 import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
