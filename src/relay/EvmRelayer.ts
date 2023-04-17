@@ -18,9 +18,6 @@ import {
 const AddressZero = ethers.constants.AddressZero;
 
 export class EvmRelayer extends Relayer {
-    // public override contractCallGasEvents: GasReceipt<ContractCallGasEvent>[] = [];
-    // public override contractCallWithTokenGasEvents: GasReceipt<ContractCallWithTokenGasEvent>[] = [];
-
     constructor() {
         super();
     }
