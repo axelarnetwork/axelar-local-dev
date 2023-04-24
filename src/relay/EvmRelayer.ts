@@ -285,9 +285,7 @@ export class EvmRelayer extends Relayer {
                 });
 
                 // check two-ways contract call
-                if (receipt) {
-                    if (!receipt.events) continue;
-
+                if (receipt?.events) {
                     const contractCallEventTopic = to.gateway.filters.ContractCall()?.topics?.[0];
                     const contractCallWithTokenEventTopic = to.gateway.filters.ContractCallWithToken()?.topics?.[0];
 
