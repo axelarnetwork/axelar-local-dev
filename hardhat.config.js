@@ -1,6 +1,6 @@
 require('hardhat-gas-reporter');
 require('solidity-coverage');
-
+require('@typechain/hardhat');
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -29,9 +29,13 @@ module.exports = {
         },
     },
     paths: {
-        sources: "./src/contracts",
+        sources: './src/contracts',
     },
     mocha: {
-        timeout: 200000
+        timeout: 200000,
+    },
+    typechain: {
+        outDir: 'src/types',
+        target: 'ethers-v5',
     },
 };

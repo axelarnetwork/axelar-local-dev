@@ -1,6 +1,6 @@
 'use strict';
 
-import { ethers, Contract } from 'ethers';
+import { ethers, Contract, BigNumber, ContractReceipt } from 'ethers';
 const { defaultAbiCoder } = ethers.utils;
 import { networks } from '../Network';
 import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types';
@@ -15,14 +15,15 @@ export class Command {
     name: string;
     data: any[];
     encodedData: string;
-    post: ((options: any) => Promise<void>) | undefined;
+    post: ((options: any) => Promise<any>) | undefined;
+
     constructor(
         commandId: string,
         name: string,
         data: any[],
         dataSignature: string[],
-        post: ((options: any) => Promise<void>) | undefined = undefined,
-        chain: string | null = null
+        post: ((options: any) => Promise<any>) | undefined = undefined,
+        chain: string | null = null,
     ) {
         this.commandId = commandId;
         this.name = name;
@@ -39,15 +40,16 @@ export class Command {
             ['string', 'string', 'address', 'bytes32'],
             async (options: any) => {
                 const to = networks.find((chain) => chain.name == args.to);
-                if (!to) return;
+                if (!to) return undefined;
 
                 const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to.relayerWallet);
-                const tx = await contract
+                const receipt: ContractReceipt = await contract
                     .execute(commandId, args.from, args.sourceAddress, args.payload, options)
                     .then((tx: any) => tx.wait());
-                relayData.callContract[commandId].execution = tx.transactionHash;
+                relayData.callContract[commandId].execution = receipt.transactionHash;
+                return receipt;
             },
-            'evm'
+            'evm',
         );
     };
 
@@ -74,7 +76,9 @@ export class Command {
                     )
                     .then((tx: any) => tx.wait());
                 relayData.callContractWithToken[commandId].execution = receipt.transactionHash;
-            }
+                return receipt;
+            },
+            'evm'
         );
     };
 
@@ -92,6 +96,7 @@ export class Command {
                 );
 
                 relayData.callContract[commandId].execution = tx.hash;
+                return tx;
             },
             'aptos'
         );
@@ -113,6 +118,8 @@ export class Command {
                 );
 
                 relayData.callContract[commandId].execution = tx.transactionReceipt.hash;
+
+                return tx;
             },
             'near'
         );
