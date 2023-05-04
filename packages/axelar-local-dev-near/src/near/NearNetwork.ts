@@ -5,6 +5,7 @@ import path from 'path';
 import { Command } from '../relay/Command';
 import { logger } from '../utils';
 
+
 /* Defining the structure of the NearEvent object based on NEP-297 standard (Events Format - https://nomicon.io/Standards/EventsFormat) */
 export interface NearEvent {
     data: any;
@@ -165,7 +166,7 @@ export class NearNetwork extends Worker {
 
     // NEAR Events
     /**
-     *  This function returns an array of NearEvent objects for 'contract_call_event' event 
+     *  This function returns an array of NearEvent objects for 'contract_call_event' event
      *  Event example: {"standard":"axelar_near","version":"1.0.0","event":"contract_call_event","data":{"address":"axelar_auth_weighted.test.near","destination_chain":"Polygon","destination_contract_address":"0xb7900E8Ec64A1D1315B6D4017d4b1dcd36E6Ea88","payload_hash":"0xcead85dcdfcdc3f9aa5aa82658669488859283d53026229b179f017824d15a1f","payload":"0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c80000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"}}
      * @returns An array of NearEvent objects.
      */
