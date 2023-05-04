@@ -1,10 +1,11 @@
-**/node_modules
-**/typechain
-**/examples/metamask/chain*.json
-**/examples/metamask/abi/**.json
+node_modules
+typechain
+examples/metamask/chain*.json
+examples/metamask/abi/**.json
 **/.DS_Store
+./test.js
+./quick.json
 local.json
-
 src/types
 
 #Hardhat files

@@ -1,6 +1,6 @@
 'use strict';
 
-import { ethers, Contract, BigNumber, ContractReceipt } from 'ethers';
+import { ethers, Contract, ContractReceipt } from 'ethers';
 const { defaultAbiCoder } = ethers.utils;
 import { networks } from '../Network';
 import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types';
