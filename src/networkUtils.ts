@@ -263,7 +263,8 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.gateway = AxelarGatewayFactory.connect(chainInfo.gateway, chain.provider);
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
     chain.gasService = AxelarGasServiceFactory.connect(chainInfo.AxelarGasService.address, chain.provider);
-
+    await chain.deployExpressServiceContract();
+    
     chain.tokens = {
         uusdc: chain.name === 'Ethereum' ? 'USDC' : 'axlUSDC',
         uausdc: 'aUSDC',
