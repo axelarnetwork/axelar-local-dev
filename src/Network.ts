@@ -153,6 +153,7 @@ export class Network {
         const implementationCode = await this.provider.getCode(gateway.address);
         const implementationCodeHash = keccak256(implementationCode);
         for (let i = 0; i < oldThreshold; i++) {
+            await (await this.ownerWallet.sendTransaction({to: adminWallets[i]._address, value: BigInt(1e18)})).wait();
             await (await this.gateway.connect(adminWallets[i]).upgrade(gateway.address, implementationCodeHash, params)).wait();
         }
         await (await auth.transferOwnership(this.gateway.address)).wait();
