@@ -6,7 +6,7 @@ import { getGasPrice } from '../networkUtils';
 import { getAptosLogID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
 import { Relayer } from './Relayer';
-import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
+import { CallContractArgs, CallContractWithTokenArgs, NativeGasPaidForContractCallArgs, RelayData } from './types';
 const AddressZero = ethers.constants.AddressZero;
 
 export class AptosRelayer extends Relayer {
@@ -128,5 +128,16 @@ export class AptosRelayer extends Relayer {
             const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
             this.commands[contractCallArgs.to].push(command);
         }
+    }
+
+    createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
+        throw new Error('Method not implemented.');
+    }
+    createCallContractWithTokenCommand(
+        commandId: string,
+        relayData: RelayData,
+        callContractWithTokenArgs: CallContractWithTokenArgs
+    ): Command {
+        throw new Error('Method not implemented.');
     }
 }

@@ -1,7 +1,7 @@
 import { HexString } from 'aptos';
 import { aptosNetwork } from '../aptos';
-import { Relayer } from './Relayer';
-import { CallContractArgs, CallContractWithTokenArgs } from './types';
+import { Relayer, RelayerType } from './Relayer';
+import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types';
 import { ContractReceipt, ContractTransaction, ethers, Wallet } from 'ethers';
 import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
@@ -9,7 +9,6 @@ import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
 import { depositAddresses } from '../networkUtils';
 import { Network, networks } from '../Network';
 import { getFee, getGasPrice } from '../networkUtils';
-import { nearNetwork } from '../near';
 import {
     ContractCallEventObject,
     ContractCallWithTokenEventObject,
@@ -17,9 +16,20 @@ import {
 
 const AddressZero = ethers.constants.AddressZero;
 
+interface EvmRelayerOptions {
+    nearRelayer?: Relayer;
+    aptosRelayer?: Relayer;
+}
+
 export class EvmRelayer extends Relayer {
-    constructor() {
+    constructor(options: EvmRelayerOptions = {}) {
         super();
+        options.nearRelayer && this.otherRelayers.set('near', options.nearRelayer);
+        options.aptosRelayer && this.otherRelayers.set('aptos', options.aptosRelayer);
+    }
+
+    setRelayer(type: RelayerType, relayer: Relayer) {
+        this.otherRelayers.set(type, relayer);
     }
 
     async updateEvents(): Promise<void> {
@@ -40,8 +50,10 @@ export class EvmRelayer extends Relayer {
 
     async execute() {
         await this.executeEvm();
-        await this.executeAptos();
-        await this.executeNear();
+
+        for (const relayer of this.otherRelayers.values()) {
+            await relayer.execute();
+        }
     }
 
     private async executeEvm() {
@@ -61,29 +73,6 @@ export class EvmRelayer extends Relayer {
 
         await this.executeAptosGateway(toExecute);
         await this.executeAptosExecutable(toExecute);
-    }
-
-    private async executeNear() {
-        const toExecute = this.commands['near'];
-        if (toExecute?.length == 0) return;
-
-        await this.executeNearGateway(toExecute);
-        await this.executeNearExecutable(toExecute);
-    }
-
-    private async executeNearGateway(commands: Command[]) {
-        if (!nearNetwork) return;
-
-        await nearNetwork.executeGateway(commands);
-    }
-
-    private async executeNearExecutable(commands: Command[]) {
-        if (!nearNetwork) return;
-
-        for (const command of commands) {
-            if (!command.post) continue;
-            await command.post({});
-        }
     }
 
     private async executeAptosGateway(commands: Command[]) {
@@ -415,14 +404,29 @@ export class EvmRelayer extends Relayer {
             this.relayData.callContract[commandId] = contractCallArgs;
             let command;
             if (args.destinationChain.toLowerCase() === 'aptos') {
-                command = Command.createAptosContractCallCommand(commandId, this.relayData, contractCallArgs);
+                command = this.otherRelayers.get('aptos')?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() == 'near') {
-                command = Command.createNearContractCallCommand(commandId, this.relayData, contractCallArgs);
+                command = this.otherRelayers.get('near')?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else {
-                command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
+                command = this.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             }
-            this.commands[args.destinationChain].push(command);
+
+            if (command) {
+                this.commands[args.destinationChain].push(command);
+            }
         }
+    }
+
+    createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
+        return Command.createEVMContractCallCommand(commandId, relayData, contractCallArgs);
+    }
+
+    createCallContractWithTokenCommand(
+        commandId: string,
+        relayData: RelayData,
+        callContractWithTokenArgs: CallContractWithTokenArgs
+    ): Command {
+        return Command.createEVMContractCallWithTokenCommand(commandId, relayData, callContractWithTokenArgs);
     }
 
     private async updateTokenSentEvent(from: Network, blockNumber: number) {

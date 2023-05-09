@@ -1,5 +1,5 @@
 import { Config } from 'near-workspaces';
-import { logger } from '../utils';
+import { logger } from '@axelar-network/axelar-local-dev';
 import { NearNetwork } from './NearNetwork';
 
 export let nearNetwork: NearNetwork;

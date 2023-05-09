@@ -1,7 +1,11 @@
 import { networks } from '../Network';
-import { RelayCommand, RelayData } from './types';
+import { Command } from './Command';
+import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
+
+export type RelayerType = 'near' | 'aptos' | 'evm';
 
 export abstract class Relayer {
+    public otherRelayers = new Map<RelayerType, Relayer>();
     public relayData: RelayData = {
         depositAddress: {},
         sendToken: {},
@@ -16,6 +20,14 @@ export abstract class Relayer {
     public expressContractCallWithTokenGasEvents: any[] = [];
     abstract updateEvents(): Promise<void>;
     abstract execute(): Promise<void>;
+    abstract createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command;
+    abstract createCallContractWithTokenCommand(
+        commandId: string,
+        relayData: RelayData,
+        callContractWithTokenArgs: CallContractWithTokenArgs
+    ): Command;
+
+    abstract setRelayer(type: RelayerType, relayer: Relayer): void;
 
     async relay() {
         for (const to of networks) {
