@@ -7,7 +7,7 @@ import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types'
 import { IAxelarExecutable } from '../contracts';
 import { aptosNetwork } from '../aptos';
 import { HexString } from 'aptos';
-import { nearNetwork } from '../near';
+// import { nearNetwork } from '../near';
 
 //An internal class for handling axelar commands.
 export class Command {
@@ -99,29 +99,6 @@ export class Command {
                 return tx;
             },
             'aptos'
-        );
-    };
-
-    static createNearContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
-        return new Command(
-            commandId,
-            'approveContractCall',
-            [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.transactionHash, args.sourceEventIndex],
-            ['string', 'string', 'string', 'bytes32', 'bytes32', 'uint256'],
-            async () => {
-                const tx = await nearNetwork.executeRemote(
-                    commandId,
-                    args.destinationContractAddress,
-                    args.from,
-                    args.sourceAddress,
-                    args.payload
-                );
-
-                relayData.callContract[commandId].execution = tx.transactionReceipt.hash;
-
-                return tx;
-            },
-            'near'
         );
     };
 }

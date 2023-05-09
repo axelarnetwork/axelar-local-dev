@@ -3,9 +3,10 @@
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
-import { RelayData, evmRelayer, aptosRelayer, relay, nearRelayer } from './relay';
+import { RelayData, Relayer, RelayerType, relay } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
+import { EvmRelayer } from './relay/EvmRelayer';
 
 let interval: any;
 
@@ -16,6 +17,7 @@ export interface CreateLocalOptions {
     chains?: string[];
     relayInterval?: number;
     port?: number;
+    relayers?: Map<RelayerType, Relayer>;
     afterRelay?: (relayData: RelayData) => void;
     callback?: (network: Network, info: any) => Promise<void>;
 }
@@ -29,13 +31,16 @@ export interface CloneLocalOptions {
     relayInterval?: number;
     port?: number;
     networkOptions?: NetworkOptions;
+    relayers?: Map<RelayerType, Relayer>;
     afterRelay?: (relayData: RelayData) => void;
     callback?: (network: Network, info: any) => Promise<null>;
 }
 
+const defaultEvmRelayer = new EvmRelayer();
+
 let relaying = false;
 export async function createAndExport(options: CreateLocalOptions = {}) {
-    const { accountsToFund, afterRelay, callback, chainOutputPath, chains, fundAmount, port, relayInterval } = options;
+    const { accountsToFund, afterRelay, callback, chainOutputPath, chains, fundAmount, port, relayInterval, relayers } = options;
     const _options = {
         chainOutputPath: chainOutputPath || './local.json',
         accountsToFund: accountsToFund || [],
@@ -43,6 +48,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         chains: chains || ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
         port: port || 8500,
         afterRelay: afterRelay || null,
+        relayers: relayers || new Map<RelayerType, Relayer>().set('evm', defaultEvmRelayer),
         callback: callback || null,
         relayInterval: relayInterval || 2000,
     };
@@ -89,11 +95,14 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     interval = setInterval(async () => {
         if (relaying) return;
         relaying = true;
-        await relay().catch(() => undefined);
+        await relay(_options.relayers).catch(() => undefined);
         if (options.afterRelay) {
-            options.afterRelay(evmRelayer.relayData);
-            options.afterRelay(aptosRelayer.relayData);
-            options.afterRelay(nearRelayer.relayData);
+            for (const relayer of _options.relayers.values()) {
+                const relayData = relayer.relayData;
+                if (relayData) {
+                    await options.afterRelay(relayData);
+                }
+            }
         }
         relaying = false;
     }, _options.relayInterval);
@@ -101,38 +110,41 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
 }
 
 export async function forkAndExport(options: CloneLocalOptions = {}) {
-    const defaultOptions = {
-        chainOutputPath: './local.json',
-        accountsToFund: [],
-        fundAmount: ethers.utils.parseEther('100').toString(),
-        env: 'mainnet',
-        chains: [],
-        port: 8500,
-        relayInterval: 2000,
-        networkOptions: {},
-    } as CloneLocalOptions;
-    for (const option in defaultOptions) (options as any)[option] = (options as any)[option] || (defaultOptions as any)[option];
+    const _options = {
+        chainOutputPath: options.chainOutputPath || './local.json',
+        accountsToFund: options.accountsToFund || [],
+        fundAmount: options.fundAmount || ethers.utils.parseEther('100').toString(),
+        env: options.env || 'mainnet',
+        chains: options.chains || ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
+        port: options.port || 8500,
+        relayInterval: options.relayInterval || 2000,
+        relayers: options.relayers || new Map<RelayerType, Relayer>().set('evm', defaultEvmRelayer),
+        networkOptions: options.networkOptions,
+        callback: options.callback,
+        afterRelay: options.afterRelay,
+    };
+
     const chains_local: Record<string, any>[] = [];
-    if (options.env != 'mainnet' && options.env != 'testnet') {
-        console.log(`Forking ${options.env.length} chains from custom data.`);
+    if (_options.env != 'mainnet' && _options.env != 'testnet') {
+        console.log(`Forking ${_options.env.length} chains from custom data.`);
     }
-    const chainsRaw = options.env == 'mainnet' ? mainnetInfo : options.env == 'testnet' ? testnetInfo : options.env;
+    const chainsRaw = _options.env == 'mainnet' ? mainnetInfo : _options.env == 'testnet' ? testnetInfo : _options.env;
 
     const chains =
-        options.chains?.length == 0
+        _options.chains?.length == 0
             ? chainsRaw
             : chainsRaw.filter(
-                  (chain: any) => options.chains?.find((name) => name.toLocaleLowerCase() == chain.name.toLocaleLowerCase()) != null
+                  (chain: any) => _options.chains?.find((name) => name.toLocaleLowerCase() == chain.name.toLocaleLowerCase()) != null
               );
 
     let i = 0;
     for (const chain of chains) {
-        const network = await forkNetwork(chain, options.networkOptions);
+        const network = await forkNetwork(chain, _options.networkOptions);
         const info = network.getCloneInfo() as any;
         info.rpc = `http://localhost:${options.port}/${i}`;
         (info.tokenName = chain?.tokenName), (info.tokenSymbol = chain?.tokenSymbol), chains_local.push(info);
         const [user] = network.userWallets;
-        for (const account of options.accountsToFund!) {
+        for (const account of _options.accountsToFund) {
             await user
                 .sendTransaction({
                     to: account,
@@ -140,24 +152,34 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
                 })
                 .then((tx) => tx.wait());
         }
-        if (options.callback) await options.callback!(network, info);
+        await _options.callback?.(network, info);
         i++;
     }
-    listen(options.port!);
+    listen(_options.port);
     interval = setInterval(async () => {
+        const evmRelayer = _options.relayers.get('evm');
+        if (!evmRelayer) return;
+
         await evmRelayer.relay();
-        if (options.afterRelay) options.afterRelay(evmRelayer.relayData);
-    }, options.relayInterval);
-    setJSON(chains_local, options.chainOutputPath!);
+        if (_options.afterRelay) _options.afterRelay(evmRelayer.relayData);
+    }, _options.relayInterval);
+
+    setJSON(chains_local, _options.chainOutputPath);
 }
 
-export async function destroyExported() {
+export async function destroyExported(relayers?: Map<RelayerType, Relayer>) {
     stopAll();
     if (interval) {
         clearInterval(interval);
     }
-    evmRelayer.contractCallGasEvents.length = 0;
-    evmRelayer.contractCallWithTokenGasEvents.length = 0;
-    aptosRelayer.contractCallGasEvents.length = 0;
-    nearRelayer.contractCallGasEvents.length = 0;
+
+    if (!relayers) return;
+
+    for (const relayer of relayers.values()) {
+        relayer.contractCallGasEvents.length = 0;
+        relayer.contractCallWithTokenGasEvents.length = 0;
+    }
+
+    defaultEvmRelayer.contractCallGasEvents.length = 0;
+    defaultEvmRelayer.contractCallWithTokenGasEvents.length = 0;
 }

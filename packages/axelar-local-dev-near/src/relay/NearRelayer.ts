@@ -1,17 +1,38 @@
 import { ethers } from 'ethers';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
 import { nearNetwork } from '../near';
-import { Network, networks } from '../Network';
-import { getNearLogID, getSignedExecuteInput, logger } from '../utils';
-import { Command } from './Command';
-import { Relayer } from './Relayer';
-import { CallContractArgs, NativeGasPaidForContractCallArgs } from './types';
+import {
+    Network,
+    networks,
+    getNearLogID,
+    getSignedExecuteInput,
+    logger,
+    Relayer,
+    CallContractArgs,
+    NativeGasPaidForContractCallArgs,
+    Command,
+    CallContractWithTokenArgs,
+    RelayData,
+    RelayerType,
+} from '@axelar-network/axelar-local-dev';
+import { Command as NearCommand } from './Command';
 
 const AddressZero = ethers.constants.AddressZero;
 
+interface NearRelayerOptions {
+    evmRelayer?: Relayer;
+    aptosRelayer?: Relayer;
+}
+
 export class NearRelayer extends Relayer {
-    constructor() {
+    constructor(options: NearRelayerOptions = {}) {
         super();
+        options.evmRelayer && this.otherRelayers.set('evm', options.evmRelayer);
+        options.aptosRelayer && this.otherRelayers.set('aptos', options.aptosRelayer);
+    }
+
+    setRelayer(type: RelayerType, relayer: Relayer) {
+        this.otherRelayers.set(type, relayer);
     }
 
     async updateEvents() {
@@ -20,6 +41,12 @@ export class NearRelayer extends Relayer {
     }
 
     async execute() {
+        await this.executeNear();
+        this.otherRelayers.get('evm')?.execute();
+        this.otherRelayers.get('aptos')?.execute();
+    }
+
+    private async executeNear() {
         for (const to of networks) {
             const commands = this.commands[to.name];
             if (commands.length == 0) continue;
@@ -95,5 +122,18 @@ export class NearRelayer extends Relayer {
                 logger.log(e);
             }
         }
+    }
+
+    createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
+        return NearCommand.createCallContractCommand(commandId, relayData, contractCallArgs);
+    }
+
+    // TODO: implement
+    createCallContractWithTokenCommand(
+        commandId: string,
+        relayData: RelayData,
+        callContractWithTokenArgs: CallContractWithTokenArgs
+    ): Command {
+        throw new Error('Method not implemented.');
     }
 }

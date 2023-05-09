@@ -17,11 +17,12 @@ import {
 } from './networkUtils';
 import { defaultAccounts, deployContract, setJSON, setLogger } from './utils';
 
+// export * from './near';
 export * from './aptos';
 export * from './exportUtils';
-export * from './near';
 export * from './relay';
 export * from './utils';
+export * from './Network';
 
 export const contracts = compiledContracts;
 

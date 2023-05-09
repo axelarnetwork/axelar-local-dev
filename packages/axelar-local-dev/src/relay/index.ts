@@ -1,18 +1,15 @@
-import { aptosNetwork } from '../aptos';
-import { nearNetwork } from '../near';
-import { AptosRelayer } from './AptosRelayer';
-import { EvmRelayer } from './EvmRelayer';
-import { NearRelayer } from './NearRelayer';
+import { Relayer, RelayerType } from './Relayer';
 
 export * from './Command';
 export * from './types';
+export * from './Relayer';
 
-export const nearRelayer = new NearRelayer();
-export const aptosRelayer = new AptosRelayer();
-export const evmRelayer = new EvmRelayer();
+// export const nearRelayer = new NearRelayer();
+// export const aptosRelayer = new AptosRelayer();
+// export const evmRelayer = new EvmRelayer();
 
-export const relay = async () => {
-    if (nearNetwork) await nearRelayer.relay();
-    if (aptosNetwork) await aptosRelayer.relay();
-    await evmRelayer.relay();
+export const relay = async (relayers: Map<RelayerType, Relayer>) => {
+    for (const relayer of relayers.values()) {
+        await relayer.relay();
+    }
 };
