@@ -25,9 +25,6 @@ export const getRandomID = () => id(getRandomInt(1e10).toString());
 export const getEVMLogID = (chain: string, log: any) => {
     return id(chain + ':' + log.blockNumber + ':' + log.transactionIndex + ':' + log.logIndex + ':' + new Date().getMilliseconds());
 };
-export const getAptosLogID = (chain: string, event: any) => {
-    return id(chain + ':' + event.guid.account_address + ':' + event.version + ':' + event.sequence_number);
-};
 
 export const getNearLogID = (chain: string, event: any) => {
     return id(chain + ':' + event.standard + ':' + event.version + ':' + new Date().getMilliseconds());

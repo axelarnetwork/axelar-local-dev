@@ -5,8 +5,6 @@ export * from './Command';
 export * from './types';
 export * from './Relayer';
 
-// export const nearRelayer = new NearRelayer();
-// export const aptosRelayer = new AptosRelayer();
 export const evmRelayer = new EvmRelayer();
 
 export const relay = async (relayers?: RelayerMap) => {

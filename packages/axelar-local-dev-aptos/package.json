@@ -1,0 +1,21 @@
+{
+    "name": "@axelar-network/axelar-local-dev-aptos",
+    "version": "2.0.0",
+    "main": "dist/index.js",
+    "scripts": {
+        "contract-test": "npx hardhat test",
+        "test": "jest",
+        "build-ts": "rm -rf dist && tsc",
+        "build-aptos": "bash ./modules/build.sh",
+        "build": "run-s build-aptos build-ts",
+        "postinstalls": "run-s build",
+        "prettier": "prettier --write 'src/**/*.ts'"
+    },
+    "dependencies": {
+        "@axelar-network/axelar-local-dev": "*",
+        "aptos": "1.3.16"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": ""
+}
