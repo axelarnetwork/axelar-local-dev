@@ -5,9 +5,6 @@ const { defaultAbiCoder } = ethers.utils;
 import { networks } from '../Network';
 import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types';
 import { IAxelarExecutable } from '../contracts';
-import { aptosNetwork } from '../aptos';
-import { HexString } from 'aptos';
-// import { nearNetwork } from '../near';
 
 //An internal class for handling axelar commands.
 export class Command {
@@ -23,7 +20,7 @@ export class Command {
         data: any[],
         dataSignature: string[],
         post: ((options: any) => Promise<any>) | undefined = undefined,
-        chain: string | null = null,
+        chain: string | null = null
     ) {
         this.commandId = commandId;
         this.name = name;
@@ -49,7 +46,7 @@ export class Command {
                 relayData.callContract[commandId].execution = receipt.transactionHash;
                 return receipt;
             },
-            'evm',
+            'evm'
         );
     };
 
@@ -79,26 +76,6 @@ export class Command {
                 return receipt;
             },
             'evm'
-        );
-    };
-
-    static createAptosContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
-        return new Command(
-            commandId,
-            'approve_contract_call',
-            [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.payload],
-            [],
-            async () => {
-                const tx = await aptosNetwork.execute(
-                    new HexString(commandId).toUint8Array(),
-                    args.destinationContractAddress,
-                    new HexString(args.payload).toUint8Array()
-                );
-
-                relayData.callContract[commandId].execution = tx.hash;
-                return tx;
-            },
-            'aptos'
         );
     };
 }

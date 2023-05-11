@@ -1,24 +1,34 @@
 import { ethers } from 'ethers';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
-import { aptosNetwork } from '../aptos';
-import { Network, networks } from '../Network';
-import { getGasPrice } from '../networkUtils';
-import { getAptosLogID, getSignedExecuteInput, logger } from '../utils';
-import { Command } from './Command';
-import { Relayer, RelayerType } from './Relayer';
-import { CallContractArgs, CallContractWithTokenArgs, NativeGasPaidForContractCallArgs, RelayData } from './types';
+import { aptosNetwork } from './aptosNetworkUtils';
+import { getAptosLogID } from './utils';
+import { HexString } from 'aptos';
+import {
+    logger,
+    getSignedExecuteInput,
+    RelayCommand,
+    Network,
+    networks,
+    getGasPrice,
+    Command,
+    Relayer,
+    RelayerType,
+    CallContractArgs,
+    NativeGasPaidForContractCallArgs,
+    RelayData,
+} from '@axelar-network/axelar-local-dev';
+import { Command as AptosCommand } from './Command';
+
 const AddressZero = ethers.constants.AddressZero;
 
 interface AptosRelayerOptions {
     nearRelayer?: Relayer;
-    evmRelayer?: Relayer;
 }
 
 export class AptosRelayer extends Relayer {
     constructor(options: AptosRelayerOptions) {
         super();
         this.otherRelayers.near = options.nearRelayer;
-        this.otherRelayers.evm = options.evmRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer): void {
@@ -27,18 +37,47 @@ export class AptosRelayer extends Relayer {
 
     async updateEvents(): Promise<void> {
         await this.updateGasEvents();
-
         await this.updateCallContractEvents();
     }
 
-    async execute() {
+    async execute(commands: RelayCommand) {
+        await this.executeAptosToEvm(commands);
+        await this.executeEvmToAptos(commands);
+    }
+
+    async executeAptosToEvm(commandList: RelayCommand) {
         for (const to of networks) {
-            const commands = this.commands[to.name];
+            const commands = commandList[to.name];
             if (commands.length == 0) continue;
 
             const execution = await this.executeEvmGateway(to, commands);
-
             await this.executeEvmExecutable(to, commands, execution);
+        }
+    }
+
+    private async executeEvmToAptos(commands: RelayCommand) {
+        const toExecute = commands['aptos'];
+        if (toExecute?.length === 0) return;
+
+        await this.executeAptosGateway(toExecute);
+        await this.executeAptosExecutable(toExecute);
+    }
+
+    private async executeAptosGateway(commands: Command[]) {
+        if (!aptosNetwork) return;
+        for (const command of commands) {
+            const commandId = new HexString(command.commandId).toUint8Array();
+            const payloadHash = new HexString(command.data[3]).toUint8Array();
+            await aptosNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
+        }
+    }
+
+    private async executeAptosExecutable(commands: Command[]) {
+        if (!aptosNetwork) return;
+        for (const command of commands) {
+            if (!command.post) continue;
+
+            await command.post({});
         }
     }
 
@@ -142,13 +181,9 @@ export class AptosRelayer extends Relayer {
     }
 
     createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
-        throw new Error('Method not implemented.');
+        return AptosCommand.createAptosContractCallCommand(commandId, relayData, contractCallArgs);
     }
-    createCallContractWithTokenCommand(
-        commandId: string,
-        relayData: RelayData,
-        callContractWithTokenArgs: CallContractWithTokenArgs
-    ): Command {
+    createCallContractWithTokenCommand(): Command {
         throw new Error('Method not implemented.');
     }
 }

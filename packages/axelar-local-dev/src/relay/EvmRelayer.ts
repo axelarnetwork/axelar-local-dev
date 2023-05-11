@@ -1,5 +1,3 @@
-import { HexString } from 'aptos';
-import { aptosNetwork } from '../aptos';
 import { Relayer, RelayerType } from './Relayer';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 import { ContractReceipt, ContractTransaction, ethers, Wallet } from 'ethers';
@@ -64,32 +62,6 @@ export class EvmRelayer extends Relayer {
             const execution = await this.executeEvmGateway(to, commands);
             await this.completeEvmExpress(to, commands, execution);
             await this.executeEvmExecutable(to, commands, execution);
-        }
-    }
-
-    private async executeAptos() {
-        const toExecute = this.commands['aptos'];
-        if (toExecute?.length === 0) return;
-
-        await this.executeAptosGateway(toExecute);
-        await this.executeAptosExecutable(toExecute);
-    }
-
-    private async executeAptosGateway(commands: Command[]) {
-        if (!aptosNetwork) return;
-        for (const command of commands) {
-            const commandId = new HexString(command.commandId).toUint8Array();
-            const payloadHash = new HexString(command.data[3]).toUint8Array();
-            await aptosNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
-        }
-    }
-
-    private async executeAptosExecutable(commands: Command[]) {
-        if (!aptosNetwork) return;
-        for (const command of commands) {
-            if (!command.post) continue;
-
-            await command.post({});
         }
     }
 

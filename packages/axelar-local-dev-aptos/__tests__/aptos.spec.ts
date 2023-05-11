@@ -1,5 +1,5 @@
 import { HexString, TxnBuilderTypes } from 'aptos';
-import { createAptosNetwork } from '../aptos';
+import { createAptosNetwork } from '..';
 import fs from 'fs';
 import path from 'path';
 import { ethers } from 'ethers';
@@ -12,6 +12,8 @@ describe('aptos', () => {
     beforeEach(async () => {
         client = await createAptosNetwork();
     });
+
+    // TODO: implement example to check relaying between Aptos -> Evm and Evm -> Aptos
 
     it('should be able to call approve_contract_call', async () => {
         const payloadHash = ethers.utils.randomBytes(32);
@@ -26,7 +28,7 @@ describe('aptos', () => {
 
     it('should be able to call validate_contract_call', async () => {
         const compiledModules = ['hello_world.mv'];
-        const modulePath = '../../aptos/modules/test/build/HelloWorld';
+        const modulePath = '../modules/test/build/HelloWorld';
         const packageMetadata = fs.readFileSync(path.join(__dirname, modulePath, 'package-metadata.bcs'));
         const moduleDatas = compiledModules.map((module) => {
             return fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', module));
