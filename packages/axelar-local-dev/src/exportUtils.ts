@@ -3,7 +3,7 @@
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
-import { RelayData, Relayer, RelayerType, relay } from './relay';
+import { RelayData, Relayer, RelayerMap, RelayerType, relay } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
 import { EvmRelayer } from './relay/EvmRelayer';
@@ -17,7 +17,7 @@ export interface CreateLocalOptions {
     chains?: string[];
     relayInterval?: number;
     port?: number;
-    relayers?: Map<RelayerType, Relayer>;
+    relayers?: RelayerMap;
     afterRelay?: (relayData: RelayData) => void;
     callback?: (network: Network, info: any) => Promise<void>;
 }
@@ -31,7 +31,7 @@ export interface CloneLocalOptions {
     relayInterval?: number;
     port?: number;
     networkOptions?: NetworkOptions;
-    relayers?: Map<RelayerType, Relayer>;
+    relayers?: RelayerMap;
     afterRelay?: (relayData: RelayData) => void;
     callback?: (network: Network, info: any) => Promise<null>;
 }
@@ -48,7 +48,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         chains: chains || ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
         port: port || 8500,
         afterRelay: afterRelay || null,
-        relayers: relayers || new Map<RelayerType, Relayer>().set('evm', defaultEvmRelayer),
+        relayers: relayers || { evm: defaultEvmRelayer },
         callback: callback || null,
         relayInterval: relayInterval || 2000,
     };
@@ -97,12 +97,13 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         relaying = true;
         await relay(_options.relayers).catch(() => undefined);
         if (options.afterRelay) {
-            for (const relayer of _options.relayers.values()) {
-                const relayData = relayer.relayData;
-                if (relayData) {
-                    await options.afterRelay(relayData);
-                }
-            }
+            const evmRelayData = _options.relayers.evm?.relayData;
+            const nearRelayData = _options.relayers.near?.relayData;
+            const aptosRelayDAta = _options.relayers.aptos?.relayData;
+
+            evmRelayData && (await options.afterRelay(evmRelayData));
+            nearRelayData && (await options.afterRelay(nearRelayData));
+            aptosRelayDAta && (await options.afterRelay(aptosRelayDAta));
         }
         relaying = false;
     }, _options.relayInterval);
@@ -118,7 +119,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         chains: options.chains || ['Moonbeam', 'Avalanche', 'Fantom', 'Ethereum', 'Polygon'],
         port: options.port || 8500,
         relayInterval: options.relayInterval || 2000,
-        relayers: options.relayers || new Map<RelayerType, Relayer>().set('evm', defaultEvmRelayer),
+        relayers: options.relayers || { evm: defaultEvmRelayer },
         networkOptions: options.networkOptions,
         callback: options.callback,
         afterRelay: options.afterRelay,
@@ -157,7 +158,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     }
     listen(_options.port);
     interval = setInterval(async () => {
-        const evmRelayer = _options.relayers.get('evm');
+        const evmRelayer = _options.relayers['evm'];
         if (!evmRelayer) return;
 
         await evmRelayer.relay();
@@ -167,7 +168,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     setJSON(chains_local, _options.chainOutputPath);
 }
 
-export async function destroyExported(relayers?: Map<RelayerType, Relayer>) {
+export async function destroyExported(relayers?: RelayerMap) {
     stopAll();
     if (interval) {
         clearInterval(interval);
@@ -175,9 +176,12 @@ export async function destroyExported(relayers?: Map<RelayerType, Relayer>) {
 
     if (!relayers) return;
 
-    for (const relayer of relayers.values()) {
-        relayer.contractCallGasEvents.length = 0;
-        relayer.contractCallWithTokenGasEvents.length = 0;
+    for (const relayerType in relayers) {
+        const relayer = relayers[relayerType];
+        if (relayer) {
+            relayer.contractCallGasEvents.length = 0;
+            relayer.contractCallWithTokenGasEvents.length = 0;
+        }
     }
 
     defaultEvmRelayer.contractCallGasEvents.length = 0;

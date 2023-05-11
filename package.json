@@ -5,6 +5,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test": "lerna run test",
     "build": "lerna run build"
   },
   "devDependencies": {

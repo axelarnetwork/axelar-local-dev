@@ -14,25 +14,24 @@ import {
     CallContractWithTokenArgs,
     RelayData,
     RelayerType,
+    RelayCommand,
 } from '@axelar-network/axelar-local-dev';
 import { Command as NearCommand } from './Command';
 
 const AddressZero = ethers.constants.AddressZero;
 
 interface NearRelayerOptions {
-    evmRelayer?: Relayer;
     aptosRelayer?: Relayer;
 }
 
 export class NearRelayer extends Relayer {
     constructor(options: NearRelayerOptions = {}) {
         super();
-        options.evmRelayer && this.otherRelayers.set('evm', options.evmRelayer);
-        options.aptosRelayer && this.otherRelayers.set('aptos', options.aptosRelayer);
+        this.otherRelayers.aptos = options.aptosRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {
-        this.otherRelayers.set(type, relayer);
+        this.otherRelayers[type] = relayer;
     }
 
     async updateEvents() {
@@ -40,19 +39,29 @@ export class NearRelayer extends Relayer {
         await this.updateCallContractEvents();
     }
 
-    async execute() {
-        await this.executeNear();
-        this.otherRelayers.get('evm')?.execute();
-        this.otherRelayers.get('aptos')?.execute();
+    async execute(commands: RelayCommand) {
+        await this.executeNearToEvm(commands);
+        await this.executeEvmToNear(commands);
+        await this.otherRelayers?.aptos?.execute(commands);
     }
 
-    private async executeNear() {
+    private async executeEvmToNear(commands: RelayCommand) {
+        const toExecute = commands['near'];
+        if (toExecute?.length == 0) return;
+
+        await nearNetwork?.executeGateway(toExecute);
+        for (const command of toExecute) {
+            if (!command.post) continue;
+            await command.post({});
+        }
+    }
+
+    private async executeNearToEvm(relayCommands: RelayCommand) {
         for (const to of networks) {
-            const commands = this.commands[to.name];
-            if (commands.length == 0) continue;
+            const commands = relayCommands[to.name];
+            if (commands.length === 0) continue;
 
             const execution = await this.executeEvmGateway(to, commands);
-
             await this.executeEvmExecutable(to, commands, execution);
         }
     }
