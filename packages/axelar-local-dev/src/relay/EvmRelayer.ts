@@ -1,7 +1,7 @@
 import { HexString } from 'aptos';
 import { aptosNetwork } from '../aptos';
 import { Relayer, RelayerType } from './Relayer';
-import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types';
+import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 import { ContractReceipt, ContractTransaction, ethers, Wallet } from 'ethers';
 import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
@@ -24,12 +24,12 @@ interface EvmRelayerOptions {
 export class EvmRelayer extends Relayer {
     constructor(options: EvmRelayerOptions = {}) {
         super();
-        options.nearRelayer && this.otherRelayers.set('near', options.nearRelayer);
-        options.aptosRelayer && this.otherRelayers.set('aptos', options.aptosRelayer);
+        this.otherRelayers.near = options.nearRelayer;
+        this.otherRelayers.aptos = options.aptosRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {
-        this.otherRelayers.set(type, relayer);
+        this.otherRelayers[type] = relayer;
     }
 
     async updateEvents(): Promise<void> {
@@ -48,17 +48,17 @@ export class EvmRelayer extends Relayer {
         }
     }
 
-    async execute() {
-        await this.executeEvm();
+    async execute(commands: RelayCommand) {
+        await this.executeEvm(commands);
 
-        for (const relayer of this.otherRelayers.values()) {
-            await relayer.execute();
+        for (const relayerType in this.otherRelayers) {
+            await this.otherRelayers[relayerType]?.execute(commands);
         }
     }
 
-    private async executeEvm() {
+    private async executeEvm(commandList: RelayCommand) {
         for (const to of networks) {
-            const commands = this.commands[to.name];
+            const commands = commandList[to.name];
             if (!commands || commands?.length === 0) continue;
             await this.executeEvmExpress(to, commands);
             const execution = await this.executeEvmGateway(to, commands);
@@ -404,9 +404,9 @@ export class EvmRelayer extends Relayer {
             this.relayData.callContract[commandId] = contractCallArgs;
             let command;
             if (args.destinationChain.toLowerCase() === 'aptos') {
-                command = this.otherRelayers.get('aptos')?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+                command = this.otherRelayers?.aptos?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() == 'near') {
-                command = this.otherRelayers.get('near')?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+                command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else {
                 command = this.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             }

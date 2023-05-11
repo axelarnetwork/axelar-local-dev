@@ -5,13 +5,24 @@ import { Network, networks } from '../Network';
 import { getGasPrice } from '../networkUtils';
 import { getAptosLogID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
-import { Relayer } from './Relayer';
+import { Relayer, RelayerType } from './Relayer';
 import { CallContractArgs, CallContractWithTokenArgs, NativeGasPaidForContractCallArgs, RelayData } from './types';
 const AddressZero = ethers.constants.AddressZero;
 
+interface AptosRelayerOptions {
+    nearRelayer?: Relayer;
+    evmRelayer?: Relayer;
+}
+
 export class AptosRelayer extends Relayer {
-    constructor() {
+    constructor(options: AptosRelayerOptions) {
         super();
+        this.otherRelayers.near = options.nearRelayer;
+        this.otherRelayers.evm = options.evmRelayer;
+    }
+
+    setRelayer(type: RelayerType, relayer: Relayer): void {
+        this.otherRelayers[type] = relayer;
     }
 
     async updateEvents(): Promise<void> {

@@ -3,9 +3,10 @@ import { Command } from './Command';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 
 export type RelayerType = 'near' | 'aptos' | 'evm';
+export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 
 export abstract class Relayer {
-    public otherRelayers = new Map<RelayerType, Relayer>();
+    public otherRelayers: RelayerMap = {};
     public relayData: RelayData = {
         depositAddress: {},
         sendToken: {},
@@ -19,7 +20,7 @@ export abstract class Relayer {
     public expressContractCallGasEvents: any[] = [];
     public expressContractCallWithTokenGasEvents: any[] = [];
     abstract updateEvents(): Promise<void>;
-    abstract execute(): Promise<void>;
+    abstract execute(commands: RelayCommand): Promise<void>;
     abstract createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command;
     abstract createCallContractWithTokenCommand(
         commandId: string,
@@ -38,7 +39,7 @@ export abstract class Relayer {
         // Update all events at the source chains
         await this.updateEvents();
 
-        await this.execute();
+        await this.execute(this.commands);
 
         this.commands = {};
     }

@@ -1,11 +1,10 @@
+import path from 'path';
 import { Contract, Wallet } from 'ethers';
 import { NearAccount } from 'near-workspaces';
-import path from 'path';
+import { NearRelayer } from '../relay/NearRelayer';
 import { createNearNetwork, NearNetwork } from '../near';
-import { Network } from '../Network';
-import { createNetwork, stopAll } from '../networkUtils';
-import { relay } from '../relay';
-import { deployContract } from '../utils';
+import { Network, createNetwork, stopAll, deployContract, relay } from '@axelar-network/axelar-local-dev';
+import { EvmRelayer } from '@axelar-network/axelar-local-dev/dist/relay/EvmRelayer';
 
 jest.setTimeout(120000);
 
@@ -77,7 +76,8 @@ describe('relay', () => {
             const value = 'Hello from Eth!';
             await (await evmContract.connect(evmUser).set('near', value)).wait();
 
-            await relay();
+            const nearRelayer = new NearRelayer();
+            await relay({ near: nearRelayer, evm: new EvmRelayer({ nearRelayer }) });
 
             const nearValue = await nearContract.view('get_value', {});
 
@@ -106,7 +106,9 @@ describe('relay', () => {
                 0
             );
 
-            await relay();
+            await relay({
+                near: new NearRelayer(),
+            });
 
             expect(await evmContract.value()).toBe(value);
             expect(await evmContract.sourceChain()).toBe('near');

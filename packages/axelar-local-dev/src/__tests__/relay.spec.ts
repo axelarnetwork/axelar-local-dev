@@ -10,11 +10,11 @@ import chai from 'chai';
 const { expect } = chai;
 
 setLogger(() => null);
-jest.setTimeout(300000);
 
 interface NetworkUsdc extends Network {
     usdc?: Contract;
 }
+jest.setTimeout(200000);
 
 describe('relay', () => {
     let chain1: NetworkUsdc;
@@ -30,7 +30,7 @@ describe('relay', () => {
         chain2.usdc = await chain2.deployToken('Axelar Wrapped USDC', 'aUSDC', 6, BigInt(1e18)).then((c: Contract) => c.connect(user2));
     });
     afterEach(async () => {
-        stopAll();
+        await stopAll();
     });
     describe('deposit address', () => {
         it('should generate a deposit address', async () => {
