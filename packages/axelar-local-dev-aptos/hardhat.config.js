@@ -29,7 +29,7 @@ module.exports = {
         },
     },
     paths: {
-        sources: './src/contracts',
+        sources: './__tests__/contracts',
     },
     mocha: {
         timeout: 200000,

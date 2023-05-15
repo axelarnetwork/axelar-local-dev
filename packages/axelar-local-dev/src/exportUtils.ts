@@ -3,7 +3,7 @@
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
-import { RelayData, Relayer, RelayerMap, RelayerType, relay } from './relay';
+import { RelayData, RelayerMap, relay } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo, mainnetInfo } from './info';
 import { EvmRelayer } from './relay/EvmRelayer';

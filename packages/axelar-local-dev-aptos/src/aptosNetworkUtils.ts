@@ -8,7 +8,7 @@ export interface AptosNetworkConfig {
     faucetUrl: string;
 }
 
-export async function createAptosNetwork(config?: AptosNetworkConfig) {
+export async function createAptosNetwork(config?: AptosNetworkConfig): Promise<AptosNetwork> {
     const nodeUrl = config?.nodeUrl || 'http://localhost:8080';
     const faucetUrl = config?.faucetUrl || 'http://localhost:8081';
     const loadingAptosNetwork = new AptosNetwork(nodeUrl);
