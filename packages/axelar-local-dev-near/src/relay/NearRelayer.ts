@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
-import { nearNetwork } from '../near';
+import { nearNetwork } from '..';
 import {
     Network,
     networks,

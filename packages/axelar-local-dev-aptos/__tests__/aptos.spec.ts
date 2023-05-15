@@ -14,6 +14,13 @@ describe('aptos', () => {
     });
 
     // TODO: implement example to check relaying between Aptos -> Evm and Evm -> Aptos
+    it('should be able to relay tx from Aptos to EVM', async () => {
+
+    });
+
+    it('should be able to relay tx from EVM to Aptos', async () => {
+
+    });
 
     it('should be able to call approve_contract_call', async () => {
         const payloadHash = ethers.utils.randomBytes(32);

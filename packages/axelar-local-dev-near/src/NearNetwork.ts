@@ -3,7 +3,7 @@ import { arrayify, defaultAbiCoder, keccak256 } from 'ethers/lib/utils';
 import { ClientConfig, Config, JsonRpcProvider, NEAR, NearAccount, SandboxServer, TransactionResult, Worker } from 'near-workspaces';
 import { logger } from '@axelar-network/axelar-local-dev';
 import path from 'path';
-import { Command } from '../relay/Command';
+import { Command } from './relay/Command';
 
 /* Defining the structure of the NearEvent object based on NEP-297 standard (Events Format - https://nomicon.io/Standards/EventsFormat) */
 export interface NearEvent {

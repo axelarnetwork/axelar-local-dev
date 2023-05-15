@@ -1,4 +1,3 @@
-require('hardhat-gas-reporter');
 require('solidity-coverage');
 require('@typechain/hardhat');
 /**
