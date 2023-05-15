@@ -8,7 +8,13 @@
     "bootstrap": "lerna bootstrap",
     "link": "lerna link",
     "test": "lerna run test",
-    "build": "lerna run build"
+    "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
+    "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
+    "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
+    "build": "lerna run build",
+    "build:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run build",
+    "build:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run build",
+    "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build"
   },
   "devDependencies": {
     "lerna": "^6.6.1"
