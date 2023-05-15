@@ -26,7 +26,7 @@ interface AptosRelayerOptions {
 }
 
 export class AptosRelayer extends Relayer {
-    constructor(options: AptosRelayerOptions) {
+    constructor(options: AptosRelayerOptions = {}) {
         super();
         this.otherRelayers.near = options.nearRelayer;
     }

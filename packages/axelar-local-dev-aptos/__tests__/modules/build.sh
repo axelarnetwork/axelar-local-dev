@@ -6,4 +6,4 @@ then
     exit
 fi
 
-aptos move compile --save-metadata --bytecode-version 6 --package-dir modules/test
+aptos move compile --save-metadata --bytecode-version 6 --package-dir __tests__/modules

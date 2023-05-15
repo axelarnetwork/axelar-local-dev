@@ -6,8 +6,9 @@
         "contract-test": "npx hardhat test",
         "test": "jest",
         "build-ts": "rm -rf dist && tsc",
-        "build-aptos": "bash ./modules/build.sh",
-        "build": "run-s build-aptos build-ts",
+        "build-aptos": "bash ./__tests__/modules/build.sh",
+        "build-contract": "hardhat compile",
+        "build": "run-s build-ts build-contract build-aptos",
         "prepare": "run-s build",
         "prettier": "prettier --write 'src/**/*.ts'"
     },

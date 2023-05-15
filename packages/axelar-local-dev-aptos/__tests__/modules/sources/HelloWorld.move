@@ -1,6 +1,7 @@
 module hello_world::hello_world {
   use std::string;
   use axelar_framework::gateway;
+  use axelar_framework::axelar_gas_service;
   use aptos_framework::account;
   use aptos_framework::event::{Self};
   use std::signer;
@@ -19,6 +20,11 @@ module hello_world::hello_world {
 
   fun init_module(account: &signer) {
     move_to(account, MessageHolder { message: string::utf8(b"hello"), message_change_events: account::new_event_handle<MessageChangeEvent>(account) });
+  }
+
+  public entry fun call(sender: &signer, destination_chain: string::String, contract_address: string::String, payload: vector<u8>, fee_amount: u64) {
+    axelar_gas_service::payNativeGasForContractCall(sender, @hello_world, destination_chain, contract_address, keccak256(payload), fee_amount, @hello_world);
+    gateway::call_contract(sender, destination_chain, contract_address, payload);
   }
 
   public entry fun execute(owner: &signer, command_id: vector<u8>, payload: vector<u8>) acquires MessageHolder {
