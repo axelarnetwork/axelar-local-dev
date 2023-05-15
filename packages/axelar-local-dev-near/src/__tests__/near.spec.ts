@@ -2,7 +2,7 @@ import path from 'path';
 import { Contract, Wallet } from 'ethers';
 import { NearAccount } from 'near-workspaces';
 import { NearRelayer } from '../relay/NearRelayer';
-import { createNearNetwork, NearNetwork } from '../near';
+import { createNearNetwork, NearNetwork } from '..';
 import { Network, createNetwork, stopAll, deployContract, relay } from '@axelar-network/axelar-local-dev';
 import { EvmRelayer } from '@axelar-network/axelar-local-dev/dist/relay/EvmRelayer';
 
@@ -52,9 +52,9 @@ describe('relay', () => {
         let evmContract: Contract;
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Executable = require('../artifacts/src/contracts/test/Executable.sol/Executable.json');
+        const Executable = require('../../artifacts/src/contracts/test/Executable.sol/Executable.json');
 
-        const nearWasmFilePath = path.join(path.resolve(__dirname), '../near/contracts/test/near_axelar_contract_call_example.wasm');
+        const nearWasmFilePath = path.join(path.resolve(__dirname), '../contracts/test/near_axelar_contract_call_example.wasm');
 
         beforeEach(async () => {
             nearContract = await nearClient.createAccountAndDeployContract('near_axelar_example_contract_call', nearWasmFilePath, 200);
