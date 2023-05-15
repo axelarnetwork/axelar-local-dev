@@ -2,7 +2,7 @@
 
 import { ethers } from 'ethers';
 import { CallContractArgs, RelayData } from '@axelar-network/axelar-local-dev';
-import { nearNetwork } from '../near';
+import { nearNetwork } from '..';
 
 const { defaultAbiCoder } = ethers.utils;
 

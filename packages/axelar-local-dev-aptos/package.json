@@ -8,10 +8,11 @@
         "build-ts": "rm -rf dist && tsc",
         "build-aptos": "bash ./modules/build.sh",
         "build": "run-s build-aptos build-ts",
-        "postinstalls": "run-s build",
+        "prepare": "run-s build",
         "prettier": "prettier --write 'src/**/*.ts'"
     },
     "dependencies": {
+        "@axelar-network/axelar-cgp-aptos": "^1.0.5",
         "@axelar-network/axelar-local-dev": "*",
         "aptos": "1.3.16"
     },
