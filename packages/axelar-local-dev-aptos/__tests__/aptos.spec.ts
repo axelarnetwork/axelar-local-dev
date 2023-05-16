@@ -51,7 +51,7 @@ describe('aptos', () => {
         expect(data.message).toEqual(msg);
     });
 
-    it.only('should be able to relay tx from Aptos to Evm', async () => {
+    it('should be able to relay tx from Aptos to Evm', async () => {
         // Deploy Aptos module
         await client.deploy(path.join(__dirname, 'modules/build/HelloWorld'), ['hello_world.mv']);
 
@@ -75,7 +75,6 @@ describe('aptos', () => {
         });
 
         const evmMessage = await helloWorld.value();
-        console.log(evmMessage)
         expect(evmMessage).toEqual(msg);
     });
 
@@ -92,7 +91,7 @@ describe('aptos', () => {
 
     it('should be able to call validate_contract_call', async () => {
         const compiledModules = ['hello_world.mv'];
-        const modulePath = './modules/test/build/HelloWorld';
+        const modulePath = './modules/build/HelloWorld';
         const packageMetadata = fs.readFileSync(path.join(__dirname, modulePath, 'package-metadata.bcs'));
         const moduleDatas = compiledModules.map((module) => {
             return fs.readFileSync(path.join(__dirname, modulePath, 'bytecode_modules', module));
