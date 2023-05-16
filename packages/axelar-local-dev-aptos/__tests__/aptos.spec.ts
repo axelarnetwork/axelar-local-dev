@@ -20,7 +20,7 @@ describe('aptos', () => {
         evmNetwork = await createNetwork();
     });
 
-    it('should be able to relay tx from Aptos to EVM', async () => {
+    it('should be able to relay tx from EVM to Aptos', async () => {
         // Deploy Aptos module
         await client.deploy(path.join(__dirname, 'modules/build/HelloWorld'), ['hello_world.mv']);
 
