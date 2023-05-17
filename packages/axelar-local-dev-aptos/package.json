@@ -2,6 +2,11 @@
     "name": "@axelar-network/axelar-local-dev-aptos",
     "version": "2.0.0",
     "main": "dist/index.js",
+    "files": [
+        "dist/",
+        "!dist/types",
+        "!dist/artifacts"
+    ],
     "scripts": {
         "contract-test": "npx hardhat test",
         "test": "jest",

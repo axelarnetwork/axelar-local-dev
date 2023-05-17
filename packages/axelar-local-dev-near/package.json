@@ -3,6 +3,11 @@
     "version": "2.0.0",
     "description": "",
     "main": "dist/index.js",
+    "files": [
+        "dist/",
+        "!dist/types",
+        "!dist/**/*.wasm"
+    ],
     "scripts": {
         "contract-test": "npx hardhat test",
         "test": "jest",
