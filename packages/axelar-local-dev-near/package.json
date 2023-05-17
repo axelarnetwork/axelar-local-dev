@@ -1,6 +1,6 @@
 {
     "name": "npty-axelar-local-dev-near",
-    "version": "2.0.0",
+    "version": "2.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "scripts": {
@@ -16,8 +16,8 @@
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
     },
     "dependencies": {
-        "@axelar-network/axelar-local-dev": "*",
-        "@axelar-network/axelar-cgp-near": "^1.0.0"
+        "@axelar-network/axelar-cgp-near": "^1.0.0",
+        "@axelar-network/axelar-local-dev": "*"
     },
     "author": "",
     "license": "ISC"
