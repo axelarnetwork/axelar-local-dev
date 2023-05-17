@@ -1,5 +1,5 @@
 {
-    "name": "@axelar-network/axelar-local-dev",
+    "name": "npty-axelar-local-dev",
     "version": "1.4.4",
     "description": "",
     "main": "dist/index.js",
