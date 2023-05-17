@@ -3,6 +3,11 @@
     "version": "2.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
+    "files": [
+        "dist/",
+        "!dist/types",
+        "!dist/artifacts"
+    ],
     "scripts": {
         "contract-test": "npx hardhat test",
         "test": "jest",
@@ -27,9 +32,6 @@
         "url": "https://github.com/axelarnetwork/axelar-local-dev/issues"
     },
     "homepage": "https://github.com/axelarnetwork/axelar-local-dev#readme",
-    "files": [
-        "dist"
-    ],
     "dependencies": {
         "@axelar-network/axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#feat/forecaller-service",
         "@axelar-network/axelar-gmp-sdk-solidity": "^3.2.1",
