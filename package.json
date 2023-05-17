@@ -5,6 +5,7 @@
     "packages/*"
   ],
   "scripts": {
+    "publish": "lerna publish",
     "bootstrap": "lerna bootstrap",
     "link": "lerna link",
     "test": "lerna run test",
