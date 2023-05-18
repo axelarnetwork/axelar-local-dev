@@ -1,12 +1,13 @@
 {
     "name": "@axelar-network/axelar-local-dev",
-    "version": "1.4.4",
+    "version": "2.0.0-alpha.7",
     "description": "",
     "main": "dist/index.js",
     "files": [
         "dist/",
         "!dist/types",
-        "!dist/artifacts"
+        "dist/types/factories/@axelar-network/*",
+        "dist/types/@axelar-network/*"
     ],
     "scripts": {
         "contract-test": "npx hardhat test",

@@ -5,7 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-    "publish": "lerna publish from-package --yes",
+    "publish": "lerna publish from-package --yes --dist-tag alpha",
     "bootstrap": "lerna bootstrap",
     "postinstall": "npm run bootstrap && lerna run build",
     "link": "lerna link",

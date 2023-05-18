@@ -94,12 +94,11 @@ export class AptosNetwork extends AptosClient {
         return new CoinClient(this).checkBalance(this.owner);
     }
 
-    deployAxelarFrameworkModules(rootPath = './') {
-        return this.deploy(
-            path.join(rootPath, '../../node_modules/@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework'),
-            ['axelar_gas_service.mv', 'address_utils.mv', 'gateway.mv'],
-            '0x1234'
-        );
+    deployAxelarFrameworkModules() {
+        const nodeModulesPath = path.resolve(__dirname, '..', '..', '..', 'node_modules');
+        const modulePath = path.join(nodeModulesPath, '@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework');
+
+        return this.deploy(modulePath, ['axelar_gas_service.mv', 'address_utils.mv', 'gateway.mv'], '0x1234');
     }
 
     updateContractCallSequence(events: any[]) {
