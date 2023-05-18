@@ -1,18 +1,14 @@
-name: Publish to NPM after merge
+name: "Publish to NPM"
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - feat/multi-package
+  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   publish-to-npm:
     name: "Publish to NPM"
     runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.head.ref, 'release/')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -22,8 +18,8 @@ jobs:
       - name: Cache node_modules
         uses: actions/cache@v2
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+            path: node_modules
+            key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       - run: npm run publish
         env:
