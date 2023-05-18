@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [closed]
     branches:
-      - feat/multi-package-test
+      - feat/multi-package
 
 jobs:
   publish-to-npm:
