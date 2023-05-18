@@ -5,8 +5,9 @@
     "packages/*"
   ],
   "scripts": {
-    "publish": "lerna publish",
+    "publish": "lerna publish from-package --yes",
     "bootstrap": "lerna bootstrap",
+    "postinstall": "npm run bootstrap && lerna run build",
     "link": "lerna link",
     "test": "lerna run test",
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
