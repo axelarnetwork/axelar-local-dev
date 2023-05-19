@@ -25,7 +25,8 @@ See [axelar-examples repo](https://github.com/axelarnetwork/axelar-examples/) fo
 
 ## Usage
 
-- [Basic Guide](./docs/guide_basic.md)
+- [Executing Cross-chain Transactions Guide](./docs/guide_basic.md)
+- [Standalone Environment Guide](./docs/guide_create_and_exports.md)
 - [API Reference](./docs/api_reference.md)
 
 ## Supported Chain Stacks
