@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev",
-    "version": "2.0.0-alpha.7",
+    "version": "2.0.0-alpha.12",
     "description": "",
     "main": "dist/index.js",
     "files": [
@@ -15,7 +15,6 @@
         "build-ts": "rm -rf dist && tsc",
         "build-contract": "rm -rf src/artifacts artifacts && hardhat clean && hardhat compile && mv artifacts src/artifacts",
         "build": "run-s build-contract build-ts",
-        "prepare": "run-s build",
         "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
     },

@@ -16,11 +16,12 @@ jobs:
           unzip aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
           chmod +x aptos
           cp aptos /usr/local/bin
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
           node-version: 16
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: Cache node_modules
         uses: actions/cache@v2
         with:

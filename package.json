@@ -1,9 +1,11 @@
 {
   "name": "axelar-local-dev",
-  "private": true,
   "workspaces": [
     "packages/*"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "publish": "lerna publish from-package --yes --dist-tag alpha",
     "bootstrap": "lerna bootstrap",

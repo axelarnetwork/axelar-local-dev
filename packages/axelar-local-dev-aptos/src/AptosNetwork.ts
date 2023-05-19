@@ -98,7 +98,6 @@ export class AptosNetwork extends AptosClient {
     deployAxelarFrameworkModules() {
         const nodeModulesPath = findNodeModulesPath(__dirname);
         const modulePath = path.join(nodeModulesPath, '@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework');
-
         return this.deploy(modulePath, ['axelar_gas_service.mv', 'address_utils.mv', 'gateway.mv'], '0x1234');
     }
 

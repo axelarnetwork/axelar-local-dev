@@ -10,7 +10,7 @@ export const getAptosLogID = (chain: string, event: any) => {
 
 export const findNodeModulesPath = (currentDir: string) => {
     let pathfinder: string = currentDir;
-    while (!pathfinder.includes('node_modules')) {
+    while (!pathfinder.endsWith('node_modules')) {
         pathfinder = path.join(pathfinder, '..');
         const dirs = fs.readdirSync(pathfinder);
         if (dirs.indexOf('node_modules') > -1) {
