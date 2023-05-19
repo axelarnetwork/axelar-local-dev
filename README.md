@@ -26,10 +26,7 @@ See [axelar-examples repo](https://github.com/axelarnetwork/axelar-examples/) fo
 ## Usage
 
 - [Basic Guide](./docs/guide_basic.md)
-
-## API Reference
-
-See [API Reference](./docs/api_reference.md)
+- [API Reference](./docs/api_reference.md)
 
 ## Supported Chain Stacks
 
