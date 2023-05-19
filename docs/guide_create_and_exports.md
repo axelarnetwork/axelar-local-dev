@@ -2,11 +2,6 @@
 
 This guide illustrates how to set up a cross-chain EVM environment and independently export EVM RPC networks.
 
-## Prerequisites
-
-1. You need to have an understanding of EVM-based chains.
-2. Knowledge of TypeScript is necessary.
-
 ## Steps
 
 ### 1. Setup the Crosschain Environment
