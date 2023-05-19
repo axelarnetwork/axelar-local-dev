@@ -1,58 +1,61 @@
-## Usage
+## Executing Cross-chain Transactions Guide
 
-The following script shows a simple example of how to use this module to create two test blockchains and send some USDC from one to the other.
+The script below demonstrates a simple use-case of this module. It shows how to create two test blockchains and transfer USDC tokens from one chain to the other.
 
 ```typescript
 import { createNetwork, relay } from "@axelar-network/axelar-local-dev";
 
 async function main() {
-  // create eth network
+  // Initialize an Ethereum network
   const eth = await createNetwork({
     name: "Ethereum",
   });
-  // deploy eth token
+
+  // Deploy USDC token on the Ethereum network
   await eth.deployToken("USDC", "aUSDC", 6, BigInt(100_000e6));
 
-  // create avalanche network
+  // Initialize an Avalanche network
   const avalanche = await createNetwork({
     name: "Avalanche",
   });
-  // deploy avalanche token
+
+  // Deploy USDC token on the Avalanche network
   await avalanche.deployToken("USDC", "aUSDC", 6, BigInt(100_000e6));
 
-  // extract user accounts
+  // Extract user wallets for both Ethereum and Avalanche networks
   const [ethUserWallet] = eth.userWallets;
   const [avalancheUserWallet] = avalanche.userWallets;
 
-  // mint tokens on source chain
+  // Mint tokens on the source chain (Ethereum)
   await eth.giveToken(ethUserWallet.address, "aUSDC", BigInt(100e6));
 
-  // extract token contracts
+  // Get the token contracts for both Ethereum and Avalanche networks
   const usdcEthContract = await eth.getTokenContract("aUSDC");
   const usdcAvalancheContract = await avalanche.getTokenContract("aUSDC");
 
-  // approve gateway to use token on source chain
+  // Approve the gateway to use tokens on the source chain (Ethereum)
   const ethApproveTx = await usdcEthContract
     .connect(ethUserWallet)
     .approve(eth.gateway.address, 100e6);
   await ethApproveTx.wait();
 
-  // ask gateway on source chain to send tokens to destination chain
+  // Request the Ethereum gateway to send tokens to the Avalanche network
   const ethGatewayTx = await eth.gateway
     .connect(ethUserWallet)
     .sendToken(avalanche.name, avalancheUserWallet.address, "aUSDC", 100e6);
   await ethGatewayTx.wait();
 
-  // relay transactions
+  // Relay the transactions
   await relay();
 
+  // Log the token balances
   console.log(
     (await usdcEthContract.balanceOf(ethUserWallet.address)) / 1e6,
-    "aUSDC"
+    "aUSDC in Ethereum wallet"
   );
   console.log(
     (await usdcAvalancheContract.balanceOf(avalancheUserWallet.address)) / 1e6,
-    "aUSDC"
+    "aUSDC in Avalanche wallet"
   );
 }
 
