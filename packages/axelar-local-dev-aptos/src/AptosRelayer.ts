@@ -21,18 +21,15 @@ import { Command as AptosCommand } from './Command';
 
 const AddressZero = ethers.constants.AddressZero;
 
-interface AptosRelayerOptions {
-    nearRelayer?: Relayer;
-}
-
 export class AptosRelayer extends Relayer {
-    constructor(options: AptosRelayerOptions = {}) {
+    constructor() {
         super();
-        this.otherRelayers.near = options.nearRelayer;
     }
 
-    setRelayer(type: RelayerType, relayer: Relayer): void {
-        this.otherRelayers[type] = relayer;
+    setRelayer(type: RelayerType, _: Relayer) {
+        if (type === 'near') {
+            console.log('near not supported yet');
+        }
     }
 
     async updateEvents(): Promise<void> {

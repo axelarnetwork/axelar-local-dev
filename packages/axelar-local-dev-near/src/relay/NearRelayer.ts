@@ -27,7 +27,6 @@ export class NearRelayer extends Relayer {
 
     setRelayer(type: RelayerType, _: Relayer) {
         if (type === 'aptos') {
-            // log that we haven't support aptos yet
             console.log('aptos not supported yet');
         }
     }
