@@ -2,6 +2,14 @@
 
 This package allows you to create a local development environment for cross-chain communication using the [Aptos](https://aptos.dev/) protocol. At present, we support general message passing with EVM chain but integration with `NEAR` is not currently supported.
 
+## Installation
+
+To install this package, use the following command:
+
+```bash
+npm install @axelar-network/axelar-local-dev-aptos
+```
+
 ## Prerequisite
 
 Before getting started, you'll need to install Aptos on your local machine.
