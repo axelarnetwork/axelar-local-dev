@@ -9,8 +9,8 @@ Welcome to the Axelar Local Development Environment! This monorepo contains esse
 
 The `axelar-local-dev` package is all you need for cross-chain applications between EVM chains. However, if you wish to explore cross-chain applications between EVM chains and other chain stacks, check out our specific guides:
 
-- [EVM <-> Aptos Integration Guide](./docs/guide_evm_aptos.md)
-- [EVM <-> Near Integration Guide](./docs/guide_evm_near.md)
+- [EVM <-> Aptos Integration Guide](./packages/axelar-local-dev-aptos/README.md#configuration)
+- [EVM <-> Near Integration Guide](./packages/axelar-local-dev-near/README.md#configuration)
 
 ## Installation
 
