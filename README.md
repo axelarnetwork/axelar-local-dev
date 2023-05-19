@@ -1,4 +1,4 @@
-# Axelar Local Cross-Chain Development Environment
+# Axelar Local Cross-Chain Dev Environment
 
 Welcome to the Axelar Local Development Environment! This monorepo contains essential packages to facilitate local cross-chain development:
 
