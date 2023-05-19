@@ -3,8 +3,8 @@
 This monorepo contains the following packages to support local cross-chain development:
 
 - [@axelar-network/axelar-local-dev](./packages/axelar-local-dev/)
-- [@axelar-network/axelar-local-dev-aptos (Optional)](./packages/axelar-local-dev-aptos/)
-- [@axelar-network/axelar-local-dev-near (Optional)](./packages/axelar-local-dev-near/)
+- [@axelar-network/axelar-local-dev-aptos](./packages/axelar-local-dev-aptos/) (Optional)
+- [@axelar-network/axelar-local-dev-near](./packages/axelar-local-dev-near/) (Optional)
 
 For developing cross-chain application between EVM to EVM chains, only the `axelar-local-dev` package is required.
 
