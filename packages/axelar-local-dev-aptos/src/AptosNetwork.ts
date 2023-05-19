@@ -2,6 +2,7 @@ import { AptosAccount, AptosClient, CoinClient, HexString, TxnBuilderTypes, BCS,
 import fs from 'fs';
 import path from 'path';
 import { sha3_256 as sha3Hash } from '@noble/hashes/sha3';
+import { findNodeModulesPath } from './utils';
 
 declare type EntryFunctionPayload = {
     function: string;
@@ -95,7 +96,7 @@ export class AptosNetwork extends AptosClient {
     }
 
     deployAxelarFrameworkModules() {
-        const nodeModulesPath = path.resolve(__dirname, '..', '..', '..', 'node_modules');
+        const nodeModulesPath = findNodeModulesPath(__dirname);
         const modulePath = path.join(nodeModulesPath, '@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework');
 
         return this.deploy(modulePath, ['axelar_gas_service.mv', 'address_utils.mv', 'gateway.mv'], '0x1234');
