@@ -1,4 +1,4 @@
-# Running a Separate Crosschain Environment
+# Setting Up a Standalone Crosschain EVM Environment
 
 This guide illustrates how to set up a cross-chain EVM environment and independently export EVM RPC networks.
 
