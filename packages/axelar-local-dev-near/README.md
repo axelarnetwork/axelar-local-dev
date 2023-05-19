@@ -1,14 +1,27 @@
-## Axelar Local Development Near
+## Axelar Local Dev: Near Integration
 
-## Install
+This package enables you to set up a local development environment for cross-chain communication with the NEAR Protocol. Presently, we offer support for general message passing between NEAR and EVM chains (Note: Aptos support is yet to be implemented).
 
-```
+## Installation
+
+To install this package, use the following command:
+
+```bash
 npm install @axelar-network/axelar-local-dev-near
 ```
 
-## Description
+## Configuration
 
-We support a local development enviroment for near cross chain communication. Currently we only support general message passing using NEAR and EVM (Aptos support is not implemented).
+To utilize the NEAR chain stack alongside the EVM chain stack, you will need to adjust the `createAndExport` function in your script. Specifically, create a `NearRelayer` instance and integrate it with your existing EVM relayer. Here's an example of how you might adjust the configuration:
+
+```ts
+const nearRelayer = new NearRelayer();
+const relayers = { evm: new EvmRelayer({ nearRelayer }), near: nearRelayer };
+```
+
+Please refer to our [Standalone Environment Setup Guide](../../docs/guide_create_and_exports.md) for further details on configuring the `createAndExport` function.
+
+## API Reference
 
 NEAR local development enviroment is based on [near-workspaces-js](https://github.com/near/workspaces-js) and `NearNetwork` is an extension of `Worker` (available in [near-workspaces-js](https://github.com/near/workspaces-js) package). `NearNetwork` includes everything that `Worker` has and some additional funcionalities:
 

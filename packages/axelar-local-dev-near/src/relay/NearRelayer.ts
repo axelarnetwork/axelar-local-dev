@@ -20,18 +20,16 @@ import { Command as NearCommand } from './Command';
 
 const AddressZero = ethers.constants.AddressZero;
 
-interface NearRelayerOptions {
-    aptosRelayer?: Relayer;
-}
-
 export class NearRelayer extends Relayer {
-    constructor(options: NearRelayerOptions = {}) {
+    constructor() {
         super();
-        this.otherRelayers.aptos = options.aptosRelayer;
     }
 
-    setRelayer(type: RelayerType, relayer: Relayer) {
-        this.otherRelayers[type] = relayer;
+    setRelayer(type: RelayerType, _: Relayer) {
+        if (type === 'aptos') {
+            // log that we haven't support aptos yet
+            console.log('aptos not supported yet');
+        }
     }
 
     async updateEvents() {
@@ -42,7 +40,6 @@ export class NearRelayer extends Relayer {
     async execute(commands: RelayCommand) {
         await this.executeNearToEvm(commands);
         await this.executeEvmToNear(commands);
-        await this.otherRelayers?.aptos?.execute(commands);
     }
 
     private async executeEvmToNear(commands: RelayCommand) {
