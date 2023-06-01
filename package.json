@@ -7,7 +7,7 @@
     "access": "public"
   },
   "scripts": {
-    "publish": "lerna publish from-package --yes --dist-tag alpha",
+    "publish": "lerna publish from-package --yes",
     "bootstrap": "lerna bootstrap",
     "postinstall": "npm run bootstrap && lerna run build",
     "link": "lerna link",
