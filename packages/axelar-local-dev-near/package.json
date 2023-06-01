@@ -1,0 +1,28 @@
+{
+    "name": "@axelar-network/axelar-local-dev-near",
+    "version": "2.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "files": [
+        "dist/",
+        "!dist/types",
+        "!dist/**/*.wasm"
+    ],
+    "scripts": {
+        "contract-test": "npx hardhat test",
+        "test": "jest",
+        "build-ts": "rm -rf dist && tsc",
+        "build-near": "cd ./src/contracts/test/near-axelar-contract-call-example && ./build.sh",
+        "build-contract": "rm -rf artifacts && hardhat clean && hardhat compile",
+        "copy-near-wasm": "cp ../../node_modules/@axelar-network/axelar-cgp-near/dist/axelar_cgp_near.wasm src/contracts/ && mkdir -p dist/contracts && cp -r src/contracts/axelar_cgp_near.wasm dist/contracts",
+        "build": "run-s build-near build-contract build-ts copy-near-wasm",
+        "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
+        "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
+    },
+    "dependencies": {
+        "@axelar-network/axelar-cgp-near": "^1.0.0",
+        "@axelar-network/axelar-local-dev": "2.0.0"
+    },
+    "author": "",
+    "license": "ISC"
+}

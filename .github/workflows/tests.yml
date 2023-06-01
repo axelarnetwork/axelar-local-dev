@@ -3,38 +3,34 @@ name: Run Tests
 on: pull_request
 
 jobs:
-    test:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-22.04]
-                arch: [amd64]
-        steps:
-            - name: Download Aptos Binary
-              run: |
-                  wget --no-check-certificate  https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.4/aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
-                  unzip aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
-                  chmod +x aptos
-                  cp aptos /usr/local/bin
-            - name: Checkout code
-              uses: actions/checkout@v3
-            - uses: actions/setup-node@v3
-              with:
-                  node-version: 16
-            - name: Cache node_modules
-              uses: actions/cache@v2
-              with:
-                  path: node_modules
-                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-            - name: Install
-              run: |
-                  npm ci
-            - name: Build
-              run: |
-                  npm run build
-                  npm run build-aptos
-            - name: Test
-              run: |
-                  nohup sh -c "aptos node run-local-testnet --with-faucet" > nohup.out 2> nohup.err < /dev/null &
-                  sleep 10
-                  npm run test
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        arch: [amd64]
+    steps:
+      - name: Download Aptos Binary
+        run: |
+          wget --no-check-certificate  https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.4/aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+          unzip aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+          chmod +x aptos
+          cp aptos /usr/local/bin
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: |
+          nohup sh -c "aptos node run-local-testnet --with-faucet" > nohup.out 2> nohup.err < /dev/null &
+          sleep 10
+          npm run test

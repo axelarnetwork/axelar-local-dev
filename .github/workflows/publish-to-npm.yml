@@ -21,7 +21,6 @@ jobs:
             path: node_modules
             key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
-      - run: npm run build
-      - run: npm publish
+      - run: npm run publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
