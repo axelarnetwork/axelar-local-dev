@@ -154,7 +154,7 @@ export class EvmRelayer extends Relayer {
             if (!payed) continue;
             if (command.name === 'approveContractCallWithMint') {
                 const index = this.expressContractCallWithTokenGasEvents.indexOf(payed);
-                this.expressContractCallWithTokenGasEvents.splice(index, 1);
+                this.expressContractCallWithTokenGasEvents = this.expressContractCallWithTokenGasEvents.filter((_, i) => i !== index);
             }
 
             const { sourceAddress, destinationContractAddress, payload, alias, amountIn } =
@@ -234,9 +234,13 @@ export class EvmRelayer extends Relayer {
                 const blockGasLimit = await from.provider.getBlock('latest').then((block) => block.gasLimit);
 
                 if (command.name === 'approveContractCall') {
-                    this.contractCallGasEvents.splice(gasEventIndex);
+                    this.contractCallGasEvents = this.contractCallGasEvents.filter((_, index) => {
+                        return index !== gasEventIndex;
+                    });
                 } else {
-                    this.contractCallWithTokenGasEvents.splice(gasEventIndex);
+                    this.contractCallWithTokenGasEvents = this.contractCallWithTokenGasEvents.filter((_, index) => {
+                        return index !== gasEventIndex;
+                    });
                 }
 
                 // Execute the command
