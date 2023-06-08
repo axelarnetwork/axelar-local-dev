@@ -118,10 +118,10 @@ export class AptosRelayer extends Relayer {
             if (!payed) continue;
             if (command.name == 'approveContractCall') {
                 const index = this.contractCallGasEvents.indexOf(payed);
-                this.contractCallGasEvents.splice(index, 1);
+                this.contractCallGasEvents = this.contractCallGasEvents.filter((_, i) => i !== index);
             } else {
                 const index = this.contractCallWithTokenGasEvents.indexOf(payed);
-                this.contractCallWithTokenGasEvents.splice(index, 1);
+                this.contractCallWithTokenGasEvents = this.contractCallWithTokenGasEvents.filter((_, i) => i !== index);
             }
             try {
                 const cost = getGasPrice();
