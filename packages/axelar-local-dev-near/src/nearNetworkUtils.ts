@@ -21,7 +21,8 @@ export async function createNearNetwork(config?: Config) {
         logger.log('Near Network Created');
     } catch (e) {
         logger.log(`Error creating Near Network: ${e}`);
-        loadingNearNetwork.stopNetwork();
+        await loadingNearNetwork.stopNetwork();
+        throw e;
     }
 
     return nearNetwork;
