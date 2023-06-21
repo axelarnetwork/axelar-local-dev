@@ -8,6 +8,7 @@
   },
   "scripts": {
     "publish": "lerna publish from-package --yes",
+    "version": "lerna version --yes --exact",
     "bootstrap": "lerna bootstrap",
     "postinstall": "npm run bootstrap && lerna run build",
     "link": "lerna link",
