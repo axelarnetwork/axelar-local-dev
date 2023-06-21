@@ -261,14 +261,16 @@ describe('relay', () => {
             ]);
 
             // get bytecode with constructor data
+            const expressWithToken = await deployContract(chain2.ownerWallet, ExpressWithToken, [
+                chain2.gateway.address,
+                chain2.gasService.address,
+            ]);
             const salt = ethers.utils.id(Date.now().toString());
-            const factory = new ContractFactory(ExpressWithToken.abi, ExpressWithToken.bytecode);
-            const bytecode = factory.getDeployTransaction(chain2.gateway.address, chain2.gasService.address).data;
 
             // deploy the express proxy + implementation contracts
             await chain2.expressService
                 .connect(chain2.ownerWallet)
-                .deployExpressExecutable(salt, bytecode, chain2.ownerWallet.address, '0x')
+                .deployExpressProxy(salt, expressWithToken.address, chain2.ownerWallet.address, '0x')
                 .then((tx: ContractTransaction) => tx.wait());
 
             // get the proxy address
