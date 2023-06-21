@@ -12,6 +12,7 @@
     "postinstall": "npm run bootstrap && lerna run build",
     "link": "lerna link",
     "test": "lerna run test",
+    "update": "lernaupdate",
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
     "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
     "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
@@ -21,6 +22,7 @@
     "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build"
   },
   "devDependencies": {
-    "lerna": "^6.6.1"
+    "lerna": "^6.6.1",
+    "lerna-update-wizard": "^1.1.2"
   }
 }
