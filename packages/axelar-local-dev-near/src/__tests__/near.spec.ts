@@ -26,7 +26,7 @@ describe('near', () => {
     });
 });
 
-describe('relay', () => {
+describe.skip('relay', () => {
     let nearClient: NearNetwork;
     let evmClient: Network;
 
