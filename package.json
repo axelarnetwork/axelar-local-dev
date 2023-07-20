@@ -13,7 +13,7 @@
     "postinstall": "npm run bootstrap && lerna run build",
     "link": "lerna link",
     "test": "lerna run test",
-    "update": "lernaupdate",
+    "update": "lerna update",
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
     "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
     "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
