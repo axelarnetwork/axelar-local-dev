@@ -33,7 +33,7 @@
     },
     "homepage": "https://github.com/axelarnetwork/axelar-local-dev#readme",
     "dependencies": {
-        "@axelar-network/axelar-cgp-solidity": "github:axelarnetwork/axelar-cgp-solidity#f668693",
+        "@axelar-network/axelar-cgp-solidity": "^5.0.0",
         "@axelar-network/axelar-gmp-sdk-solidity": "^4.0.1",
         "ethers": "^5.6.5",
         "fs-extra": "^10.1.0",
