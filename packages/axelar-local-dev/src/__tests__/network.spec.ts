@@ -25,6 +25,8 @@ function validateNetwork(network: Network) {
     expect(network.constAddressDeployer).to.not.be.undefined;
     expect(network.create3Deployer).to.not.be.undefined;
     expect(network.gateway).to.not.be.undefined;
+    expect(network.its).to.not.be.undefined;
+    expect(network.interchainTokenService).to.not.be.undefined;
 }
 
 describe('Network', () => {
