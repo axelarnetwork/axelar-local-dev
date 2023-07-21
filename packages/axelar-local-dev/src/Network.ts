@@ -15,8 +15,8 @@ import {
     StandardizedTokenLockUnlock,
     StandardizedTokenMintBurn,
     StandardizedTokenDeployer,
-    LinkerRouter,
-    LinkerRouterProxy,
+    RemoteAddressValidator,
+    RemoteAddressValidatorProxy,
     TokenManagerLockUnlock,
     TokenManagerMintBurn,
     TokenManagerLiquidityPool,
@@ -228,10 +228,10 @@ export class Network {
             standardizedTokenMintBurn.address,
         ]);
         const interchainTokenServiceAddress = await this.create3Deployer.deployedAddress(wallet.address, deploymentSalt);
-        const linkerRouterImpl = await deployContract(wallet, LinkerRouter, [interchainTokenServiceAddress]);
+        const linkerRouterImpl = await deployContract(wallet, RemoteAddressValidator, [interchainTokenServiceAddress]);
         const params = defaultAbiCoder.encode(['string[]', 'string[]'], [[], []]);
 
-        const linkerRouterProxy = await deployContract(wallet, LinkerRouterProxy, [linkerRouterImpl.address, wallet.address, params]);
+        const linkerRouterProxy = await deployContract(wallet, RemoteAddressValidatorProxy, [linkerRouterImpl.address, wallet.address, params]);
         const linkerRouter = new Contract(linkerRouterProxy.address, linkerRouterImpl.interface, wallet);
 
         const tokenManagerImplementations = [

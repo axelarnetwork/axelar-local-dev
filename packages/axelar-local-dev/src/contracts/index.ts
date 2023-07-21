@@ -15,8 +15,8 @@ import TokenManagerDeployer from '../artifacts/@axelar-network/interchain-token-
 import StandardizedTokenLockUnlock from '../artifacts/@axelar-network/interchain-token-service/contracts/token-implementations/StandardizedTokenLockUnlock.sol/StandardizedTokenLockUnlock.json';
 import StandardizedTokenMintBurn from '../artifacts/@axelar-network/interchain-token-service/contracts/token-implementations/StandardizedTokenMintBurn.sol/StandardizedTokenMintBurn.json';
 import StandardizedTokenDeployer from '../artifacts/@axelar-network/interchain-token-service/contracts/utils/StandardizedTokenDeployer.sol/StandardizedTokenDeployer.json';
-import LinkerRouter from '../artifacts/@axelar-network/interchain-token-service/contracts/linker-router/LinkerRouter.sol/LinkerRouter.json';
-import LinkerRouterProxy from '../artifacts/@axelar-network/interchain-token-service/contracts/proxies/LinkerRouterProxy.sol/LinkerRouterProxy.json';
+import RemoteAddressValidator from '../artifacts/@axelar-network/interchain-token-service/contracts/remote-address-validator/RemoteAddressValidator.sol/RemoteAddressValidator.json';
+import RemoteAddressValidatorProxy from '../artifacts/@axelar-network/interchain-token-service/contracts/proxies/RemoteAddressValidatorProxy.sol/RemoteAddressValidatorProxy.json';
 import TokenManagerLockUnlock from '../artifacts/@axelar-network/interchain-token-service/contracts/token-manager/implementations/TokenManagerLockUnlock.sol/TokenManagerLockUnlock.json';
 import TokenManagerMintBurn from '../artifacts/@axelar-network/interchain-token-service/contracts/token-manager/implementations/TokenManagerMintBurn.sol/TokenManagerMintBurn.json';
 import TokenManagerLiquidityPool from '../artifacts/@axelar-network/interchain-token-service/contracts/token-manager/implementations/TokenManagerLiquidityPool.sol/TokenManagerLiquidityPool.json';
@@ -41,8 +41,8 @@ export {
     StandardizedTokenLockUnlock,
     StandardizedTokenMintBurn,
     StandardizedTokenDeployer,
-    LinkerRouter,
-    LinkerRouterProxy,
+    RemoteAddressValidator,
+    RemoteAddressValidatorProxy,
     TokenManagerLockUnlock,
     TokenManagerMintBurn,
     TokenManagerLiquidityPool,
