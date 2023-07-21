@@ -11,6 +11,7 @@ import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factorie
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
 import { Server } from 'http';
 import { ConstAddressDeployer, Create3Deployer, IInterchainTokenService } from './contracts';
+import { InterchainTokenService__factory as InterchainTokenServiceFactory } from './types';
 
 const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 
@@ -153,7 +154,7 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.create3Deployer = new Contract(info.create3DeployerAddress, Create3Deployer.abi, chain.provider);
     chain.gateway = AxelarGatewayFactory.connect(info.gatewayAddress, chain.provider);
     chain.gasService = AxelarGasServiceFactory.connect(info.gasReceiverAddress, chain.provider);
-    chain.interchainTokenService = new Contract(info.InterchainTokenService, IInterchainTokenService.abi, chain.provider);
+    chain.interchainTokenService = InterchainTokenServiceFactory.connect(info.InterchainTokenService, chain.provider);
     //chain.usdc = await chain.getTokenContract('aUSDC');
 
     logger.log(`Its gateway is deployed at ${chain.gateway.address}.`);

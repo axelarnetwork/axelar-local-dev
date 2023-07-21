@@ -20,16 +20,19 @@ import {
     TokenManagerLockUnlock,
     TokenManagerMintBurn,
     TokenManagerLiquidityPool,
-    InterchainTokenService,
+    InterchainTokenService as InterchainTokenServiceContract,
     InterchainTokenServiceProxy,
 } from './contracts';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
+import { InterchainTokenService } from './types';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
+import { InterchainTokenService__factory as InterchainTokenServiceFactory } from './types';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
 import http from 'http';
 import { EvmRelayer } from './relay/EvmRelayer';
 import { evmRelayer } from './relay';
+import { ITS, setupITS } from './its';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
@@ -94,13 +97,14 @@ export class Network {
     gasService: AxelarGasService;
     constAddressDeployer: Contract;
     create3Deployer: Contract;
-    interchainTokenService: Contract;
+    interchainTokenService: InterchainTokenService;
     isRemote: boolean | undefined;
     url: string | undefined;
     ganacheProvider: any;
     server: http.Server | undefined;
     port: number | undefined;
     tokens: { [key: string]: string };
+    its: ITS;
     constructor(networkish: any = {}) {
         this.name = networkish.name;
         this.chainId = networkish.chainId;
@@ -121,6 +125,7 @@ export class Network {
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
         this.tokens = networkish.tokens;
+        this.its = networkish.its;
     }
     async deployGateway(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gateway for ${this.name}... `);
@@ -172,6 +177,7 @@ export class Network {
         logger.log(`Upgraded ${this.gateway.address}`);
         return this.gateway;
     }
+
     async deployGasReceiver(): Promise<Contract> {
         logger.log(`Deploying the Axelar Gas Receiver for ${this.name}... `);
         const gasService = await deployContract(this.ownerWallet, AxelarGasServiceFactory, [this.ownerWallet.address]);
@@ -182,6 +188,7 @@ export class Network {
         logger.log(`Deployed at ${this.gasService.address}`);
         return this.gasService;
     }
+
     async deployConstAddressDeployer(): Promise<Contract> {
         logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
         const constAddressDeployerDeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
@@ -198,6 +205,7 @@ export class Network {
         logger.log(`Deployed at ${this.constAddressDeployer.address}`);
         return this.constAddressDeployer;
     }
+
     async deployCreate3Deployer(): Promise<Contract> {
         logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
         const create3DeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
@@ -240,7 +248,7 @@ export class Network {
             await deployContract(wallet, TokenManagerLiquidityPool, [interchainTokenServiceAddress]),
         ].map(contract => contract.address);
 
-        const implementation = await deployContract(wallet, InterchainTokenService, [
+        const implementation = await deployContract(wallet, InterchainTokenServiceContract, [
             tokenManagerDeployer.address,
             standardizedTokenDeployer.address,
             this.gateway.address,
@@ -257,7 +265,8 @@ export class Network {
         ).data;
         await this.create3Deployer.connect(wallet).deploy(bytecode, deploymentSalt)
         const service = new Contract(interchainTokenServiceAddress, implementation.interface, wallet);
-        this.interchainTokenService = service;
+        this.interchainTokenService = InterchainTokenServiceFactory.connect(service.address, this.ownerWallet);
+        await setupITS(this);
         logger.log(`Deployed at ${service.address}.`);
         return this.interchainTokenService;
     }
