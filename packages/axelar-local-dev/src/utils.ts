@@ -23,7 +23,8 @@ export async function getSignedExecuteInput(data: any, wallet: Wallet) {
 
 export const getRandomID = () => id(getRandomInt(1e10).toString());
 export const getEVMLogID = (chain: string, log: any) => {
-    return id(chain + ':' + log.blockNumber + ':' + log.transactionIndex + ':' + log.logIndex + ':' + new Date().getMilliseconds());
+    const txData = [chain, log.transactionHash, log.logIndex].join(':');
+    return id(txData);
 };
 
 export const getNearLogID = (chain: string, event: any) => {
