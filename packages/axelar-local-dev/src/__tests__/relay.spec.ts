@@ -261,36 +261,16 @@ describe('relay', () => {
             ]);
 
             // get bytecode with constructor data
-            const expressWithToken = await deployContract(chain2.ownerWallet, ExpressWithToken, [
+            const contract2 = await deployContract(chain2.ownerWallet, ExpressWithToken, [
                 chain2.gateway.address,
                 chain2.gasService.address,
             ]);
-            const salt = ethers.utils.id(Date.now().toString());
-
-            // deploy the express proxy + implementation contracts
-            await chain2.expressService
-                .connect(chain2.ownerWallet)
-                .deployExpressProxy(salt, expressWithToken.address, chain2.ownerWallet.address, '0x')
-                .then((tx: ContractTransaction) => tx.wait());
-
-            // get the proxy address
-            const proxyAddress = await chain2.expressService.deployedProxyAddress(salt, chain2.ownerWallet.address);
-
-            // initialize the proxy contract with the implementation abi
-            const contract2 = new Contract(proxyAddress, ExpressWithToken.abi, chain2.ownerWallet);
 
             // mint usdc tokens to user1
             await chain1.giveToken(user1.address, 'aUSDC', BigInt(amount));
 
-            // mint usdc tokens to the destination express service contract
-            await chain2.giveToken(chain2.expressService.address, 'aUSDC', BigInt(amount));
-
             // approve the ExpressWithToken contract to spend our tokens
             await chain1.usdc?.approve(contract1.address, amount).then((tx: ContractTransaction) => tx.wait());
-
-            // contract2 should be an express proxy contract
-            const isExpress = await chain2.expressService.isExpressProxy(contract2.address);
-            expect(isExpress).to.be.true;
 
             // call the express contract
             await contract1
