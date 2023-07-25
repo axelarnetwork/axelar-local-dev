@@ -41,6 +41,7 @@ export interface NetworkInfo {
     adminKeys: string[];
     threshold: number;
     lastRelayedBlock: number;
+    lastExpressedBlock: number;
     gatewayAddress: string;
     gasReceiverAddress: string;
     constAddressDeployerAddress: string;
@@ -57,6 +58,7 @@ export interface NetworkSetup {
     adminKeys?: Wallet[];
     threshold?: number;
     lastRelayedBlock?: number;
+    lastExpressedBlock?: number;
 }
 
 /*
@@ -73,6 +75,7 @@ export class Network {
     adminWallets: Wallet[];
     threshold: number;
     lastRelayedBlock: number;
+    lastExpressedBlock: number;
     gateway: AxelarGateway;
     gasService: AxelarGasService;
     constAddressDeployer: Contract;
@@ -94,6 +97,7 @@ export class Network {
         this.adminWallets = networkish.adminWallets;
         this.threshold = networkish.threshold;
         this.lastRelayedBlock = networkish.lastRelayedBlock;
+        this.lastExpressedBlock = networkish.lastExpressedBlock;
         this.gateway = networkish.gateway;
         this.gasService = networkish.gasService;
         this.constAddressDeployer = networkish.constAddressDeployer;
@@ -257,6 +261,7 @@ export class Network {
             adminKeys: this.adminWallets.map((wallet) => wallet.privateKey),
             threshold: this.threshold,
             lastRelayedBlock: this.lastRelayedBlock,
+            lastExpressedBlock: this.lastExpressedBlock,
             gatewayAddress: this.gateway.address,
             gasReceiverAddress: this.gasService.address,
             constAddressDeployerAddress: this.constAddressDeployer.address,

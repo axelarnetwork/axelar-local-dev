@@ -87,8 +87,9 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             const symbol = chain.tokens[alias];
 
             // Mint 1e12 USDC tokens to the GMPExpressService contract.
-            await chain.giveToken(info.GMPExpressService.address, symbol, BigInt(1e18));
+            await chain.giveToken(chain.relayerWallet.address, symbol, BigInt(1e18));
         }
+
         i++;
     }
     listen(_options.port);
@@ -107,6 +108,10 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         }
         relaying = false;
     }, _options.relayInterval);
+
+    const evmRelayer = _options.relayers['evm'];
+    evmRelayer?.subscribeExpressCall();
+
     setJSON(localChains, _options.chainOutputPath);
 }
 

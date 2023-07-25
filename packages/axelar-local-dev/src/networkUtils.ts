@@ -102,6 +102,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     chain.adminWallets = wallets.splice(4, 10);
     chain.threshold = 3;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    chain.lastExpressedBlock = chain.lastRelayedBlock;
     await chain.deployConstAddressDeployer();
     await chain.deployCreate3Deployer();
     await chain.deployGateway();
@@ -143,6 +144,7 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.adminWallets = info.adminKeys.map((x) => new Wallet(x, chain.provider));
     chain.threshold = info.threshold;
     chain.lastRelayedBlock = info.lastRelayedBlock;
+    chain.lastExpressedBlock = info.lastExpressedBlock;
     chain.tokens = info.tokens;
 
     chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
@@ -191,6 +193,7 @@ export async function setupNetwork(urlOrProvider: string | providers.Provider, o
     chain.adminWallets = options.adminKeys.map((x) => new Wallet(x, chain.provider));
     chain.threshold = options.threshold != null ? options.threshold : 1;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    chain.lastExpressedBlock = chain.lastRelayedBlock;
     await chain.deployConstAddressDeployer();
     await chain.deployCreate3Deployer();
     await chain.deployGateway();
@@ -252,6 +255,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.adminWallets = wallets.splice(4, 10);
     chain.threshold = 3;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    chain.lastExpressedBlock = chain.lastRelayedBlock;
     chain.constAddressDeployer = new Contract(chainInfo.constAddressDeployer, ConstAddressDeployer.abi, chain.provider);
     // Delete the line below and uncomment the line after when we deploy create3Deployer
     await chain.deployCreate3Deployer();
