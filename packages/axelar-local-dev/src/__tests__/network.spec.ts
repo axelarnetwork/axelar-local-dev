@@ -61,6 +61,7 @@ describe('Network', () => {
         network = await getNetwork(`http://localhost:${port}`);
         validateNetwork(network);
     });
+
     it('should deploy a network on a preexisting chain', async () => {
         const port = 8600;
         const accounts = defaultAccounts(20);
