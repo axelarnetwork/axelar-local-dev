@@ -136,17 +136,28 @@ export class EvmRelayer extends Relayer {
 
             const expressExecutorContract = AxelarExpressExecutableFactory.connect(payed.destinationAddress, to.relayerWallet);
 
-            const usdcAddress = await to.gateway.tokenAddresses(to.tokens['aUSDC']);
-            const usdcContract = new ethers.Contract(
-                usdcAddress,
-                ['function allowance(address,address) view returns (uint256)', 'function approve(address,uint256)'],
+            const tokenAddress = await to.gateway.tokenAddresses(to.tokens[payed.symbol]);
+            const tokenContract = new ethers.Contract(
+                tokenAddress,
+                [
+                    'function allowance(address,address) view returns (uint256)',
+                    'function approve(address,uint256)',
+                    'function balanceOf(address) view returns (uint256)',
+                ],
                 to.relayerWallet
             );
-            const allowance = await usdcContract.allowance(to.relayerWallet.address, expressExecutorContract.address);
+
+            // fund relayer wallet with token
+            const balance = await tokenContract.balanceOf(to.relayerWallet.address);
+            if (balance.lt(payed.amount)) {
+                await to.giveToken(to.relayerWallet.address, payed.symbol, BigInt(10000e18));
+            }
+
+            const allowance = await tokenContract.allowance(to.relayerWallet.address, expressExecutorContract.address);
 
             // If the allowance is insufficient, approve the contract
             if (allowance.lt(payed.amount)) {
-                await usdcContract.approve(expressExecutorContract.address, ethers.constants.MaxUint256).then((tx: any) => tx.wait());
+                await tokenContract.approve(expressExecutorContract.address, ethers.constants.MaxUint256).then((tx: any) => tx.wait());
             }
 
             await expressExecutorContract

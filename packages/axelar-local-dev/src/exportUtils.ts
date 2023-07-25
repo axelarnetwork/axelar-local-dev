@@ -82,12 +82,6 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
 
             // If there is no USDC token, return.
             if (!alias) return;
-
-            // Get the symbol of the USDC token.
-            const symbol = chain.tokens[alias];
-
-            // Mint 1e12 USDC tokens to the GMPExpressService contract.
-            await chain.giveToken(chain.relayerWallet.address, symbol, BigInt(1e18));
         }
 
         i++;
