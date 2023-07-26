@@ -3,7 +3,7 @@
 
 import { createNetwork, relay, stopAll, listen, getFee, getDepositAddress, deployContract, setLogger } from '../';
 import { defaultAbiCoder } from 'ethers/lib/utils';
-import { BigNumber, Contract, ContractFactory, ContractTransaction, Wallet, ethers } from 'ethers';
+import { BigNumber, Contract, ContractTransaction, Wallet } from 'ethers';
 import { Network } from '../Network';
 import ExpressWithToken from '../artifacts/src/contracts/test/ExpressWithToken.sol/ExpressWithToken.json';
 import chai from 'chai';

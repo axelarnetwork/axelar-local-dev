@@ -9,7 +9,7 @@ import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
-import {ConstAddressDeployer, Create3Deployer } from './contracts';
+import { ConstAddressDeployer, Create3Deployer } from './contracts';
 
 const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 

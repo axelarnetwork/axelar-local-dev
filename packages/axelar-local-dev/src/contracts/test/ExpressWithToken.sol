@@ -57,8 +57,4 @@ contract ExpressWithToken is AxelarExpressExecutable {
     }
 
     function _execute(string calldata, string calldata, bytes calldata payload) internal override {}
-
-    function contractId() external pure returns (bytes32) {
-        return keccak256('distribution-proxy');
-    }
 }

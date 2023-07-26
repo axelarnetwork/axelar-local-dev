@@ -1,6 +1,6 @@
 import { Relayer, RelayerType } from './Relayer';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
-import { BigNumber, ContractReceipt, ContractTransaction, ethers, Wallet } from 'ethers';
+import { ContractReceipt, ethers, Wallet } from 'ethers';
 import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
@@ -21,6 +21,8 @@ interface EvmRelayerOptions {
 }
 
 export class EvmRelayer extends Relayer {
+    eventSubscribers: ethers.Contract[] = [];
+
     constructor(options: EvmRelayerOptions = {}) {
         super();
         this.otherRelayers.near = options.nearRelayer;
@@ -62,20 +64,31 @@ export class EvmRelayer extends Relayer {
             }
         }
         for (const chain of networks) {
-            chain.gasService.on('NativeGasPaidForExpressCallWithToken', async (_sourceAddress: string, destinationChain: string) => {
-                const blockNumber = await chain.provider.getBlockNumber();
-                await this.updateExpressGasEvents(chain, blockNumber);
-                await this.updateCallContractWithTokensEvents(chain, blockNumber, chain.lastExpressedBlock + 1);
-                const destChain = networks.find((network) => network.name === destinationChain);
-                if (!destChain) return;
-                const commands = this.commands[destinationChain];
-                if (!commands || commands?.length === 0) return;
-                await this.executeEvmExpress(destChain, commands).catch((e) => {
-                    logger.log(e);
-                });
-                chain.lastExpressedBlock = blockNumber;
-            });
+            const subscriber = chain.gasService.on(
+                'NativeGasPaidForExpressCallWithToken',
+                async (_sourceAddress: string, destinationChain: string) => {
+                    const blockNumber = await chain.provider.getBlockNumber();
+                    await this.updateExpressGasEvents(chain, blockNumber);
+                    await this.updateCallContractWithTokensEvents(chain, blockNumber, chain.lastExpressedBlock + 1);
+                    const destChain = networks.find((network) => network.name === destinationChain);
+                    if (!destChain) return;
+                    const commands = this.commands[destinationChain];
+                    if (!commands || commands?.length === 0) return;
+                    await this.executeEvmExpress(destChain, commands).catch((e) => {
+                        logger.log(e);
+                    });
+                    chain.lastExpressedBlock = blockNumber;
+                }
+            );
+
+            this.eventSubscribers.push(subscriber);
         }
+    }
+
+    override unsubscribe() {
+        this.eventSubscribers.forEach((subscriber) => {
+            subscriber.removeAllListeners();
+        });
     }
 
     private async executeEvm(commandList: RelayCommand) {

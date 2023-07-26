@@ -43,6 +43,10 @@ export abstract class Relayer {
     }
 
     async subscribeExpressCall() {
-        // this is a no-op for now
+        // this is a no-op by default
+    }
+
+    unsubscribe() {
+        // this is a no-op by default
     }
 }

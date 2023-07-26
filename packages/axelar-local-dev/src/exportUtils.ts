@@ -164,6 +164,9 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         if (_options.afterRelay) _options.afterRelay(evmRelayer.relayData);
     }, _options.relayInterval);
 
+    const evmRelayer = _options.relayers['evm'];
+    evmRelayer?.subscribeExpressCall();
+
     setJSON(chains_local, _options.chainOutputPath);
 }
 
@@ -173,7 +176,11 @@ export async function destroyExported(relayers?: RelayerMap) {
         clearInterval(interval);
     }
 
+    await defaultEvmRelayer?.unsubscribe();
+
     if (!relayers) return;
+
+    await relayers['evm']?.unsubscribe();
 
     for (const relayerType in relayers) {
         const relayer = relayers[relayerType];
