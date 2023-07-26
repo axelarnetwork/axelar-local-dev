@@ -11,12 +11,9 @@ import { ExpressWithToken__factory as ExpressWithTokenFactory } from '../types/f
 import { ExecutableWithToken__factory as ExecuteWithTokenFactory } from '../types/factories/src/contracts/test/ExecutableWithToken__factory';
 import ExpressWithToken from '../artifacts/src/contracts/test/ExpressWithToken.sol/ExpressWithToken.json';
 import ExecuteWithToken from '../artifacts/src/contracts/test/ExecutableWithToken.sol/ExecutableWithToken.json';
-import { solidity } from 'ethereum-waffle';
 import { EvmRelayer } from '../relay/EvmRelayer';
 
-chai.use(solidity);
 setLogger(() => null);
-jest.setTimeout(20000);
 
 async function deployAndFundUsdc(chain: Network) {
     await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e22));
@@ -49,7 +46,7 @@ describe('createAndExport', () => {
     });
 
     afterEach(async () => {
-        await destroyExported();
+        await destroyExported({ evm: evmRelayer });
     });
 
     it('should export a local.json file correctly', async () => {
@@ -90,7 +87,7 @@ describe('createAndExport', () => {
         // print eth balance of owner
         await contract1.setAndSend(chain2.name, 'hello', wallet.address, 'aUSDC', amount, { value: BigInt(1e12) });
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const token2 = await chain2.getTokenContract('aUSDC');
         const balance = await token2.balanceOf(wallet.address);
@@ -113,7 +110,7 @@ describe('createAndExport', () => {
         await token1.approve(contract1.address, amount);
         await contract1.sendToMany(chain2.name, contract2.address, [wallet.address], 'aUSDC', amount, { value: BigInt(1e17) });
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const token2 = await chain2.getTokenContract('aUSDC');
         const balance = await token2.balanceOf(wallet.address);

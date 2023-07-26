@@ -10,7 +10,7 @@
     "publish": "lerna publish from-package --yes",
     "version": "lerna version --yes --exact",
     "bootstrap": "lerna bootstrap",
-    "postinstall": "npm run bootstrap && lerna run build",
+    "postinstall": "lerna bootstrap",
     "link": "lerna link",
     "test": "lerna run test",
     "update": "lerna update",

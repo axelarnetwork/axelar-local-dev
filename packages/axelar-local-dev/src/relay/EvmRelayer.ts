@@ -163,7 +163,12 @@ export class EvmRelayer extends Relayer {
             // fund relayer wallet with token
             const balance = await tokenContract.balanceOf(to.relayerWallet.address);
             if (balance.lt(payed.amount)) {
-                await to.giveToken(to.relayerWallet.address, payed.symbol, BigInt(10000e18));
+                const fundAmount = ethers.BigNumber.from(1e10);
+                await to.giveToken(
+                    to.relayerWallet.address,
+                    payed.symbol,
+                    fundAmount.gt(payed.amount) ? fundAmount.toBigInt() : payed.amount
+                );
             }
 
             const allowance = await tokenContract.allowance(to.relayerWallet.address, expressExecutorContract.address);

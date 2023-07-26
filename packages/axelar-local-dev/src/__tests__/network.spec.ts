@@ -11,7 +11,6 @@ import chai from 'chai';
 const { expect } = chai;
 setLogger(() => null);
 
-jest.setTimeout(300000);
 
 function validateNetwork(network: Network) {
     // wallets

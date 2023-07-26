@@ -6,8 +6,6 @@ import { createNearNetwork, NearNetwork } from '..';
 import { Network, createNetwork, stopAll, deployContract, relay } from '@axelar-network/axelar-local-dev';
 import { EvmRelayer } from '@axelar-network/axelar-local-dev/dist/relay/EvmRelayer';
 
-jest.setTimeout(120000);
-
 describe('near', () => {
     let client: NearNetwork;
 

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 'use strict';
 
-import { createNetwork, relay, stopAll, listen, getFee, getDepositAddress, deployContract, setLogger } from '../';
+import { createNetwork, relay, stopAll, listen, getFee, getDepositAddress, deployContract, setLogger, evmRelayer } from '../';
 import { defaultAbiCoder } from 'ethers/lib/utils';
-import { BigNumber, Contract, ContractTransaction, Wallet } from 'ethers';
+import { BigNumber, Contract, ContractTransaction, Wallet, ethers } from 'ethers';
 import { Network } from '../Network';
 import ExpressWithToken from '../artifacts/src/contracts/test/ExpressWithToken.sol/ExpressWithToken.json';
 import chai from 'chai';
@@ -14,7 +14,6 @@ setLogger(() => null);
 interface NetworkUsdc extends Network {
     usdc?: Contract;
 }
-jest.setTimeout(200000);
 
 describe('relay', () => {
     let chain1: NetworkUsdc;
@@ -29,9 +28,11 @@ describe('relay', () => {
         [user2] = chain2.userWallets;
         chain2.usdc = await chain2.deployToken('Axelar Wrapped USDC', 'aUSDC', 6, BigInt(1e18)).then((c: Contract) => c.connect(user2));
     });
+
     afterEach(async () => {
         await stopAll();
     });
+
     describe('deposit address', () => {
         it('should generate a deposit address', async () => {
             const depositAddress = await getDepositAddress(chain1, chain2, user2.address, 'aUSDC');
@@ -251,20 +252,17 @@ describe('relay', () => {
     });
 
     describe('gmp express', () => {
-        const amount = 1e10;
+        const amount = 1e6;
 
-        it('should be able to relay a valid gmp-express call', async () => {
+        it.only('should be able to relay a valid gmp-express call', async () => {
             // source chain contract doesn't need to be proxy contract. it can be a normal contract
-            const contract1 = await deployContract(chain1.ownerWallet, ExpressWithToken, [
-                chain1.gateway.address,
-                chain1.gasService.address,
-            ]);
+            const contract1 = await deployContract(user1, ExpressWithToken, [chain1.gateway.address, chain1.gasService.address]);
 
             // get bytecode with constructor data
-            const contract2 = await deployContract(chain2.ownerWallet, ExpressWithToken, [
-                chain2.gateway.address,
-                chain2.gasService.address,
-            ]);
+            const contract2 = await deployContract(user2, ExpressWithToken, [chain2.gateway.address, chain2.gasService.address]);
+
+            // subscribe to the express call
+            await evmRelayer.subscribeExpressCall();
 
             // mint usdc tokens to user1
             await chain1.giveToken(user1.address, 'aUSDC', BigInt(amount));
@@ -274,15 +272,27 @@ describe('relay', () => {
 
             // call the express contract
             await contract1
-                .connect(user1)
-                .sendToMany(chain2.name, contract2.address, [user2.address], 'aUSDC', amount, { value: 1e15 })
+                .sendToMany(chain2.name, contract2.address, [user2.address], 'aUSDC', amount, { value: ethers.utils.parseEther('1') })
                 .then((tx: ContractTransaction) => tx.wait());
 
-            // relay the call
-            await relay();
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+            await evmRelayer.unsubscribe();
 
             // check that the call was successful
-            expect((await chain2.usdc?.balanceOf(user2.address))?.toNumber()).to.equal(amount);
+            const user2Balance = (await chain2.usdc?.balanceOf(user2.address))?.toNumber();
+            expect(user2Balance).to.equal(amount);
+
+            // check that relayer wallet balance
+            const balanceRelayerAfterExpressed = await chain2.usdc?.balanceOf(chain2.relayerWallet.address);
+
+            // relay the usual gmp call
+            await relay();
+
+            // check that relayer should receive fund back.
+            const balanceRelayerAfterRelayed = await chain2.usdc?.balanceOf(chain2.relayerWallet.address);
+
+            // check that relayer wallet balance should be increased by amount from the usual gmp call
+            expect(balanceRelayerAfterRelayed.sub(balanceRelayerAfterExpressed).toNumber()).to.be.eq(amount);
         });
     });
 });

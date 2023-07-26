@@ -10,10 +10,11 @@ import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
 import { ConstAddressDeployer, Create3Deployer } from './contracts';
+import { Server } from 'http';
 
 const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 
-let serverInstance: any;
+let serverInstance: Server | undefined;
 
 export interface ChainCloneData {
     name: string;
@@ -283,8 +284,8 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
 }
 
 export async function stop(network: string | Network) {
-    if (typeof network === 'string') network = networks.find((chain) => chain.name == network)!;
-    if (network.server != null) await network.server.close();
+    if (typeof network === 'string') network = networks.find((chain) => chain.name === network)!;
+    if (network.server) await network.server.close();
     networks.splice(networks.indexOf(network), 1);
 }
 
@@ -294,7 +295,7 @@ export async function stopAll() {
     }
     if (serverInstance) {
         await serverInstance.close();
-        serverInstance = null;
+        serverInstance = undefined;
     }
 }
 

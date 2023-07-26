@@ -11,7 +11,6 @@ const { keccak256, toUtf8Bytes } = ethers.utils;
 setLogger(() => undefined);
 
 describe('aptos', () => {
-    jest.setTimeout(60000);
     let client: AptosNetwork;
     let evmNetwork: Network;
 

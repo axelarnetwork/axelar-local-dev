@@ -17,6 +17,8 @@ import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contr
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
 import http from 'http';
+import { EvmRelayer } from './relay/EvmRelayer';
+import { evmRelayer } from './relay';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
@@ -234,6 +236,7 @@ export class Network {
 
     async giveToken(address: string, alias: string, amount: bigint) {
         const symbol = this.tokens[alias] || alias;
+
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
