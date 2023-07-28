@@ -15,7 +15,6 @@ interface NetworkUsdc extends Network {
 }
 
 describe.skip("forking", () => {
-    jest.setTimeout(2000000);
 
     afterEach(async () => {
         await stopAll();

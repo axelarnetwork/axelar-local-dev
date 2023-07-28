@@ -82,13 +82,8 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
 
             // If there is no USDC token, return.
             if (!alias) return;
-
-            // Get the symbol of the USDC token.
-            const symbol = chain.tokens[alias];
-
-            // Mint 1e12 USDC tokens to the GMPExpressService contract.
-            await chain.giveToken(info.GMPExpressService.address, symbol, BigInt(1e18));
         }
+
         i++;
     }
     listen(_options.port);
@@ -107,6 +102,10 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         }
         relaying = false;
     }, _options.relayInterval);
+
+    const evmRelayer = _options.relayers['evm'];
+    evmRelayer?.subscribeExpressCall();
+
     setJSON(localChains, _options.chainOutputPath);
 }
 
@@ -165,6 +164,9 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         if (_options.afterRelay) _options.afterRelay(evmRelayer.relayData);
     }, _options.relayInterval);
 
+    const evmRelayer = _options.relayers['evm'];
+    evmRelayer?.subscribeExpressCall();
+
     setJSON(chains_local, _options.chainOutputPath);
 }
 
@@ -174,7 +176,11 @@ export async function destroyExported(relayers?: RelayerMap) {
         clearInterval(interval);
     }
 
+    await defaultEvmRelayer?.unsubscribe();
+
     if (!relayers) return;
+
+    await relayers['evm']?.unsubscribe();
 
     for (const relayerType in relayers) {
         const relayer = relayers[relayerType];

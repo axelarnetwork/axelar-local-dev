@@ -11,14 +11,14 @@ import {
     AxelarGasReceiverProxy,
     ConstAddressDeployer,
     Create3Deployer,
-    GMPExpressService,
-    GMPExpressProxyDeployer,
 } from './contracts';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
 import http from 'http';
+import { EvmRelayer } from './relay/EvmRelayer';
+import { evmRelayer } from './relay';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
@@ -43,10 +43,9 @@ export interface NetworkInfo {
     adminKeys: string[];
     threshold: number;
     lastRelayedBlock: number;
+    lastExpressedBlock: number;
     gatewayAddress: string;
     gasReceiverAddress: string;
-    expressServiceAddress: string;
-    expressProxyDeployerAddress: string;
     constAddressDeployerAddress: string;
     create3DeployerAddress: string;
     tokens: { [key: string]: string };
@@ -61,6 +60,7 @@ export interface NetworkSetup {
     adminKeys?: Wallet[];
     threshold?: number;
     lastRelayedBlock?: number;
+    lastExpressedBlock?: number;
 }
 
 /*
@@ -77,12 +77,11 @@ export class Network {
     adminWallets: Wallet[];
     threshold: number;
     lastRelayedBlock: number;
+    lastExpressedBlock: number;
     gateway: AxelarGateway;
     gasService: AxelarGasService;
     constAddressDeployer: Contract;
     create3Deployer: Contract;
-    expressService: Contract;
-    expressProxyDeployer: Contract;
     isRemote: boolean | undefined;
     url: string | undefined;
     ganacheProvider: any;
@@ -100,12 +99,11 @@ export class Network {
         this.adminWallets = networkish.adminWallets;
         this.threshold = networkish.threshold;
         this.lastRelayedBlock = networkish.lastRelayedBlock;
+        this.lastExpressedBlock = networkish.lastExpressedBlock;
         this.gateway = networkish.gateway;
         this.gasService = networkish.gasService;
         this.constAddressDeployer = networkish.constAddressDeployer;
         this.create3Deployer = networkish.create3Deployer;
-        this.expressService = networkish.expressService;
-        this.expressProxyDeployer = networkish.expressProxyDeployer;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
         this.tokens = networkish.tokens;
@@ -203,20 +201,6 @@ export class Network {
         return this.create3Deployer;
     }
 
-    async deployExpressServiceContract(): Promise<Contract> {
-        logger.log(`Deploying the Express Service Contract for ${this.name}... `);
-        const expressProxyDeployer = await deployContract(this.ownerWallet, GMPExpressProxyDeployer, [this.gateway.address]);
-        const expressService = await deployContract(this.ownerWallet, GMPExpressService, [
-            this.gateway.address,
-            expressProxyDeployer.address,
-            this.ownerWallet.address,
-        ]);
-        this.expressService = new Contract(expressService.address, GMPExpressService.abi, this.provider);
-        this.expressProxyDeployer = new Contract(expressProxyDeployer.address, GMPExpressProxyDeployer.abi, this.provider);
-        logger.log(`Deployed ExpressService at ${expressService.address}`);
-        return expressService;
-    }
-
     async deployToken(name: string, symbol: string, decimals: number, cap: bigint, address: string = ADDRESS_ZERO, alias: string = symbol) {
         logger.log(`Deploying ${name} for ${this.name}... `);
         const data = arrayify(
@@ -252,6 +236,7 @@ export class Network {
 
     async giveToken(address: string, alias: string, amount: bigint) {
         const symbol = this.tokens[alias] || alias;
+
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -279,10 +264,9 @@ export class Network {
             adminKeys: this.adminWallets.map((wallet) => wallet.privateKey),
             threshold: this.threshold,
             lastRelayedBlock: this.lastRelayedBlock,
+            lastExpressedBlock: this.lastExpressedBlock,
             gatewayAddress: this.gateway.address,
             gasReceiverAddress: this.gasService.address,
-            expressProxyDeployerAddress: this.expressProxyDeployer.address,
-            expressServiceAddress: this.expressService.address,
             constAddressDeployerAddress: this.constAddressDeployer.address,
             create3DeployerAddress: this.create3Deployer.address,
             tokens: this.tokens,
@@ -299,14 +283,6 @@ export class Network {
             constAddressDeployer: this.constAddressDeployer.address,
             create3Deployer: this.create3Deployer.address,
             tokens: this.tokens,
-            GMPExpressService: {
-                expressOperator: this.ownerWallet.address,
-                salt: 'GMPExpressService',
-                address: this.expressService.address,
-                implementation: this.expressService.address,
-                deployer: this.ownerWallet.address,
-                proxyDeployer: this.expressProxyDeployer.address,
-            },
         };
     }
 }

@@ -9,11 +9,12 @@ import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
-import { GMPExpressService, ConstAddressDeployer, GMPExpressProxyDeployer, Create3Deployer } from './contracts';
+import { ConstAddressDeployer, Create3Deployer } from './contracts';
+import { Server } from 'http';
 
 const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
 
-let serverInstance: any;
+let serverInstance: Server | undefined;
 
 export interface ChainCloneData {
     name: string;
@@ -102,11 +103,11 @@ export async function createNetwork(options: NetworkOptions = {}) {
     chain.adminWallets = wallets.splice(4, 10);
     chain.threshold = 3;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    chain.lastExpressedBlock = chain.lastRelayedBlock;
     await chain.deployConstAddressDeployer();
     await chain.deployCreate3Deployer();
     await chain.deployGateway();
     await chain.deployGasReceiver();
-    await chain.deployExpressServiceContract();
     chain.tokens = {};
     //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
 
@@ -144,14 +145,13 @@ export async function getNetwork(urlOrProvider: string | providers.Provider, inf
     chain.adminWallets = info.adminKeys.map((x) => new Wallet(x, chain.provider));
     chain.threshold = info.threshold;
     chain.lastRelayedBlock = info.lastRelayedBlock;
+    chain.lastExpressedBlock = info.lastExpressedBlock;
     chain.tokens = info.tokens;
 
     chain.constAddressDeployer = new Contract(info.constAddressDeployerAddress, ConstAddressDeployer.abi, chain.provider);
     chain.create3Deployer = new Contract(info.create3DeployerAddress, Create3Deployer.abi, chain.provider);
     chain.gateway = AxelarGatewayFactory.connect(info.gatewayAddress, chain.provider);
     chain.gasService = AxelarGasServiceFactory.connect(info.gasReceiverAddress, chain.provider);
-    chain.expressService = new Contract(info.expressServiceAddress, GMPExpressService.abi, chain.provider);
-    chain.expressProxyDeployer = new Contract(info.expressProxyDeployerAddress, GMPExpressProxyDeployer.abi, chain.provider);
     //chain.usdc = await chain.getTokenContract('aUSDC');
 
     logger.log(`Its gateway is deployed at ${chain.gateway.address}.`);
@@ -194,11 +194,11 @@ export async function setupNetwork(urlOrProvider: string | providers.Provider, o
     chain.adminWallets = options.adminKeys.map((x) => new Wallet(x, chain.provider));
     chain.threshold = options.threshold != null ? options.threshold : 1;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    chain.lastExpressedBlock = chain.lastRelayedBlock;
     await chain.deployConstAddressDeployer();
     await chain.deployCreate3Deployer();
     await chain.deployGateway();
     await chain.deployGasReceiver();
-    await chain.deployExpressServiceContract();
     chain.tokens = {};
     //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
     networks.push(chain);
@@ -256,6 +256,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.adminWallets = wallets.splice(4, 10);
     chain.threshold = 3;
     chain.lastRelayedBlock = await chain.provider.getBlockNumber();
+    chain.lastExpressedBlock = chain.lastRelayedBlock;
     chain.constAddressDeployer = new Contract(chainInfo.constAddressDeployer, ConstAddressDeployer.abi, chain.provider);
     // Delete the line below and uncomment the line after when we deploy create3Deployer
     await chain.deployCreate3Deployer();
@@ -263,8 +264,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     chain.gateway = AxelarGatewayFactory.connect(chainInfo.gateway, chain.provider);
     await chain._upgradeGateway(oldAdminAddresses, oldThreshold);
     chain.gasService = AxelarGasServiceFactory.connect(chainInfo.AxelarGasService.address, chain.provider);
-    await chain.deployExpressServiceContract();
-    
+
     chain.tokens = {
         uusdc: chain.name === 'Ethereum' ? 'USDC' : 'axlUSDC',
         uausdc: 'aUSDC',
@@ -284,8 +284,8 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
 }
 
 export async function stop(network: string | Network) {
-    if (typeof network === 'string') network = networks.find((chain) => chain.name == network)!;
-    if (network.server != null) await network.server.close();
+    if (typeof network === 'string') network = networks.find((chain) => chain.name === network)!;
+    if (network.server) await network.server.close();
     networks.splice(networks.indexOf(network), 1);
 }
 
@@ -295,7 +295,7 @@ export async function stopAll() {
     }
     if (serverInstance) {
         await serverInstance.close();
-        serverInstance = null;
+        serverInstance = undefined;
     }
 }
 

@@ -11,7 +11,6 @@ import chai from 'chai';
 const { expect } = chai;
 setLogger(() => null);
 
-jest.setTimeout(300000);
 
 function validateNetwork(network: Network) {
     // wallets
@@ -26,8 +25,6 @@ function validateNetwork(network: Network) {
     expect(network.constAddressDeployer).to.not.be.undefined;
     expect(network.create3Deployer).to.not.be.undefined;
     expect(network.gateway).to.not.be.undefined;
-    expect(network.expressService).to.not.be.undefined;
-    expect(network.expressProxyDeployer).to.not.be.undefined;
 }
 
 describe('Network', () => {
@@ -63,6 +60,7 @@ describe('Network', () => {
         network = await getNetwork(`http://localhost:${port}`);
         validateNetwork(network);
     });
+
     it('should deploy a network on a preexisting chain', async () => {
         const port = 8600;
         const accounts = defaultAccounts(20);

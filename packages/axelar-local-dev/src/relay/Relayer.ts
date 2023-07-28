@@ -40,7 +40,13 @@ export abstract class Relayer {
         await this.updateEvents();
 
         await this.execute(this.commands);
+    }
 
-        this.commands = {};
+    async subscribeExpressCall() {
+        // this is a no-op by default
+    }
+
+    unsubscribe() {
+        // this is a no-op by default
     }
 }

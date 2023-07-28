@@ -6,4 +6,5 @@ module.exports = {
     },
     testRegex: '/__tests__/.*\\.(test|spec)?\\.(ts)$',
     transformIgnorePatterns: ['<rootDir>/node_modules/'],
+    testTimeout: 300000,
 };

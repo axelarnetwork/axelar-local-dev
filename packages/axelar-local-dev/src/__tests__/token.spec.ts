@@ -9,7 +9,6 @@ const { expect } = chai;
 
 setLogger(() => undefined);
 
-jest.setTimeout(300000);
 
 describe('token', () => {
     let chain: Network;
