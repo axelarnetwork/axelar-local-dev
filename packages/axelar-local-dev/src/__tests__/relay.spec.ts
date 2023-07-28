@@ -254,7 +254,7 @@ describe('relay', () => {
     describe('gmp express', () => {
         const amount = 1e6;
 
-        it.only('should be able to relay a valid gmp-express call', async () => {
+        it('should be able to relay a valid gmp-express call', async () => {
             // source chain contract doesn't need to be proxy contract. it can be a normal contract
             const contract1 = await deployContract(user1, ExpressWithToken, [chain1.gateway.address, chain1.gasService.address]);
 
