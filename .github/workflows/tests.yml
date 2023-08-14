@@ -31,8 +31,6 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Clean
-        run: npm run clean
       - name: Test
         timeout-minutes: 15
         run: |
