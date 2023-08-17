@@ -18,13 +18,18 @@
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
     "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
     "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
+    "test:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run test",
     "build": "lerna run build",
     "build:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run build",
     "build:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run build",
-    "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build"
+    "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build",
+    "build:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run test"
   },
   "devDependencies": {
     "lerna": "^6.6.1",
     "lerna-update-wizard": "^1.1.2"
+  },
+  "dependencies": {
+    "@mysten/sui.js": "^0.0.0-experimental-20230814210706"
   }
 }

@@ -1,0 +1,23 @@
+{
+    "name": "@axelar-network/axelar-local-dev-sui",
+    "version": "2.0.5",
+    "main": "dist/index.js",
+    "files": [
+        "dist/",
+        "!dist/types",
+        "!dist/artifacts"
+    ],
+    "scripts": {
+        "test": "jest",
+        "build-ts": "tsc",
+        "clean": "rm -rf src/types dist artifacts",
+        "prettier": "prettier --write 'src/**/*.ts'"
+    },
+    "dependencies": {
+        "@mysten-labs/sui": "git://github.com/MystenLabs/sui.git#c49bdb3a96ea0975c56e5332c3776e03c1497dce",
+        "@axelar-network/axelar-local-dev": "2.0.5"
+    },
+    "author": "euro@axelar.network",
+    "license": "ISC",
+    "description": ""
+}
