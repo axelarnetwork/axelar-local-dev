@@ -1,0 +1,27 @@
+{
+    "name": "@axelar-network/axelar-local-dev-multiversx",
+    "version": "0.0.1",
+    "main": "dist/index.js",
+    "files": [
+        "dist/",
+        "!dist/types",
+        "!dist/artifacts"
+    ],
+    "scripts": {
+        "contract-test": "npx hardhat test",
+        "test": "jest",
+        "build-ts": "tsc",
+        "build-multiversx": "bash ./__tests__/modules/build.sh",
+        "build-contract": "hardhat compile",
+        "build": "run-s clean build-ts build-contract build-multiversx",
+        "clean": "rm -rf src/types dist artifacts",
+        "prettier": "prettier --write 'src/**/*.ts'"
+    },
+    "dependencies": {
+        "@axelar-network/axelar-local-dev": "2.0.5",
+        "@multiversx/sdk-core": "^12.5.0"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": ""
+}
