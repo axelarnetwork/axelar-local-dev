@@ -21,7 +21,7 @@ import { Command as AptosCommand } from './Command';
 
 const AddressZero = ethers.constants.AddressZero;
 
-export class AptosRelayer extends Relayer {
+export class MultiversXRelayer extends Relayer {
     constructor() {
         super();
     }

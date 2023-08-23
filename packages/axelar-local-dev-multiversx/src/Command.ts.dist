@@ -6,7 +6,7 @@ import { CallContractArgs, RelayData } from '@axelar-network/axelar-local-dev';
 import { HexString } from 'aptos';
 import { aptosNetwork } from './aptosNetworkUtils';
 
-//An internal class for handling axelar commands.
+//An internal class for handling MultiversX commands.
 export class Command {
     commandId: string;
     name: string;
@@ -25,11 +25,11 @@ export class Command {
         this.commandId = commandId;
         this.name = name;
         this.data = data;
-        this.encodedData = chain === 'aptos' && name === 'approve_contract_call' ? '' : defaultAbiCoder.encode(dataSignature, data);
+        this.encodedData = chain === 'multiversx' && name === 'approve_contract_call' ? '' : defaultAbiCoder.encode(dataSignature, data);
         this.post = post;
     }
 
-    static createAptosContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
+    static createContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
         return new Command(
             commandId,
             'approve_contract_call',
@@ -45,7 +45,7 @@ export class Command {
                 relayData.callContract[commandId].execution = tx.hash;
                 return tx;
             },
-            'aptos'
+            'multiversx'
         );
     };
 }

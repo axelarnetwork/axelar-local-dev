@@ -6,12 +6,6 @@
     "bracketSpacing": true,
     "overrides": [
         {
-            "files": "*.sol",
-            "options": {
-                "explicitTypes": "always"
-            }
-        },
-        {
             "files": "*.js",
             "options": {
                 "trailingComma": "all"

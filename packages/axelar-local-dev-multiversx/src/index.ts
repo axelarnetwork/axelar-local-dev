@@ -1,4 +1,4 @@
-export * from './AptosNetwork';
-export * from './aptosNetworkUtils';
-export * from './AptosRelayer';
+export * from './MultiversXNetwork';
+export * from './multiversXNetworkUtils';
+// export * from './MultiversXRelayer';
 export * from './utils';
