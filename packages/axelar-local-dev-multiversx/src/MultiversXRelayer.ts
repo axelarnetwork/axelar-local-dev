@@ -1,8 +1,6 @@
 import { ethers } from 'ethers';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
-import { aptosNetwork } from './aptosNetworkUtils';
 import { getAptosLogID } from './utils';
-import { HexString } from 'aptos';
 import {
     logger,
     getSignedExecuteInput,
@@ -17,7 +15,8 @@ import {
     NativeGasPaidForContractCallArgs,
     RelayData,
 } from '@axelar-network/axelar-local-dev';
-import { Command as AptosCommand } from './Command';
+import { Command as MultiversXCommand } from './Command';
+import { multiversXNetwork } from './multiversXNetworkUtils';
 
 const AddressZero = ethers.constants.AddressZero;
 
@@ -27,8 +26,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     setRelayer(type: RelayerType, _: Relayer) {
-        if (type === 'near') {
-            console.log('near not supported yet');
+        if (type === 'near' || type === 'aptos') {
+            console.log('near or aptos not supported yet');
         }
     }
 
@@ -38,11 +37,11 @@ export class MultiversXRelayer extends Relayer {
     }
 
     async execute(commands: RelayCommand) {
-        await this.executeAptosToEvm(commands);
-        await this.executeEvmToAptos(commands);
+        await this.executeMultiversXToEvm(commands);
+        await this.executeEvmToMultiversX(commands);
     }
 
-    async executeAptosToEvm(commandList: RelayCommand) {
+    async executeMultiversXToEvm(commandList: RelayCommand) {
         for (const to of networks) {
             const commands = commandList[to.name];
             if (commands.length == 0) continue;
@@ -52,25 +51,25 @@ export class MultiversXRelayer extends Relayer {
         }
     }
 
-    private async executeEvmToAptos(commands: RelayCommand) {
-        const toExecute = commands['aptos'];
+    private async executeEvmToMultiversX(commands: RelayCommand) {
+        const toExecute = commands['multiversx'];
         if (toExecute?.length === 0) return;
 
-        await this.executeAptosGateway(toExecute);
-        await this.executeAptosExecutable(toExecute);
+        await this.executeMultiversXGateway(toExecute);
+        await this.executeMultiversXExecutable(toExecute);
     }
 
-    private async executeAptosGateway(commands: Command[]) {
-        if (!aptosNetwork) return;
+    private async executeMultiversXGateway(commands: Command[]) {
+        if (!multiversXNetwork) return;
         for (const command of commands) {
-            const commandId = new HexString(command.commandId).toUint8Array();
-            const payloadHash = new HexString(command.data[3]).toUint8Array();
-            await aptosNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
+            // const commandId = new HexString(command.commandId).toUint8Array();
+            // const payloadHash = new HexString(command.data[3]).toUint8Array();
+            // await multiversXNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
         }
     }
 
-    private async executeAptosExecutable(commands: Command[]) {
-        if (!aptosNetwork) return;
+    private async executeMultiversXExecutable(commands: Command[]) {
+        if (!multiversXNetwork) return;
         for (const command of commands) {
             if (!command.post) continue;
 
@@ -136,50 +135,51 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async updateGasEvents() {
-        const events = await aptosNetwork.queryPayGasContractCallEvents();
-        aptosNetwork.updatePayGasContractCallSequence(events);
-
-        for (const event of events) {
-            const args: NativeGasPaidForContractCallArgs = {
-                sourceAddress: event.data.source_address,
-                destinationAddress: event.data.destination_address,
-                gasFeeAmount: event.data.gas_fee_amount,
-                destinationChain: event.data.destination_chain,
-                payloadHash: event.data.payload_hash,
-                refundAddress: event.data.refund_address,
-                gasToken: AddressZero,
-            };
-
-            this.contractCallGasEvents.push(args);
-        }
+        // const events = await multiversXNetwork.queryPayGasContractCallEvents();
+        // multiversXNetwork.updatePayGasContractCallSequence(events);
+        //
+        // for (const event of events) {
+        //     const args: NativeGasPaidForContractCallArgs = {
+        //         sourceAddress: event.data.source_address,
+        //         destinationAddress: event.data.destination_address,
+        //         gasFeeAmount: event.data.gas_fee_amount,
+        //         destinationChain: event.data.destination_chain,
+        //         payloadHash: event.data.payload_hash,
+        //         refundAddress: event.data.refund_address,
+        //         gasToken: AddressZero,
+        //     };
+        //
+        //     this.contractCallGasEvents.push(args);
+        // }
     }
 
     private async updateCallContractEvents() {
-        const events = await aptosNetwork.queryContractCallEvents();
-        aptosNetwork.updateContractCallSequence(events);
-
-        for (const event of events) {
-            const commandId = getAptosLogID('aptos', event);
-
-            const contractCallArgs: CallContractArgs = {
-                from: 'aptos',
-                to: event.data.destinationChain,
-                sourceAddress: event.data.sourceAddress,
-                destinationContractAddress: event.data.destinationAddress,
-                payload: event.data.payload,
-                payloadHash: event.data.payloadHash,
-                transactionHash: '',
-                sourceEventIndex: 0,
-            };
-            this.relayData.callContract[commandId] = contractCallArgs;
-            const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
-            this.commands[contractCallArgs.to].push(command);
-        }
+        // const events = await multiversXNetwork.queryContractCallEvents();
+        // multiversXNetwork.updateContractCallSequence(events);
+        //
+        // for (const event of events) {
+        //     const commandId = getAptosLogID('aptos', event);
+        //
+        //     const contractCallArgs: CallContractArgs = {
+        //         from: 'multiversx',
+        //         to: event.data.destinationChain,
+        //         sourceAddress: event.data.sourceAddress,
+        //         destinationContractAddress: event.data.destinationAddress,
+        //         payload: event.data.payload,
+        //         payloadHash: event.data.payloadHash,
+        //         transactionHash: '',
+        //         sourceEventIndex: 0,
+        //     };
+        //     this.relayData.callContract[commandId] = contractCallArgs;
+        //     const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
+        //     this.commands[contractCallArgs.to].push(command);
+        // }
     }
 
     createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
-        return AptosCommand.createAptosContractCallCommand(commandId, relayData, contractCallArgs);
+        return MultiversXCommand.createContractCallCommand(commandId, relayData, contractCallArgs);
     }
+
     createCallContractWithTokenCommand(): Command {
         throw new Error('Method not implemented.');
     }

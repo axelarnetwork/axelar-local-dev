@@ -1,7 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "test": "tsx test.ts"
+    "start": "tsx start.ts",
+    "deploy": "tsx deploy.ts",
+    "execute": "tsx execute.ts"
   },
   "devDependencies": {
     "tsx": "^3.12.7",

@@ -25,7 +25,9 @@
     "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build",
     "build:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run build",
 
-    "temp": "cd temp && npm run test"
+    "temp:start": "cd temp && npm run start",
+    "temp:deploy": "cd temp && npm run deploy",
+    "temp:execute": "cd temp && npm run execute"
   },
   "devDependencies": {
     "lerna": "^6.6.1",

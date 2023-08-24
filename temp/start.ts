@@ -1,32 +1,27 @@
 const { Wallet, ethers } = require('ethers');
-const { createAndExport } = require('@axelar-network/axelar-local-dev');
+const { createAndExport, Network } = require('@axelar-network/axelar-local-dev');
 const { EvmRelayer } = require('@axelar-network/axelar-local-dev/dist/relay/EvmRelayer');
-const { AptosRelayer } = require('@axelar-network/axelar-local-dev-aptos');
-const { createMultiversXNetwork } = require('@axelar-network/axelar-local-dev-multiversx');
+const { createMultiversXNetwork, MultiversXRelayer } = require('@axelar-network/axelar-local-dev-multiversx');
 const path = require('path');
 
 // Define the path where chain configuration files with deployed contract addresses will be stored
 const outputPath = path.resolve(__dirname, '../..', 'chain-config', 'local.json');
 
-const wallet = new Wallet('0x39ee7aeb81c863f98d4929c62620c6bee01bdad16f7b2c860eb6c33d1a521a38');
+export const wallet = new Wallet('0x39ee7aeb81c863f98d4929c62620c6bee01bdad16f7b2c860eb6c33d1a521a38');
 
 // A list of addresses to be funded with the native token
 const fundAddresses = [wallet.address];
 
-// A callback function that takes a Network object and an info object as parameters
-// The info object should look similar to this file: https://github.com/axelarnetwork/axelar-cgp-solidity/blob/main/info/testnet.json.
-const callback = (chain: Network, info: any) => {};
-
 // A list of EVM chain names to be initialized
-const chains = ["Avalanche", "Ethereum"];
+export const chains = ["Avalanche", "Ethereum"];
 
 const evmRelayer = new EvmRelayer();
-const aptosRelayer = new AptosRelayer();
+const multiversXRelayer = new MultiversXRelayer();
 
 // Define the chain stacks that the networks will relay transactions between
-const relayers = { evm: evmRelayer, aptos: aptosRelayer };
+const relayers = { evm: evmRelayer, multiversx: multiversXRelayer };
 
-evmRelayer.setRelayer('aptos', relayers.aptos);
+evmRelayer.setRelayer('multiversx', relayers.multiversx);
 
 // Number of milliseconds to periodically trigger the relay function and send all pending crosschain transactions to the destination chain
 const relayInterval = 5000
@@ -48,15 +43,15 @@ const start = async () => {
         gatewayUrl: 'http://0.0.0.0:7950',
     });
 
-    // await createAndExport({
-    //     chainOutputPath: outputPath,
-    //     accountsToFund: fundAddresses,
-    //     callback: (chain, _info) => deployAndFundUsdc(chain, fundAddresses),
-    //     chains: chains.length !== 0 ? chains : null,
-    //     relayInterval: relayInterval,
-    //     relayers,
-    //     port,
-    // });
+    await createAndExport({
+        chainOutputPath: outputPath,
+        accountsToFund: fundAddresses,
+        callback: (chain: Network, info: any) => deployAndFundUsdc(chain, fundAddresses),
+        chains: chains.length !== 0 ? chains : null,
+        relayInterval: relayInterval,
+        relayers,
+        port,
+    });
 }
 
 start();

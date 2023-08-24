@@ -18,6 +18,7 @@ const AddressZero = ethers.constants.AddressZero;
 interface EvmRelayerOptions {
     nearRelayer?: Relayer;
     aptosRelayer?: Relayer;
+    multiversXRelayer?: Relayer;
 }
 
 export class EvmRelayer extends Relayer {
@@ -27,6 +28,7 @@ export class EvmRelayer extends Relayer {
         super();
         this.otherRelayers.near = options.nearRelayer;
         this.otherRelayers.aptos = options.aptosRelayer;
+        this.otherRelayers.multiversx = options.multiversXRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {
