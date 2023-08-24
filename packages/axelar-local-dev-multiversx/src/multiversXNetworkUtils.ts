@@ -8,8 +8,10 @@ export interface MultiversXNetworkConfig {
     gatewayUrl: string;
 }
 
-interface MultiversXConfig {
+export interface MultiversXConfig {
+    axelarAuthAddress: string;
     axelarGatewayAddress: string;
+    axelarGasReceiverAddress: string;
 }
 
 function createMultiversXConfig(config: MultiversXConfig) {
@@ -38,22 +40,28 @@ function getMultiversXConfig(): MultiversXConfig | undefined {
 export async function createMultiversXNetwork(config?: MultiversXNetworkConfig): Promise<MultiversXNetwork> {
     const configFile = getMultiversXConfig();
 
-    console.log('MultiversX config', configFile);
-
     const gatewayUrl = config?.gatewayUrl || 'http://localhost:7950';
-    const loadingMultiversXNetwork = new MultiversXNetwork(gatewayUrl, configFile?.axelarGatewayAddress);
+    const loadingMultiversXNetwork = new MultiversXNetwork(
+        gatewayUrl,
+        configFile?.axelarGatewayAddress,
+        configFile?.axelarAuthAddress,
+        configFile?.axelarGasReceiverAddress
+    );
 
     // Check if whether the gateway is deployed
     const isGatewayDeployed = await loadingMultiversXNetwork.isGatewayDeployed();
 
     // Deploy multiversx framework modules, skip if already deployed
     if (!isGatewayDeployed) {
-        createMultiversXConfig({ axelarGatewayAddress: 'test' });
+        try {
+            const multiversXConfig = await loadingMultiversXNetwork.deployAxelarFrameworkModules();
 
-        // const tx = await loadingMultiversXNetwork.deployAxelarFrameworkModules().catch((e: any) => {
-        //     console.error(e);
-        // });
-        // console.log('Deployed Axelar Framework modules:', tx.hash);
+            createMultiversXConfig(multiversXConfig);
+
+            console.log('Deployed Axelar Framework modules for MultiversX');
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     // update the sequence number
@@ -64,9 +72,15 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
     // loadingMultiversXNetwork.updatePayGasContractCallSequence(payGasEvents);
 
     multiversXNetwork = loadingMultiversXNetwork;
+
     return multiversXNetwork;
 }
 
-export async function loadMultiversXNetwork(gatewayUrl = 'http://localhost:7950', axelarGatewayAddress: string) {
-    multiversXNetwork = new MultiversXNetwork(gatewayUrl, axelarGatewayAddress);
+export async function loadMultiversXNetwork(
+    gatewayUrl = 'http://localhost:7950',
+    axelarGatewayAddress: string,
+    axelarAuthAddress: string,
+    axelarGasReceiverAddress: string
+) {
+    multiversXNetwork = new MultiversXNetwork(gatewayUrl, axelarGatewayAddress, axelarAuthAddress, axelarGasReceiverAddress);
 }
