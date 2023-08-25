@@ -1,4 +1,6 @@
-const { Wallet, ethers } = require('ethers');
+import { chains, wallet } from './utils';
+
+const { ethers } = require('ethers');
 const { createAndExport, Network } = require('@axelar-network/axelar-local-dev');
 const { EvmRelayer } = require('@axelar-network/axelar-local-dev/dist/relay/EvmRelayer');
 const { createMultiversXNetwork, MultiversXRelayer } = require('@axelar-network/axelar-local-dev-multiversx');
@@ -7,13 +9,8 @@ const path = require('path');
 // Define the path where chain configuration files with deployed contract addresses will be stored
 const outputPath = path.resolve(__dirname, '../..', 'chain-config', 'local.json');
 
-export const wallet = new Wallet('0x39ee7aeb81c863f98d4929c62620c6bee01bdad16f7b2c860eb6c33d1a521a38');
-
 // A list of addresses to be funded with the native token
 const fundAddresses = [wallet.address];
-
-// A list of EVM chain names to be initialized
-export const chains = ["Avalanche", "Ethereum"];
 
 const evmRelayer = new EvmRelayer();
 const multiversXRelayer = new MultiversXRelayer();

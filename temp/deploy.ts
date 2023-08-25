@@ -1,36 +1,70 @@
-import path from 'path';
+import { chains, getEVMChains, wallet } from './utils';
 
-const { getDefaultProvider } = require('ethers');
-const fs = require('fs-extra');
+const {
+    utils: { setJSON },
+} = require('@axelar-network/axelar-local-dev');
+const { getDefaultProvider, utils } = require('ethers');
 
 
-import { chains, wallet } from './start';
-import { preDeploy as examplePreDeploy, deploy as exampleDeploy } from './call-contract'
+deploy(getEVMChains(chains), wallet, require('./call-contract'));
 
-deploy(getEVMChains(chains), wallet);
+async function deploy(chains, wallet, example) {
+    await preDeploy(chains, wallet, example);
+    await doDeploy(chains, wallet, example);
+    await postDeploy(chains, wallet, example);
 
-async function deploy(chains, wallet) {
-    await preDeploy();
-    await doDeploy(chains, wallet);
+    // Serialize the contracts by storing the human-readable abi with the address in the json file.
+    for (const chain of chains) {
+        for (const key of Object.keys(chain)) {
+            if (isSerializableContract(chain[key])) {
+                chain[key] = serializeContract(chain[key]);
+            }
+        }
+
+        // Remove the wallet from the chain objects.
+        delete chain.wallet;
+    }
+
+    // Write the chain objects to the json file.
+    setJSON(chains, `./chain-config/local.json`);
 }
 
-function preDeploy() {
-    return examplePreDeploy();
+// Run the preDeploy function if it exists.
+function preDeploy(chains, wallet, example) {
+    if (!example.preDeploy) return;
+
+    return example.preDeploy(chains, wallet);
 }
 
-function doDeploy(chains, wallet) {
+// Deploy the contracts.
+function doDeploy(chains, wallet, example) {
     const deploys = chains.map((chain) => {
         const provider = getDefaultProvider(chain.rpc);
-        return exampleDeploy(chain, wallet.connect(provider));
+        return example.deploy(chain, wallet.connect(provider));
     });
 
     return Promise.all(deploys);
 }
 
+// Run the postDeploy function if it exists.
+function postDeploy(chains, wallet, example) {
+    if (!example.postDeploy) return;
 
-function getEVMChains(selectedChains) {
-    return fs
-        .readJsonSync(path.join(__dirname, './chain-config/local.json'))
-        .filter((chain) => selectedChains.includes(chain.name));
+    const deploys = chains.map((chain) => {
+        const provider = getDefaultProvider(chain.rpc);
+        return example.postDeploy(chain, chains, wallet.connect(provider));
+    });
+
+    return Promise.all(deploys);
 }
 
+function serializeContract(contract) {
+    return {
+        abi: contract.interface.format(utils.FormatTypes.full),
+        address: contract.address,
+    };
+}
+
+function isSerializableContract(obj) {
+    return obj && obj.interface;
+}

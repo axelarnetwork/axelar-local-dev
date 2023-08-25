@@ -8,6 +8,7 @@
   "devDependencies": {
     "tsx": "^3.12.7",
     "typescript": "^5.0.4",
-    "@axelar-network/axelar-local-dev": "3.0.0"
+    "@axelar-network/axelar-local-dev": "3.0.0",
+    "@axelar-network/axelarjs-sdk": "^0.12.8"
   }
 }
