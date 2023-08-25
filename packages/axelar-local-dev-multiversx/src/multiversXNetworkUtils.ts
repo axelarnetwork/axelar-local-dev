@@ -14,6 +14,15 @@ export interface MultiversXConfig {
     axelarGasReceiverAddress: string;
 }
 
+export function updateMultiversXConfig(extra: any) {
+    const currentConfig = getMultiversXConfig();
+
+    createMultiversXConfig({
+        ...currentConfig,
+        ...extra,
+    });
+}
+
 function createMultiversXConfig(config: MultiversXConfig) {
     console.log('creating MultiversX config file');
 
@@ -21,7 +30,7 @@ function createMultiversXConfig(config: MultiversXConfig) {
     fs.writeFileSync(configPath, JSON.stringify(config));
 }
 
-function getMultiversXConfig(): MultiversXConfig | undefined {
+export function getMultiversXConfig(): MultiversXConfig | undefined {
     const configPath = path.join(__dirname, '..', 'multiversxConfig.json');
 
     if (!fs.existsSync(configPath)) {
@@ -78,9 +87,21 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
 
 export async function loadMultiversXNetwork(
     gatewayUrl = 'http://localhost:7950',
-    axelarGatewayAddress: string,
-    axelarAuthAddress: string,
-    axelarGasReceiverAddress: string
 ) {
-    multiversXNetwork = new MultiversXNetwork(gatewayUrl, axelarGatewayAddress, axelarAuthAddress, axelarGasReceiverAddress);
+    const configFile = getMultiversXConfig();
+
+    multiversXNetwork = new MultiversXNetwork(
+        gatewayUrl,
+        configFile?.axelarGatewayAddress,
+        configFile?.axelarAuthAddress,
+        configFile?.axelarGasReceiverAddress
+    );
+
+    const isGatewayDeployed = await multiversXNetwork.isGatewayDeployed();
+
+    if (!isGatewayDeployed) {
+        throw new Error('Axelar Gateway contract is not deployed on MultiversX!');
+    }
+
+    return multiversXNetwork;
 }

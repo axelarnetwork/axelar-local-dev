@@ -1,10 +1,10 @@
 import {
     Account,
     Address, AddressType, AddressValue, ArrayVec, BigUIntType, BigUIntValue,
-    CodeMetadata, CompositeValue, ContractFunction,
+    CodeMetadata, CompositeValue, ContractFunction, Interaction,
     ITransactionOnNetwork, List, ResultsParser, ReturnCode,
     SmartContract, StructType, Transaction,
-    TransactionWatcher, Tuple, TupleType, VariadicValue
+    TransactionWatcher, Tuple, TupleType, TypedValue, VariadicValue
 } from '@multiversx/sdk-core/out';
 import { AccountOnNetwork, ProxyNetworkProvider, TransactionOnNetwork } from '@multiversx/sdk-network-providers/out';
 import { Code } from '@multiversx/sdk-core';
@@ -97,6 +97,39 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
             return false;
         }
+    }
+
+    async deployContract(contract: string, initArguments: TypedValue[]): Promise<string> {
+        const homedir = os.homedir();
+        const ownerWalletFile = path.resolve(homedir, 'multiversx-sdk/testwallets/latest/users/alice.pem')
+
+        const file = fs.readFileSync(ownerWalletFile).toString();
+        const privateKey = UserSecretKey.fromPem(file);
+
+        const buffer = await promises.readFile(contract);
+
+        const code = Code.fromBuffer(buffer);
+        const authContract = new SmartContract();
+
+        const deployTransaction = authContract.deploy({
+            deployer: this.owner,
+            code,
+            codeMetadata: new CodeMetadata(true, true, false, false),
+            initArguments,
+            gasLimit: 50_000_000,
+            chainID: 'localnet',
+        });
+        deployTransaction.setNonce(this.ownerAccount.getNonceThenIncrement());
+
+        const returnCode = await this.signAndSendTransaction(deployTransaction, privateKey);
+
+        if (!returnCode.isSuccess()) {
+            throw new Error(`Could not deploy Contract...`);
+        }
+
+        const contractAddress = SmartContract.computeAddress(deployTransaction.getSender(), deployTransaction.getNonce());
+
+        return contractAddress.bech32();
     }
 
     //
@@ -255,6 +288,17 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         return returnCode;
     }
+
+    async callContract(address: string, func: string, args: any[] = []): Promise<any> {
+        const contract = new SmartContract({
+            address: new Address(address),
+        });
+
+        const query = new Interaction(contract, new ContractFunction(func), args).buildQuery();
+
+        return await super.queryContract(query);
+    }
+
     //
     // updateContractCallSequence(events: any[]) {
     //     const lastSequence = this.getLatestEventSequence(events);

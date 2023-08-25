@@ -28,19 +28,19 @@ async function executeMultiversXExample(chains, args, wallet, example) {
 
     // Get source and destination chains.
     // TODO: Change these
-    const source = chains.find((chain) => chain.name === 'Avalanche');
+    // const source = chains.find((chain) => chain.name === 'Avalanche');
     const destination = chains.find((chain) => chain.name === 'Ethereum');
 
     // Listen for GMP events on testnet for printing an Axelarscan link for tracking.
-    const startBlockNumber = await source.provider.getBlockNumber();
-    listenForGMPEvent(source, startBlockNumber);
+    // const startBlockNumber = await source.provider.getBlockNumber();
+    // listenForGMPEvent(source, startBlockNumber);
 
     // Execute the example script.
     await example.execute(chains, wallet, {
-        calculateBridgeFee,
-        getDepositAddress: (source, destination, destinationAddress, symbol) =>
-            getDepositAddress(source, destination, destinationAddress, symbol),
-        source,
+        // calculateBridgeFee,
+        // getDepositAddress: (source, destination, destinationAddress, symbol) =>
+        //     getDepositAddress(source, destination, destinationAddress, symbol),
+        // source,
         destination,
     });
 
