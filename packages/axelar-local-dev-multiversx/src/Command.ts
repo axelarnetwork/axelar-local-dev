@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 const { defaultAbiCoder } = ethers.utils;
 import { CallContractArgs, RelayData } from '@axelar-network/axelar-local-dev';
 import { multiversXNetwork } from './multiversXNetworkUtils';
+import createKeccakHash from "keccak";
 
 //An internal class for handling MultiversX commands.
 export class Command {
@@ -29,20 +30,32 @@ export class Command {
     }
 
     static createContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
+        // Remove 0x added by Ethereum for hex strings
+        const properPayloadHex = args.payload.startsWith('0x') ? args.payload.substring(2) : args.payload;
+
+        console.log('Proper payload', properPayloadHex);
+
+        const properPayloadHash = createKeccakHash('keccak256').update(Buffer.from(properPayloadHex, 'hex')).digest('hex');
+
+        console.log('generated payload hash', properPayloadHash);
+
         return new Command(
             commandId,
             'approveContractCall',
-            [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.transactionHash, args.sourceEventIndex],
-            [], // TODO: Setup proper signature
+            [args.from, args.sourceAddress, args.destinationContractAddress, properPayloadHash, args.transactionHash, args.sourceEventIndex],
+            [],
             async () => {
-                // const tx = await multiversXNetwork.execute(
-                //     new HexString(commandId).toUint8Array(),
-                //     args.destinationContractAddress,
-                //     new HexString(args.payload).toUint8Array()
-                // );
-                //
-                // relayData.callContract[commandId].execution = tx.hash;
-                // return tx;
+                const tx = await multiversXNetwork.executeContract(
+                    commandId,
+                    args.destinationContractAddress,
+                    args.from,
+                    args.sourceAddress,
+                    properPayloadHex,
+                );
+
+                relayData.callContract[commandId].execution = tx.getHash();
+
+                return tx;
             },
             'multiversx'
         );

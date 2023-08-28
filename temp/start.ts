@@ -21,11 +21,11 @@ const relayers = { evm: evmRelayer, multiversx: multiversXRelayer };
 evmRelayer.setRelayer('multiversx', relayers.multiversx);
 
 // Number of milliseconds to periodically trigger the relay function and send all pending crosschain transactions to the destination chain
-const relayInterval = 5000
+const relayInterval = 6000;
 
 // A port number for the RPC endpoint. The endpoint for each chain can be accessed by the 0-based index of the chains array.
 // For example, if your chains array is ["Avalanche", "Fantom", "Moonbeam"], then http://localhost:8500/0 is the endpoint for the local Avalanche chain.
-const port = 8500
+const port = 8500;
 
 async function deployAndFundUsdc(chain, toFund) {
     await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, ethers.utils.parseEther('1000'));

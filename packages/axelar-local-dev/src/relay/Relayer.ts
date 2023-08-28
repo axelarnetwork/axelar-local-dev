@@ -2,7 +2,7 @@ import { networks } from '../Network';
 import { Command } from './Command';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 
-export type RelayerType = 'near' | 'aptos' | 'evm';
+export type RelayerType = 'near' | 'aptos' | 'evm' | 'multiversx';
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 
 export abstract class Relayer {
@@ -36,6 +36,7 @@ export abstract class Relayer {
         }
         this.commands['aptos'] = [];
         this.commands['near'] = [];
+        this.commands['multiversx'] = [];
         // Update all events at the source chains
         await this.updateEvents();
 

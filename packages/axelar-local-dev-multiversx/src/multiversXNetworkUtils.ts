@@ -12,6 +12,7 @@ export interface MultiversXConfig {
     axelarAuthAddress: string;
     axelarGatewayAddress: string;
     axelarGasReceiverAddress: string;
+    contractAddress?: string;
 }
 
 export function updateMultiversXConfig(extra: any) {
@@ -30,7 +31,7 @@ function createMultiversXConfig(config: MultiversXConfig) {
     fs.writeFileSync(configPath, JSON.stringify(config));
 }
 
-export function getMultiversXConfig(): MultiversXConfig | undefined {
+function getMultiversXConfig(): MultiversXConfig | undefined {
     const configPath = path.join(__dirname, '..', 'multiversxConfig.json');
 
     if (!fs.existsSync(configPath)) {
@@ -54,7 +55,8 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
         gatewayUrl,
         configFile?.axelarGatewayAddress,
         configFile?.axelarAuthAddress,
-        configFile?.axelarGasReceiverAddress
+        configFile?.axelarGasReceiverAddress,
+        configFile?.contractAddress,
     );
 
     // Check if whether the gateway is deployed
@@ -94,7 +96,8 @@ export async function loadMultiversXNetwork(
         gatewayUrl,
         configFile?.axelarGatewayAddress,
         configFile?.axelarAuthAddress,
-        configFile?.axelarGasReceiverAddress
+        configFile?.axelarGasReceiverAddress,
+        configFile?.contractAddress,
     );
 
     const isGatewayDeployed = await multiversXNetwork.isGatewayDeployed();

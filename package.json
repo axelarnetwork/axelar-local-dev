@@ -12,7 +12,7 @@
     "bootstrap": "lerna bootstrap",
     "postinstall": "lerna bootstrap",
     "link": "lerna link",
-    "test": "lerna run temp",
+    "test": "lerna run test",
     "update": "lerna update",
     "clean": "lerna clean",
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
@@ -27,7 +27,8 @@
 
     "temp:start": "cd temp && npm run start",
     "temp:deploy": "cd temp && npm run deploy",
-    "temp:execute": "cd temp && npm run execute"
+    "temp:execute": "cd temp && npm run execute",
+    "temp:build": "cd temp && npm run build"
   },
   "devDependencies": {
     "lerna": "^6.6.1",

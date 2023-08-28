@@ -3,7 +3,8 @@
   "scripts": {
     "start": "tsx start.ts",
     "deploy": "tsx deploy.ts",
-    "execute": "tsx execute.ts"
+    "execute": "tsx execute.ts",
+    "build": "rm -rf artifacts && npx hardhat clean && npx hardhat compile && cd call-contract/hello-world && mxpy contract build"
   },
   "devDependencies": {
     "tsx": "^3.12.7",

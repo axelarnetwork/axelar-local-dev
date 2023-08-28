@@ -42,6 +42,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     async executeMultiversXToEvm(commandList: RelayCommand) {
+        console.log('Execute MultiversX to EVM...');
+
         for (const to of networks) {
             const commands = commandList[to.name];
             if (commands.length == 0) continue;
@@ -52,6 +54,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeEvmToMultiversX(commands: RelayCommand) {
+        console.log('Execute EVM to MultiversX...')
+
         const toExecute = commands['multiversx'];
         if (toExecute?.length === 0) return;
 
@@ -60,15 +64,17 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeMultiversXGateway(commands: Command[]) {
+        console.log('Execute MultiversX Gateway...')
+
         if (!multiversXNetwork) return;
         for (const command of commands) {
-            // const commandId = new HexString(command.commandId).toUint8Array();
-            // const payloadHash = new HexString(command.data[3]).toUint8Array();
-            // await multiversXNetwork.approveContractCall(commandId, command.data[0], command.data[1], command.data[2], payloadHash);
+            await multiversXNetwork.executeGateway(command.name, command.commandId, command.data[0], command.data[1], command.data[2], command.data[3], command.data[4], command.data[5]);
         }
     }
 
     private async executeMultiversXExecutable(commands: Command[]) {
+        console.log('Execute MultiversX Executable...')
+
         if (!multiversXNetwork) return;
         for (const command of commands) {
             if (!command.post) continue;
@@ -78,6 +84,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeEvmGateway(to: Network, commands: Command[]): Promise<void> {
+        console.log('Execute Evm Gateway...')
+
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -93,6 +101,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeEvmExecutable(to: Network, commands: Command[], execution: any): Promise<void> {
+        console.log('Execute Evm Executable...')
+
         for (const command of commands) {
             if (command.post == null) continue;
 
@@ -135,6 +145,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async updateGasEvents() {
+        console.log('Update Gas Events...')
+
         // const events = await multiversXNetwork.queryPayGasContractCallEvents();
         // multiversXNetwork.updatePayGasContractCallSequence(events);
         //
@@ -154,6 +166,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async updateCallContractEvents() {
+        console.log('Update Call Contract Events...')
+
         // const events = await multiversXNetwork.queryContractCallEvents();
         // multiversXNetwork.updateContractCallSequence(events);
         //
@@ -177,10 +191,14 @@ export class MultiversXRelayer extends Relayer {
     }
 
     createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
+        console.log('Create call contract command...')
+
         return MultiversXCommand.createContractCallCommand(commandId, relayData, contractCallArgs);
     }
 
     createCallContractWithTokenCommand(): Command {
+        console.log('Create call contract with token command...')
+
         throw new Error('Method not implemented.');
     }
 }

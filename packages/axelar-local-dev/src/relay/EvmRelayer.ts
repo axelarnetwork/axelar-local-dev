@@ -414,7 +414,9 @@ export class EvmRelayer extends Relayer {
             };
             this.relayData.callContract[commandId] = contractCallArgs;
             let command;
-            if (args.destinationChain.toLowerCase() === 'aptos') {
+            if (args.destinationChain.toLowerCase() === 'multiversx') {
+                command = this.otherRelayers?.multiversx?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() === 'aptos') {
                 command = this.otherRelayers?.aptos?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() == 'near') {
                 command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);

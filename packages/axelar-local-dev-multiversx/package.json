@@ -18,7 +18,11 @@
         "@axelar-network/axelar-local-dev": "3.0.0",
         "@multiversx/sdk-core": "^12.5.0",
         "@multiversx/sdk-network-providers": "^1.5.0",
-        "@multiversx/sdk-wallet": "^4.2.0"
+        "@multiversx/sdk-wallet": "^4.2.0",
+        "keccak": "^3.0.3"
+    },
+    "devDependencies": {
+        "@types/keccak": "^3.0.1"
     },
     "author": "",
     "license": "ISC",

@@ -34,6 +34,15 @@ mod gateway_proxy {
             destination_contract_address: &ManagedBuffer,
             payload: &ManagedBuffer,
         );
+
+        #[endpoint(validateContractCall)]
+        fn validate_contract_call(
+            &self,
+            command_id: &ManagedBuffer,
+            source_chain: &ManagedBuffer,
+            source_address: &ManagedBuffer,
+            payload_hash: &ManagedBuffer,
+        ) -> bool;
     }
 }
 
@@ -71,6 +80,7 @@ pub trait HelloWorldContract {
                 payload,
                 self.blockchain().get_caller()
             )
+            .with_egld_transfer(value.clone_value())
             .execute_on_dest_context::<()>();
 
         self.gateway_proxy(self.gateway_address().get())
@@ -85,10 +95,19 @@ pub trait HelloWorldContract {
     #[endpoint]
     fn execute(
         &self,
+        command_id: ManagedBuffer,
         source_chain: ManagedBuffer,
         source_address: ManagedBuffer,
         payload: ManagedBuffer
     ) {
+        let payload_hash = self.crypto().keccak256(&payload);
+
+        let valid = self.gateway_proxy(self.gateway_address().get())
+            .validate_contract_call(&command_id, &source_chain, &source_address, payload_hash.as_managed_buffer())
+            .execute_on_dest_context::<bool>();
+
+        require!(valid, "Contract call is not valid");
+
         self.received_value().set(&ReceivedValue {
             source_chain,
             source_address,
