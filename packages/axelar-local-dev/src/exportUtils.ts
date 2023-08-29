@@ -90,7 +90,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     interval = setInterval(async () => {
         if (relaying) return;
         relaying = true;
-        await relay(_options.relayers).catch(() => undefined);
+        await relay(_options.relayers).catch((e) => console.error(e));
         if (options.afterRelay) {
             const evmRelayData = _options.relayers.evm?.relayData;
             const nearRelayData = _options.relayers.near?.relayData;

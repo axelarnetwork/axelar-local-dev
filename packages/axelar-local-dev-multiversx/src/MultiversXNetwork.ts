@@ -1,37 +1,34 @@
 import {
     Account,
-    Address, AddressType, AddressValue, ArrayVec, BigUIntType, BigUIntValue, BinaryCodec, BytesValue,
-    CodeMetadata, CompositeValue, ContractFunction, H256Value, Interaction,
-    ITransactionOnNetwork, List, ResultsParser, ReturnCode,
-    SmartContract, StringValue, StructType, Transaction,
-    TransactionWatcher, Tuple, TupleType, TypedValue, VariadicValue
+    Address,
+    AddressValue,
+    BigUIntValue,
+    BinaryCodec,
+    BytesValue,
+    CodeMetadata,
+    ContractFunction,
+    H256Value,
+    Interaction,
+    List,
+    ResultsParser,
+    ReturnCode,
+    SmartContract,
+    StringValue,
+    Transaction,
+    TransactionWatcher,
+    Tuple,
+    TypedValue
 } from '@multiversx/sdk-core/out';
-import { AccountOnNetwork, ProxyNetworkProvider, TransactionOnNetwork } from '@multiversx/sdk-network-providers/out';
+import { ProxyNetworkProvider } from '@multiversx/sdk-network-providers/out';
 import { Code } from '@multiversx/sdk-core';
 import fs, { promises } from 'fs';
-import { Mnemonic, UserSecretKey, UserSigner } from '@multiversx/sdk-wallet/out';
+import { UserSecretKey } from '@multiversx/sdk-wallet/out';
 import path from 'path';
 import * as os from 'os';
 import { MultiversXConfig } from './multiversXNetworkUtils';
 import { ContractQueryResponse } from '@multiversx/sdk-network-providers/out/contractQueryResponse';
-import createKeccakHash from "keccak";
+import createKeccakHash from 'keccak';
 
-// declare type EntryFunctionPayload = {
-//     function: string;
-//     /**
-//      * Type arguments of the function
-//      */
-//     type_arguments: Array<string>;
-//     /**
-//      * Arguments of the function
-//      */
-//     arguments: Array<any>;
-// };
-//
-// interface QueryOptions {
-//     start?: number;
-//     limit?: number;
-// }
 export class MultiversXNetwork extends ProxyNetworkProvider {
     public owner: Address;
     public ownerAccount: Account;
@@ -39,8 +36,6 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
     public gatewayAddress?: Address;
     public authAddress?: Address;
     public gasReceiverAddress?: Address;
-    public contractCallSequence: number;
-    public payContractCallSequence: number;
     public contractAddress?: string;
 
     private readonly ownerPrivateKey: UserSecretKey;
@@ -53,10 +48,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         contractAddress: string | undefined = undefined
     ) {
         super(url);
-        // WARNING: should not use the same account for production! Account of alice.pem
-        this.owner = Address.fromBech32('erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th');
-        // Address of bob.pem
-        this.operatorWallet = Address.fromBech32('erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx');
+        this.owner = Address.fromBech32('erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th'); // alice.pem
+        this.operatorWallet = Address.fromBech32('erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx'); // bob.pem
         this.ownerAccount = new Account(this.owner);
         try {
             this.gatewayAddress = gatewayAddress ? Address.fromBech32(gatewayAddress) : undefined;
@@ -78,20 +71,6 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const file = fs.readFileSync(ownerWalletFile).toString();
         this.ownerPrivateKey = UserSecretKey.fromPem(file);
-
-        this.contractCallSequence = -1;
-        this.payContractCallSequence = -1;
-
-        // this.isGatewayDeployed().then((result) => {
-        //     if (result) {
-        // this.queryContractCallEvents().then((events) => {
-        //     if (events) this.updateContractCallSequence(events);
-        // });
-        // this.queryPayGasContractCallEvents().then((events) => {
-        //     if (events) this.updatePayGasContractCallSequence(events);
-        // });
-        //     }
-        // });
     }
 
     async isGatewayDeployed(): Promise<boolean> {
@@ -111,8 +90,6 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
                 return false;
             }
 
-            console.log('MultiversX Axelar Gateway is already deployed');
-
             return true;
         } catch (e) {
             console.error(e);
@@ -121,14 +98,14 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         }
     }
 
-    async deployContract(contract: string, initArguments: TypedValue[]): Promise<string> {
+    async deployContract(contractCode: string, initArguments: TypedValue[]): Promise<string> {
         const homedir = os.homedir();
         const ownerWalletFile = path.resolve(homedir, 'multiversx-sdk/testwallets/latest/users/alice.pem');
 
         const file = fs.readFileSync(ownerWalletFile).toString();
         const privateKey = UserSecretKey.fromPem(file);
 
-        const buffer = await promises.readFile(contract);
+        const buffer = await promises.readFile(contractCode);
 
         const code = Code.fromBuffer(buffer);
         const authContract = new SmartContract();
@@ -154,11 +131,6 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         return contractAddress.bech32();
     }
 
-    //
-    // getOwnerBalance() {
-    //     return new CoinClient(this).checkBalance(this.owner);
-    // }
-    //
     async deployAxelarFrameworkModules(): Promise<MultiversXConfig> {
         console.log(`Deploying the Axelar Gateway for MultiversX... `);
 
@@ -311,7 +283,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         return returnCode;
     }
 
-    async callContract(address: string, func: string, args: any[] = []): Promise<ContractQueryResponse> {
+    async callContract(address: string, func: string, args: TypedValue[] = []): Promise<ContractQueryResponse> {
         const contract = new SmartContract({
             address: new Address(address)
         });
@@ -321,41 +293,6 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         return await super.queryContract(query);
     }
 
-    //
-    // updateContractCallSequence(events: any[]) {
-    //     const lastSequence = this.getLatestEventSequence(events);
-    //     if (lastSequence !== null) {
-    //         this.contractCallSequence = lastSequence;
-    //     }
-    // }
-    //
-    // updatePayGasContractCallSequence(events: any[]) {
-    //     const lastSequence = this.getLatestEventSequence(events);
-    //     if (lastSequence !== null) {
-    //         this.payContractCallSequence = lastSequence;
-    //     }
-    // }
-    //
-    // queryContractCallEvents(options?: QueryOptions) {
-    //     const _options = options || { start: this.contractCallSequence === -1 ? 0 : this.contractCallSequence + 1, limit: 100 };
-    //     return this.getEventsByEventHandle(
-    //         this.resourceAddress,
-    //         `${this.resourceAddress}::gateway::OutgoingContractCallsState`,
-    //         'events',
-    //         _options
-    //     );
-    // }
-    //
-    // queryPayGasContractCallEvents(options?: QueryOptions) {
-    //     const _options = options || { start: this.payContractCallSequence === -1 ? 0 : this.payContractCallSequence + 1, limit: 100 };
-    //     return this.getEventsByEventHandle(
-    //         this.resourceAddress,
-    //         `${this.resourceAddress}::axelar_gas_service::GasServiceEventStore`,
-    //         'native_gas_paid_for_contract_call_events',
-    //         _options
-    //     );
-    // }
-    //
     public async executeGateway(
         commandName: string,
         commandId: string,
@@ -406,10 +343,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const returnCode = await this.signAndSendTransaction(transaction);
 
-        console.log(`Executed MultiversX gateway transaction: ${transaction.getHash()}`);
-
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not execute MultiversX Gateway transaction...`);
+            throw new Error(`Could not execute MultiversX Gateway transaction... ${transaction.getHash()}`);
         }
 
         return transaction;
@@ -444,10 +379,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const returnCode = await this.signAndSendTransaction(transaction);
 
-        console.log(`Executing MultiversX call contract transaction: ${transaction.getHash()}`);
-
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not call MultiversX contract execute endpoint...`);
+            throw new Error(`Could not call MultiversX contract execute endpoint... ${transaction.getHash()}`);
         }
 
         return transaction;
@@ -472,21 +405,4 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             List.fromItems([new H256Value(signature)]),
         ]);
     }
-
-    //
-    // private getLatestEventSequence = (events: any[]) => {
-    //     if (events.length == 0) return null;
-    //
-    //     return parseInt(events[events.length - 1].sequence_number);
-    // };
-    //
-    // static getResourceAccountAddress(sourceAddress: MaybeHexString, seed: MaybeHexString): HexString {
-    //     seed = HexString.ensure(seed);
-    //     const source = BCS.bcsToBytes(TxnBuilderTypes.AccountAddress.fromHex(sourceAddress));
-    //     const bytes = new Uint8Array([...source, ...seed.toUint8Array(), 255]);
-    //     const hash = sha3Hash.create();
-    //     hash.update(bytes);
-    //
-    //     return HexString.fromUint8Array(hash.digest());
-    // }
 }

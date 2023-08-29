@@ -1,28 +1,58 @@
 import { ethers } from 'ethers';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
-import { getAptosLogID } from './utils';
 import {
-    logger,
+    CallContractArgs,
+    Command,
+    getGasPrice,
     getSignedExecuteInput,
-    RelayCommand,
+    logger,
+    NativeGasPaidForContractCallArgs,
     Network,
     networks,
-    getGasPrice,
-    Command,
-    Relayer,
-    RelayerType,
-    CallContractArgs,
-    NativeGasPaidForContractCallArgs,
+    RelayCommand,
     RelayData,
+    Relayer,
+    RelayerType
 } from '@axelar-network/axelar-local-dev';
 import { Command as MultiversXCommand } from './Command';
 import { multiversXNetwork } from './multiversXNetworkUtils';
+import {
+    Address,
+    AddressType,
+    AddressValue,
+    BigUIntType,
+    BigUIntValue,
+    BinaryCodec, BytesType, BytesValue,
+    H256Type,
+    H256Value,
+    TupleType
+} from '@multiversx/sdk-core/out';
+import { getMultiversXLogID } from './utils';
 
 const AddressZero = ethers.constants.AddressZero;
 
+const { Client } = require('@elastic/elasticsearch')
+
+interface MultiversXEvent {
+    identifier: string;
+    address: string;
+    data: string;
+    topics: string[];
+    order: number;
+    txHash?: string;
+}
+
 export class MultiversXRelayer extends Relayer {
+    private readonly elasticsearch;
+
+    private initialHitsLength: number = -1;
+
     constructor() {
         super();
+
+        this.elasticsearch = new Client({
+            node: 'http://localhost:9200'
+        });
     }
 
     setRelayer(type: RelayerType, _: Relayer) {
@@ -32,8 +62,49 @@ export class MultiversXRelayer extends Relayer {
     }
 
     async updateEvents(): Promise<void> {
-        await this.updateGasEvents();
-        await this.updateCallContractEvents();
+        const logsCount = await this.elasticsearch.count({
+            index: "logs",
+        });
+        const count = logsCount.count;
+
+        // Skip processing if no new logs
+        if (this.initialHitsLength == -1) {
+            this.initialHitsLength = count;
+        }
+        if (this.initialHitsLength === count) {
+            return;
+        }
+
+        // Process only new events
+        const logs = await this.elasticsearch.search({
+            index: "logs",
+            sort: [
+                { timestamp: "desc" },
+            ],
+            size: count - this.initialHitsLength,
+        });
+        const hits = logs.hits.hits;
+
+        const newHits: MultiversXEvent[] = hits
+            .reduce((acc: any, hit: any) => {
+                const newEvents = hit._source.events
+                    .map((newEvent: MultiversXEvent) => ({...newEvent, txHash: hit._id }));
+
+                acc.push(...newEvents);
+
+                return acc;
+            }, []);
+
+        await this.updateGasEvents(
+            newHits
+                .filter((newHit: any) => newHit.address === multiversXNetwork.gasReceiverAddress?.bech32())
+        );
+        await this.updateCallContractEvents(
+            newHits
+                .filter((newHit: any) => newHit.address === multiversXNetwork.gatewayAddress?.bech32())
+        );
+
+        this.initialHitsLength = count;
     }
 
     async execute(commands: RelayCommand) {
@@ -41,9 +112,7 @@ export class MultiversXRelayer extends Relayer {
         await this.executeEvmToMultiversX(commands);
     }
 
-    async executeMultiversXToEvm(commandList: RelayCommand) {
-        console.log('Execute MultiversX to EVM...');
-
+    private async executeMultiversXToEvm(commandList: RelayCommand) {
         for (const to of networks) {
             const commands = commandList[to.name];
             if (commands.length == 0) continue;
@@ -54,8 +123,6 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeEvmToMultiversX(commands: RelayCommand) {
-        console.log('Execute EVM to MultiversX...')
-
         const toExecute = commands['multiversx'];
         if (toExecute?.length === 0) return;
 
@@ -64,8 +131,6 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeMultiversXGateway(commands: Command[]) {
-        console.log('Execute MultiversX Gateway...')
-
         if (!multiversXNetwork) return;
         for (const command of commands) {
             await multiversXNetwork.executeGateway(command.name, command.commandId, command.data[0], command.data[1], command.data[2], command.data[3], command.data[4], command.data[5]);
@@ -73,8 +138,6 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeMultiversXExecutable(commands: Command[]) {
-        console.log('Execute MultiversX Executable...')
-
         if (!multiversXNetwork) return;
         for (const command of commands) {
             if (!command.post) continue;
@@ -84,8 +147,6 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeEvmGateway(to: Network, commands: Command[]): Promise<void> {
-        console.log('Execute Evm Gateway...')
-
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
@@ -101,8 +162,6 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async executeEvmExecutable(to: Network, commands: Command[], execution: any): Promise<void> {
-        console.log('Execute Evm Executable...')
-
         for (const command of commands) {
             if (command.post == null) continue;
 
@@ -128,10 +187,8 @@ export class MultiversXRelayer extends Relayer {
             if (command.name == 'approveContractCall') {
                 const index = this.contractCallGasEvents.indexOf(payed);
                 this.contractCallGasEvents = this.contractCallGasEvents.filter((_, i) => i !== index);
-            } else {
-                const index = this.contractCallWithTokenGasEvents.indexOf(payed);
-                this.contractCallWithTokenGasEvents = this.contractCallWithTokenGasEvents.filter((_, i) => i !== index);
             }
+
             try {
                 const cost = getGasPrice();
                 const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
@@ -144,61 +201,77 @@ export class MultiversXRelayer extends Relayer {
         }
     }
 
-    private async updateGasEvents() {
-        console.log('Update Gas Events...')
+    private async updateGasEvents(events: MultiversXEvent[]) {
+        const newEvents = events.filter((event) => event.identifier === 'payNativeGasForContractCall');
 
-        // const events = await multiversXNetwork.queryPayGasContractCallEvents();
-        // multiversXNetwork.updatePayGasContractCallSequence(events);
-        //
-        // for (const event of events) {
-        //     const args: NativeGasPaidForContractCallArgs = {
-        //         sourceAddress: event.data.source_address,
-        //         destinationAddress: event.data.destination_address,
-        //         gasFeeAmount: event.data.gas_fee_amount,
-        //         destinationChain: event.data.destination_chain,
-        //         payloadHash: event.data.payload_hash,
-        //         refundAddress: event.data.refund_address,
-        //         gasToken: AddressZero,
-        //     };
-        //
-        //     this.contractCallGasEvents.push(args);
-        // }
+        for (const event of newEvents) {
+            const sender = new Address(Buffer.from(event.topics[1], "base64"));
+            const destinationChain = Buffer.from(event.topics[2], "base64").toString();
+            const destinationAddress = Buffer.from(event.topics[3], "base64").toString();
+
+            const decoded = new BinaryCodec().decodeTopLevel(
+                Buffer.from(event.data, "base64"),
+                new TupleType(new H256Type(), new BigUIntType(), new AddressType())
+            ).valueOf();
+            // Need to add '0x' in front of hex encoded strings for EVM
+            const payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
+            const gasFeeAmount = (decoded.field1 as BigUIntValue).toString();
+            const refundAddress = (decoded.field2 as AddressValue).valueOf().bech32();
+
+            const args: NativeGasPaidForContractCallArgs = {
+                sourceAddress: sender.bech32(),
+                destinationAddress,
+                gasFeeAmount,
+                destinationChain,
+                payloadHash,
+                refundAddress,
+                gasToken: AddressZero,
+            };
+
+            this.contractCallGasEvents.push(args);
+        }
     }
 
-    private async updateCallContractEvents() {
-        console.log('Update Call Contract Events...')
+    private async updateCallContractEvents(events: MultiversXEvent[]) {
+        const newEvents = events.filter((event) => event.identifier === 'callContract');
 
-        // const events = await multiversXNetwork.queryContractCallEvents();
-        // multiversXNetwork.updateContractCallSequence(events);
-        //
-        // for (const event of events) {
-        //     const commandId = getAptosLogID('aptos', event);
-        //
-        //     const contractCallArgs: CallContractArgs = {
-        //         from: 'multiversx',
-        //         to: event.data.destinationChain,
-        //         sourceAddress: event.data.sourceAddress,
-        //         destinationContractAddress: event.data.destinationAddress,
-        //         payload: event.data.payload,
-        //         payloadHash: event.data.payloadHash,
-        //         transactionHash: '',
-        //         sourceEventIndex: 0,
-        //     };
-        //     this.relayData.callContract[commandId] = contractCallArgs;
-        //     const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
-        //     this.commands[contractCallArgs.to].push(command);
-        // }
+        for (const event of newEvents) {
+            const sender = new Address(Buffer.from(event.topics[1], "base64"));
+            const destinationChain = Buffer.from(event.topics[2], "base64").toString();
+            const destinationAddress = Buffer.from(event.topics[3], "base64").toString();
+
+            const decoded = new BinaryCodec().decodeTopLevel(
+                Buffer.from(event.data, "base64"),
+                new TupleType(new H256Type(), new BytesType())
+            ).valueOf();
+            // Need to add '0x' in front of hex encoded strings for EVM
+            const payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
+            const payload = '0x' + (decoded.field1 as BytesValue).valueOf().toString('hex');
+
+            const commandId = getMultiversXLogID('multiversx', sender.bech32(), event.txHash as string, event.order);
+
+            const contractCallArgs: CallContractArgs = {
+                from: 'multiversx',
+                to: destinationChain,
+                sourceAddress: sender.bech32(),
+                destinationContractAddress: destinationAddress,
+                payload,
+                payloadHash,
+                transactionHash: event.txHash as string,
+                sourceEventIndex: event.order,
+            };
+
+            this.relayData.callContract[commandId] = contractCallArgs;
+            const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
+            this.commands[contractCallArgs.to].push(command);
+        }
     }
 
     createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
-        console.log('Create call contract command...')
-
         return MultiversXCommand.createContractCallCommand(commandId, relayData, contractCallArgs);
     }
 
     createCallContractWithTokenCommand(): Command {
-        console.log('Create call contract with token command...')
-
         throw new Error('Method not implemented.');
     }
 }
