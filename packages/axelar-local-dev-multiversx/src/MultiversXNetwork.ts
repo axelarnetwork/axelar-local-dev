@@ -174,7 +174,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(authTransaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not deploy Axelar Auth contract...`);
+            throw new Error(`Could not deploy Axelar Auth contract... ${ authTransaction.getHash() }`);
         }
 
         const axelarAuthAddress = SmartContract.computeAddress(authTransaction.getSender(), authTransaction.getNonce());
@@ -205,7 +205,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(gatewayTransaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not deploy Axelar Gateway contract...`);
+            throw new Error(`Could not deploy Axelar Gateway contract... ${ gatewayTransaction.getHash() }`);
         }
 
         const axelarGatewayAddress = SmartContract.computeAddress(gatewayTransaction.getSender(), gatewayTransaction.getNonce());
@@ -229,7 +229,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(transaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not change owner of Axelar Gateway contract...`);
+            throw new Error(`Could not change owner of Axelar Gateway contract... ${ transaction.getHash() }`);
         }
 
         console.log('Changed contract owner of Auth contract...');
@@ -256,7 +256,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(gasReceiverTransaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not deploy Axelar Auth contract...`);
+            throw new Error(`Could not deploy Axelar Auth contract... ${ gasReceiverTransaction.getHash() }`);
         }
 
         const axelarGasReceiverAddress = SmartContract.computeAddress(gasReceiverTransaction.getSender(), gasReceiverTransaction.getNonce());
@@ -301,7 +301,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         destinationAddress: string,
         payloadHash: string,
         sourceTxHash: string,
-        sourceTxIndex: number,
+        sourceTxIndex: number
     ) {
         const gatewayContract = new SmartContract({ address: this.gatewayAddress as Address });
 
@@ -311,7 +311,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             new AddressValue(Address.fromBech32(destinationAddress)),
             new BytesValue(Buffer.from(payloadHash, 'hex')),
             new StringValue(sourceTxHash),
-            new BigUIntValue(sourceTxIndex),
+            new BigUIntValue(sourceTxIndex)
         ]);
         const encodedNestedData = new BinaryCodec().encodeTopLevel(nestedData);
 
@@ -319,7 +319,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             List.fromItems([new StringValue(commandId)]),
             List.fromItems([new StringValue(commandName)]),
             List.fromItems([
-                new BytesValue(encodedNestedData),
+                new BytesValue(encodedNestedData)
             ])
         ]);
 
@@ -331,7 +331,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             gasLimit: 50_000_000,
             args: [
                 executeData,
-                proof,
+                proof
             ],
             chainID: 'localnet'
         });
@@ -344,7 +344,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(transaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not execute MultiversX Gateway transaction... ${transaction.getHash()}`);
+            throw new Error(`Could not execute MultiversX Gateway transaction... ${ transaction.getHash() }`);
         }
 
         return transaction;
@@ -367,7 +367,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
                 new StringValue(commandId),
                 new StringValue(sourceChain),
                 new StringValue(sourceAddress),
-                new BytesValue(Buffer.from(payloadHex, 'hex')),
+                new BytesValue(Buffer.from(payloadHex, 'hex'))
             ],
             chainID: 'localnet'
         });
@@ -380,7 +380,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(transaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not call MultiversX contract execute endpoint... ${transaction.getHash()}`);
+            throw new Error(`Could not call MultiversX contract execute endpoint... ${ transaction.getHash() }`);
         }
 
         return transaction;
@@ -402,7 +402,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             List.fromItems([new AddressValue(this.operatorWallet)]),
             List.fromItems([new BigUIntValue(1)]),
             new BigUIntValue(1),
-            List.fromItems([new H256Value(signature)]),
+            List.fromItems([new H256Value(signature)])
         ]);
     }
 }
