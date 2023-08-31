@@ -2,7 +2,7 @@ import { networks } from '../Network';
 import { Command } from './Command';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 
-export type RelayerType = 'near' | 'aptos' | 'evm';
+export type RelayerType = 'near' | 'aptos' | 'evm' | 'sui';
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 
 export abstract class Relayer {
@@ -44,6 +44,10 @@ export abstract class Relayer {
     }
 
     async subscribeExpressCall() {
+        // this is a no-op by default
+    }
+
+    async subscribeGMPCall() {
         // this is a no-op by default
     }
 

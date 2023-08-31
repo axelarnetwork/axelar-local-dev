@@ -24,7 +24,7 @@ contract Executable is AxelarExecutable {
     // Call this function to update the value of this contract along with all its siblings'.
     function set(string memory chain, string calldata value_) external payable {
         value = value_;
-        bytes memory payload = abi.encode(value_);
+        bytes memory payload = abi.encodePacked(value_);
         if (msg.value > 0) {
             gasService.payNativeGasForContractCall{ value: msg.value }(address(this), chain, siblings[chain], payload, msg.sender);
         }

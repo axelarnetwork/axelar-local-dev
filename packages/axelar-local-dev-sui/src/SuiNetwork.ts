@@ -1,43 +1,33 @@
-import { CoinBalance, GetBalanceParams, SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
+import { CoinBalance, SuiEvent, SuiClient, getFullnodeUrl, SuiEventFilter } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { requestSuiFromFaucetV0, getFaucetHost } from '@mysten/sui.js/faucet';
-import { BCS, fromHEX, toHEX, getSuiMoveConfig } from '@mysten/bcs';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { execSync, exec } from 'child_process';
+import { PublishedPackage } from './types';
 
-import fs from 'fs';
-import path from 'path';
-
-export class SuiNetwork {
+export class SuiNetwork extends SuiClient {
     private executor: Ed25519Keypair;
-    private client: SuiClient;
-    private nodeUrl: string;
     private faucetUrl: string;
-    private bcs = new BCS(getSuiMoveConfig());
+    public nodeUrl: string;
+    public gatewayObjects: PublishedPackage[] = [];
 
     constructor(nodeUrl?: string, faucetUrl?: string) {
-        // create a client connected to devnet
+        super({ url: nodeUrl || getFullnodeUrl('localnet') });
         this.nodeUrl = nodeUrl || getFullnodeUrl('localnet');
         this.faucetUrl = faucetUrl || getFaucetHost('localnet');
-
-        this.client = new SuiClient({ url: this.nodeUrl });
         this.executor = new Ed25519Keypair();
     }
 
     async init() {
         // Fund executor account
-        this.fundWallet(this.getExecutorAddress());
+        await this.fundWallet(this.getExecutorAddress());
     }
 
-    private registerTypes() {
-        // TODO: Add more types
-
-        this.bcs.registerStructType('GenericMessage', {
-            source_chain: 'string',
-            source_address: 'string',
-            target_id: 'address',
-            payload_hash: 'vector<u8>',
-        });
-    }
-
+    /**
+     * Fund a wallet with SUI tokens from the faucet
+     * @param address - address to fund
+     * @returns
+     */
     public fundWallet(address: string) {
         return requestSuiFromFaucetV0({
             host: this.faucetUrl,
@@ -45,30 +35,103 @@ export class SuiNetwork {
         });
     }
 
-    public getExecutorAddress(): string {
-        return this.executor.toSuiAddress();
-    }
-
-    /**
-     * Check if gateway module is deployed
-     * @returns boolean
-     */
-    public async isGatewayDeployed(): Promise<boolean> {
-        // TODO: check if gateway module is deployed
-        return Promise.resolve(false);
-    }
-
     /**
      * Deploy a module given the path to the module
-     * @param modulePath - path to the module.
-     * @param compiledModules - compiled modules
+     * @param modulePath - path to the module containing a Move.toml file.
      * @returns A transaction object
      */
-    public async deploy(modulePath: string, compiledModules: string[]) {
-        const packageMetadata = fs.readFileSync(path.join(modulePath, 'package-metadata.bcs'));
-        const moduleDatas = compiledModules.map((module: string) => {
-            return fs.readFileSync(path.join(modulePath, 'bytecode_modules', module));
+    public async deploy(modulePath: string, senderAddress: string = this.getExecutorAddress()) {
+        if (!(await this.suiCommandExist())) {
+            throw new Error('Please install sui command');
+        }
+
+        const { modules, dependencies } = JSON.parse(
+            execSync(`sui move build --dump-bytecode-as-base64 --path ${modulePath} --with-unpublished-dependencies`, {
+                encoding: 'utf-8',
+                stdio: 'pipe', // silent the output
+            }),
+        );
+
+        const tx = new TransactionBlock();
+        const [upgradeCap] = tx.publish({
+            modules,
+            dependencies,
         });
+        tx.transferObjects([upgradeCap], tx.pure(senderAddress));
+
+        const result = await this.execute(tx);
+
+        const publishedPackages = result.objectChanges
+            ?.filter((change) => change.type === 'published')
+            ?.map((change: any) => {
+                return {
+                    packageId: change.packageId,
+                    modules: change.modules,
+                    deployedAt: new Date().getTime(),
+                };
+            });
+
+        if (!publishedPackages) {
+            throw new Error('No published packages');
+        }
+
+        // add gateway compatible modules
+        this.gatewayObjects.push(...publishedPackages.filter((p: any) => p.modules.includes('gateway')));
+
+        return {
+            digest: result.digest,
+            packages: publishedPackages,
+        };
+    }
+
+    public async execute(tx: TransactionBlock) {
+        return this.signAndExecuteTransactionBlock({
+            signer: this.executor,
+            transactionBlock: tx,
+            options: {
+                showObjectChanges: true,
+                showInput: true,
+                showEffects: true,
+                showBalanceChanges: true,
+                showEvents: true,
+                showRawInput: true,
+            },
+        });
+    }
+
+    public async subscribe(packageId: string, onMessage: (message: SuiEvent) => void) {
+        const filter = {
+            Package: packageId,
+        };
+        return this.subscribeEvent({
+            filter,
+            onMessage,
+        });
+    }
+
+    public async queryGatewayEvents(startTime?: string, endTime?: string) {
+        const timeRange = {
+            startTime: startTime || (new Date().getTime() - 1000 * 60).toString(), // default to 1 minute ago
+            endTime: endTime || new Date().getTime().toString(), // default to now
+        };
+
+        const events = await this.queryEvents({
+            query: {
+                TimeRange: timeRange,
+            },
+        });
+
+        return events.data.filter((e) => {
+            return e.type.includes('gateway::ContractCall');
+        });
+    }
+
+    /**
+     * Get the executor address
+     * @returns executor address
+     */
+    public getExecutorAddress(): string {
+        return this.executor.toSuiAddress();
     }
 
     /**
@@ -76,16 +139,22 @@ export class SuiNetwork {
      * @returns balance of the executor account
      */
     getExecutorBalance(): Promise<CoinBalance> {
-        return this.client.getBalance({
+        return this.getBalance({
             owner: this.executor.toSuiAddress(),
         });
     }
 
-    /**
-     * Deploy the gateway module and the other modules
-     */
-    deployAxelarModules() {
-        // TODO: deploy gateway module and other modules
-    }
+    private async suiCommandExist(): Promise<boolean> {
+        return new Promise((resolve) => {
+            const platformCmd = process.platform === 'win32' ? 'where' : 'which';
 
+            exec(`${platformCmd} sui`, (err) => {
+                if (err) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
+    }
 }

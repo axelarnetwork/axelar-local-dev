@@ -14,22 +14,27 @@ import {
     RelayData,
 } from '@axelar-network/axelar-local-dev';
 import { Command as SuiCommand } from './Command';
-
-const AddressZero = ethers.constants.AddressZero;
+import { SuiNetwork } from './SuiNetwork';
+import { getCommandId } from './utils';
 
 export class SuiRelayer extends Relayer {
-    constructor() {
+    private suiNetwork: SuiNetwork;
+    private lastQueryMs: number = new Date().getTime();
+
+    constructor(suiNetwork: SuiNetwork) {
         super();
+        this.suiNetwork = suiNetwork;
     }
 
     setRelayer(type: RelayerType, _: Relayer) {
-        if (type === 'near') {
-            console.log('near not supported yet');
+        if (type === 'near' || type === 'aptos') {
+            console.log(`${type} not supported yet`);
         }
     }
 
+    // no-op since the events will be listened with event subscription.
     async updateEvents(): Promise<void> {
-        await this.updateGasEvents();
+        // await this.updateGasEvents();
         await this.updateCallContractEvents();
     }
 
@@ -50,7 +55,7 @@ export class SuiRelayer extends Relayer {
 
     private async executeEvmToSui(commands: RelayCommand) {
         const toExecute = commands['sui'];
-        if (toExecute?.length === 0) return;
+        if (!toExecute || toExecute?.length === 0) return;
 
         await this.executeSuiGateway(toExecute);
         await this.executeSuiExecutable(toExecute);
@@ -94,30 +99,11 @@ export class SuiRelayer extends Relayer {
             )
                 continue;
 
-            const payed =
-                command.name == 'approveContractCall'
-                    ? this.contractCallGasEvents.find((log: any) => {
-                          if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                          if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                          if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                          if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                          return true;
-                      })
-                    : false;
-
-            if (!payed) continue;
-            if (command.name == 'approveContractCall') {
-                const index = this.contractCallGasEvents.indexOf(payed);
-                this.contractCallGasEvents = this.contractCallGasEvents.filter((_, i) => i !== index);
-            } else {
-                const index = this.contractCallWithTokenGasEvents.indexOf(payed);
-                this.contractCallWithTokenGasEvents = this.contractCallWithTokenGasEvents.filter((_, i) => i !== index);
-            }
             try {
-                const cost = getGasPrice();
                 const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
+                console.log('Executing command...');
                 await command.post({
-                    gasLimit: BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost)),
+                    gasLimit: BigInt(blockLimit),
                 });
             } catch (e) {
                 logger.log(e);
@@ -130,23 +116,31 @@ export class SuiRelayer extends Relayer {
     }
 
     private async updateCallContractEvents() {
-        // TODO: Query Sui contract call events here
-        const events: any[] = [];
+        const events = await this.suiNetwork.queryGatewayEvents((this.lastQueryMs + 1).toString());
+        this.lastQueryMs = new Date().getTime();
+
+        const decoder = new TextDecoder('utf-8');
+        const decode = (msg: number[]) => decoder.decode(new Uint8Array(msg));
 
         for (const event of events) {
-            // TODO: Generate commandId for Sui
-            const commandId = '1234';
+            const commandId = getCommandId(event.id);
+            const eventParams = event.parsedJson as any;
+
+            const { destination_address: destinationAddress, destination_chain: destinationChain, payload } = eventParams;
+
+            const payloadHash = ethers.utils.keccak256(decode(payload));
 
             const contractCallArgs: CallContractArgs = {
                 from: 'sui',
-                to: event.data.destinationChain,
-                sourceAddress: event.data.sourceAddress,
-                destinationContractAddress: event.data.destinationAddress,
-                payload: event.data.payload,
-                payloadHash: event.data.payloadHash,
-                transactionHash: '',
-                sourceEventIndex: 0,
+                to: decode(destinationChain),
+                destinationContractAddress: decode(destinationAddress),
+                payload: decode(payload),
+                sourceAddress: event.packageId,
+                transactionHash: event.id.txDigest,
+                payloadHash,
+                sourceEventIndex: parseInt(event.id.eventSeq),
             };
+
             this.relayData.callContract[commandId] = contractCallArgs;
             const command = Command.createEVMContractCallCommand(commandId, this.relayData, contractCallArgs);
             this.commands[contractCallArgs.to].push(command);
@@ -154,8 +148,9 @@ export class SuiRelayer extends Relayer {
     }
 
     createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
-        return SuiCommand.createContractCallCommand(commandId, relayData, contractCallArgs);
+        return SuiCommand.createContractCallCommand(commandId, this.suiNetwork, relayData, contractCallArgs);
     }
+
     createCallContractWithTokenCommand(): Command {
         throw new Error('Method not implemented.');
     }

@@ -1,9 +1,11 @@
 'use strict';
 
 import { ethers } from 'ethers';
-const { defaultAbiCoder } = ethers.utils;
 import { CallContractArgs, RelayData } from '@axelar-network/axelar-local-dev';
+import { SuiNetwork } from './SuiNetwork';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 
+const { defaultAbiCoder } = ethers.utils;
 //An internal class for handling axelar commands.
 export class Command {
     commandId: string;
@@ -27,14 +29,19 @@ export class Command {
         this.post = post;
     }
 
-    static createContractCallCommand = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
+    static createContractCallCommand = (commandId: string, suiNetwork: SuiNetwork, relayData: RelayData, args: CallContractArgs) => {
         return new Command(
             commandId,
             'approve_contract_call',
             [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.payload],
             [],
             async () => {
-                // TODO: execute the transaction on destination module
+                const tx = new TransactionBlock();
+                tx.moveCall({
+                    target: `${args.destinationContractAddress}::execute` as any,
+                    arguments: [tx.pure(commandId), tx.pure(args.from), tx.pure(args.sourceAddress), tx.pure(args.payload.slice(2))],
+                });
+                return suiNetwork.execute(tx);
             },
             'sui',
         );

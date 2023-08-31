@@ -9,13 +9,15 @@
     ],
     "scripts": {
         "test": "jest",
-        "build-ts": "tsc",
         "clean": "rm -rf src/types dist artifacts",
-        "prettier": "prettier --write 'src/**/*.ts'"
+        "prettier": "prettier --write 'src/**/*.ts'",
+        "build": "npm run clean && npm run build-ts",
+        "build-ts": "tsc",
+        "build-sui": "cd move && sui move build"
     },
     "dependencies": {
-        "@mysten-labs/sui": "git://github.com/MystenLabs/sui.git#c49bdb3a96ea0975c56e5332c3776e03c1497dce",
-        "@axelar-network/axelar-local-dev": "2.0.5"
+        "@axelar-network/axelar-local-dev": "^2.0.5",
+        "@mysten/sui.js": "^0.41.0"
     },
     "author": "euro@axelar.network",
     "license": "ISC",
