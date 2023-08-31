@@ -6,7 +6,6 @@ import {
     RelayCommand,
     Network,
     networks,
-    getGasPrice,
     Command,
     Relayer,
     RelayerType,

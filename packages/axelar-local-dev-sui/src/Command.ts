@@ -1,12 +1,10 @@
-'use strict';
-
 import { ethers } from 'ethers';
 import { CallContractArgs, RelayData } from '@axelar-network/axelar-local-dev';
 import { SuiNetwork } from './SuiNetwork';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 
 const { defaultAbiCoder } = ethers.utils;
-//An internal class for handling axelar commands.
+
 export class Command {
     commandId: string;
     name: string;
