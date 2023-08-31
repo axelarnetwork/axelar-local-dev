@@ -94,11 +94,13 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         if (options.afterRelay) {
             const evmRelayData = _options.relayers.evm?.relayData;
             const nearRelayData = _options.relayers.near?.relayData;
-            const aptosRelayDAta = _options.relayers.aptos?.relayData;
+            const aptosRelayData = _options.relayers.aptos?.relayData;
+            const suiRelayData = _options.relayers.sui?.relayData;
 
             evmRelayData && (await options.afterRelay(evmRelayData));
             nearRelayData && (await options.afterRelay(nearRelayData));
-            aptosRelayDAta && (await options.afterRelay(aptosRelayDAta));
+            aptosRelayData && (await options.afterRelay(aptosRelayData));
+            suiRelayData && (await options.afterRelay(suiRelayData));
         }
         relaying = false;
     }, _options.relayInterval);

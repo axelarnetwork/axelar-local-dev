@@ -1,5 +1,6 @@
 import { CoinBalance, SuiEvent, SuiClient, getFullnodeUrl, SuiEventFilter } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { Keypair } from '@mysten/sui.js/cryptography';
 import { requestSuiFromFaucetV0, getFaucetHost } from '@mysten/sui.js/faucet';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { execSync, exec } from 'child_process';
@@ -84,9 +85,9 @@ export class SuiNetwork extends SuiClient {
         };
     }
 
-    public async execute(tx: TransactionBlock) {
+    public async execute(tx: TransactionBlock, keypair?: Keypair) {
         return this.signAndExecuteTransactionBlock({
-            signer: this.executor,
+            signer: keypair || this.executor,
             transactionBlock: tx,
             options: {
                 showObjectChanges: true,

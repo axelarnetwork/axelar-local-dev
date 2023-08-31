@@ -4,9 +4,9 @@ import { SuiRelayer } from './SuiRelayer';
 export let suiNetwork: SuiNetwork;
 export let suiRelayer: SuiRelayer;
 
-export async function createSuiRelayer(): Promise<SuiRelayer> {
-    suiNetwork = new SuiNetwork();
+export async function createSuiRelayer(nodeUrl?: string, faucetUrl?: string): Promise<SuiRelayer> {
+    suiNetwork = new SuiNetwork(nodeUrl, faucetUrl);
     await suiNetwork.init();
-    const relayer = new SuiRelayer(suiNetwork);
-    return relayer;
+    suiRelayer = new SuiRelayer(suiNetwork);
+    return suiRelayer;
 }
