@@ -19,21 +19,24 @@ import { getCommandId } from './utils';
 export class SuiRelayer extends Relayer {
     private suiNetwork: SuiNetwork;
     private lastQueryMs: number = new Date().getTime();
+    private textDecoder = new TextDecoder('utf-8');
 
     constructor(suiNetwork: SuiNetwork) {
         super();
         this.suiNetwork = suiNetwork;
     }
 
-    setRelayer(type: RelayerType, _: Relayer) {
+    setRelayer(type: RelayerType, relayer: Relayer) {
         if (type === 'near' || type === 'aptos') {
-            console.log(`${type} not supported yet`);
+            return console.log(`${type} not supported yet`);
         }
+
+        this.otherRelayers[type] = relayer;
     }
 
     // no-op since the events will be listened with event subscription.
     async updateEvents(): Promise<void> {
-        // await this.updateGasEvents();
+        await this.updateGasEvents();
         await this.updateCallContractEvents();
     }
 
@@ -100,7 +103,6 @@ export class SuiRelayer extends Relayer {
 
             try {
                 const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
-                console.log('Executing command...');
                 await command.post({
                     gasLimit: BigInt(blockLimit),
                 });
@@ -110,16 +112,16 @@ export class SuiRelayer extends Relayer {
         }
     }
 
-    private async updateGasEvents() {
-        // TODO: Query Sui gas events here
+    // TODO: Implement querying gas events in the future when we integrate with the gas module.
+    private async updateGasEvents() {}
+
+    private convertUint8ArrayToUtf8String(uint8Array: number[]) {
+        return this.textDecoder.decode(new Uint8Array(uint8Array));
     }
 
     private async updateCallContractEvents() {
         const events = await this.suiNetwork.queryGatewayEvents((this.lastQueryMs + 1).toString());
         this.lastQueryMs = new Date().getTime();
-
-        const decoder = new TextDecoder('utf-8');
-        const decode = (msg: number[]) => decoder.decode(new Uint8Array(msg));
 
         for (const event of events) {
             const commandId = getCommandId(event.id);
@@ -127,13 +129,13 @@ export class SuiRelayer extends Relayer {
 
             const { destination_address: destinationAddress, destination_chain: destinationChain, payload } = eventParams;
 
-            const payloadHash = ethers.utils.keccak256(decode(payload));
+            const payloadHash = ethers.utils.keccak256(this.convertUint8ArrayToUtf8String(payload));
 
             const contractCallArgs: CallContractArgs = {
                 from: 'sui',
-                to: decode(destinationChain),
-                destinationContractAddress: decode(destinationAddress),
-                payload: decode(payload),
+                to: this.convertUint8ArrayToUtf8String(destinationChain),
+                destinationContractAddress: this.convertUint8ArrayToUtf8String(destinationAddress),
+                payload: this.convertUint8ArrayToUtf8String(payload),
                 sourceAddress: event.packageId,
                 transactionHash: event.id.txDigest,
                 payloadHash,
