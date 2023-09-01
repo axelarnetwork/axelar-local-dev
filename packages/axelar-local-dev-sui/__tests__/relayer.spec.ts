@@ -39,7 +39,5 @@ describe('relayer', () => {
 
         // Check if the command is added to the relayer
         expect(relayer['commands']['avalanche'].length).toBe(1);
-
-        console.log(relayer['commands']['avalanche'][0]);
     });
 });

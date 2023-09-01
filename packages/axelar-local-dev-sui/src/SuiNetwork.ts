@@ -1,4 +1,4 @@
-import { CoinBalance, SuiEvent, SuiClient, getFullnodeUrl, SuiEventFilter } from '@mysten/sui.js/client';
+import { CoinBalance, SuiEvent, SuiClient, getFullnodeUrl, SuiTransactionBlockResponseOptions } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { Keypair } from '@mysten/sui.js/cryptography';
 import { requestSuiFromFaucetV0, getFaucetHost } from '@mysten/sui.js/faucet';
@@ -6,12 +6,36 @@ import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { execSync, exec } from 'child_process';
 import { PublishedPackage } from './types';
 
+/**
+ * `SuiNetwork` class provides methods and functionalities to interact with the SUI network.
+ * It extends the functionalities of `SuiClient`, offering a higher-level abstraction for
+ * various network operations.
+ *
+ * @extends {SuiClient}
+ *
+ * @property {Ed25519Keypair} executor - Represents the keypair of the executor.
+ * @property {string} faucetUrl - URL of the faucet for fetching tokens.
+ * @property {string} nodeUrl - URL of the node to connect to the SUI network.
+ * @property {PublishedPackage[]} gatewayObjects - Array to store packages compatible with gateway.
+ *
+ * Main Features:
+ * - Initialize and fund the executor account.
+ * - Deploy modules to the network.
+ * - Execute transaction with optional configurations.
+ * - Query gateway events within a specified time range.
+ */
 export class SuiNetwork extends SuiClient {
     private executor: Ed25519Keypair;
     private faucetUrl: string;
     public nodeUrl: string;
     public gatewayObjects: PublishedPackage[] = [];
 
+    /**
+     * Constructs an instance of SuiNetwork
+     *
+     * @param nodeUrl - Optional node URL; defaults to localnet if not provided
+     * @param faucetUrl - Optional faucet URL; defaults to localnet if not provided
+     */
     constructor(nodeUrl?: string, faucetUrl?: string) {
         super({ url: nodeUrl || getFullnodeUrl('localnet') });
         this.nodeUrl = nodeUrl || getFullnodeUrl('localnet');
@@ -19,15 +43,19 @@ export class SuiNetwork extends SuiClient {
         this.executor = new Ed25519Keypair();
     }
 
+    /**
+     * Initialize the SuiNetwork by funding the executor account
+     */
     async init() {
         // Fund executor account
         await this.fundWallet(this.getExecutorAddress());
     }
 
     /**
-     * Fund a wallet with SUI tokens from the faucet
-     * @param address - address to fund
-     * @returns
+     * Request funds for a given wallet from the SUI faucet
+     *
+     * @param address - The address of the wallet to fund
+     * @returns A Promise that resolves once the funding request is made
      */
     public fundWallet(address: string) {
         return requestSuiFromFaucetV0({
@@ -37,9 +65,11 @@ export class SuiNetwork extends SuiClient {
     }
 
     /**
-     * Deploy a module given the path to the module
-     * @param modulePath - path to the module containing a Move.toml file.
-     * @returns A transaction object
+     * Builds and deploys a module from a specified path
+     *
+     * @param modulePath - Path to the module containing a Move.toml file
+     * @param senderAddress - Optional sender address; defaults to executor address if not provided
+     * @returns A Promise with transaction details and published packages
      */
     public async deploy(modulePath: string, senderAddress: string = this.getExecutorAddress()) {
         if (!(await this.suiCommandExist())) {
@@ -68,7 +98,7 @@ export class SuiNetwork extends SuiClient {
                 return {
                     packageId: change.packageId,
                     modules: change.modules,
-                    deployedAt: new Date().getTime(),
+                    deployedAt: Date.now(),
                 };
             });
 
@@ -85,7 +115,15 @@ export class SuiNetwork extends SuiClient {
         };
     }
 
-    public async execute(tx: TransactionBlock, keypair?: Keypair) {
+    /**
+     * Signs and executes a transaction block
+     *
+     * @param tx - The transaction block to execute
+     * @param keypair - Optional keypair for signing; defaults to executor keypair if not provided
+     * @param options - Optional settings for the transaction execution response
+     * @returns A Promise with details of the transaction execution
+     */
+    public async execute(tx: TransactionBlock, keypair: Keypair = this.executor, options?: SuiTransactionBlockResponseOptions) {
         return this.signAndExecuteTransactionBlock({
             signer: keypair || this.executor,
             transactionBlock: tx,
@@ -96,66 +134,64 @@ export class SuiNetwork extends SuiClient {
                 showBalanceChanges: true,
                 showEvents: true,
                 showRawInput: true,
+                ...options,
             },
-        });
-    }
-
-    public async subscribe(packageId: string, onMessage: (message: SuiEvent) => void) {
-        const filter = {
-            Package: packageId,
-        };
-        return this.subscribeEvent({
-            filter,
-            onMessage,
-        });
-    }
-
-    public async queryGatewayEvents(startTime?: string, endTime?: string) {
-        const timeRange = {
-            startTime: startTime || (new Date().getTime() - 1000 * 60).toString(), // default to 1 minute ago
-            endTime: endTime || new Date().getTime().toString(), // default to now
-        };
-
-        const events = await this.queryEvents({
-            query: {
-                TimeRange: timeRange,
-            },
-        });
-
-        return events.data.filter((e) => {
-            return e.type.includes('gateway::ContractCall');
         });
     }
 
     /**
-     * Get the executor address
-     * @returns executor address
+     * Queries for gateway events within a specified time range
+     *
+     * @param startTime - Optional start time for the query; defaults to 1 minute ago if not provided
+     * @param endTime - Optional end time for the query; defaults to current time if not provided
+     * @returns A Promise with the filtered gateway events
+     */
+    public async queryGatewayEvents(startTime?: string, endTime?: string) {
+        const now = Date.now();
+        const events = await this.queryEvents({
+            query: {
+                TimeRange: {
+                    startTime: startTime || (now - 1000 * 60).toString(),
+                    endTime: endTime || now.toString(),
+                },
+            },
+        });
+
+        return events.data.filter((e) => e.type.includes('gateway::ContractCall'));
+    }
+
+    /**
+     * Fetches the address of the executor
+     *
+     * @returns The address of the executor
      */
     public getExecutorAddress(): string {
         return this.executor.toSuiAddress();
     }
 
     /**
-     * Get the balance of the executor account
-     * @returns balance of the executor account
+     * Fetches the balance of the executor account
+     *
+     * @returns A Promise with the balance details of the executor account
      */
-    getExecutorBalance(): Promise<CoinBalance> {
+    public getExecutorBalance(): Promise<CoinBalance> {
         return this.getBalance({
             owner: this.executor.toSuiAddress(),
         });
     }
 
-    private async suiCommandExist(): Promise<boolean> {
-        return new Promise((resolve) => {
+    /**
+     * Checks if the `sui` command is available in the system
+     *
+     * @returns A Promise that resolves to true if the command exists, false otherwise
+     */
+    public async suiCommandExist(): Promise<boolean> {
+        try {
             const platformCmd = process.platform === 'win32' ? 'where' : 'which';
-
-            exec(`${platformCmd} sui`, (err) => {
-                if (err) {
-                    resolve(false);
-                } else {
-                    resolve(true);
-                }
-            });
-        });
+            await exec(`${platformCmd} sui`);
+            return true;
+        } catch (err) {
+            return false;
+        }
     }
 }

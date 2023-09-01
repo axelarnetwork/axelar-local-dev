@@ -47,10 +47,6 @@ export abstract class Relayer {
         // this is a no-op by default
     }
 
-    async subscribeGMPCall() {
-        // this is a no-op by default
-    }
-
     unsubscribe() {
         // this is a no-op by default
     }
