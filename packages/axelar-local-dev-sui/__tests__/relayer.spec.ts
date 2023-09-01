@@ -14,11 +14,11 @@ describe('relayer', () => {
         relayer = new SuiRelayer(client);
 
         // initialize commands for testing
-        relayer['commands']['avalanche'] = [];
+        relayer['commands']['Avalanche'] = [];
     });
 
     it('should update command list for sui -> evm call_contract transaction', async () => {
-        expect(relayer['commands']['avalanche'].length).toBe(0);
+        expect(relayer['commands']['Avalanche'].length).toBe(0);
 
         // Deploy a sample module
         const response = await client.deploy(path.join(__dirname, '../move/sample'));
@@ -30,7 +30,7 @@ describe('relayer', () => {
         const tx = new TransactionBlock();
         tx.moveCall({
             target: `${response.packages[0].packageId}::hello_world::call`,
-            arguments: [tx.pure('avalanche'), tx.pure('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789'), tx.pure(payload), tx.pure(1)],
+            arguments: [tx.pure('Avalanche'), tx.pure('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789'), tx.pure(payload), tx.pure(1)],
         });
         await client.execute(tx);
 
@@ -38,6 +38,6 @@ describe('relayer', () => {
         await relayer.updateEvents();
 
         // Check if the command is added to the relayer
-        expect(relayer['commands']['avalanche'].length).toBe(1);
+        expect(relayer['commands']['Avalanche'].length).toBe(1);
     });
 });

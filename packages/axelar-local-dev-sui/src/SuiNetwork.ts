@@ -102,7 +102,7 @@ export class SuiNetwork extends SuiClient {
                 };
             });
 
-        if (!publishedPackages) {
+        if (!publishedPackages || publishedPackages.length === 0) {
             throw new Error('No published packages');
         }
 
@@ -124,6 +124,7 @@ export class SuiNetwork extends SuiClient {
      * @returns A Promise with details of the transaction execution
      */
     public async execute(tx: TransactionBlock, keypair: Keypair = this.executor, options?: SuiTransactionBlockResponseOptions) {
+      // todo: add check for sui command
         return this.signAndExecuteTransactionBlock({
             signer: keypair || this.executor,
             transactionBlock: tx,

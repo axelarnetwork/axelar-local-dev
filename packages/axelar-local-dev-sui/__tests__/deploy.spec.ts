@@ -26,7 +26,7 @@ describe('Sui Network', () => {
 
         tx.moveCall({
             target: `${response.packages[0].packageId}::hello_world::execute`,
-            arguments: [tx.pure('0x0'), tx.pure('avalanche'), tx.pure('0x0'), tx.pure(toHEX(msgBytes))],
+            arguments: [tx.pure('0x0'), tx.pure('Avalanche'), tx.pure('0x0'), tx.pure(toHEX(msgBytes))],
         });
         await client.execute(tx);
 

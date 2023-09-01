@@ -11,6 +11,7 @@ describe('e2e', () => {
     let relayer: SuiRelayer;
     let evmNetwork: Network;
     let evmContract: Contract;
+    const evmChainName = 'Avalanche';
     const Executable = require('../../axelar-local-dev/src/artifacts/src/contracts/test/Executable.sol/Executable.json');
 
     beforeEach(async () => {
@@ -19,18 +20,18 @@ describe('e2e', () => {
         relayer = new SuiRelayer(client);
 
         evmNetwork = await createNetwork({
-            name: 'avalanche',
+            name: evmChainName,
         });
     });
 
-    it('should be able to relay from sui to evm', async () => {
-        // deploy a contract on avalanche
+    it.only('should be able to relay from sui to evm', async () => {
+        // deploy a contract on Avalanche
         evmContract = await deployContract(evmNetwork.userWallets[0], Executable, [
             evmNetwork.gateway.address,
             evmNetwork.gasService.address,
         ]);
 
-        console.log('Deployed contract on avalanche: ', evmContract.address);
+        console.log('Deployed contract on Avalanche: ', evmContract.address);
 
         // Deploy a sample module
         const response = await client.deploy(path.join(__dirname, '../move/sample'));
@@ -42,7 +43,7 @@ describe('e2e', () => {
         const tx = new TransactionBlock();
         tx.moveCall({
             target: `${response.packages[0].packageId}::hello_world::call`,
-            arguments: [tx.pure('avalanche'), tx.pure(evmContract.address), tx.pure(payload), tx.pure(1)],
+            arguments: [tx.pure(evmChainName), tx.pure(evmContract.address), tx.pure(payload), tx.pure(1)],
         });
         await client.execute(tx);
 
@@ -57,7 +58,7 @@ describe('e2e', () => {
             suiRelayer: relayer,
         });
 
-        // deploy a contract on avalanche
+        // deploy a contract on Avalanche
         evmContract = await deployContract(evmNetwork.userWallets[0], Executable, [
             evmNetwork.gateway.address,
             evmNetwork.gasService.address,

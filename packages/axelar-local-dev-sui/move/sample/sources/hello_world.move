@@ -12,13 +12,6 @@ module axelar_sui_sample::hello_world {
     updated_message: String,
   }
 
-  struct ContractCall has copy, drop {
-    source: vector<u8>,
-    destination_chain: vector<u8>,
-    destination_address: vector<u8>,
-    payload: vector<u8>,
-  }
-
   struct MessageHolder has key {
     id: UID,
     message: String,
