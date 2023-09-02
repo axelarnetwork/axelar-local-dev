@@ -1,5 +1,4 @@
-import { ethers } from 'ethers';
-import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
+import { arrayify, defaultAbiCoder, hexlify, keccak256 } from 'ethers/lib/utils';
 import {
     logger,
     getSignedExecuteInput,
@@ -15,6 +14,8 @@ import {
 import { Command as SuiCommand } from './Command';
 import { SuiNetwork } from './SuiNetwork';
 import { getCommandId } from './utils';
+
+const DEFAULT_GAS_LIMIT = BigInt(8e6);
 
 export class SuiRelayer extends Relayer {
     private suiNetwork: SuiNetwork;
@@ -48,7 +49,7 @@ export class SuiRelayer extends Relayer {
     async executeSuiToEvm(commandList: RelayCommand) {
         for (const to of networks) {
             const commands = commandList[to.name];
-            if (commands.length == 0) continue;
+            if (commands.length === 0) continue;
 
             const execution = await this.executeEvmGateway(to, commands);
             await this.executeEvmExecutable(to, commands, execution);
@@ -86,7 +87,7 @@ export class SuiRelayer extends Relayer {
 
         return to.gateway
             .connect(to.ownerWallet)
-            .execute(signedData, { gasLimit: BigInt(8e6) })
+            .execute(signedData, { gasLimit: DEFAULT_GAS_LIMIT })
             .then((tx: any) => tx.wait());
     }
 
@@ -127,9 +128,16 @@ export class SuiRelayer extends Relayer {
             const commandId = getCommandId(event.id);
             const eventParams = event.parsedJson as any;
 
-            const { destination_address: destinationAddress, destination_chain: destinationChain, payload } = eventParams;
+            const {
+                destination_address: destinationAddress,
+                destination_chain: destinationChain,
+                payload,
+                payload_hash: _payloadHash,
+            } = eventParams;
 
-            const payloadHash = ethers.utils.keccak256(this.convertUint8ArrayToUtf8String(payload));
+            // TODO: Investigate why using the payload hash directly causes relay failure.
+            // Current workaround: use keccak256 hash of the payload.
+            const payloadHash = keccak256(this.convertUint8ArrayToUtf8String(payload));
 
             const contractCallArgs: CallContractArgs = {
                 from: 'sui',
@@ -138,6 +146,7 @@ export class SuiRelayer extends Relayer {
                 payload: this.convertUint8ArrayToUtf8String(payload),
                 sourceAddress: event.packageId,
                 transactionHash: event.id.txDigest,
+                // payloadHash: hexlify(_payloadHash),
                 payloadHash,
                 sourceEventIndex: parseInt(event.id.eventSeq),
             };
