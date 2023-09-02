@@ -24,7 +24,7 @@ describe('e2e', () => {
         });
     });
 
-    it.only('should be able to relay from sui to evm', async () => {
+    it('should be able to relay from sui to evm', async () => {
         // deploy a contract on Avalanche
         evmContract = await deployContract(evmNetwork.userWallets[0], Executable, [
             evmNetwork.gateway.address,
