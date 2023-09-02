@@ -10,41 +10,73 @@ jobs:
         os: [ubuntu-22.04]
         arch: [amd64]
     steps:
-      - name: Download Aptos Binary
+      # - name: Download Aptos Binary
+      #   run: |
+      #     # Install Aptos binary
+      #     wget --no-check-certificate  https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.4/aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+      #     unzip aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+      #     chmod +x aptos
+      #     cp aptos /usr/local/bin
+      # - name: Download Sui binary
+      #   run: |
+      #     # Install sui binary
+      #     sudo apt-get install libpq-dev
+      #     wget https://github.com/MystenLabs/sui/releases/download/devnet-v1.7.0/sui-devnet-v1.7.0-ubuntu-x86_64.tgz && \
+      #     tar -xvf sui-devnet-v1.7.0-ubuntu-x86_64.tgz && \
+      #     mv ./target/release/sui-test-validator-ubuntu-x86_64 ./sui-test-validator
+      #     mv ./target/release/sui-ubuntu-x86_64 ./sui
+      #     chmod +x sui-test-validator
+      #     chmod +x sui
+      #     cp sui /usr/local/bin
+      #     # Install postgresql for sui
+      #     rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip sui-devnet-v1.7.0-ubuntu-x86_64.tgz
+
+      - name: Download and Install Aptos Binary
         run: |
-          # Install aptos binary
-          wget --no-check-certificate  https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.4/aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+          wget --no-check-certificate https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.4/aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
           unzip aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
-          chmod +x aptos
-          cp aptos /usr/local/bin
-          # Install sui binary
-          wget https://github.com/MystenLabs/sui/releases/download/devnet-v1.7.0/sui-devnet-v1.7.0-ubuntu-x86_64.tgz && \
-          tar -xvf sui-devnet-v1.7.0-ubuntu-x86_64.tgz && \
-          mv ./target/release/sui-test-validator-ubuntu-x86_64 ./sui-test-validator
-          chmod +x sui-test-validator
-          # Install postgresql for sui
-          sudo apt-get install libpq-dev
+          sudo mv aptos /usr/local/bin
+
+      - name: Setup Dependencies for Sui Binary
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev
+
+      - name: Download and Install Sui Binary
+        run: |
+          wget https://github.com/MystenLabs/sui/releases/download/devnet-v1.7.0/sui-devnet-v1.7.0-ubuntu-x86_64.tgz
+          tar -xvf sui-devnet-v1.7.0-ubuntu-x86_64.tgz
+          sudo mv ./target/release/sui-test-validator-ubuntu-x86_64 /usr/local/bin/sui-test-validator
+          sudo mv ./target/release/sui-ubuntu-x86_64 /usr/local/bin/sui
+
+      - name: Cleanup
+        run: rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip sui-devnet-v1.7.0-ubuntu-x86_64.tgz
+
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 16
+
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Cache node_modules
         uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install dependencies
         run: npm ci
+
       - name: Build
         run: npm run build
+
       - name: Build Sui test contract
         run: npm run build:sui_test
+
       - name: Test
         timeout-minutes: 15
         run: |
-          RUST_LOG="off" ./sui-test-validator
+          RUST_LOG="off" sui-test-validator
           nohup sh -c "aptos node run-local-testnet --with-faucet" > nohup.out 2> nohup.err < /dev/null &
           sleep 10
           npm run test
