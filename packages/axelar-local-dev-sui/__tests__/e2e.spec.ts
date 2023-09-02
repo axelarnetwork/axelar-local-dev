@@ -12,7 +12,7 @@ describe('e2e', () => {
     let evmNetwork: Network;
     let evmContract: Contract;
     const evmChainName = 'Avalanche';
-    const Executable = require('../../axelar-local-dev/src/artifacts/src/contracts/test/Executable.sol/Executable.json');
+    const Executable = require('../artifacts/contracts/TestExecutable.sol/TestExecutable.json');
 
     beforeEach(async () => {
         client = new SuiNetwork();

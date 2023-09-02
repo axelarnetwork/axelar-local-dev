@@ -13,6 +13,7 @@
         "prettier": "prettier --write 'src/**/*.ts'",
         "build": "npm run clean && npm run build-ts",
         "build-ts": "tsc",
+        "build-contract": "hardhat compile",
         "build-sui": "cd move && sui move build"
     },
     "dependencies": {

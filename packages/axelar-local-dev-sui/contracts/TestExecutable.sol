@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import { IAxelarGasService } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol';
 import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol';
 
-contract Executable is AxelarExecutable {
+contract TestExecutable is AxelarExecutable {
     string public value;
     string public sourceChain;
     string public sourceAddress;
@@ -21,10 +21,11 @@ contract Executable is AxelarExecutable {
         siblings[chain_] = address_;
     }
 
+
     // Call this function to update the value of this contract along with all its siblings'.
     function set(string memory chain, string calldata value_) external payable {
         value = value_;
-        bytes memory payload = abi.encode(value_);
+        bytes memory payload = abi.encodePacked(value_);
         if (msg.value > 0) {
             gasService.payNativeGasForContractCall{ value: msg.value }(address(this), chain, siblings[chain], payload, msg.sender);
         }

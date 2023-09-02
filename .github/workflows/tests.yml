@@ -31,6 +31,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Build Sui test contract
+        run: npm run build:sui_test
       - name: Test
         timeout-minutes: 15
         run: |
