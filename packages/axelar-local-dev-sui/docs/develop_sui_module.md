@@ -2,7 +2,23 @@
 
 To develop a module that is compatible with `axelar-local-dev-sui`, follow the guidelines outlined in this document. We will walk you through creating a module similar to the `HelloWorld` module illustrated here.
 
-The development process involves meeting two critical requirements:
+Before you begin, ensure that your `Move.toml` file is correctly configured. Here is a template that you might find useful:
+
+```toml
+[package]
+name = "sui-example"
+version = "0.0.1"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "77a9e0d"}
+axelar = { git = "https://github.com/axelarnetwork/axelar-local-dev.git", subdir = "packages/axelar-local-dev-sui/move/axelar", rev = "ae68c9c" }
+
+[addresses]
+sui_example = "0x0"
+sui = "0x2"
+```
+
+With your `Move.toml`` set up, you can proceed with the module development which primarily involves two key steps:
 
 1. **Sending Messages from Sui to the EVM Chain:** Implement the `call` function to facilitate this. The function should invoke `gateway::call_contract`. Reference the gateway module's implementation [here](../move/axelar/sources/gateway.move) for details.
 
@@ -68,3 +84,6 @@ public entry fun execute(_command_id: vector<u8>, _source_chain: String, _source
  transfer::share_object(event);
 }
 }
+```
+
+Feel free to refer to the HelloWorld module and adapt this template according to your specific needs and functionalities.
