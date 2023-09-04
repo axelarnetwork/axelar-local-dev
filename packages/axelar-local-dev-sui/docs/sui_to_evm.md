@@ -60,6 +60,8 @@ const response = await suiClient.deploy(path.join(__dirname, pathToModule));
 
 ### Step 6: Execute a Function on the Sui Module
 
+Using the [hello_world](../move/sample/sources/hello_world.move) module as an example, create a transaction block and execute a function call on the Sui module, incorporating necessary arguments.
+
 ```ts
 const tx = new TransactionBlock();
 const payload = ethers.utils.defaultAbiCoder.encode(['string'], ['hello from sui']);
