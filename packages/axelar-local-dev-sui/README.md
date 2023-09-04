@@ -20,5 +20,5 @@ RUST_LOG="consensus=off" cargo run --bin sui-test-validator
 
 ## Usage
 
-1. [Relay Transaction to Sui](./docs/evm_to_sui.md)
-2. [Relay Transaction to Evm](./docs/sui_to_evm.md)
+1. [Relay Transaction From Evm to Sui](./docs/evm_to_sui.md)
+2. [Relay Transaction From Sui to Evm](./docs/sui_to_evm.md)
