@@ -1,9 +1,7 @@
-import { SuiNetwork } from '../src/SuiNetwork';
-import { SuiRelayer } from '../src/SuiRelayer';
 import { Contract, ethers } from 'ethers';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { Network, createNetwork, deployContract } from '@axelar-network/axelar-local-dev';
-import { EvmRelayer } from '@axelar-network/axelar-local-dev/dist/relay/EvmRelayer';
+import { Network, createNetwork, deployContract, EvmRelayer, RelayerType } from '@axelar-network/axelar-local-dev';
+import { SuiNetwork, SuiRelayer, initSui } from '@axelar-network/axelar-local-dev-sui';
 import path from 'path';
 
 describe('e2e', () => {
@@ -15,9 +13,9 @@ describe('e2e', () => {
     const Executable = require('../artifacts/contracts/TestExecutable.sol/TestExecutable.json');
 
     beforeEach(async () => {
-        client = new SuiNetwork();
-        await client.init();
-        relayer = new SuiRelayer(client);
+        const response = await initSui();
+        client = response.suiNetwork;
+        relayer = response.suiRelayer;
 
         evmNetwork = await createNetwork({
             name: evmChainName,
@@ -54,9 +52,8 @@ describe('e2e', () => {
     });
 
     it('should be able to relay from evm to sui', async () => {
-        const evmRelayer = new EvmRelayer({
-            suiRelayer: relayer,
-        });
+        const evmRelayer = new EvmRelayer();
+        evmRelayer.setRelayer(RelayerType.Sui, relayer);
 
         // deploy a contract on Avalanche
         evmContract = await deployContract(evmNetwork.userWallets[0], Executable, [
@@ -69,7 +66,6 @@ describe('e2e', () => {
 
         // add sibling
         await evmContract.addSibling('sui', `${response.packages[0].packageId}::hello_world`);
-
         await evmContract.set('sui', 'hello from evm', {
             value: 10000000,
         });

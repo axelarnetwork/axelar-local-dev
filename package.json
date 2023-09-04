@@ -23,8 +23,7 @@
     "build:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run build",
     "build:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run build",
     "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build",
-    "build:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run build",
-    "build:sui_test": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run build-contract"
+    "build:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run build"
   },
   "devDependencies": {
     "lerna": "^6.6.1",

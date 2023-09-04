@@ -1,33 +1,24 @@
-# Axelar Local Dev Sui
+# Axelar Local Dev: Sui Integration
+
+This package allows you to create a local development environment for cross-chain communication using the [Sui](https://sui.io/) protocol. At present, we support general message passing only with EVM chain
+
+## Prequisite
+
+You'll have to install `sui` and `sui-test-validator` in your local machine.
+
+To do this, please follow the guide from Sui [here](https://docs.sui.io/build/sui-local-network#install-sui-from-github)
+
+> Note: This package has tested against version [devnet-v1.8.1](https://github.com/MystenLabs/sui/releases/tag/devnet-v1.8.1).
 
 ## Running Local Sui Network
 
-1. Clone the repository
+To start running local sui network, run the following command.
 
-```bash
-git clone https://github.com/MystenLabs/sui.git
 ```
-
-2. cd into sui directory and run the following commmand
-
-```bash
 RUST_LOG="consensus=off" cargo run --bin sui-test-validator
 ```
 
-> Important: Each time you start the sui-test-validator, the network starts as a new network with no previous data. The local network is not persistent.
+## Usage
 
-```
-OPTIONS:
-  --epoch-duration-ms <EPOCH_DURATION_MS>
-      The duration for epochs (defaults to one minute) [default: 60000]
-
-  --faucet-port <FAUCET_PORT>
-      Port to start the Sui faucet on [default: 9123]
-
-  --fullnode-rpc-port <FULLNODE_RPC_PORT>
-      Port to start the Fullnode RPC server on [default: 9000]
-```
-
-See more: https://docs.sui.io/build/install#start-the-local-network
-
-##
+1. [Relay Transaction to Sui](./docs/evm_to_sui.md)
+2. [Relay Transaction to Evm](./docs/sui_to_evm.md)
