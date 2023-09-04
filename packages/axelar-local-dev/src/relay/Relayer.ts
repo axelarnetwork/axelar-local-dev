@@ -2,7 +2,12 @@ import { networks } from '../Network';
 import { Command } from './Command';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 
-export type RelayerType = 'near' | 'aptos' | 'evm' | 'sui';
+export enum RelayerType {
+    Sui = 'sui',
+    Evm = 'evm',
+    Aptos = 'aptos',
+    Near = 'near',
+}
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 
 export abstract class Relayer {
