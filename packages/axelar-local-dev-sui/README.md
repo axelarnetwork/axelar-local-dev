@@ -1,6 +1,6 @@
 # Axelar Local Dev: Sui Integration
 
-Welcome to the Axelar Local Development Suite featuring SUI Integration. This package empowers developers to establish a local development environment for streamlined cross-chain communication utilizing the [Sui protocol](https://sui.io/). Currently, the integration facilitates general message passing exclusively with the EVM chain.
+Welcome to the Axelar Local Development Suite featuring Sui Integration. This package empowers developers to establish a local development environment for streamlined cross-chain communication utilizing the [Sui protocol](https://sui.io/). Currently, the integration facilitates general message passing exclusively with the EVM chain.
 
 ## Prequisites
 
@@ -25,6 +25,6 @@ RUST_LOG="consensus=off" cargo run --bin sui-test-validator
 
 Here, you'll find detailed guides that will assist you in various functionalities, including:
 
--   [Relaying Transactions from EVM to SUI](./docs/evm_to_sui.md)
--   [Relaying Transactions from SUI to EVM](./docs/sui_to_evm.md)
--   [Developing a SUI Module](./docs/develop_sui_module.md)
+-   [Relaying Transactions from EVM to Sui](./docs/evm_to_sui.md)
+-   [Relaying Transactions from Sui to EVM](./docs/sui_to_evm.md)
+-   [Developing a Sui Module](./docs/develop_sui_module.md)

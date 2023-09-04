@@ -1,4 +1,4 @@
-## Relay from EVM to Sui
+## Relay from Evm to Sui
 
 In this guide, we demonstrate how to facilitate a transaction relay from an EVM network to the Sui network. We will walk through the steps of initializing relayers, deploying contracts and modules, and finally executing a function on the EVM contract and relaying the transaction to the Sui network.
 

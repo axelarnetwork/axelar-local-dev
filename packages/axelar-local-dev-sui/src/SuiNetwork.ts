@@ -7,7 +7,7 @@ import { execSync, exec } from 'child_process';
 import { PublishedPackage } from './types';
 
 /**
- * `SuiNetwork` class provides methods and functionalities to interact with the SUI network.
+ * `SuiNetwork` class provides methods and functionalities to interact with the Sui network.
  * It extends the functionalities of `SuiClient`, offering a higher-level abstraction for
  * various network operations.
  *
@@ -15,7 +15,7 @@ import { PublishedPackage } from './types';
  *
  * @property {Ed25519Keypair} executor - Represents the keypair of the executor.
  * @property {string} faucetUrl - URL of the faucet for fetching tokens.
- * @property {string} nodeUrl - URL of the node to connect to the SUI network.
+ * @property {string} nodeUrl - URL of the node to connect to the Sui network.
  * @property {PublishedPackage[]} gatewayObjects - Array to store packages compatible with gateway.
  *
  * Main Features:
@@ -52,7 +52,7 @@ export class SuiNetwork extends SuiClient {
     }
 
     /**
-     * Request funds for a given wallet from the SUI faucet
+     * Request funds for a given wallet from the Sui faucet
      *
      * @param address - The address of the wallet to fund
      * @returns A Promise that resolves once the funding request is made
