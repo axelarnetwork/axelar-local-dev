@@ -18,7 +18,7 @@ sui_example = "0x0"
 sui = "0x2"
 ```
 
-With your `Move.toml`` set up, you can proceed with the module development which primarily involves two key steps:
+With your `Move.toml` set up, you can proceed with the module development which primarily involves two key steps:
 
 1. **Sending Messages from Sui to the EVM Chain:** Implement the `call` function to facilitate this. The function should invoke `gateway::call_contract`. Reference the gateway module's implementation [here](../move/axelar/sources/gateway.move) for details.
 
