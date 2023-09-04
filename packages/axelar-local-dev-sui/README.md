@@ -1,24 +1,30 @@
 # Axelar Local Dev: Sui Integration
 
-This package allows you to create a local development environment for cross-chain communication using the [Sui](https://sui.io/) protocol. At present, we support general message passing only with EVM chain
+Welcome to the Axelar Local Development Suite featuring SUI Integration. This package empowers developers to establish a local development environment for streamlined cross-chain communication utilizing the [Sui protocol](https://sui.io/). Currently, the integration facilitates general message passing exclusively with the EVM chain.
 
-## Prequisite
+## Prequisites
 
-You'll have to install `sui` and `sui-test-validator` in your local machine.
+Before you delve into the development, ensure you have the following components installed on your local machine:
 
-To do this, please follow the guide from Sui [here](https://docs.sui.io/build/sui-local-network#install-sui-from-github)
+-   `sui`
+-   `sui-test-validator`
 
-> Note: This package has tested against version [devnet-v1.8.1](https://github.com/MystenLabs/sui/releases/tag/devnet-v1.8.1).
+To set these up, adhere to the step-by-step guide provided by Sui, which can be accessed [here](https://docs.sui.io/build/sui-local-network#install-sui-from-github).
 
-## Running Local Sui Network
+> **Note**: This package has been rigorously tested and found compatible with the [devnet-v1.8.1](https://github.com/MystenLabs/sui/releases/tag/devnet-v1.8.1) version.
 
-To start running local sui network, run the following command.
+## Initiating the Local Sui Network
+
+To initiate the local Sui network, execute the command below in your terminal:
 
 ```
 RUST_LOG="consensus=off" cargo run --bin sui-test-validator
 ```
 
-## Usage
+## Usage Guidelines
 
-1. [Relay Transaction From Evm to Sui](./docs/evm_to_sui.md)
-2. [Relay Transaction From Sui to Evm](./docs/sui_to_evm.md)
+Here, you'll find detailed guides that will assist you in various functionalities, including:
+
+-   [Relaying Transactions from EVM to SUI](./docs/evm_to_sui.md)
+-   [Relaying Transactions from SUI to EVM](./docs/sui_to_evm.md)
+-   [Developing a SUI Module](./docs/develop_sui_module.md)
