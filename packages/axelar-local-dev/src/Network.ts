@@ -1,5 +1,6 @@
 'use strict';
 
+import http from 'http';
 import { ethers, Wallet, Contract, providers } from 'ethers';
 import { logger } from './utils';
 import { getSignedExecuteInput, getRandomID, deployContract } from './utils';
@@ -16,9 +17,6 @@ import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factorie
 import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
-import http from 'http';
-import { EvmRelayer } from './relay/EvmRelayer';
-import { evmRelayer } from './relay';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;

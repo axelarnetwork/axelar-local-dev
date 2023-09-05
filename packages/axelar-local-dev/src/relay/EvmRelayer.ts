@@ -18,6 +18,7 @@ const AddressZero = ethers.constants.AddressZero;
 interface EvmRelayerOptions {
     nearRelayer?: Relayer;
     aptosRelayer?: Relayer;
+    suiRelayer?: Relayer;
 }
 
 export class EvmRelayer extends Relayer {
@@ -27,6 +28,7 @@ export class EvmRelayer extends Relayer {
         super();
         this.otherRelayers.near = options.nearRelayer;
         this.otherRelayers.aptos = options.aptosRelayer;
+        this.otherRelayers.sui = options.suiRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {
@@ -414,8 +416,10 @@ export class EvmRelayer extends Relayer {
             let command;
             if (args.destinationChain.toLowerCase() === 'aptos') {
                 command = this.otherRelayers?.aptos?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
-            } else if (args.destinationChain.toLowerCase() == 'near') {
+            } else if (args.destinationChain.toLowerCase() === 'near') {
                 command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() === 'sui') {
+                command = this.otherRelayers?.sui?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else {
                 command = this.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             }
