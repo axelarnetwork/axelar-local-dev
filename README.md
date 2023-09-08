@@ -36,6 +36,7 @@ Visit our [axelar-examples repo](https://github.com/axelarnetwork/axelar-example
 
 We currently support the following chain stacks:
 
+- [EVM](./packages/axelar-local-dev/)
 - [Aptos](./packages/axelar-local-dev-aptos/)
 - [Near](./packages/axelar-local-dev-near/)
 - [Sui](./packages/axelar-local-dev-sui/)
