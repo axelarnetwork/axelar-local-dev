@@ -28,5 +28,8 @@
   "devDependencies": {
     "lerna": "^6.6.1",
     "lerna-update-wizard": "^1.1.2"
+  },
+  "dependencies": {
+    "sui-monorepo": "github:Foivos/sui#pat/axelar"
   }
 }

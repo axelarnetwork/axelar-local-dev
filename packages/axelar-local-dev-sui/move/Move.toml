@@ -1,0 +1,11 @@
+[package]
+name = "sui-axelar-examples"
+version = "0.0.1"
+
+[dependencies]
+sui-axelar-cgp = { local= "../../../node_modules/sui-monorepo/crates/sui-axelar-cgp/move" }
+
+[addresses]
+axelar = "0x0"
+sui = "0x2"
+axelar_sui_sample = "0x1"

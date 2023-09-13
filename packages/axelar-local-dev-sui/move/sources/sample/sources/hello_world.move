@@ -1,4 +1,4 @@
-module axelar_sui_sample::hello_world {
+/*module axelar_sui_sample::hello_world {
   use std::string::{utf8, String};
   use sui::object::{Self, ID, UID};
   use sui::transfer;
@@ -49,3 +49,4 @@ module axelar_sui_sample::hello_world {
     transfer::share_object(event);
   }
 }
+*/

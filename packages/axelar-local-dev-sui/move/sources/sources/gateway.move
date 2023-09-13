@@ -1,5 +1,5 @@
 // Todo: remove this file once we have a proper gateway module
-module axelar::gateway {
+module axelar::gatewayV2 {
   use sui::event::emit;
   use sui::hash::keccak256;
 
