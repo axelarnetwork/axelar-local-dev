@@ -7,8 +7,8 @@ import Auth from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/aut
 import AxelarGasReceiver from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json';
 import AxelarGasReceiverProxy from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasServiceProxy.sol/AxelarGasServiceProxy.json';
 import IAxelarGasService from '../artifacts/@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGasService.sol/IAxelarGasService.json';
-import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/dist/ConstAddressDeployer.json';
-import Create3Deployer from '@axelar-network/axelar-gmp-sdk-solidity/dist/Create3Deployer.json';
+import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json';
+import Create3Deployer from '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
 
 export {
