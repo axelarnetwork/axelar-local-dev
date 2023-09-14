@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  simapp:
+    image: ghcr.io/cosmos/simapp
+    container_name: simapp_container
+    command: "/root/private/bin/init_and_add_keys.sh"
+    volumes:
+      - "./private:/root/private"
+      - "./config:/root/config"
+    ports:
+      - "26657:26657"
+      - "26656:26656"
+      - "1317:1317"
+      - "9090:9090"

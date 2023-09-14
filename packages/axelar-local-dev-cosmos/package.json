@@ -1,0 +1,30 @@
+{
+  "name": "@axelar-network/axelar-local-dev-cosmos",
+  "version": "2.1.0",
+  "main": "dist/index.js",
+  "files": [
+    "dist/",
+    "!dist/types",
+    "!dist/artifacts"
+  ],
+  "scripts": {
+    "test": "jest",
+    "clean": "rm -rf src/types dist artifacts",
+    "prettier": "prettier --write 'src/**/*.ts'",
+    "build": "npm run clean && npm run build-ts",
+    "build-ts": "tsc",
+    "start": "ts-node scripts/start.ts",
+    "stop": "ts-node scripts/stop.ts"
+  },
+  "dependencies": {
+    "@axelar-network/axelar-local-dev": "2.1.0",
+    "@cosmjs/stargate": "^0.31.1"
+  },
+  "author": "euro@axelar.network",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "docker-compose": "^0.24.2",
+    "ts-node": "^10.9.1"
+  }
+}
