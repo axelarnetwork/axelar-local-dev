@@ -5,7 +5,7 @@ import { setJSON } from './utils';
 import { Network, NetworkOptions } from './Network';
 import { RelayData, RelayerMap, relay } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
-import { testnetInfo, mainnetInfo } from './info';
+import { testnetInfo } from './info';
 import { EvmRelayer } from './relay/EvmRelayer';
 import { getChainArray } from '@axelar-network/axelar-chains-config';
 
@@ -130,7 +130,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
         console.log(`Forking ${_options.env.length} chains from custom data.`);
     }
     const chainsRaw =
-        _options.env == 'mainnet' ? getChainArray(mainnetInfo) : _options.env == 'testnet' ? getChainArray(testnetInfo) : _options.env;
+        _options.env == 'mainnet' ? getChainArray('mainnet') : _options.env == 'testnet' ? getChainArray('testnet') : _options.env;
 
     const chains =
         _options.chains?.length == 0
