@@ -1,5 +1,5 @@
 import { HexString, TxnBuilderTypes } from 'aptos';
-import { AptosNetwork, AptosRelayer, createAptosNetwork, findNodeModulesPath } from '..';
+import { AptosNetwork, AptosRelayer, createAptosNetwork } from '..';
 import fs from 'fs';
 import path from 'path';
 import { ethers } from 'ethers';
