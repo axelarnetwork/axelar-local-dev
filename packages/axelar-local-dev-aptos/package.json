@@ -12,7 +12,7 @@
         "test": "jest",
         "build-ts": "tsc",
         "build-aptos": "bash ./__tests__/modules/build.sh",
-        "build-contract": "hardhat compile",
+        "build-contract": "hardhat clean && hardhat compile",
         "build": "run-s clean build-ts build-contract build-aptos",
         "clean": "rm -rf src/types dist artifacts",
         "prettier": "prettier --write 'src/**/*.ts'"
