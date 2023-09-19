@@ -24,7 +24,9 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/node-fetch": "^2.6.5",
     "docker-compose": "^0.24.2",
+    "node-fetch": "^2.7.0",
     "ts-node": "^10.9.1"
   }
 }

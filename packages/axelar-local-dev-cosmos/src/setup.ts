@@ -1,17 +1,28 @@
-import child_process from "child_process";
 import path from "path";
-import { v2 as compose } from "docker-compose";
+import fetch from "node-fetch";
+import { v2 as compose, ps } from "docker-compose";
 
-export async function start() {
-  console.log("Waiting for Cosmos to start...");
-  // child_process.execSync("docker-compose up");
-  const result = await compose.upOne("simapp", {
+export interface StartOptions {
+  cleanStart?: boolean;
+}
+
+const defaultStartOptions = {
+  cleanStart: true,
+};
+
+export async function start(options?: StartOptions) {
+  const { cleanStart } = { ...defaultStartOptions, ...options };
+
+  if (cleanStart) {
+    await stop();
+  }
+
+  await compose.upOne("simapp", {
     cwd: path.join(__dirname, "../docker"),
     log: true,
   });
 
-  console.log(result);
-
+  console.log("Waiting for Cosmos to start (~5-10s)...");
   await waitForCosmos();
 
   console.log("Cosmos started");
@@ -20,13 +31,12 @@ export async function start() {
 async function waitForCosmos() {
   const start = Date.now();
   const timeout = 60000;
-  const interval = 1000;
-  const url = "http://localhost:1317/swagger";
+  const interval = 3000;
+  const url = "http://localhost:1317/cosmos/base/node/v1beta1/status";
   let status = 0;
   while (Date.now() - start < timeout) {
     try {
-      status = await fetch(url).then((res) => res.status);
-      console.log(status)
+      status = await fetch(url).then((res: any) => res.status);
       if (status === 200) {
         break;
       }
@@ -40,8 +50,14 @@ async function waitForCosmos() {
   }
 }
 
-export function stop() {
+export async function stop() {
   console.log("Stopping Cosmos...");
-  child_process.execSync("docker-compose down", { stdio: "inherit" });
+  try {
+    await compose.down({
+      cwd: path.join(__dirname, "../docker"),
+    });
+  } catch (e: any) {
+    console.log(e);
+  }
   console.log("Cosmos stopped");
 }
