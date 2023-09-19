@@ -13,7 +13,7 @@
         "declarationMap": true /* Create sourcemaps for d.ts files. */,
         "sourceMap": true /* Create source map files for emitted JavaScript files. */,
         "rootDirs": ["./src", "src/__test__"] /* Specify the root folder within your source files. */,
-        "outDir": "./dist" /* Specify an output folder for all emitted files. */,
+        "outDir": "dist" /* Specify an output folder for all emitted files. */,
 
         /* Interop Constraints */
         // "isolatedModules": true,                          /* Ensure that each file can be safely transpiled without relying on other imports. */

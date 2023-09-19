@@ -2,7 +2,7 @@ import { AptosAccount, AptosClient, CoinClient, HexString, TxnBuilderTypes, BCS,
 import fs from 'fs';
 import path from 'path';
 import { sha3_256 as sha3Hash } from '@noble/hashes/sha3';
-import { findNodeModulesPath } from './utils';
+import { findAxelarFramework } from './utils';
 
 declare type EntryFunctionPayload = {
     function: string;
@@ -80,7 +80,7 @@ export class AptosNetwork extends AptosClient {
             txHash = await this.publishPackage(
                 this.owner,
                 new HexString(packageMetadata.toString('hex')).toUint8Array(),
-                moduleDatas.map((moduleData: any) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array()))
+                moduleDatas.map((moduleData: any) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array())),
             );
         }
 
@@ -96,8 +96,7 @@ export class AptosNetwork extends AptosClient {
     }
 
     deployAxelarFrameworkModules() {
-        const nodeModulesPath = findNodeModulesPath(__dirname);
-        const modulePath = path.join(nodeModulesPath, '@axelar-network/axelar-cgp-aptos/aptos/modules/axelar/build/AxelarFramework');
+        const modulePath = findAxelarFramework(__dirname);
         return this.deploy(modulePath, ['axelar_gas_service.mv', 'address_utils.mv', 'gateway.mv'], '0x1234');
     }
 
@@ -121,7 +120,7 @@ export class AptosNetwork extends AptosClient {
             this.resourceAddress,
             `${this.resourceAddress}::gateway::OutgoingContractCallsState`,
             'events',
-            _options
+            _options,
         );
     }
 
@@ -131,7 +130,7 @@ export class AptosNetwork extends AptosClient {
             this.resourceAddress,
             `${this.resourceAddress}::axelar_gas_service::GasServiceEventStore`,
             'native_gas_paid_for_contract_call_events',
-            _options
+            _options,
         );
     }
 
@@ -140,7 +139,7 @@ export class AptosNetwork extends AptosClient {
         sourceChain: string,
         sourceAddress: string,
         destinationAddress: string,
-        payloadHash: Uint8Array
+        payloadHash: Uint8Array,
     ) {
         const tx = await this.submitTransactionAndWait(this.owner.address(), {
             function: `${this.resourceAddress}::gateway::approve_contract_call`,
