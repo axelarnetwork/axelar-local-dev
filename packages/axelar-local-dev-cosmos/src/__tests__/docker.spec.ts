@@ -1,4 +1,5 @@
 import { start, stop } from "../lib/docker";
+import fetch from "node-fetch";
 
 describe("docker", () => {
   afterEach(async () => {
@@ -11,5 +12,8 @@ describe("docker", () => {
 
   it("should stop Cosmos container gracefully", async () => {
     await stop();
+    await fetch("http://localhost:1317/").catch((e) => {
+      expect(e.message).toContain("ECONNREFUSED");
+    });
   });
 });
