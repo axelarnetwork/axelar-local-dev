@@ -1,8 +1,9 @@
 version: "3.8"
 services:
-  simapp:
+  demo-chain:
     image: ghcr.io/cosmos/simapp
-    container_name: simapp_container
+    container_name: ${CHAIN_NAME}
+    env_file: ".env"
     command: "/root/private/bin/init_and_add_keys.sh"
     volumes:
       - "./private:/root/private"
@@ -10,5 +11,5 @@ services:
     ports:
       - "26657:26657"
       - "26656:26656"
-      - "1317:1317"
+      - "${CHAIN_PORT}:1317"
       - "9090:9090"

@@ -1,3 +1,3 @@
-import { stop } from "../src/setup";
+import { stop } from "../src/lib/docker";
 
 stop();
