@@ -1,1 +1,5 @@
-docker/private/.*
+.env
+
+# Docker
+docker/private/*
+!docker/private/bin
