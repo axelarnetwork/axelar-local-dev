@@ -1,17 +1,15 @@
 import path from "path";
 import fetch from "node-fetch";
 import { v2 as compose, ps } from "docker-compose";
+import { CosmosChainOptions, StartOptions } from "../types";
+import { logger } from "@axelar-network/axelar-local-dev";
 
-export interface StartOptions {
-  cleanStart?: boolean;
-  chain?: CosmosChainOptions;
-}
-
-export interface CosmosChainOptions {
-  name: string;
-  port: number;
-}
-
+export const cosmosAppName = "demo-chain";
+const healthcheckUrl = "http://localhost:1317/cosmos/base/node/v1beta1/status";
+const dockerPath = path.join(__dirname, "../../docker");
+const defaultDockerConfig = {
+  cwd: dockerPath,
+};
 const defaultStartOptions = {
   cleanStart: true,
   chain: {
@@ -20,13 +18,12 @@ const defaultStartOptions = {
   },
 };
 
-export const cosmosAppName = "demo-chain";
-
+// Start cosmos container
 export async function start(options?: StartOptions) {
-  // if (!(await isDockerRunning())) {
-    // console.error("Docker is not running. Please start Docker and try again.");
-    // return;
-  // }
+  if (!(await isDockerRunning())) {
+    console.error("Docker is not running. Please start Docker and try again.");
+    return;
+  }
 
   const { cleanStart, chain } = { ...defaultStartOptions, ...options };
 
@@ -35,26 +32,29 @@ export async function start(options?: StartOptions) {
   }
 
   await compose.upOne(cosmosAppName, {
-    cwd: path.join(__dirname, "../docker"),
+    ...defaultDockerConfig,
     env: {
       ...process.env,
       CHAIN_NAME: chain.name,
       CHAIN_PORT: chain.port.toString(),
     },
-    log: true,
   });
 
-  console.log("Waiting for Cosmos to start (~5-10s)...");
+  logger.log("Waiting for Cosmos to start (~5-10s)...");
   await waitForCosmos();
 
-  console.log("Cosmos started");
+  logger.log("Cosmos started");
 }
 
+/**
+ * Periodically fetching the healthcheck url until the response code is 200.
+ * If response isn't 200 within {timeout}, throws an error.
+ */
 async function waitForCosmos() {
   const start = Date.now();
   const timeout = 60000;
   const interval = 3000;
-  const url = "http://localhost:1317/cosmos/base/node/v1beta1/status";
+  const url = healthcheckUrl;
   let status = 0;
   while (Date.now() - start < timeout) {
     try {
@@ -72,20 +72,28 @@ async function waitForCosmos() {
   }
 }
 
+/**
+ * Checking if the docker service is running on the host machine
+ * @returns true if the docker service is running, otherwise false.
+ */
 export async function isDockerRunning() {
-  return ps({ cwd: "../docker" })
+  return ps({ cwd: dockerPath })
     .then(() => true)
-    .catch((e) => console.log(e));
+    .catch((e) => logger.log(e));
 }
 
+/**
+ * Stop docker container
+ */
 export async function stop() {
-  console.log("Stopping Cosmos...");
+  logger.log("Stopping Cosmos...");
   try {
     await compose.down({
-      cwd: path.join(__dirname, "../docker"),
+      cwd: dockerPath,
+      log: true,
     });
   } catch (e: any) {
-    console.log(e);
+    logger.log(e);
   }
-  console.log("Cosmos stopped");
+  logger.log("Cosmos stopped");
 }
