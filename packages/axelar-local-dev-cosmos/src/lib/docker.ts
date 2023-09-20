@@ -1,14 +1,17 @@
 import path from "path";
 import fetch from "node-fetch";
 import { v2 as compose, ps } from "docker-compose";
-import { CosmosChainOptions, StartOptions } from "../types";
+import { CosmosChainOptions, StartOptions, StartResponse } from "../types";
 import { logger } from "@axelar-network/axelar-local-dev";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import fs from "fs";
 
 // A default app name
 export const cosmosAppName = "demo-chain";
 
 // A default port
-export const defaultPort = 1317;
+export const defaultLcdPort = 1317;
+export const defaultRpcPort = 26657;
 
 // API endpoint for healthchecking if the cosmos chain is up and running
 const healthcheckApiPath = "cosmos/base/node/v1beta1/status";
@@ -25,38 +28,65 @@ const defaultStartOptions = {
   cleanStart: true,
   chain: {
     name: cosmosAppName,
-    port: defaultPort,
+    port: defaultLcdPort,
+    rpcPort: defaultRpcPort,
   },
 };
 
 // Start cosmos container
-export async function start(options?: StartOptions) {
-  if (!(await isDockerRunning())) {
-    console.error("Docker is not running. Please start Docker and try again.");
-    return;
-  }
+export async function start(options?: StartOptions): Promise<StartResponse> {
+  const { cleanStart, chain, dockerComposeOptions } = {
+    ...defaultStartOptions,
+    ...options,
+  };
 
-  const { cleanStart, chain } = { ...defaultStartOptions, ...options };
+  // Write given env vars to .env file
+  const envPath = path.join(dockerPath, ".env");
+  const env = `CHAIN_NAME=${chain.name}\nCHAIN_PORT=${chain.port}\nCHAIN_RPC_PORT=${chain.rpcPort}`;
+  fs.writeFileSync(envPath, env);
+
+  // Check if docker is running
+  if (!(await isDockerRunning())) {
+    throw new Error(
+      "Docker is not running. Please start Docker and try again."
+    );
+  }
 
   if (cleanStart) {
     await stop();
   }
 
+  // Setup docker-compose config
   const config = {
     ...defaultDockerConfig,
-    env: {
-      ...process.env,
-      CHAIN_NAME: chain.name,
-      CHAIN_PORT: chain.port.toString(),
-    },
+    ...dockerComposeOptions,
   };
 
+  // Start docker container
   await compose.upOne(cosmosAppName, config);
 
+  // Wait for cosmos to start
   logger.log("Waiting for Cosmos to start (~5-10s)...");
   await waitForCosmos(chain);
 
   logger.log("Cosmos started");
+
+  // Get mnemonic and address from the container
+  const homedir = `./private/.${chain.name}`;
+  const homePath = path.join(dockerPath, homedir);
+  const mnemonic = fs.readFileSync(`${homePath}/mnemonic.txt`, "utf8");
+  const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic)
+    .then((wallet) => wallet.getAccounts())
+    .then((accounts) => accounts[0].address);
+
+  return {
+    owner: {
+      mnemonic,
+      address,
+    },
+    lcdUrl: `http://localhost:${chain.port}`,
+    rpcUrl: `http://localhost:${chain.rpcPort}`,
+  };
 }
 
 /**
@@ -68,6 +98,7 @@ async function waitForCosmos(chain: CosmosChainOptions) {
   const timeout = 60000;
   const interval = 3000;
   const url = `http://localhost:${chain.port}/${healthcheckApiPath}`;
+  logger.log(`Waiting for Cosmos to start at ${url}...`);
   let status = 0;
   while (Date.now() - start < timeout) {
     try {

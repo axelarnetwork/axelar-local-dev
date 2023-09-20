@@ -30,7 +30,7 @@ simd genesis collect-gentxs \
     --home ${HOME} > /dev/null 2>&1 && echo "Collected genesis transactions"
 
 # Output the mnemonic to HOME directory
-simd keys mnemonic --home ${HOME} > ${HOME}/mnemonic.txt
+simd keys mnemonic --home ${HOME} | tr -d "\n" >> ${HOME}/mnemonic.txt
 
 # Starting the blockchain node with the specified home directory
 simd start --home ${HOME}
