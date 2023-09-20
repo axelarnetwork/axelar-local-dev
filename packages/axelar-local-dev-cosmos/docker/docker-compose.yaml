@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   demo-chain:
-    image: ghcr.io/cosmos/simapp
+    image: cosmwasm/wasmd
     container_name: ${CHAIN_NAME}
     env_file: ".env"
     command: "/root/private/bin/init_and_add_keys.sh"
