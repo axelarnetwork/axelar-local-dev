@@ -6,7 +6,7 @@ export interface StartOptions {
   dockerComposeOptions?: IDockerComposeOptions;
 }
 
-export interface StartResponse {
+export interface CosmosChainInfo {
   owner: {
     mnemonic: string;
     address: string;

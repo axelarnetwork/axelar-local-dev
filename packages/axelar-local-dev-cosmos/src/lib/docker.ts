@@ -1,7 +1,7 @@
 import path from "path";
 import fetch from "node-fetch";
 import { v2 as compose, ps } from "docker-compose";
-import { CosmosChainOptions, StartOptions, StartResponse } from "../types";
+import { CosmosChainOptions, StartOptions, CosmosChainInfo } from "../types";
 import { logger } from "@axelar-network/axelar-local-dev";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import fs from "fs";
@@ -34,7 +34,7 @@ const defaultStartOptions = {
 };
 
 // Start cosmos container
-export async function start(options?: StartOptions): Promise<StartResponse> {
+export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
   const { cleanStart, chain, dockerComposeOptions } = {
     ...defaultStartOptions,
     ...options,
