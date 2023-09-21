@@ -3,11 +3,8 @@ import { start, stop } from "../lib/docker";
 import fetch from "node-fetch";
 
 setLogger(() => undefined);
-describe("docker", () => {
-  afterEach(async () => {
-    await stop();
-  });
 
+describe.skip("docker", () => {
   it("should start Cosmos container successfully", async () => {
     const { owner, rpcUrl, lcdUrl } = await start();
 

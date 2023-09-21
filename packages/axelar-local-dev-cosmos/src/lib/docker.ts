@@ -75,7 +75,9 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
   const homedir = `./private/.${chain.name}`;
   const homePath = path.join(dockerPath, homedir);
   const mnemonic = fs.readFileSync(`${homePath}/mnemonic.txt`, "utf8");
-  const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic)
+  const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    prefix: "wasm",
+  })
     .then((wallet) => wallet.getAccounts())
     .then((accounts) => accounts[0].address);
 
@@ -84,6 +86,7 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
       mnemonic,
       address,
     },
+    denom: "stake",
     lcdUrl: `http://localhost:${chain.port}`,
     rpcUrl: `http://localhost:${chain.rpcPort}`,
   };

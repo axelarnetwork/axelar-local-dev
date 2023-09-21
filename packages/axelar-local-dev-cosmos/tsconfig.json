@@ -29,6 +29,6 @@
       "skipDefaultLibCheck": true /* Skip type checking .d.ts files that are included with TypeScript. */,
       "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
-  "include": ["src"],
+  "include": ["src", "jest/jest.global-setup.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/"]
 }

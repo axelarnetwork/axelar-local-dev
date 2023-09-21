@@ -12,7 +12,10 @@ wasmd init test-chain --chain-id ${CHAIN_NAME} --home ${HOME} > /dev/null 2>&1 &
 cp /root/config/*.toml ${HOME}/config/
 
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory
-wasmd keys add owner --keyring-backend test --home ${HOME} > /dev/null 2>&1 && echo "Added new key 'owner'"
+# and storing the mnemonic in the mnemonic.txt file
+mnemonic=$(wasmd keys add owner --keyring-backend test --home ${HOME} 2>&1 | tail -n 1)
+echo ${mnemonic} | tr -d "\n" > ${HOME}/mnemonic.txt
+echo "Added new key 'owner'"
 
 # Adding a new genesis account named 'owner' with an initial balance of 100000000stake in the blockchain
 wasmd genesis add-genesis-account owner 100000000stake \
@@ -29,7 +32,6 @@ wasmd genesis gentx owner 70000000stake \
 wasmd genesis collect-gentxs \
     --home ${HOME} > /dev/null 2>&1 && echo "Collected genesis transactions"
 
-wasmd keys mnemonic --home ${HOME} | tr -d "\n" > ${HOME}/mnemonic.txt
 
 # Starting the blockchain node with the specified home directory
 wasmd start --home ${HOME}

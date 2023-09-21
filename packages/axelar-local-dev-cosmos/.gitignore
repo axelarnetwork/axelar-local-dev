@@ -3,3 +3,4 @@
 # Docker
 docker/private/*
 !docker/private/bin
+config.json

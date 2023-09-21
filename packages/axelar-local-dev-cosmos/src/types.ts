@@ -11,6 +11,7 @@ export interface CosmosChainInfo {
     mnemonic: string;
     address: string;
   };
+  denom: string;
   rpcUrl: string;
   lcdUrl: string;
 }

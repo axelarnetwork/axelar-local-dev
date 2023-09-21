@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@axelar-network/axelar-local-dev": "2.1.1",
+    "@cosmjs/cosmwasm-stargate": "^0.31.1",
     "@cosmjs/stargate": "^0.31.1"
   },
   "author": "euro@axelar.network",
