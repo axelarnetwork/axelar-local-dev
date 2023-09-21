@@ -9,7 +9,7 @@ services:
       - "./private:/root/private"
       - "./config:/root/config"
     ports:
-      - "26657:26657"
+      - "${CHAIN_RPC_PORT}:26657"
       - "26656:26656"
       - "${CHAIN_PORT}:1317"
       - "9090:9090"

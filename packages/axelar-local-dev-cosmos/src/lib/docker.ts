@@ -14,7 +14,7 @@ export const defaultLcdPort = 1317;
 export const defaultRpcPort = 26657;
 
 // API endpoint for healthchecking if the cosmos chain is up and running
-const healthcheckApiPath = "cosmos/base/tendermint/v1beta1/node_info";
+const healthcheckApiPath = "health";
 
 // A local path to a folder container docker-compose.yaml file
 const dockerPath = path.join(__dirname, "../../docker");
@@ -97,7 +97,7 @@ async function waitForCosmos(chain: CosmosChainOptions) {
   const start = Date.now();
   const timeout = 60000;
   const interval = 3000;
-  const url = `http://localhost:${chain.port}/${healthcheckApiPath}`;
+  const url = `http://localhost:${chain.rpcPort}/${healthcheckApiPath}`;
   logger.log(`Waiting for Cosmos to start at ${url}...`);
   let status = 0;
   while (Date.now() - start < timeout) {
