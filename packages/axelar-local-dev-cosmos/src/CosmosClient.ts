@@ -27,7 +27,9 @@ export class CosmosClient {
   }
 
   getBalance(address: string) {
-    return this.client?.getBalance(address, "stake").then((res) => res.amount);
+    return this.client
+      ?.getBalance(address, this.chainInfo.denom)
+      .then((res) => res.amount);
   }
 
   async getOwnerBalance() {
