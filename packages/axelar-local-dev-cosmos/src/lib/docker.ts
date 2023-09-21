@@ -14,7 +14,7 @@ export const defaultLcdPort = 1317;
 export const defaultRpcPort = 26657;
 
 // API endpoint for healthchecking if the cosmos chain is up and running
-const healthcheckApiPath = "cosmos/base/node/v1beta1/status";
+const healthcheckApiPath = "cosmos/base/tendermint/v1beta1/node_info";
 
 // A local path to a folder container docker-compose.yaml file
 const dockerPath = path.join(__dirname, "../../docker");

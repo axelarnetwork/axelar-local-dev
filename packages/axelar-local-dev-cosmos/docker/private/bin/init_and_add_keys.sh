@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HOME=./private/.${CHAIN_NAME}
+HOME=/root/private/.${CHAIN_NAME}
 
 # Removing the existing .simapp directory to start with a clean slate
 rm -rf ${HOME}
@@ -9,7 +9,7 @@ rm -rf ${HOME}
 wasmd init test-chain --chain-id ${CHAIN_NAME} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_NAME}"
 
 # Copying the config files
-cp ./config/*.toml ${HOME}/config/
+cp /root/config/*.toml ${HOME}/config/
 
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory
 wasmd keys add owner --keyring-backend test --home ${HOME} > /dev/null 2>&1 && echo "Added new key 'owner'"
@@ -29,7 +29,6 @@ wasmd genesis gentx owner 70000000stake \
 wasmd genesis collect-gentxs \
     --home ${HOME} > /dev/null 2>&1 && echo "Collected genesis transactions"
 
-# Output the mnemonic to HOME directory
 wasmd keys mnemonic --home ${HOME} | tr -d "\n" > ${HOME}/mnemonic.txt
 
 # Starting the blockchain node with the specified home directory
