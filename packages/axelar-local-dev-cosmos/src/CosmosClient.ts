@@ -1,48 +1,64 @@
+import fs from "fs";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { SigningStargateClient, StargateClient } from "@cosmjs/stargate";
-import { CosmosChainInfo } from "./types";
+import { GasPrice } from "@cosmjs/stargate";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { Decimal } from "@cosmjs/math";
+import { CosmosChainInfo } from "./types";
 
 export class CosmosClient {
   chainInfo: CosmosChainInfo;
-  owner: DirectSecp256k1HdWallet | undefined;
-  client: SigningCosmWasmClient | undefined;
+  owner: DirectSecp256k1HdWallet;
+  client: SigningCosmWasmClient;
 
-  constructor(chainInfo: CosmosChainInfo) {
+  private constructor(
+    chainInfo: CosmosChainInfo,
+    owner: DirectSecp256k1HdWallet,
+    client: SigningCosmWasmClient
+  ) {
     this.chainInfo = chainInfo;
+    this.owner = owner;
+    this.client = client;
   }
 
-  async init() {
-    this.owner = await DirectSecp256k1HdWallet.fromMnemonic(
-      this.chainInfo.owner.mnemonic,
-      {
-        prefix: "wasm",
-      }
+  static async create(chainInfo: CosmosChainInfo) {
+    const walletOptions = {
+      prefix: "wasm",
+    };
+    const clientOptions = {
+      gasPrice: new GasPrice(Decimal.fromAtomics("1", 6), chainInfo.denom),
+    };
+
+    const owner = await DirectSecp256k1HdWallet.fromMnemonic(
+      chainInfo.owner.mnemonic,
+      walletOptions
     );
 
-    this.client = await SigningCosmWasmClient.connectWithSigner(
-      this.chainInfo.rpcUrl,
-      this.owner
+    const client = await SigningCosmWasmClient.connectWithSigner(
+      chainInfo.rpcUrl,
+      owner,
+      clientOptions
     );
+
+    return new CosmosClient(chainInfo, owner, client);
   }
 
   getBalance(address: string) {
     return this.client
-      ?.getBalance(address, this.chainInfo.denom)
+      .getBalance(address, this.chainInfo.denom)
       .then((res) => res.amount);
   }
 
+  async uploadWasm(path: string) {
+    const wasm = fs.readFileSync(path);
+
+    return this.client.upload(
+      this.chainInfo.owner.address,
+      new Uint8Array(wasm),
+      "auto"
+    );
+  }
+
   async getOwnerBalance() {
-    if (!this.owner) {
-      throw new Error(
-        "The init method must be called before calling this method"
-      );
-    }
-
-    const addresses = await this.owner
-      .getAccounts()
-      .then((accounts) => accounts.map((account) => account.address));
-
-    return this.getBalance(addresses[0]);
+    return this.owner.getAccounts().then((accounts) => accounts[0].address);
   }
 }
