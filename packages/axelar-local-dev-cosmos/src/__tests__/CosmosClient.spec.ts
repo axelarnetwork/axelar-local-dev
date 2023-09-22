@@ -1,6 +1,6 @@
-import { CosmosClient } from "../CosmosClient";
 import fs from "fs";
 import path from "path";
+import { CosmosClient } from "../CosmosClient";
 
 describe("CosmosClient", () => {
   let cosmosClient: CosmosClient;
