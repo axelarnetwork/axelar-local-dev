@@ -19,7 +19,8 @@ describe("CosmosClient", () => {
     const _path = path.resolve(__dirname, "../..", "wasm/multi_send.wasm");
     console.log("contract path:", _path);
     const response = await cosmosClient.uploadWasm(_path);
-
     console.log(response);
+
+    expect(response).toBeDefined();
   });
 });
