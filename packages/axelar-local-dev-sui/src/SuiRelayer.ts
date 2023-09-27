@@ -10,10 +10,12 @@ import {
     RelayerType,
     CallContractArgs,
     RelayData,
+    getRandomID,
 } from '@axelar-network/axelar-local-dev';
 import { Command as SuiCommand } from './Command';
 import { SuiNetwork } from './SuiNetwork';
-import { getCommandId } from './utils';
+import { getBcsForGateway, getCommandId, getInputForMessage } from './utils';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 
 const DEFAULT_GAS_LIMIT = BigInt(8e6);
 
@@ -64,8 +66,48 @@ export class SuiRelayer extends Relayer {
         await this.executeSuiExecutable(toExecute);
     }
 
+    private approveContractCallInput(sourceChain: string, sourceAddress: string, destinationAddress: string, payloadHash: string, commandId = getRandomID()) {
+        const bcs = getBcsForGateway();
+        const params = bcs
+        .ser("GenericMessage", {
+            source_chain: sourceChain,
+            source_address: sourceAddress,
+            payload_hash: arrayify(payloadHash),
+            target_id: destinationAddress,
+        })
+        .toBytes();
+        const message = bcs
+            .ser("AxelarMessage", {
+                chain_id: 1,
+                command_ids: [commandId],
+                commands: ["approveContractCall"],
+                params: [
+                    params
+                ],
+            })
+            .toBytes();
+            
+            return getInputForMessage(message);
+    }
+    
+
     private async executeSuiGateway(commands: Command[]) {
-        // TODO: Send approve_contract_call tx to Axelar Gateway
+        for(const command of commands) {
+            const input = this.approveContractCallInput(command.data[0], command.data[1], command.data[2], command.data[3], command.commandId);
+            
+            const packageId = this.suiNetwork.axelarPackageId;
+            const validators = this.suiNetwork.axelarValidators;
+
+            const tx = new TransactionBlock(); 
+            tx.moveCall({
+                target: `${packageId}::gateway::process_commands`,
+                arguments: [tx.object(validators), tx.pure(String.fromCharCode(...input))],
+                typeArguments: [],
+            });
+            await this.suiNetwork.execute(
+                tx,
+            );
+        }
     }
 
     private async executeSuiExecutable(commands: Command[]) {

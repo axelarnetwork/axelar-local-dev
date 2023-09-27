@@ -29,6 +29,8 @@ export class SuiNetwork extends SuiClient {
     private faucetUrl: string;
     public nodeUrl: string;
     public gatewayObjects: PublishedPackage[] = [];
+    public axelarValidators: string = '';
+    public axelarPackageId: string = '';
 
     /**
      * Constructs an instance of SuiNetwork
@@ -49,6 +51,15 @@ export class SuiNetwork extends SuiClient {
     async init() {
         // Fund executor account
         await this.fundWallet(this.getExecutorAddress());
+
+        const scriptPath = 'scripts/publish-package.js'
+        const path = require.resolve('@axelar-network/axelar-cgp-sui/' + scriptPath).slice(0, -scriptPath.length) + 'move/axelar';
+        const {publishTxn} = await this.deploy(path);
+        const validators = publishTxn.objectChanges?.find((obj: any) => {
+            return obj.objectType && obj.objectType.endsWith('validators::AxelarValidators');
+        }) as any;
+        this.axelarValidators = validators.objectId;
+        this.axelarPackageId = validators.objectType.slice(0,66);
     }
 
     /**
@@ -77,7 +88,7 @@ export class SuiNetwork extends SuiClient {
         }
 
         const { modules, dependencies } = JSON.parse(
-            execSync(`sui move build --dump-bytecode-as-base64 --path ${modulePath} --with-unpublished-dependencies`, {
+            execSync(`sui move build --dump-bytecode-as-base64 --path ${modulePath}`, {
                 encoding: 'utf-8',
                 stdio: 'pipe', // silent the output
             }),
@@ -112,6 +123,7 @@ export class SuiNetwork extends SuiClient {
         return {
             digest: result.digest,
             packages: publishedPackages,
+            publishTxn: result,
         };
     }
 
@@ -139,6 +151,22 @@ export class SuiNetwork extends SuiClient {
             },
         });
     }
+
+    /**
+     * Signs and executes a transaction block
+     *
+     * @param tx - The transaction block to execute
+     * @param sender - Optional sender address to execute as, defaults to the executor address
+     * @returns A Promise with details of the transaction dev inspect
+     */
+    public async devInspect(tx: TransactionBlock, sender: string = this.executor.getPublicKey().toSuiAddress()) {
+        // todo: add check for sui command
+            return this.devInspectTransactionBlock({
+                sender: sender || this.executor.getPublicKey().toSuiAddress(),
+                transactionBlock: tx,
+            });
+        }
+      
 
     /**
      * Queries for gateway events within a specified time range
