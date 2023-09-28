@@ -14,8 +14,7 @@ interface NetworkUsdc extends Network {
     usdc?: Contract;
 }
 
-describe.skip("forking", () => {
-
+describe.skip('forking', () => {
     afterEach(async () => {
         await stopAll();
     });
@@ -24,8 +23,8 @@ describe.skip("forking", () => {
         const chainName = 'Avalanche';
         const tokenAlias = 'uusdc';
         const testAmount = 1234;
-        const chains = mainnetInfo;
-        const avalanche = chains.find((chain: { name: string }) => chain.name === chainName) as any;
+        const chains = mainnetInfo as any;
+        const avalanche = chains[chainName.toLowerCase()];
         const chain: NetworkUsdc = await forkNetwork(avalanche, {
             ganacheOptions: {
                 fork: { deleteCache: true },
@@ -40,11 +39,11 @@ describe.skip("forking", () => {
     });
 
     it('should fork Avalanche and Ethereum and send some USDC back and forth', async () => {
-        const chains = mainnetInfo;
+        const chains = mainnetInfo as any;
         const alias = 'uusdc';
 
         for (const chainName of ['Avalanche', 'Ethereum']) {
-            const chainInfo = chains.find((chain: { name: string }) => chain.name === chainName) as any;
+            const chainInfo = chains[chainName.toLowerCase()];
             const chain = (await forkNetwork(chainInfo)) as any;
             chain.usdc = await chain.getTokenContract(alias);
         }
