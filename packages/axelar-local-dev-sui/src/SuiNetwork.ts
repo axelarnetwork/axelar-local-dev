@@ -52,14 +52,14 @@ export class SuiNetwork extends SuiClient {
         // Fund executor account
         await this.fundWallet(this.getExecutorAddress());
 
-        const scriptPath = 'scripts/publish-package.js'
+        const scriptPath = 'scripts/publish-package.js';
         const path = require.resolve('@axelar-network/axelar-cgp-sui/' + scriptPath).slice(0, -scriptPath.length) + 'move/axelar';
-        const {publishTxn} = await this.deploy(path);
+        const { publishTxn } = await this.deploy(path);
         const validators = publishTxn.objectChanges?.find((obj: any) => {
             return obj.objectType && obj.objectType.endsWith('validators::AxelarValidators');
         }) as any;
         this.axelarValidators = validators.objectId;
-        this.axelarPackageId = validators.objectType.slice(0,66);
+        this.axelarPackageId = validators.objectType.slice(0, 66);
     }
 
     /**
@@ -136,7 +136,7 @@ export class SuiNetwork extends SuiClient {
      * @returns A Promise with details of the transaction execution
      */
     public async execute(tx: TransactionBlock, keypair: Keypair = this.executor, options?: SuiTransactionBlockResponseOptions) {
-      // todo: add check for sui command
+        // todo: add check for sui command
         return this.signAndExecuteTransactionBlock({
             signer: keypair || this.executor,
             transactionBlock: tx,
@@ -161,12 +161,11 @@ export class SuiNetwork extends SuiClient {
      */
     public async devInspect(tx: TransactionBlock, sender: string = this.executor.getPublicKey().toSuiAddress()) {
         // todo: add check for sui command
-            return this.devInspectTransactionBlock({
-                sender: sender || this.executor.getPublicKey().toSuiAddress(),
-                transactionBlock: tx,
-            });
-        }
-      
+        return this.devInspectTransactionBlock({
+            sender: sender || this.executor.getPublicKey().toSuiAddress(),
+            transactionBlock: tx,
+        });
+    }
 
     /**
      * Queries for gateway events within a specified time range

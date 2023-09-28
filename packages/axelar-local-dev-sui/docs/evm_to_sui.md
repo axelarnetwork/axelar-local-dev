@@ -6,7 +6,7 @@ In this guide, we demonstrate how to facilitate a transaction relay from an EVM 
 
 ```ts
 import { createSuiRelayer, RelayerType, initSui } from '@axelar-network/axelar-local-dev-sui';
-import { EvmRelayer, createNetwork, deployContract } from '@axelar-network/axelar-local-dev
+import { EvmRelayer, createNetwork, deployContract } from '@axelar-network/axelar-local-dev';
 import { ethers } from 'ethers';
 import path from 'path';
 ```
