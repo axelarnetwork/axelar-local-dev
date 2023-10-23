@@ -18,8 +18,6 @@ version = "0.38.0-rc3"
 # or the name of an ABCI application compiled in with the CometBFT binary
 proxy_app = "tcp://0.0.0.0:26658"
 
-# A custom human readable name for this node
-moniker = "test-chain"
 
 # Database backend: goleveldb | cleveldb | boltdb | rocksdb | badgerdb
 # * goleveldb (github.com/syndtr/goleveldb - most popular implementation)

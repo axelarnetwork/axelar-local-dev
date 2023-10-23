@@ -1,7 +1,8 @@
 #!/bin/sh
 
 DENOM=${DENOM:-ustake}
-
+CHAIN_ID=${CHAIN_ID:-demo-chain}
+MONIKER=${MONIKER:-demo-chain}
 HOME=/root/private/.${CHAIN_ID}
 
 # Removing the existing .simapp directory to start with a clean slate
@@ -9,6 +10,9 @@ rm -rf ${HOME}
 
 # Initializing a new blockchain with identifier ${CHAIN_ID} in the specified home directory
 wasmd init test-chain --chain-id ${CHAIN_ID} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_ID}"
+
+# this is essential for sub-1s block times (or header times go crazy)
+sed -i 's/"time_iota_ms": "1000"/"time_iota_ms": "10"/' "$HOME"/config/genesis.json
 
 # staking/governance token is hardcoded in config, change this
 sed -i "s/\"stake\"/\"$DENOM\"/" "$HOME"/config/genesis.json && echo "Updated staking token to $DENOM"
@@ -39,4 +43,4 @@ wasmd genesis collect-gentxs \
 
 
 # Starting the blockchain node with the specified home directory
-wasmd start --home ${HOME} --minimum-gas-prices 0${DENOM}
+wasmd start --home ${HOME} --minimum-gas-prices 0${DENOM} --moniker ${MONIKER}
