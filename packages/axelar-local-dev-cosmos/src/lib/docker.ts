@@ -73,8 +73,17 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
 
   logger.log("Cosmos started");
 
+  return {
+    owner: await getOwnerAccount(chain.name),
+    denom: chain.denom,
+    lcdUrl: `http://localhost:${chain.port}`,
+    rpcUrl: `http://localhost:${chain.rpcPort}`,
+  };
+}
+
+export async function getOwnerAccount(chainName: string) {
   // Get mnemonic and address from the container
-  const homedir = `./private/.${chain.name}`;
+  const homedir = `./private/.${chainName}`;
   const homePath = path.join(dockerPath, homedir);
   const mnemonic = fs.readFileSync(`${homePath}/mnemonic.txt`, "utf8");
   const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
@@ -84,13 +93,8 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
     .then((accounts) => accounts[0].address);
 
   return {
-    owner: {
-      mnemonic,
-      address,
-    },
-    denom: chain.denom,
-    lcdUrl: `http://localhost:${chain.port}`,
-    rpcUrl: `http://localhost:${chain.rpcPort}`,
+    mnemonic,
+    address,
   };
 }
 

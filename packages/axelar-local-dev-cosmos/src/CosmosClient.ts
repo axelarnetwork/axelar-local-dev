@@ -6,12 +6,12 @@ import { Decimal } from "@cosmjs/math";
 import { CosmosChainInfo } from "./types";
 
 export class CosmosClient {
-  chainInfo: CosmosChainInfo;
+  chainInfo: Required<CosmosChainInfo>;
   owner: DirectSecp256k1HdWallet;
-  client: SigningCosmWasmClient;
+  public client: SigningCosmWasmClient;
 
   private constructor(
-    chainInfo: CosmosChainInfo,
+    chainInfo: Required<CosmosChainInfo>,
     owner: DirectSecp256k1HdWallet,
     client: SigningCosmWasmClient
   ) {
@@ -20,7 +20,14 @@ export class CosmosClient {
     this.client = client;
   }
 
-  static async create(chainInfo: CosmosChainInfo) {
+  static async create(config: CosmosChainInfo) {
+    const chainInfo = {
+      ...config,
+      denom: config.denom || "udemo",
+      lcdUrl: config.lcdUrl || "http://localhost:1317",
+      rpcUrl: config.rpcUrl || "http://localhost:26657",
+    };
+
     const walletOptions = {
       prefix: "wasm",
     };
@@ -29,7 +36,7 @@ export class CosmosClient {
     };
 
     const owner = await DirectSecp256k1HdWallet.fromMnemonic(
-      chainInfo.owner.mnemonic,
+      config?.owner.mnemonic,
       walletOptions
     );
 
@@ -58,7 +65,7 @@ export class CosmosClient {
     );
   }
 
-  async getOwnerBalance() {
+  async getOwnerAccount() {
     return this.owner.getAccounts().then((accounts) => accounts[0].address);
   }
 }
