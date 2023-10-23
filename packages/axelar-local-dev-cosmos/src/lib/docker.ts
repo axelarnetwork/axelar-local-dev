@@ -8,6 +8,7 @@ import fs from "fs";
 
 // A default app name
 export const cosmosAppName = "demo-chain";
+export const defaultDenom = "udemo";
 
 // A default port
 export const defaultLcdPort = 1317;
@@ -30,6 +31,7 @@ const defaultStartOptions = {
     name: cosmosAppName,
     port: defaultLcdPort,
     rpcPort: defaultRpcPort,
+    denom: defaultDenom,
   },
 };
 
@@ -42,7 +44,7 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
 
   // Write given env vars to .env file
   const envPath = path.join(dockerPath, ".env");
-  const env = `CHAIN_NAME=${chain.name}\nCHAIN_PORT=${chain.port}\nCHAIN_RPC_PORT=${chain.rpcPort}`;
+  const env = `CHAIN_ID=${chain.name}\nCHAIN_PORT=${chain.port}\nCHAIN_RPC_PORT=${chain.rpcPort}\nDENOM=${chain.denom}\nMONIKER=${chain.name}`;
   fs.writeFileSync(envPath, env);
 
   // Check if docker is running
@@ -86,7 +88,7 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
       mnemonic,
       address,
     },
-    denom: "stake",
+    denom: chain.denom,
     lcdUrl: `http://localhost:${chain.port}`,
     rpcUrl: `http://localhost:${chain.rpcPort}`,
   };

@@ -20,4 +20,5 @@ export interface CosmosChainOptions {
   name: string;
   port: number;
   rpcPort: number;
+  denom: string;
 }
