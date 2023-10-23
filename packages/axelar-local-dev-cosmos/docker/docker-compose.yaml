@@ -10,6 +10,6 @@ services:
       - "./config:/root/config"
     ports:
       - "${CHAIN_RPC_PORT}:26657"
-      - "26656:26656"
       - "${CHAIN_PORT}:1317"
+      - "26656:26656"
       - "9090:9090"
