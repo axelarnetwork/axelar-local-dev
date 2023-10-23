@@ -2,13 +2,13 @@
 
 DENOM=${DENOM:-ustake}
 
-HOME=/root/private/.${CHAIN_NAME}
+HOME=/root/private/.${CHAIN_ID}
 
 # Removing the existing .simapp directory to start with a clean slate
 rm -rf ${HOME}
 
-# Initializing a new blockchain with identifier ${CHAIN_NAME} in the specified home directory
-wasmd init test-chain --chain-id ${CHAIN_NAME} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_NAME}"
+# Initializing a new blockchain with identifier ${CHAIN_ID} in the specified home directory
+wasmd init test-chain --chain-id ${CHAIN_ID} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_ID}"
 
 # staking/governance token is hardcoded in config, change this
 sed -i "s/\"stake\"/\"$DENOM\"/" "$HOME"/config/genesis.json && echo "Updated staking token to $DENOM"
@@ -31,7 +31,7 @@ wasmd genesis add-genesis-account owner 100000000${DENOM} \
 wasmd genesis gentx owner 70000000${DENOM} \
 --home ${HOME} \
 --keyring-backend test \
---chain-id ${CHAIN_NAME} > /dev/null 2>&1 && echo "Generated genesis transaction for 'owner'"
+--chain-id ${CHAIN_ID} > /dev/null 2>&1 && echo "Generated genesis transaction for 'owner'"
 
 # Collecting all genesis transactions to form the genesis block
 wasmd genesis collect-gentxs \
