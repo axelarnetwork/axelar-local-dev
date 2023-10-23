@@ -2,7 +2,7 @@ version: "3.8"
 services:
   demo-chain:
     image: cosmwasm/wasmd
-    container_name: ${CHAIN_NAME}
+    container_name: ${CHAIN_ID}
     env_file: ".env"
     command: "/root/private/bin/init_and_add_keys.sh"
     volumes:

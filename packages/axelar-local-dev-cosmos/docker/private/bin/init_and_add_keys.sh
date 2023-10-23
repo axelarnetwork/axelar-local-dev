@@ -9,7 +9,7 @@ HOME=/root/private/.${CHAIN_ID}
 rm -rf ${HOME}
 
 # Initializing a new blockchain with identifier ${CHAIN_ID} in the specified home directory
-wasmd init test-chain --chain-id ${CHAIN_ID} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_ID}"
+wasmd init "$MONIKER" --chain-id ${CHAIN_ID} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_ID}"
 
 # this is essential for sub-1s block times (or header times go crazy)
 sed -i 's/"time_iota_ms": "1000"/"time_iota_ms": "10"/' "$HOME"/config/genesis.json
@@ -35,6 +35,7 @@ wasmd genesis add-genesis-account owner 100000000${DENOM} \
 wasmd genesis gentx owner 70000000${DENOM} \
 --home ${HOME} \
 --keyring-backend test \
+--moniker ${MONIKER} \
 --chain-id ${CHAIN_ID} > /dev/null 2>&1 && echo "Generated genesis transaction for 'owner'"
 
 # Collecting all genesis transactions to form the genesis block
