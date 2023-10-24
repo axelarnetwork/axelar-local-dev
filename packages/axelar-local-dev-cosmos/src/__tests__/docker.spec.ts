@@ -22,7 +22,7 @@ describe("docker", () => {
     expect(denom).toBe(chain.denom);
   });
 
-  it.only('should start Cosmos container with default denom "udemo"', async () => {
+  it('should start Cosmos container with default denom "udemo"', async () => {
     const owner = await getOwnerAccount();
     const cosmosClient = await CosmosClient.create({
       owner,

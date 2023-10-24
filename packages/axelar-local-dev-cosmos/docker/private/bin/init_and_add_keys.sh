@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DENOM=${DENOM:-ustake}
+DENOM=${DENOM:-udemo}
 CHAIN_ID=${CHAIN_ID:-demo-chain}
 MONIKER=${MONIKER:-demo-chain}
 HOME=/root/private/.${CHAIN_ID}
