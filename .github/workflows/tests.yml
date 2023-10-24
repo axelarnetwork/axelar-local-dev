@@ -21,13 +21,13 @@ jobs:
 
       - name: Download and Install Sui Binary
         run: |
-          wget https://github.com/MystenLabs/sui/releases/download/devnet-v1.7.0/sui-devnet-v1.7.0-ubuntu-x86_64.tgz
-          tar -xvf sui-devnet-v1.7.0-ubuntu-x86_64.tgz
+          wget https://github.com/MystenLabs/sui/releases/download/devnet-v2.2.2/sui-devnet-v2.2.2-ubuntu-x86_64.tgz
+          tar -xvf sui-devnet-v2.2.2-ubuntu-x86_64.tgz
           sudo mv ./target/release/sui-test-validator-ubuntu-x86_64 /usr/local/bin/sui-test-validator
           sudo mv ./target/release/sui-ubuntu-x86_64 /usr/local/bin/sui
 
       - name: Cleanup
-        run: rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip sui-devnet-v1.7.0-ubuntu-x86_64.tgz
+        run: rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip sui-devnet-v2.2.2-ubuntu-x86_64.tgz
 
       - name: Setup Node
         uses: actions/setup-node@v3
