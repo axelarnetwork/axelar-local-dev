@@ -7,9 +7,11 @@ services:
     command: "/root/private/bin/init_and_add_keys.sh"
     volumes:
       - "./private:/root/private"
-      - "./config:/root/config"
     ports:
       - "${CHAIN_RPC_PORT}:26657"
       - "${CHAIN_PORT}:1317"
       - "26656:26656"
       - "9090:9090"
+  # axelar:
+  #   image: axelarnet/axelar-core:v0.34.1
+  #   container_name: axelar

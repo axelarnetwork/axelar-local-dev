@@ -18,7 +18,7 @@ sed -i 's/"time_iota_ms": "1000"/"time_iota_ms": "10"/' "$HOME"/config/genesis.j
 sed -i "s/\"stake\"/\"$DENOM\"/" "$HOME"/config/genesis.json && echo "Updated staking token to $DENOM"
 
 # Copying the config files
-cp /root/config/*.toml ${HOME}/config/
+# cp /root/config/*.toml ${HOME}/config/
 
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory
 # and storing the mnemonic in the mnemonic.txt file
@@ -44,4 +44,9 @@ wasmd genesis collect-gentxs \
 
 
 # Starting the blockchain node with the specified home directory
-wasmd start --home ${HOME} --minimum-gas-prices 0${DENOM} --moniker ${MONIKER}
+wasmd start --home ${HOME} \
+--minimum-gas-prices 0${DENOM} \
+--moniker ${MONIKER} \
+--api.swagger true \
+--api.enable true \
+--rpc.laddr "tcp://0.0.0.0:26657"
