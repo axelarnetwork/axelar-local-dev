@@ -21,8 +21,8 @@ jobs:
 
       - name: Download and Install Sui Binary
         run: |
-          wget https://github.com/MystenLabs/sui/releases/download/devnet-v1.11.2/sui-devnet-v1.11.2-ubuntu-x86_64.tgz
-          tar -xvf sui-devnet-v1.11.2-ubuntu-x86_64.tgz
+          wget https://github.com/MystenLabs/sui/releases/download/mainnet-v1.11.2/sui-mainnet-v1.11.2-ubuntu-x86_64.tgz
+          tar -xvf sui-mainnet-v1.11.2-ubuntu-x86_64.tgz
           sudo mv ./target/release/sui-test-validator-ubuntu-x86_64 /usr/local/bin/sui-test-validator
           sudo mv ./target/release/sui-ubuntu-x86_64 /usr/local/bin/sui
 
