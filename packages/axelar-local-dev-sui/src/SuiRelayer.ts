@@ -78,7 +78,7 @@ export class SuiRelayer extends Relayer {
             .ser('GenericMessage', {
                 source_chain: sourceChain,
                 source_address: sourceAddress,
-                payload_hash: arrayify(payloadHash),
+                payload_hash: payloadHash,
                 target_id: destinationAddress,
             })
             .toBytes();
@@ -181,22 +181,18 @@ export class SuiRelayer extends Relayer {
                 destination_address: destinationAddress,
                 destination_chain: destinationChain,
                 payload,
-                payload_hash: _payloadHash,
+                payload_hash,
+                source_id,
             } = eventParams;
-
-            // TODO: Investigate why using the payload hash directly causes relay failure.
-            // Current workaround: use keccak256 hash of the payload.
-            const payloadHash = keccak256(this.convertUint8ArrayToUtf8String(payload));
 
             const contractCallArgs: CallContractArgs = {
                 from: 'sui',
-                to: this.convertUint8ArrayToUtf8String(destinationChain),
-                destinationContractAddress: this.convertUint8ArrayToUtf8String(destinationAddress),
-                payload: this.convertUint8ArrayToUtf8String(payload),
-                sourceAddress: event.packageId,
+                to: destinationChain,
+                destinationContractAddress: destinationAddress,
+                payload: hexlify(payload),
+                sourceAddress: source_id,
                 transactionHash: event.id.txDigest,
-                // payloadHash: hexlify(_payloadHash),
-                payloadHash,
+                payloadHash: payload_hash,
                 sourceEventIndex: parseInt(event.id.eventSeq),
             };
 

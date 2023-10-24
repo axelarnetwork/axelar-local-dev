@@ -3,6 +3,7 @@ import { CallContractArgs, RelayData } from '@axelar-network/axelar-local-dev';
 import { SuiNetwork } from './SuiNetwork';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { BCS, getSuiMoveConfig } from '@mysten/bcs';
+import { getMoveCallFromTx } from './utils';
 
 const { defaultAbiCoder, arrayify } = ethers.utils;
 
@@ -35,31 +36,21 @@ export class Command {
             [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.payload],
             [],
             async () => {
-                const callInfoObject = (await suiNetwork.getObject({
-                    id: args.destinationContractAddress,
-                    options: { showContent: true },
-                })) as any;
-                const callObjectIds = callInfoObject.data.content.fields.get_call_info_object_ids as string[];
 
-                const lastCol = callInfoObject.data.content.type.lastIndexOf(':');
-                const infoTarget = (callInfoObject.data.content.type.slice(0, lastCol + 1) + 'get_call_info') as any;
 
                 let tx = new TransactionBlock();
                 tx.moveCall({
-                    target: infoTarget,
-                    arguments: [
-                        tx.pure(String.fromCharCode(...arrayify(args.payload))),
-                        ...callObjectIds.map((id: string) => tx.object(id)),
-                    ],
+                    target: `${suiNetwork.axelarPackageId}::discovery::get_transaction`,
+                    arguments: [tx.object(suiNetwork.axelarDiscoveryId), tx.pure(args.destinationContractAddress)]
                 });
-                const resp = (await suiNetwork.devInspect(tx)) as any;
-
-                const bcs_encoded_resp = resp.results[0].returnValues[0][0];
-                const bcs = new BCS(getSuiMoveConfig());
-                const decoded = bcs.de(BCS.STRING, new Uint8Array(bcs_encoded_resp));
-                const toCall = JSON.parse(decoded);
+                let resp = await suiNetwork.devInspect(tx) as any;
 
                 tx = new TransactionBlock();
+                tx.moveCall(getMoveCallFromTx(tx, resp.results[0].returnValues[0][0], args.payload));
+                resp = await suiNetwork.devInspect(tx) as any;
+
+                tx = new TransactionBlock();
+                
                 const approvedCall = tx.moveCall({
                     target: `${suiNetwork.axelarPackageId}::gateway::take_approved_call`,
                     arguments: [
@@ -73,19 +64,8 @@ export class Command {
                     typeArguments: [],
                 });
 
-                toCall.arguments = toCall.arguments.map((arg: string) => {
-                    if (arg == 'contractCall') {
-                        return approvedCall;
-                    }
-                    if (arg.slice(0, 4) === 'obj:') {
-                        return tx.object(arg.slice(4));
-                    }
-                    if (arg.slice(0, 5) === 'pure:') {
-                        return tx.pure(arg.slice(5));
-                    }
-                });
+                tx.moveCall(getMoveCallFromTx(tx, resp.results[0].returnValues[0][0], '', approvedCall));
 
-                tx.moveCall(toCall);
                 return suiNetwork.execute(tx);
             },
             'sui',

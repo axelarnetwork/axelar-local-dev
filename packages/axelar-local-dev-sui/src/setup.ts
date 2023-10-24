@@ -24,7 +24,6 @@ export async function initSui(
 }> {
     try {
         suiNetwork = new SuiNetwork(nodeUrl, faucetUrl);
-
         await suiNetwork.init();
 
         suiRelayer = new SuiRelayer(suiNetwork);

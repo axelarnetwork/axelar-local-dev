@@ -4,6 +4,8 @@ import path from 'path';
 import { ethers } from 'ethers';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 
+const { utils: { arrayify } } = ethers;
+
 describe('relayer', () => {
     let client: SuiNetwork;
     let relayer: SuiRelayer;
@@ -22,15 +24,17 @@ describe('relayer', () => {
 
         // Deploy a sample module
         const response = await client.deploy(path.join(__dirname, '../move/sample'));
-
+        const packageId = response.packages[0].packageId;
+        const singleton: any = response.publishTxn.objectChanges?.find((change) => (change as any).objectType === `${packageId}::test::Singleton` )
+        
         const msg = 'hello from sui';
         const payload = ethers.utils.defaultAbiCoder.encode(['string'], [msg]);
 
         // Send a callContract transaction
         const tx = new TransactionBlock();
         tx.moveCall({
-            target: `${response.packages[0].packageId}::hello_world::call`,
-            arguments: [tx.pure('Avalanche'), tx.pure('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789'), tx.pure(payload), tx.pure(1)],
+            target: `${packageId}::test::send_call`,
+            arguments: [tx.object(singleton.objectId), tx.pure('Avalanche'), tx.pure('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789'), tx.pure(String.fromCharCode(...arrayify(payload)))],
         });
         await client.execute(tx);
 

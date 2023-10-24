@@ -5,6 +5,7 @@ import { requestSuiFromFaucetV0, getFaucetHost } from '@mysten/sui.js/faucet';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { execSync, exec } from 'child_process';
 import { PublishedPackage } from './types';
+const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 
 /**
  * `SuiNetwork` class provides methods and functionalities to interact with the Sui network.
@@ -16,7 +17,6 @@ import { PublishedPackage } from './types';
  * @property {Ed25519Keypair} executor - Represents the keypair of the executor.
  * @property {string} faucetUrl - URL of the faucet for fetching tokens.
  * @property {string} nodeUrl - URL of the node to connect to the Sui network.
- * @property {PublishedPackage[]} gatewayObjects - Array to store packages compatible with gateway.
  *
  * Main Features:
  * - Initialize and fund the executor account.
@@ -28,9 +28,9 @@ export class SuiNetwork extends SuiClient {
     private executor: Ed25519Keypair;
     private faucetUrl: string;
     public nodeUrl: string;
-    public gatewayObjects: PublishedPackage[] = [];
     public axelarValidators: string = '';
     public axelarPackageId: string = '';
+    public axelarDiscoveryId: string = '';
 
     /**
      * Constructs an instance of SuiNetwork
@@ -39,6 +39,7 @@ export class SuiNetwork extends SuiClient {
      * @param faucetUrl - Optional faucet URL; defaults to localnet if not provided
      */
     constructor(nodeUrl?: string, faucetUrl?: string) {
+
         super({ url: nodeUrl || getFullnodeUrl('localnet') });
         this.nodeUrl = nodeUrl || getFullnodeUrl('localnet');
         this.faucetUrl = faucetUrl || getFaucetHost('localnet');
@@ -51,14 +52,21 @@ export class SuiNetwork extends SuiClient {
     async init() {
         // Fund executor account
         await this.fundWallet(this.getExecutorAddress());
-
-        const scriptPath = 'scripts/publish-package.js';
-        const path = require.resolve('@axelar-network/axelar-cgp-sui/' + scriptPath).slice(0, -scriptPath.length) + 'move/axelar';
-        const { publishTxn } = await this.deploy(path);
+        
+        updateMoveToml('axelar', '0x0');
+        const {packageId, publishTxn } = await publishPackage('../move/axelar', this, this.executor);
+        updateMoveToml('axelar', packageId);
+        
         const validators = publishTxn.objectChanges?.find((obj: any) => {
             return obj.objectType && obj.objectType.endsWith('validators::AxelarValidators');
         }) as any;
         this.axelarValidators = validators.objectId;
+
+        const discovery = publishTxn.objectChanges?.find((obj: any) => {
+            return obj.objectType && obj.objectType.endsWith('discovery::RelayerDiscovery');
+        }) as any;
+        this.axelarDiscoveryId = discovery.objectId;
+
         this.axelarPackageId = validators.objectType.slice(0, 66);
     }
 
@@ -116,9 +124,6 @@ export class SuiNetwork extends SuiClient {
         if (!publishedPackages || publishedPackages.length === 0) {
             throw new Error('No published packages');
         }
-
-        // add gateway compatible modules
-        this.gatewayObjects.push(...publishedPackages.filter((p: any) => p.modules.includes('gateway')));
 
         return {
             digest: result.digest,
