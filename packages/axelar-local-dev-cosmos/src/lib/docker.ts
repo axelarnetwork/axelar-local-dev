@@ -7,7 +7,7 @@ import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import fs from "fs";
 
 // A default app name
-export const cosmosAppName = "demo-chain";
+export const defaultChainId = "demo-chain";
 export const defaultDenom = "udemo";
 
 // A default port
@@ -28,7 +28,7 @@ const defaultDockerConfig = {
 const defaultStartOptions = {
   cleanStart: true,
   chain: {
-    name: cosmosAppName,
+    name: defaultChainId,
     port: defaultLcdPort,
     rpcPort: defaultRpcPort,
     denom: defaultDenom,
@@ -62,10 +62,11 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
   const config = {
     ...defaultDockerConfig,
     ...dockerComposeOptions,
+    cleanStart,
   };
 
   // Start docker container
-  await compose.upOne(cosmosAppName, config);
+  await compose.upOne(defaultChainId, config);
 
   // Wait for cosmos to start
   logger.log("Waiting for Cosmos to start (~5-10s)...");
@@ -81,9 +82,9 @@ export async function start(options?: StartOptions): Promise<CosmosChainInfo> {
   };
 }
 
-export async function getOwnerAccount(chainName: string) {
+export async function getOwnerAccount(chainId: string = defaultChainId) {
   // Get mnemonic and address from the container
-  const homedir = `./private/.${chainName}`;
+  const homedir = `./private/.${chainId}`;
   const homePath = path.join(dockerPath, homedir);
   const mnemonic = fs.readFileSync(`${homePath}/mnemonic.txt`, "utf8");
   const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {

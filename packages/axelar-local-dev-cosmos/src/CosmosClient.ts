@@ -55,6 +55,14 @@ export class CosmosClient {
       .then((res) => res.amount);
   }
 
+  getChainInfo(): Omit<CosmosChainInfo, "owner"> {
+    return {
+      denom: this.chainInfo.denom,
+      lcdUrl: this.chainInfo.lcdUrl,
+      rpcUrl: this.chainInfo.rpcUrl,
+    };
+  }
+
   async uploadWasm(path: string) {
     const wasm = fs.readFileSync(path);
 
