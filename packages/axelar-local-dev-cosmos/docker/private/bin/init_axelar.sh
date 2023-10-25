@@ -24,6 +24,9 @@ axelard init "$MONIKER" --chain-id ${CHAIN_ID} --home ${HOME} > /dev/null 2>&1 &
 sed -i '/\[api\]/,/\[/ s/enable = false/enable = true/' "$HOME"/config/app.toml
 sed -i '/\[api\]/,/\[/ s/swagger = false/swagger = true/' "$HOME"/config/app.toml
 
+# staking/governance token is hardcoded in config, change this
+sed -i "s/\"stake\"/\"$DENOM\"/" "$HOME"/config/genesis.json && echo "Updated staking token to $DENOM"
+
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory
 # and storing the mnemonic in the mnemonic.txt file
 mnemonic=$(axelard keys add owner --keyring-backend test --home ${HOME} 2>&1 | tail -n 1)
