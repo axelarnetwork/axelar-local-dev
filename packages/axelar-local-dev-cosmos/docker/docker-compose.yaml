@@ -1,10 +1,22 @@
 version: "3.8"
 services:
-  demo-chain:
-    image: cosmwasm/wasmd
-    container_name: ${CHAIN_ID}
+  # demo-chain:
+  #   image: cosmwasm/wasmd
+  #   container_name: ${CHAIN_ID}
+  #   env_file: ".env"
+  #   command: "/root/private/bin/init_and_add_keys.sh"
+  #   volumes:
+  #     - "./private:/root/private"
+  #   ports:
+  #     - "${CHAIN_RPC_PORT}:26657"
+  #     - "${CHAIN_PORT}:1317"
+  #     - "26656:26656"
+  #     - "9090:9090"
+  axelar:
+    image: alpine:3.18
+    container_name: axelar
     env_file: ".env"
-    command: "/root/private/bin/init_and_add_keys.sh"
+    command: "/root/private/bin/init_axelar.sh"
     volumes:
       - "./private:/root/private"
     ports:
@@ -12,6 +24,3 @@ services:
       - "${CHAIN_PORT}:1317"
       - "26656:26656"
       - "9090:9090"
-  # axelar:
-  #   image: axelarnet/axelar-core:v0.34.1
-  #   container_name: axelar
