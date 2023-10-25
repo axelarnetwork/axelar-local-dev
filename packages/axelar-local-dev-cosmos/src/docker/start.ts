@@ -2,8 +2,6 @@ import { IDockerComposeOptions, v2 as compose } from "docker-compose";
 import { defaultConfig as axelarConfig } from "../axelar";
 import { defaultConfig as wasmConfig } from "../wasm";
 import { CosmosChainInfo, ChainConfig, CosmosChain } from "../types";
-import path from "path";
-import fs from "fs";
 import {
   createContainerEnv,
   getChainConfig,
@@ -17,9 +15,12 @@ export async function startAll(
   customAxelarConfig?: ChainConfig,
   customWasmConfig?: ChainConfig
 ) {
+  const configAxelar = customAxelarConfig || axelarConfig;
+  const configWasm = customWasmConfig || wasmConfig;
+
   return Promise.all([
-    start("axelar", customAxelarConfig || axelarConfig),
-    start("wasm", customWasmConfig || wasmConfig),
+    start("axelar", configAxelar),
+    start("wasm", configWasm),
   ]);
 }
 
