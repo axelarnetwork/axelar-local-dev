@@ -1,9 +1,9 @@
 import { IDockerComposeOptions } from "docker-compose/dist/v2";
 
 export interface StartOptions {
-  cleanStart?: boolean;
+  // cleanStart?: boolean;
   chain?: CosmosChainOptions;
-  dockerComposeOptions?: IDockerComposeOptions;
+  composeOptions?: IDockerComposeOptions;
 }
 
 export interface CosmosChainInfo {
@@ -16,9 +16,17 @@ export interface CosmosChainInfo {
   lcdUrl?: string;
 }
 
-export interface CosmosChainOptions {
-  name: string;
-  port: number;
+export type ChainConfig = {
+  lcdPort: number;
   rpcPort: number;
-  denom: string;
-}
+  healthcheckEndpoint: string;
+  dockerPath: string;
+};
+
+export type CosmosChain = "axelar" | "wasm";
+
+export type ChainDenom<T extends CosmosChain> = T extends "axelar"
+  ? "uaxl"
+  : CosmosChain extends "wasm"
+  ? "uwasm"
+  : never;

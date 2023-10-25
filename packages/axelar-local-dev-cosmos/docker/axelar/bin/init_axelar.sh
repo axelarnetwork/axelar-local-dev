@@ -49,7 +49,6 @@ axelard gentx owner 70000000${DENOM} \
 axelard collect-gentxs \
 --home ${HOME} > /dev/null 2>&1 && echo "Collected genesis transactions"
 
-
 # Starting the blockchain node with the specified home directory
 axelard start --home ${HOME} \
 --minimum-gas-prices 0${DENOM} \

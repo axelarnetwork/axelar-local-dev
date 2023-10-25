@@ -1,8 +1,8 @@
 #!/bin/sh
 
-DENOM=${DENOM:-udemo}
-CHAIN_ID=${CHAIN_ID:-demo-chain}
-MONIKER=${MONIKER:-demo-chain}
+DENOM=${DENOM:-uwasm}
+CHAIN_ID=${CHAIN_ID:-wasm}
+MONIKER=${MONIKER:-wasm}
 HOME=/root/private/.${CHAIN_ID}
 
 # Removing the existing .simapp directory to start with a clean slate
@@ -11,14 +11,16 @@ rm -rf ${HOME}
 # Initializing a new blockchain with identifier ${CHAIN_ID} in the specified home directory
 wasmd init "$MONIKER" --chain-id ${CHAIN_ID} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_ID}"
 
+# edit the app.toml file to enable the API and swagger
+sed -i '/\[api\]/,/\[/ s/enable = false/enable = true/' "$HOME"/config/app.toml
+sed -i '/\[api\]/,/\[/ s/swagger = false/swagger = true/' "$HOME"/config/app.toml
+sed -i '/\[api\]/,/\[/ s/address = "tcp:\/\/localhost:1317"/address = "tcp:\/\/0.0.0.0:1317"/' "$HOME"/config/app.toml
+
 # this is essential for sub-1s block times (or header times go crazy)
 sed -i 's/"time_iota_ms": "1000"/"time_iota_ms": "10"/' "$HOME"/config/genesis.json
 
 # staking/governance token is hardcoded in config, change this
 sed -i "s/\"stake\"/\"$DENOM\"/" "$HOME"/config/genesis.json && echo "Updated staking token to $DENOM"
-
-# Copying the config files
-# cp /root/config/*.toml ${HOME}/config/
 
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory
 # and storing the mnemonic in the mnemonic.txt file
@@ -42,11 +44,10 @@ wasmd genesis gentx owner 70000000${DENOM} \
 wasmd genesis collect-gentxs \
 --home ${HOME} > /dev/null 2>&1 && echo "Collected genesis transactions"
 
-
 # Starting the blockchain node with the specified home directory
 wasmd start --home ${HOME} \
 --minimum-gas-prices 0${DENOM} \
 --moniker ${MONIKER} \
---api.swagger true \
---api.enable true \
+--api.enable=true \
+--api.swagger=true \
 --rpc.laddr "tcp://0.0.0.0:26657"
