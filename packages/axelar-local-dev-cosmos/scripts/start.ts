@@ -1,3 +1,3 @@
-import { start } from "../src/lib/docker";
+import { start } from "../src/docker";
 
-start();
+start("axelar");

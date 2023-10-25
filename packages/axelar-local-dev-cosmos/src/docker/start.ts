@@ -1,11 +1,13 @@
-import { v2 as compose } from "docker-compose";
+import { IDockerComposeOptions, v2 as compose } from "docker-compose";
 import { defaultConfig as axelarConfig } from "../axelar";
 import { defaultConfig as wasmConfig } from "../wasm";
 import { CosmosChainInfo, ChainConfig, CosmosChain } from "../types";
-import { logger } from "@axelar-network/axelar-local-dev";
+import path from "path";
+import fs from "fs";
 import {
   createContainerEnv,
   getChainConfig,
+  getChainDenom,
   getOwnerAccount,
   isDockerRunning,
   waitForRpc,
@@ -27,23 +29,18 @@ export async function start(
 ): Promise<CosmosChainInfo> {
   const { dockerPath, lcdPort, rpcPort } = options;
 
-  const env = createContainerEnv(chain, options);
+  // Create .env file for docker-compose
+  createContainerEnv(chain, options);
 
   // Check if docker is running
-  if (!(await isDockerRunning(dockerPath))) {
-    throw new Error(
-      "Docker is not running. Please start Docker and try again."
-    );
-  }
+  await throwIfDockerNotRunning(dockerPath);
 
   // Setup docker-compose config
-  const config = {
-    cleanStart: true,
+  const config: IDockerComposeOptions = {
     cwd: dockerPath,
-    env,
   };
 
-  logger.log(`Starting ${chain} container...`);
+  console.log(`Starting ${chain} container...`);
 
   // Start docker container
   await compose.upOne(chain, config);
@@ -51,11 +48,20 @@ export async function start(
   // Wait for cosmos to start
   await waitForRpc(chain, options);
 
-  logger.log(`${chain} started`);
+  console.log(`${chain} started`);
   return {
     owner: await getOwnerAccount(chain, dockerPath),
-    denom: env.DENOM,
+    // denom: env.DENOM,
+    denom: getChainDenom(chain),
     lcdUrl: `http://localhost:${lcdPort}`,
     rpcUrl: `http://localhost:${rpcPort}`,
   };
+}
+
+async function throwIfDockerNotRunning(dockerPath: string) {
+  if (!(await isDockerRunning(dockerPath))) {
+    throw new Error(
+      "Docker is not running. Please start Docker and try again."
+    );
+  }
 }

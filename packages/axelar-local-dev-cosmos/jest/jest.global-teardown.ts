@@ -1,5 +1,5 @@
-import { stop } from "../src/lib/docker";
+import { stopAll } from "../src/docker";
 
 export default async () => {
-  await stop();
+  await stopAll();
 };

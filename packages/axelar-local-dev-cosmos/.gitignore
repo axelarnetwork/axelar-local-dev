@@ -1,6 +1,5 @@
 .env
 
 # Docker
-docker/private/*
-!docker/private/bin
+docker/**/.*
 config.json

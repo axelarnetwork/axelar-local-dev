@@ -21,20 +21,15 @@ export function getChainConfig(chain: CosmosChain) {
 }
 
 export function createContainerEnv(chain: CosmosChain, options: ChainConfig) {
-  const { lcdPort, rpcPort } = options;
-  const denom = getChainDenom(chain);
-  return {
-    CHAIN_ID: chain,
-    CHAIN_LCD_PORT: lcdPort.toString(),
-    CHAIN_RPC_PORT: rpcPort.toString(),
-    DENOM: denom,
-    MONIKER: chain,
-  };
+  const { dockerPath, rpcPort, lcdPort } = options;
+  const envPath = path.join(dockerPath, ".env");
+  const env = `CHAIN_ID=${chain}\nCHAIN_LCD_PORT=${lcdPort}\nCHAIN_RPC_PORT=${rpcPort}\nMONIKER=${chain}`;
+  fs.writeFileSync(envPath, env);
 }
 
 export async function getOwnerAccount(chain: CosmosChain, dockerPath: string) {
   // Get mnemonic and address from the container
-  const homedir = `./private/.${chain}`;
+  const homedir = `./.${chain}`;
   const homePath = path.join(dockerPath, homedir);
   const mnemonic = fs.readFileSync(`${homePath}/mnemonic.txt`, "utf8");
   const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
