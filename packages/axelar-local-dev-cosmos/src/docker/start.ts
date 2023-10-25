@@ -49,7 +49,7 @@ export async function start(
   // Wait for cosmos to start
   await waitForRpc(chain, options);
 
-  console.log(`${chain} started`);
+  console.log(`${chain} started at http://localhost:${rpcPort}`);
   return {
     owner: await getOwnerAccount(chain, dockerPath),
     // denom: env.DENOM,

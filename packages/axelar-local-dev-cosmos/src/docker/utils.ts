@@ -54,7 +54,7 @@ export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
   const timeout = 60000;
   const interval = 3000;
   const url = `http://localhost:${rpcPort}/${healthcheckEndpoint}`;
-  logger.log(`Waiting for ${chain} to start at ${url}...`);
+  // logger.log(`Waiting for ${chain} to start at ${url}...`);
   let status = 0;
   while (Date.now() - start < timeout) {
     try {

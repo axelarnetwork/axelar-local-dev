@@ -15,7 +15,7 @@ export async function stopAll() {
  * Stop docker container
  */
 export async function stop(chain: CosmosChain, dockerPath: string) {
-  logger.log(`Stopping ${chain}...`);
+  logger.log(`Stopping ${chain} container...`);
   try {
     await compose.down({
       cwd: dockerPath,
