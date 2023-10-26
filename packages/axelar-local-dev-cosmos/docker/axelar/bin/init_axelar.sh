@@ -8,14 +8,14 @@ HOME=/root/private/.axelar
 # Removing the existing directory to start with a clean slate
 rm -rf ${HOME}
 
-# Download the latest axelard binary
-echo "Downloading axelard binary..."
-wget https://github.com/axelarnetwork/axelar-core/releases/download/v0.34.1/axelard-linux-arm64-v0.34.1 -O axelard > /dev/null 2>&1 && echo "Downloaded axelard binary"
+# # Download the latest axelard binary
+# echo "Downloading axelard binary..."
+# wget https://github.com/axelarnetwork/axelar-core/releases/download/v0.34.1/axelard-linux-arm64-v0.34.1 -O axelard > /dev/null 2>&1 && echo "Downloaded axelard binary"
 
-# Make the binary executable
-chmod +x axelard
-# Move the binary to the /usr/local/bin directory
-mv axelard /usr/local/bin/axelard
+# # Make the binary executable
+# chmod +x axelard
+# # Move the binary to the /usr/local/bin directory
+# mv axelard /usr/local/bin/axelard
 
 # Initializing a new blockchain with identifier ${CHAIN_ID} in the specified home directory
 axelard init "$MONIKER" --chain-id ${CHAIN_ID} --home ${HOME} > /dev/null 2>&1 && echo "Initialized new blockchain with chain ID ${CHAIN_ID}"

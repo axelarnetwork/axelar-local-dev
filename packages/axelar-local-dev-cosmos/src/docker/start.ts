@@ -1,4 +1,4 @@
-import { IDockerComposeOptions, v2 as compose } from "docker-compose";
+import { IDockerComposeOptions, buildOne, v2 as compose } from "docker-compose";
 import { defaultConfig as axelarConfig } from "../axelar";
 import { defaultConfig as wasmConfig } from "../wasm";
 import { CosmosChainInfo, ChainConfig, CosmosChain } from "../types";
@@ -10,6 +10,7 @@ import {
   isDockerRunning,
   waitForRpc,
 } from "./utils";
+import path from "path";
 
 export async function startAll(
   customAxelarConfig?: ChainConfig,
@@ -21,7 +22,21 @@ export async function startAll(
   return Promise.all([
     start("axelar", configAxelar),
     start("wasm", configWasm),
+    startTraefik(),
   ]);
+}
+
+export async function startTraefik() {
+  const traefikPath = path.join(__dirname, "../../docker/traefik");
+  const config: IDockerComposeOptions = {
+    cwd: traefikPath,
+  };
+
+  console.log("Starting traefik container...");
+
+  await compose.upOne("traefik", config);
+
+  console.log("Traefik started at http://localhost:8080");
 }
 
 export async function start(
@@ -49,7 +64,13 @@ export async function start(
   // Wait for cosmos to start
   await waitForRpc(chain, options);
 
-  console.log(`${chain} started at http://localhost:${rpcPort}`);
+  console.log(
+    `RPC server for ${chain} is started at http://localhost/${chain}-rpc`
+  );
+  console.log(
+    `LCD server for ${chain} is started at http://localhost/${chain}-lcd`
+  );
+
   return {
     owner: await getOwnerAccount(chain, dockerPath),
     // denom: env.DENOM,

@@ -51,10 +51,9 @@ export async function getOwnerAccount(chain: CosmosChain, dockerPath: string) {
 export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
   const { healthcheckEndpoint, rpcPort } = config;
   const start = Date.now();
-  const timeout = 60000;
+  const timeout = 30000;
   const interval = 3000;
-  const url = `http://localhost:${rpcPort}/${healthcheckEndpoint}`;
-  // logger.log(`Waiting for ${chain} to start at ${url}...`);
+  const url = `http://localhost/${chain}-rpc/${healthcheckEndpoint}`;
   let status = 0;
   while (Date.now() - start < timeout) {
     try {
