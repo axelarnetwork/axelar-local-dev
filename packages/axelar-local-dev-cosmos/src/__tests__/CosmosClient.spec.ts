@@ -1,17 +1,16 @@
-import fs from "fs";
 import path from "path";
-import { CosmosClient } from "../CosmosClient";
+import { CosmosClient } from "../";
 
 describe("CosmosClient", () => {
   let cosmosClient: CosmosClient;
 
   beforeAll(async () => {
-    const config = JSON.parse(fs.readFileSync("./config.json", "utf-8"));
-    cosmosClient = await CosmosClient.create(config);
+    cosmosClient = await CosmosClient.create();
   });
 
   it("should query the balance", async () => {
-    const balance = await cosmosClient.getOwnerAccount();
+    const owner = await cosmosClient.getOwnerAccount();
+    const balance = await cosmosClient.getBalance(owner);
     expect(parseInt(balance || "0")).toBeGreaterThan(0);
   });
 
@@ -22,7 +21,16 @@ describe("CosmosClient", () => {
     expect(response).toBeDefined();
   });
 
-  it.only("should be able to execute the wasm contract", async () => {
+  it("should be able to send tokens to given address", async () => {
+    const recipient = "wasm1kmfc98hsz9cxq9lyezlpr8d0sh5ct244krg6u5";
+    const amount = "1000000";
+    const initialBalance = await cosmosClient.getBalance(recipient);
+    await cosmosClient.fundWallet(recipient, amount);
+    const balance = await cosmosClient.getBalance(recipient);
+    expect(parseInt(balance)).toBe(parseInt(initialBalance) + parseInt(amount));
+  });
+
+  it.skip("should be able to execute the wasm contract", async () => {
     const _path = path.resolve(__dirname, "../..", "wasm/multi_send.wasm");
     const response = await cosmosClient.uploadWasm(_path);
 

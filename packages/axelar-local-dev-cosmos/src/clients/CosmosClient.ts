@@ -2,7 +2,6 @@ import fs from "fs";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { Decimal } from "@cosmjs/math";
 import { CosmosChainInfo } from "../types";
 import { getOwnerAccount } from "../docker";
 
@@ -10,15 +9,18 @@ export class CosmosClient {
   chainInfo: Required<CosmosChainInfo>;
   owner: DirectSecp256k1HdWallet;
   public client: SigningCosmWasmClient;
+  gasPrice: GasPrice;
 
   private constructor(
     chainInfo: Required<CosmosChainInfo>,
     owner: DirectSecp256k1HdWallet,
-    client: SigningCosmWasmClient
+    client: SigningCosmWasmClient,
+    gasPrice: GasPrice
   ) {
     this.chainInfo = chainInfo;
     this.owner = owner;
     this.client = client;
+    this.gasPrice = gasPrice;
   }
 
   static async create(config: Omit<CosmosChainInfo, "owner"> = {}) {
@@ -31,8 +33,10 @@ export class CosmosClient {
     const walletOptions = {
       prefix: "wasm",
     };
+
+    const gasPrice = GasPrice.fromString(`1${chainInfo.denom}`);
     const clientOptions = {
-      gasPrice: new GasPrice(Decimal.fromAtomics("1", 6), chainInfo.denom),
+      gasPrice,
     };
 
     const { address, mnemonic } = await getOwnerAccount("wasm");
@@ -57,7 +61,8 @@ export class CosmosClient {
         },
       },
       owner,
-      client
+      client,
+      gasPrice
     );
   }
 
@@ -78,6 +83,8 @@ export class CosmosClient {
   async fundWallet(address: string, amount: string) {
     const ownerAddress = await this.getOwnerAccount();
 
+    const gasPrice = GasPrice.fromString(`1${this.chainInfo.denom}`);
+
     return this.client.sendTokens(
       ownerAddress,
       address,
@@ -87,7 +94,15 @@ export class CosmosClient {
           denom: this.chainInfo.denom,
         },
       ],
-      "auto"
+      {
+        amount: [
+          {
+            amount: gasPrice.amount.toString(),
+            denom: gasPrice.denom,
+          },
+        ],
+        gas: "100000",
+      }
     );
   }
 
