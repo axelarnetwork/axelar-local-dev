@@ -9,9 +9,6 @@ export interface CosmosChainInfo {
 }
 
 export type ChainConfig = {
-  lcdPort: number;
-  rpcPort: number;
-  healthcheckEndpoint: string;
   dockerPath: string;
 };
 

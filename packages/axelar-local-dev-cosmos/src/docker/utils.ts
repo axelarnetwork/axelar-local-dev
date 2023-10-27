@@ -21,9 +21,9 @@ export function getChainConfig(chain: CosmosChain) {
 }
 
 export function createContainerEnv(chain: CosmosChain, options: ChainConfig) {
-  const { dockerPath, rpcPort, lcdPort } = options;
+  const { dockerPath } = options;
   const envPath = path.join(dockerPath, ".env");
-  const env = `CHAIN_ID=${chain}\nCHAIN_LCD_PORT=${lcdPort}\nCHAIN_RPC_PORT=${rpcPort}\nMONIKER=${chain}`;
+  const env = `CHAIN_ID=${chain}\nMONIKER=${chain}`;
   fs.writeFileSync(envPath, env);
 }
 
@@ -50,11 +50,10 @@ export async function getOwnerAccount(chain: CosmosChain) {
  * If response isn't 200 within {timeout}, throws an error.
  */
 export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
-  const { healthcheckEndpoint } = config;
   const start = Date.now();
   const timeout = 60000;
   const interval = 3000;
-  const url = `http://localhost/${chain}-rpc/${healthcheckEndpoint}`;
+  const url = `http://localhost/${chain}-rpc/health`;
   let status = 0;
   while (Date.now() - start < timeout) {
     try {
