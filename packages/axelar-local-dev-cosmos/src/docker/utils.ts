@@ -27,9 +27,10 @@ export function createContainerEnv(chain: CosmosChain, options: ChainConfig) {
   fs.writeFileSync(envPath, env);
 }
 
-export async function getOwnerAccount(chain: CosmosChain, dockerPath: string) {
+export async function getOwnerAccount(chain: CosmosChain) {
   // Get mnemonic and address from the container
   const homedir = `./.${chain}`;
+  const dockerPath = path.join(__dirname, `../../docker/${chain}`);
   const homePath = path.join(dockerPath, homedir);
   const mnemonic = fs.readFileSync(`${homePath}/mnemonic.txt`, "utf8");
   const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
@@ -49,9 +50,9 @@ export async function getOwnerAccount(chain: CosmosChain, dockerPath: string) {
  * If response isn't 200 within {timeout}, throws an error.
  */
 export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
-  const { healthcheckEndpoint, rpcPort } = config;
+  const { healthcheckEndpoint } = config;
   const start = Date.now();
-  const timeout = 30000;
+  const timeout = 60000;
   const interval = 3000;
   const url = `http://localhost/${chain}-rpc/${healthcheckEndpoint}`;
   let status = 0;
@@ -61,13 +62,38 @@ export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
       if (status === 200) {
         break;
       }
+      console.log("status", status);
     } catch (e) {
       // do nothing
     }
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
   if (status !== 200) {
-    throw new Error(`${chain} failed to start in ${timeout}ms`);
+    throw new Error(`${chain} rpc server failed to start in ${timeout}ms`);
+  }
+}
+
+export async function waitForLcd(chain: CosmosChain) {
+  const testUrl = "cosmos/base/tendermint/v1beta1/node_info";
+  const start = Date.now();
+  const timeout = 60000;
+  const interval = 3000;
+  const url = `http://localhost/${chain}-lcd/${testUrl}`;
+  let result, network;
+  while (Date.now() - start < timeout) {
+    try {
+      result = await fetch(url).then((res: any) => res.json());
+      network = result.default_node_info.network;
+      if (network === chain) {
+        break;
+      }
+    } catch (e) {
+      // do nothing
+    }
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+  if (network !== chain) {
+    throw new Error(`${chain} lcd server failed to start in ${timeout}ms`);
   }
 }
 

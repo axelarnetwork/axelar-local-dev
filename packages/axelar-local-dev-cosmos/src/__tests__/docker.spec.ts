@@ -1,32 +1,32 @@
 import { setLogger } from "@axelar-network/axelar-local-dev";
-import { getOwnerAccount, start, stop } from "../docker";
-import { CosmosClient } from "../CosmosClient";
+import { getOwnerAccount } from "../docker";
+import { CosmosClient } from "../";
 import fetch from "node-fetch";
 
 setLogger(() => undefined);
 
 describe("docker", () => {
-  it("should start Cosmos container successfully", async () => {
-    const response = await fetch("http://localhost:26657/health");
-    expect(response.status).toBe(200);
+  it("should start containers successfully", async () => {
+    const testLcd = "cosmos/base/tendermint/v1beta1/node_info";
+    const healthAxelarRpc = await fetch("http://localhost/axelar-rpc");
+    const healthAxelarLcd = await fetch(
+      `http://localhost/axelar-lcd/${testLcd}`
+    );
+    const healthWasmRpc = await fetch("http://localhost/wasm-rpc");
+    const healthWasmLcd = await fetch(`http://localhost/wasm-lcd/${testLcd}`);
+
+    expect(healthAxelarRpc.status).toBe(200);
+    expect(healthAxelarLcd.status).toBe(200);
+    expect(healthWasmRpc.status).toBe(200);
+    expect(healthWasmLcd.status).toBe(200);
   });
 
-  // it('should start Cosmos container with default denom "udemo"', async () => {
-  //   const owner = await getOwnerAccount();
-  //   const cosmosClient = await CosmosClient.create({
-  //     owner,
-  //   });
+  it("should have some balance in the owner account", async () => {
+    const owner = await getOwnerAccount("wasm");
+    const cosmosClient = await CosmosClient.create();
 
-  //   const balance = await cosmosClient.getBalance(owner.address);
+    const balance = await cosmosClient.getBalance(owner.address);
 
-  //   expect(parseInt(balance)).toBeGreaterThan(1);
-  //   expect(cosmosClient.getChainInfo().denom).toBe(defaultDenom);
-  // });
-
-  // it.skip("should stop Cosmos container gracefully", async () => {
-  //   await stop();
-  //   await fetch("http://localhost:1317/").catch((e) => {
-  //     expect(e.message).toContain("ECONNREFUSED");
-  //   });
-  // });
+    expect(parseInt(balance)).toBeGreaterThan(1);
+  });
 });

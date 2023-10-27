@@ -3,7 +3,8 @@ import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { Decimal } from "@cosmjs/math";
-import { CosmosChainInfo } from "./types";
+import { CosmosChainInfo } from "../types";
+import { getOwnerAccount } from "../docker";
 
 export class CosmosClient {
   chainInfo: Required<CosmosChainInfo>;
@@ -20,12 +21,11 @@ export class CosmosClient {
     this.client = client;
   }
 
-  static async create(config: CosmosChainInfo) {
+  static async create(config: Omit<CosmosChainInfo, "owner"> = {}) {
     const chainInfo = {
-      ...config,
-      denom: config.denom || "udemo",
-      lcdUrl: config.lcdUrl || "http://localhost:1317",
-      rpcUrl: config.rpcUrl || "http://localhost:26657",
+      denom: config.denom || "uwasm",
+      lcdUrl: config.lcdUrl || "http://localhost/wasm-lcd",
+      rpcUrl: config.rpcUrl || "http://localhost/wasm-rpc",
     };
 
     const walletOptions = {
@@ -35,8 +35,10 @@ export class CosmosClient {
       gasPrice: new GasPrice(Decimal.fromAtomics("1", 6), chainInfo.denom),
     };
 
+    const { address, mnemonic } = await getOwnerAccount("wasm");
+
     const owner = await DirectSecp256k1HdWallet.fromMnemonic(
-      config?.owner.mnemonic,
+      mnemonic,
       walletOptions
     );
 
@@ -46,7 +48,17 @@ export class CosmosClient {
       clientOptions
     );
 
-    return new CosmosClient(chainInfo, owner, client);
+    return new CosmosClient(
+      {
+        ...chainInfo,
+        owner: {
+          mnemonic,
+          address,
+        },
+      },
+      owner,
+      client
+    );
   }
 
   getBalance(address: string) {
@@ -61,6 +73,22 @@ export class CosmosClient {
       lcdUrl: this.chainInfo.lcdUrl,
       rpcUrl: this.chainInfo.rpcUrl,
     };
+  }
+
+  async fundWallet(address: string, amount: string) {
+    const ownerAddress = await this.getOwnerAccount();
+
+    return this.client.sendTokens(
+      ownerAddress,
+      address,
+      [
+        {
+          amount,
+          denom: this.chainInfo.denom,
+        },
+      ],
+      "auto"
+    );
   }
 
   async uploadWasm(path: string) {

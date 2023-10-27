@@ -7,3 +7,4 @@ export const defaultConfig: ChainConfig = {
   healthcheckEndpoint: "health",
   dockerPath: path.join(__dirname, "../../docker/axelar"),
 };
+export const getOwnerAccount = () => {};

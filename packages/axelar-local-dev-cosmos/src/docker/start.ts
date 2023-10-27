@@ -8,6 +8,7 @@ import {
   getChainDenom,
   getOwnerAccount,
   isDockerRunning,
+  waitForLcd,
   waitForRpc,
 } from "./utils";
 import path from "path";
@@ -61,8 +62,9 @@ export async function start(
   // Start docker container
   await compose.upOne(chain, config);
 
-  // Wait for cosmos to start
+  // Wait for API servers to start
   await waitForRpc(chain, options);
+  await waitForLcd(chain);
 
   const rpcUrl = `http://localhost/${chain}-rpc`;
   const lcdUrl = `http://localhost/${chain}-lcd`;
@@ -71,7 +73,7 @@ export async function start(
   console.log(`LCD server for ${chain} is started at ${lcdUrl}`);
 
   return {
-    owner: await getOwnerAccount(chain, dockerPath),
+    owner: await getOwnerAccount(chain),
     denom: getChainDenom(chain),
     lcdUrl,
     rpcUrl,

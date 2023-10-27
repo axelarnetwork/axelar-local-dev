@@ -1,11 +1,3 @@
-import { IDockerComposeOptions } from "docker-compose/dist/v2";
-
-export interface StartOptions {
-  // cleanStart?: boolean;
-  chain?: CosmosChainOptions;
-  composeOptions?: IDockerComposeOptions;
-}
-
 export interface CosmosChainInfo {
   owner: {
     mnemonic: string;

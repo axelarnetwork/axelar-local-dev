@@ -6,11 +6,7 @@ import path from "path";
 import { logger } from "@axelar-network/axelar-local-dev";
 
 export async function stopAll() {
-  return Promise.all([
-    stop("axelar", axelarConfig.dockerPath),
-    stop("wasm", wasmConfig.dockerPath),
-    stopTraefik(),
-  ]);
+  return Promise.all([stop("axelar"), stop("wasm"), stopTraefik()]);
 }
 
 export async function stopTraefik() {
@@ -29,8 +25,9 @@ export async function stopTraefik() {
 /**
  * Stop docker container
  */
-export async function stop(chain: CosmosChain, dockerPath: string) {
+export async function stop(chain: CosmosChain) {
   logger.log(`Stopping ${chain} container...`);
+  const dockerPath = path.join(__dirname, `../../docker/${chain}`);
   try {
     await compose.down({
       cwd: dockerPath,
