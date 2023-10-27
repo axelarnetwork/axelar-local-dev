@@ -1,4 +1,4 @@
-import { IDockerComposeOptions, buildOne, v2 as compose } from "docker-compose";
+import { IDockerComposeOptions, v2 as compose } from "docker-compose";
 import { defaultConfig as axelarConfig } from "../axelar";
 import { defaultConfig as wasmConfig } from "../wasm";
 import { CosmosChainInfo, ChainConfig, CosmosChain } from "../types";
@@ -43,7 +43,7 @@ export async function start(
   chain: CosmosChain,
   options: ChainConfig = getChainConfig(chain)
 ): Promise<CosmosChainInfo> {
-  const { dockerPath, lcdPort, rpcPort } = options;
+  const { dockerPath } = options;
 
   // Create .env file for docker-compose
   createContainerEnv(chain, options);
@@ -64,19 +64,17 @@ export async function start(
   // Wait for cosmos to start
   await waitForRpc(chain, options);
 
-  console.log(
-    `RPC server for ${chain} is started at http://localhost/${chain}-rpc`
-  );
-  console.log(
-    `LCD server for ${chain} is started at http://localhost/${chain}-lcd`
-  );
+  const rpcUrl = `http://localhost/${chain}-rpc`;
+  const lcdUrl = `http://localhost/${chain}-lcd`;
+
+  console.log(`RPC server for ${chain} is started at ${rpcUrl}`);
+  console.log(`LCD server for ${chain} is started at ${lcdUrl}`);
 
   return {
     owner: await getOwnerAccount(chain, dockerPath),
-    // denom: env.DENOM,
     denom: getChainDenom(chain),
-    lcdUrl: `http://localhost:${lcdPort}`,
-    rpcUrl: `http://localhost:${rpcPort}`,
+    lcdUrl,
+    rpcUrl,
   };
 }
 
