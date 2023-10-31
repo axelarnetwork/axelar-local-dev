@@ -7,6 +7,7 @@ import { defaultConfig as wasmConfig } from "../wasm";
 import { ChainConfig, CosmosChain } from "../types";
 import { logger } from "@axelar-network/axelar-local-dev";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import bech32 from "bech32";
 
 export function getChainDenom(chain: CosmosChain) {
   return chain === "axelar" ? "uaxl" : "uwasm";
@@ -18,6 +19,11 @@ export function getChainPrefix(chain: CosmosChain) {
 
 export function getChainConfig(chain: CosmosChain) {
   return chain === "axelar" ? axelarConfig : wasmConfig;
+}
+
+export function convertCosmosAddress(address: string, prefix: string) {
+  const decoded = bech32.decode(address);
+  return bech32.encode(prefix, decoded.words);
 }
 
 export function createContainerEnv(chain: CosmosChain, options: ChainConfig) {
@@ -49,9 +55,8 @@ export async function getOwnerAccount(chain: CosmosChain) {
  * Periodically fetching the healthcheck url until the response code is 200.
  * If response isn't 200 within {timeout}, throws an error.
  */
-export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
+export async function waitForRpc(chain: CosmosChain, timeout = 120000) {
   const start = Date.now();
-  const timeout = 60000;
   const interval = 3000;
   const url = `http://localhost/${chain}-rpc/health`;
   let status = 0;
@@ -61,7 +66,6 @@ export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
       if (status === 200) {
         break;
       }
-      console.log("status", status);
     } catch (e) {
       // do nothing
     }
@@ -72,10 +76,9 @@ export async function waitForRpc(chain: CosmosChain, config: ChainConfig) {
   }
 }
 
-export async function waitForLcd(chain: CosmosChain) {
+export async function waitForLcd(chain: CosmosChain, timeout = 60000) {
   const testUrl = "cosmos/base/tendermint/v1beta1/node_info";
   const start = Date.now();
-  const timeout = 60000;
   const interval = 3000;
   const url = `http://localhost/${chain}-lcd/${testUrl}`;
   let result, network;

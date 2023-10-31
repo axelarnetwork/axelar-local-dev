@@ -33,8 +33,8 @@ mnemonic=$(axelard keys add owner --keyring-backend test --home ${HOME} 2>&1 | t
 echo ${mnemonic} | tr -d "\n" > ${HOME}/mnemonic.txt
 echo "Added new key 'owner'"
 
-# Adding a new genesis account named 'owner' with an initial balance of 100000000stake in the blockchain
-axelard add-genesis-account owner 100000000${DENOM} \
+# Adding a new genesis account named 'owner' with an initial balance of 100000000000000000000 in the blockchain
+axelard add-genesis-account owner 100000000000000000000${DENOM} \
 --home ${HOME} \
 --keyring-backend test > /dev/null 2>&1 && echo "Added 'owner' to genesis account"
 

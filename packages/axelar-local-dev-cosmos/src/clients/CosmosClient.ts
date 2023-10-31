@@ -1,37 +1,47 @@
 import fs from "fs";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { GasPrice } from "@cosmjs/stargate";
+import { GasPrice, StargateClient } from "@cosmjs/stargate";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { CosmosChainInfo } from "../types";
+import { sha256 } from "@cosmjs/crypto";
+import crypto from "crypto";
+import { CosmosChain, CosmosChainInfo } from "../types";
 import { getOwnerAccount } from "../docker";
+import Long from "long";
 
 export class CosmosClient {
-  chainInfo: Required<CosmosChainInfo>;
-  owner: DirectSecp256k1HdWallet;
+  public chainInfo: Required<CosmosChainInfo>;
+  public owner: DirectSecp256k1HdWallet;
   public client: SigningCosmWasmClient;
-  gasPrice: GasPrice;
+  stargateClient: StargateClient;
+  public gasPrice: GasPrice;
 
   private constructor(
     chainInfo: Required<CosmosChainInfo>,
     owner: DirectSecp256k1HdWallet,
     client: SigningCosmWasmClient,
-    gasPrice: GasPrice
+    gasPrice: GasPrice,
+    starGateClient: StargateClient
   ) {
     this.chainInfo = chainInfo;
     this.owner = owner;
     this.client = client;
     this.gasPrice = gasPrice;
+    this.stargateClient = starGateClient;
   }
 
-  static async create(config: Omit<CosmosChainInfo, "owner"> = {}) {
+  static async create(
+    chain: CosmosChain = "wasm",
+    config: Omit<CosmosChainInfo, "owner"> = { prefix: chain }
+  ) {
+    const defaultDenom = chain === "wasm" ? "uwasm" : "uaxl";
     const chainInfo = {
-      denom: config.denom || "uwasm",
-      lcdUrl: config.lcdUrl || "http://localhost/wasm-lcd",
-      rpcUrl: config.rpcUrl || "http://localhost/wasm-rpc",
+      denom: config.denom || defaultDenom,
+      lcdUrl: config.lcdUrl || `http://localhost/${chain}-lcd`,
+      rpcUrl: config.rpcUrl || `http://localhost/${chain}-rpc`,
     };
 
     const walletOptions = {
-      prefix: "wasm",
+      prefix: chain,
     };
 
     const gasPrice = GasPrice.fromString(`1${chainInfo.denom}`);
@@ -39,7 +49,7 @@ export class CosmosClient {
       gasPrice,
     };
 
-    const { address, mnemonic } = await getOwnerAccount("wasm");
+    const { address, mnemonic } = await getOwnerAccount(chain);
 
     const owner = await DirectSecp256k1HdWallet.fromMnemonic(
       mnemonic,
@@ -52,6 +62,8 @@ export class CosmosClient {
       clientOptions
     );
 
+    const stargateClient = await StargateClient.connect(chainInfo.rpcUrl);
+
     return new CosmosClient(
       {
         ...chainInfo,
@@ -59,25 +71,75 @@ export class CosmosClient {
           mnemonic,
           address,
         },
+        prefix: chain,
       },
       owner,
       client,
-      gasPrice
+      gasPrice,
+      stargateClient
     );
   }
 
-  getBalance(address: string) {
+  getBalance(address: string, denom?: string) {
     return this.client
-      .getBalance(address, this.chainInfo.denom)
+      .getBalance(address, denom || this.chainInfo.denom)
       .then((res) => res.amount);
+  }
+
+  async getBalances(address: string) {
+    return this.stargateClient.getAllBalances(address);
   }
 
   getChainInfo(): Omit<CosmosChainInfo, "owner"> {
     return {
+      prefix: this.chainInfo.prefix,
       denom: this.chainInfo.denom,
       lcdUrl: this.chainInfo.lcdUrl,
       rpcUrl: this.chainInfo.rpcUrl,
     };
+  }
+
+  async ibcTransfer(
+    sender: string,
+    receiver: string,
+    sourceChannel: string,
+    amount: string
+  ) {
+    const msgIBCTransfer = {
+      typeUrl: "/ibc.applications.transfer.v1.MsgTransfer",
+      value: {
+        sourcePort: "transfer",
+        sourceChannel,
+        token: {
+          denom: this.chainInfo.denom,
+          amount: amount,
+        },
+        sender: sender,
+        receiver: receiver,
+        timeoutTimestamp: Long.fromNumber(Date.now() + 600_000).multiply(
+          1_000_000
+        ),
+      },
+    };
+
+    return this.client.signAndBroadcast(
+      sender,
+      [msgIBCTransfer],
+      "auto",
+      "IBC Transfer"
+    );
+  }
+
+  getIBCDenom(channel: string, denom: string, port = "transfer") {
+    const path = `${port}/${channel}/${denom}`;
+    // Compute the SHA-256 hash of the path
+    const hash = crypto.createHash("sha256").update(path).digest();
+
+    // Convert the hash to a hexadecimal representation
+    const hexHash = hash.toString("hex").toUpperCase();
+
+    // Construct the denom by prefixing the hex hash with 'ibc/'
+    return `ibc/${hexHash}`;
   }
 
   async fundWallet(address: string, amount: string) {
@@ -85,25 +147,32 @@ export class CosmosClient {
 
     const gasPrice = GasPrice.fromString(`1${this.chainInfo.denom}`);
 
-    return this.client.sendTokens(
-      ownerAddress,
-      address,
-      [
-        {
-          amount,
-          denom: this.chainInfo.denom,
-        },
-      ],
-      {
-        amount: [
+    return this.client
+      .sendTokens(
+        ownerAddress,
+        address,
+        [
           {
-            amount: gasPrice.amount.toString(),
-            denom: gasPrice.denom,
+            amount,
+            denom: this.chainInfo.denom,
           },
         ],
-        gas: "100000",
-      }
-    );
+        {
+          amount: [
+            {
+              amount: gasPrice.amount.toString(),
+              denom: gasPrice.denom,
+            },
+          ],
+          gas: "100000",
+        }
+      )
+      .then((res) => {
+        if (res.code !== 0) {
+          throw new Error(res.rawLog);
+        }
+        return res;
+      });
   }
 
   async uploadWasm(path: string) {

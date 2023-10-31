@@ -63,7 +63,7 @@ export async function start(
   await compose.upOne(chain, config);
 
   // Wait for API servers to start
-  await waitForRpc(chain, options);
+  await waitForRpc(chain);
   await waitForLcd(chain);
 
   const rpcUrl = `http://localhost/${chain}-rpc`;
@@ -73,6 +73,7 @@ export async function start(
   console.log(`LCD server for ${chain} is started at ${lcdUrl}`);
 
   return {
+    prefix: chain,
     owner: await getOwnerAccount(chain),
     denom: getChainDenom(chain),
     lcdUrl,

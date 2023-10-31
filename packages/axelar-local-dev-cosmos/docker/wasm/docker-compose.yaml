@@ -1,10 +1,10 @@
 version: "3.8"
 services:
   wasm:
-    image: cosmwasm/wasmd
+    image: cosmwasm/wasmd:v0.42.0
     container_name: wasm
     env_file: ".env"
-    command: "/root/private/bin/init_and_add_keys.sh"
+    command: "/root/private/bin/init_wasm.sh"
     volumes:
       - "./bin:/root/private/bin"
       - "./.wasm:/root/private/.wasm"
