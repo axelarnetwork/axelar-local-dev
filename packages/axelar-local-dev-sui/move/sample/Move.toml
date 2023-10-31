@@ -1,11 +1,10 @@
 [package]
-name = "axelar_sui_sample"
+name = "Test"
 version = "0.0.1"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "77a9e0d"}
-axelar = { local = "../axelar" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/devnet" }
+Axelar = { local = "../../../../node_modules/@axelar-network/axelar-cgp-sui/move/axelar" }
 
 [addresses]
-axelar_sui_sample = "0x0"
-sui = "0x2"
+test = "0x0"
