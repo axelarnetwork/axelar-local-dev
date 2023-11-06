@@ -14,7 +14,7 @@
     "prettier": "prettier --write 'src/**/*.ts'",
     "build": "npm run clean && npm run build-ts",
     "build-ts": "tsc",
-    "start": "ts-node scripts/start.ts",
+    "start": "./scripts/clean.sh && ts-node scripts/start.ts",
     "stop": "ts-node scripts/stop.ts"
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "@cosmjs/cosmwasm-stargate": "^0.31.1",
     "@cosmjs/stargate": "^0.31.1",
     "@types/sinon": "^10.0.20",
+    "reconnecting-websocket": "^4.4.0",
     "sinon": "^17.0.0"
   },
   "author": "euro@axelar.network",

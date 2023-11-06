@@ -5,6 +5,7 @@ HOME=/root/private/.axelar
 DEFAULT_KEYS_FLAGS="--keyring-backend test --home ${HOME}"
 CHAIN=$1
 CHANNEL_ID=${2:-channel-0}
+DIR="$(dirname "$0")"
 
 if [ -z "$CHAIN" ]
 then
@@ -21,4 +22,6 @@ docker exec -it axelar /bin/sh -c "axelard tx axelarnet add-cosmos-based-chain $
 echo "Added cosmos-based chain"
 docker exec -t axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
 
-sh broadcast-unsigned-tx.sh
+sh "$DIR/../libs/broadcast-unsigned-multi-tx.sh"
+
+sh "$DIR/../libs/activate-chain.sh" ${CHAIN}

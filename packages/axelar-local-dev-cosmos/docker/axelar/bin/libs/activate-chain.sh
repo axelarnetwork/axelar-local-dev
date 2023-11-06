@@ -4,6 +4,7 @@ CHAIN_ID=axelar
 HOME=/root/private/.axelar
 DEFAULT_KEYS_FLAGS="--keyring-backend test --home ${HOME}"
 CHAIN=$1
+DIR="$(dirname "$0")"
 
 if [ -z "$CHAIN" ]
 then
@@ -18,4 +19,4 @@ docker exec -it axelar /bin/sh -c "axelard tx nexus activate-chain ${CHAIN} --ge
 echo "Activated chain ${CHAIN}"
 docker exec -t axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
 
-sh broadcast-unsigned-tx.sh
+sh "$DIR/broadcast-unsigned-multi-tx.sh"

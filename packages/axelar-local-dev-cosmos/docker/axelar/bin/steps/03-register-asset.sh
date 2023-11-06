@@ -5,6 +5,7 @@ HOME=/root/private/.axelar
 DEFAULT_KEYS_FLAGS="--keyring-backend test --home ${HOME}"
 CHAIN=$1
 DENOM=${2:-uwasm}
+DIR="$(dirname "$0")"
 
 if [ -z "$CHAIN" ]
 then
@@ -19,4 +20,4 @@ docker exec -it axelar /bin/sh -c "axelard tx axelarnet register-asset ${CHAIN} 
 docker exec -t axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
 echo "Registered asset ${CHAIN} ${DENOM}"
 
-sh broadcast-unsigned-tx.sh
+sh "$DIR/../libs/broadcast-unsigned-multi-tx.sh"

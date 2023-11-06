@@ -68,9 +68,11 @@ export async function start(
 
   const rpcUrl = `http://localhost/${chain}-rpc`;
   const lcdUrl = `http://localhost/${chain}-lcd`;
+  const wsUrl = `ws://localhost/${chain}-rpc/websocket`;
 
   console.log(`RPC server for ${chain} is started at ${rpcUrl}`);
   console.log(`LCD server for ${chain} is started at ${lcdUrl}`);
+  console.log(`WS server for ${chain} is started at ${wsUrl}`);
 
   return {
     prefix: chain,
@@ -78,6 +80,7 @@ export async function start(
     denom: getChainDenom(chain),
     lcdUrl,
     rpcUrl,
+    wsUrl,
   };
 }
 

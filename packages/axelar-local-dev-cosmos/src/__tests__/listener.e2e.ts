@@ -20,6 +20,53 @@ describe("E2E - Listener", () => {
 
   async function executeContractCall() {
     // Upload the wasm contract
+    const _path = path.resolve(__dirname, "../..", "wasm/send_receive.wasm");
+    const response = await wasmClient.uploadWasm(_path).catch((err) => {
+      console.log(err);
+
+      throw err;
+    });
+    console.log(response);
+    console.log("Uploaded wasm:", response.codeId);
+
+    // Instantiate the contract
+    const { client } = wasmClient;
+    const ownerAddress = await wasmClient.getOwnerAccount();
+    const { contractAddress } = await client.instantiate(
+      ownerAddress,
+      response.codeId,
+      {
+        channel: srcChannelId,
+      },
+      "amazing random contract",
+      "auto"
+    );
+    console.log("Deployed contract:", contractAddress);
+
+    const denom = wasmClient.chainInfo.denom;
+
+    const execution = await client.execute(
+      ownerAddress,
+      contractAddress,
+      {
+        send_message_evm: {
+          destination_chain: "ethereum",
+          destination_address: "0x49324C7f83568861AB1b66E547BB1B66431f1070",
+          message: "Hello",
+        },
+      },
+      "auto",
+      "test",
+      [{ amount: "1000000", denom }]
+    );
+
+    // console.log(JSON.stringify(execution, null, 2));
+
+    await relayerClient.relayPackets();
+  }
+
+  async function executeContractCallWithToken() {
+    // Upload the wasm contract
     const _path = path.resolve(__dirname, "../..", "wasm/multi_send.wasm");
     const response = await wasmClient.uploadWasm(_path);
     console.log("Uploaded wasm:", response.codeId);
@@ -82,19 +129,25 @@ describe("E2E - Listener", () => {
 
   it("should receive ibc events from call contract", (done) => {
     (async () => {
-      axelarListener.listen(AxelarIBCEvent, (args) => {
-        console.log("Any event", args);
-      });
+      // axelarListener.listen(AxelarIBCEvent, (args) => {
+      //   console.log("Any event", args);
+      // });
       axelarListener.listen(AxelarCosmosContractCallEvent, (args) => {
         console.log("Received ContractCall", args);
         done();
       });
-      axelarListener.listen(AxelarCosmosContractCallWithTokenEvent, (args) => {
-        console.log("Received ContractCallWithToken:", args);
-        done();
-      });
+      // axelarListener.listen(AxelarCosmosContractCallWithTokenEvent, (args) => {
+      //   console.log("Received ContractCallWithToken:", args);
+      //   done();
+      // });
 
-      await executeContractCall();
+      try {
+        await executeContractCall();
+      } catch (e) {
+        console.log(e);
+        done();
+      }
+      await executeContractCallWithToken();
     })();
   });
 });

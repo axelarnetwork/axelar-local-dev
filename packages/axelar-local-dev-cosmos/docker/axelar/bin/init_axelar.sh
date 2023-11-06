@@ -30,6 +30,7 @@ sed -i '/\[api\]/,/\[/ s/swagger = false/swagger = true/' "$HOME"/config/app.tom
 # staking/governance token is hardcoded in config, change this
 sed -i "s/\"stake\"/\"$DENOM\"/" "$HOME"/config/genesis.json && echo "Updated staking token to $DENOM"
 
+
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory
 # and storing the mnemonic in the mnemonic.txt file
 mnemonic=$(axelard keys add owner ${DEFAULT_KEYS_FLAGS} 2>&1 | tail -n 1)

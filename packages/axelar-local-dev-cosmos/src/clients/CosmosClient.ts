@@ -38,6 +38,7 @@ export class CosmosClient {
       denom: config.denom || defaultDenom,
       lcdUrl: config.lcdUrl || `http://localhost/${chain}-lcd`,
       rpcUrl: config.rpcUrl || `http://localhost/${chain}-rpc`,
+      wsUrl: config.wsUrl || `ws://localhost/${chain}-rpc/websocket`,
     };
 
     const walletOptions = {
@@ -96,6 +97,7 @@ export class CosmosClient {
       denom: this.chainInfo.denom,
       lcdUrl: this.chainInfo.lcdUrl,
       rpcUrl: this.chainInfo.rpcUrl,
+      wsUrl: this.chainInfo.wsUrl,
     };
   }
 
