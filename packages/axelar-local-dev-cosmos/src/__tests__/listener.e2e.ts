@@ -21,12 +21,7 @@ describe("E2E - Listener", () => {
   async function executeContractCall() {
     // Upload the wasm contract
     const _path = path.resolve(__dirname, "../..", "wasm/send_receive.wasm");
-    const response = await wasmClient.uploadWasm(_path).catch((err) => {
-      console.log(err);
-
-      throw err;
-    });
-    console.log(response);
+    const response = await wasmClient.uploadWasm(_path);
     console.log("Uploaded wasm:", response.codeId);
 
     // Instantiate the contract
@@ -127,12 +122,17 @@ describe("E2E - Listener", () => {
     axelarListener = new AxelarListener(axelarClient.getChainInfo());
   });
 
+  afterAll((done) => {
+    axelarListener.stop();
+    done();
+  });
+
   it("should receive ibc events from call contract", (done) => {
     (async () => {
       // axelarListener.listen(AxelarIBCEvent, (args) => {
       //   console.log("Any event", args);
       // });
-      axelarListener.listen(AxelarCosmosContractCallEvent, (args) => {
+      axelarListener.listen(AxelarCosmosContractCallEvent, async (args) => {
         console.log("Received ContractCall", args);
         done();
       });
@@ -147,7 +147,6 @@ describe("E2E - Listener", () => {
         console.log(e);
         done();
       }
-      await executeContractCallWithToken();
     })();
   });
 });

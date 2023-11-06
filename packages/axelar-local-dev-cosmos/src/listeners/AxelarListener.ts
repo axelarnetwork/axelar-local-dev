@@ -27,6 +27,15 @@ export class AxelarListener {
     return ws;
   }
 
+  public stop() {
+    this.wsMap.forEach((ws) => {
+      ws.removeEventListener("message", () => {});
+      ws.removeEventListener("close", () => {});
+      ws.removeEventListener("open", () => {});
+      ws.close();
+    });
+  }
+
   public listen<T>(event: AxelarListenerEvent<T>, callback: (args: T) => void) {
     const ws = this.initWs(event.topicId);
     ws.addEventListener("open", () => {
@@ -41,12 +50,12 @@ export class AxelarListener {
       console.info(`[AxelarListener] Listening to "${event.type}" event`);
     });
 
-    ws.addEventListener("close", () => {
-      console.debug(
-        `[AxelarListener] ws connection for ${event.type} is closed. Reconnect Ws...`
-      );
-      ws.reconnect();
-    });
+    // ws.addEventListener("close", () => {
+    //   console.debug(
+    //     `[AxelarListener] ws connection for ${event.type} is closed. Reconnect Ws...`
+    //   );
+    //   ws.reconnect();
+    // });
 
     ws.addEventListener("message", (ev: MessageEvent<any>) => {
       // convert buffer to json
