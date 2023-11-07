@@ -6,7 +6,9 @@ import path from "path";
 import { logger } from "@axelar-network/axelar-local-dev";
 
 export async function stopAll() {
-  return Promise.all([stop("axelar"), stop("wasm"), stopTraefik()]);
+  return Promise.all([stop("axelar"), stop("wasm"), stopTraefik()]).catch((e) =>
+    console.log(e)
+  );
 }
 
 export async function stopTraefik() {

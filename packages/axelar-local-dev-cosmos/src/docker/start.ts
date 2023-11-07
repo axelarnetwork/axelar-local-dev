@@ -12,19 +12,30 @@ import {
   waitForRpc,
 } from "./utils";
 import path from "path";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { IBCRelayerRunner } from "../ibc";
 
 export async function startAll(
   customAxelarConfig?: ChainConfig,
-  customWasmConfig?: ChainConfig
+  customWasmConfig?: ChainConfig,
+  relayerMnemonic?: string
 ) {
   const configAxelar = customAxelarConfig || axelarConfig;
   const configWasm = customWasmConfig || wasmConfig;
 
-  return Promise.all([
+  const chains = await Promise.all([
     start("axelar", configAxelar),
     start("wasm", configWasm),
     startTraefik(),
-  ]);
+  ]).catch((e) => console.log(e));
+
+  // const ibcMnemonic =
+  // relayerMnemonic || (await DirectSecp256k1HdWallet.generate(12)).mnemonic;
+
+  // const ibcRelayer = await IBCRelayerRunner.create(ibcMnemonic);
+  // await ibcRelayer.setup();
+
+  return chains;
 }
 
 export async function startTraefik() {
@@ -74,7 +85,7 @@ export async function start(
   console.log(`LCD server for ${chain} is started at ${lcdUrl}`);
   console.log(`WS server for ${chain} is started at ${wsUrl}`);
 
-  return {
+  const response = {
     prefix: chain,
     owner: await getOwnerAccount(chain),
     denom: getChainDenom(chain),
@@ -82,6 +93,12 @@ export async function start(
     rpcUrl,
     wsUrl,
   };
+
+  if (chain === "axelar") {
+    options?.onCompleted(response);
+  }
+
+  return response;
 }
 
 async function throwIfDockerNotRunning(dockerPath: string) {

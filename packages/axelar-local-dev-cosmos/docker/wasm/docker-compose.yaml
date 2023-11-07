@@ -33,5 +33,5 @@ services:
       - "traefik.http.routers.wasm-lcd.middlewares=wasm-lcd"
 networks:
   default:
-    external:
-      name: traefik_default
+    name: traefik_default
+    external: true

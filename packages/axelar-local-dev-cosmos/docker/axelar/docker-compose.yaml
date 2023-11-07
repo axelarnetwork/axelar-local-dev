@@ -33,5 +33,5 @@ services:
       - "traefik.http.routers.axelar-lcd.middlewares=axelar-lcd"
 networks:
   default:
-    external:
-      name: traefik_default
+    name: traefik_default
+    external: true

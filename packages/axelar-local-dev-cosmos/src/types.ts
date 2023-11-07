@@ -15,6 +15,7 @@ export interface CosmosChainInfo {
 
 export type ChainConfig = {
   dockerPath: string;
+  onCompleted: (chainInfo: CosmosChainInfo) => void;
 };
 
 export type CosmosChain = "axelar" | "wasm";

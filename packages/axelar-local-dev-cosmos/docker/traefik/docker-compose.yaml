@@ -19,5 +19,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 networks:
   default:
-    external:
-      name: traefik_default
+    name: traefik_default

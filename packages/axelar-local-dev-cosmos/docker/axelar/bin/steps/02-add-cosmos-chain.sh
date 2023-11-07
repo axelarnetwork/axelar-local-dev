@@ -13,14 +13,11 @@ then
   exit 1
 fi
 
-echo "Adding cosmos-based chain ${CHAIN}"
-echo "Channel ID: ${CHANNEL_ID}"
-
-docker exec -it axelar /bin/sh -c "axelard tx axelarnet add-cosmos-based-chain ${CHAIN} ${CHAIN} transfer/${CHANNEL_ID} --generate-only \
+docker exec axelar /bin/sh -c "axelard tx axelarnet add-cosmos-based-chain ${CHAIN} ${CHAIN} transfer/${CHANNEL_ID} --generate-only \
 --chain-id ${CHAIN_ID} --from \$(axelard keys show governance -a ${DEFAULT_KEYS_FLAGS}) --home ${HOME} \
 --output json --gas 500000 &> ${HOME}/unsigned_msg.json"
 echo "Added cosmos-based chain"
-docker exec -t axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
+docker exec axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
 
 sh "$DIR/../libs/broadcast-unsigned-multi-tx.sh"
 

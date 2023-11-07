@@ -3,6 +3,7 @@ import {
   CosmosClient,
   IBCRelayerClient,
   AxelarListener,
+  IBCRelayerRunner,
   AxelarCosmosContractCallEvent,
   AxelarCosmosContractCallWithTokenEvent,
   AxelarIBCEvent,
@@ -107,18 +108,8 @@ describe("E2E - Listener", () => {
   }
 
   beforeAll(async () => {
-    wasmClient = await CosmosClient.create("wasm");
-    axelarClient = await CosmosClient.create("axelar");
-
-    // Initialize the connection and channel
-    relayerClient = await IBCRelayerClient.create(testMnemonic);
-    await relayerClient.fundRelayerAccountsIfNeeded();
-    await relayerClient.initConnection(true);
-    const { dest, src } = await relayerClient.createChannel("B", true);
-    srcChannelId = src.channelId;
-    destChannelId = dest.channelId;
-    console.log("Created IBC Channel:", src, dest);
-
+    const ibcRelayer = await IBCRelayerRunner.create(testMnemonic);
+    await ibcRelayer.run();
     axelarListener = new AxelarListener(axelarClient.getChainInfo());
   });
 

@@ -29,4 +29,14 @@ describe("docker", () => {
 
     expect(parseInt(balance)).toBeGreaterThan(1);
   });
+
+  // it should have governance account
+
+  // it should have registered evm chain
+
+  // it should have registered wasm chain
+
+  // it should have registered broadcaster
+
+  // it should have channel id between axelar <-> wasm
 });

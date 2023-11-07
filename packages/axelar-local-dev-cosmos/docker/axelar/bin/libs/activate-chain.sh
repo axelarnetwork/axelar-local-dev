@@ -12,11 +12,9 @@ then
   exit 1
 fi
 
-echo "Activating chain ${CHAIN}"
-docker exec -it axelar /bin/sh -c "axelard tx nexus activate-chain ${CHAIN} --generate-only \
+docker exec axelar /bin/sh -c "axelard tx nexus activate-chain ${CHAIN} --generate-only \
 --chain-id ${CHAIN_ID} --from \$(axelard keys show governance -a ${DEFAULT_KEYS_FLAGS}) --home ${HOME} \
 --output json --gas 500000 &> ${HOME}/unsigned_msg.json"
-echo "Activated chain ${CHAIN}"
-docker exec -t axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
+docker exec axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
 
 sh "$DIR/broadcast-unsigned-multi-tx.sh"
