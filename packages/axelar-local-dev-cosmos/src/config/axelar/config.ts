@@ -33,4 +33,3 @@ export const defaultAxelarConfig: ChainConfig = {
     }
   },
 };
-export const getOwnerAccount = () => {};
