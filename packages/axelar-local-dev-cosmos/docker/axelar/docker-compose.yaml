@@ -3,7 +3,7 @@ services:
   axelar:
     image: nptytn/local-axelard:v0.0.1
     container_name: axelar
-    env_file: ".env"
+    # env_file: ".env"
     command: "/root/private/bin/init_axelar.sh"
     volumes:
       - "./bin:/root/private/bin"

@@ -1,2 +1,2 @@
 export * from './IBCRelayerService'
-export * from './CosmosRelayerService'
+export * from './AxelarRelayerService'

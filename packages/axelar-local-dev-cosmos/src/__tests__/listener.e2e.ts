@@ -3,7 +3,7 @@ import {
   CosmosClient,
   IBCRelayerClient,
   AxelarListener,
-  IBCRelayerRunner,
+  IBCRelayerService,
   AxelarCosmosContractCallEvent,
   AxelarCosmosContractCallWithTokenEvent,
   AxelarIBCEvent,
@@ -108,13 +108,15 @@ describe("E2E - Listener", () => {
   }
 
   beforeAll(async () => {
-    const ibcRelayer = await IBCRelayerRunner.create(testMnemonic);
+    const ibcRelayer = await IBCRelayerService.create(testMnemonic);
     await ibcRelayer.run();
-    axelarListener = new AxelarListener(axelarClient.getChainInfo());
+    axelarListener = new AxelarListener(ibcRelayer.axelarClient.chainInfo);
+    wasmClient = ibcRelayer.wasmClient;
+    axelarClient = ibcRelayer.axelarClient;
   });
 
   afterAll((done) => {
-    axelarListener.stop();
+    axelarListener?.stop();
     done();
   });
 

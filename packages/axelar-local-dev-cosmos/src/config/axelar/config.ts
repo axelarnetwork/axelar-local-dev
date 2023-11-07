@@ -2,7 +2,7 @@ import path from "path";
 import { exec } from "child_process";
 import { ChainConfig } from "../../types";
 
-const dockerPath = path.join(__dirname, "../../docker/axelar");
+const dockerPath = path.join(__dirname, "../../../docker/axelar");
 
 const runChainSetup = () => {
   return new Promise((resolve, reject) => {

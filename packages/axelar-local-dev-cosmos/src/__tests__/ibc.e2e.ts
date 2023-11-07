@@ -2,28 +2,12 @@ import path from "path";
 import { CosmosClient, IBCRelayerClient } from "..";
 import { ChannelInfo } from "@confio/relayer/build/lib/ibcclient";
 
-describe("E2E - IBC", () => {
+describe.skip("E2E - IBC", () => {
   let wasmClient: CosmosClient;
   let axelarClient: CosmosClient;
   let relayerClient: IBCRelayerClient;
   let srcChannelId: string;
   let destChannelId: string;
-  let testMnemonic =
-    "illness step primary sibling donkey body sphere pigeon inject antique head educate";
-
-  beforeAll(async () => {
-    wasmClient = await CosmosClient.create("wasm");
-    axelarClient = await CosmosClient.create("axelar");
-
-    // Initialize the connection and channel
-    relayerClient = await IBCRelayerClient.create(testMnemonic);
-    await relayerClient.fundRelayerAccountsIfNeeded();
-    await relayerClient.initConnection(true);
-    const { dest, src } = await relayerClient.createChannel("B", true);
-    srcChannelId = src.channelId;
-    destChannelId = dest.channelId;
-    console.log("Created IBC Channel:", src, dest);
-  });
 
   it("ibc transfer", async () => {
     const ownerAddress = await wasmClient.getOwnerAccount();

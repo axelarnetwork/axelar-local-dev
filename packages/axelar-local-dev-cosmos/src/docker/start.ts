@@ -2,7 +2,6 @@ import { IDockerComposeOptions, v2 as compose } from "docker-compose";
 import { defaultAxelarConfig, defaultWasmConfig } from "../config";
 import { CosmosChainInfo, ChainConfig, CosmosChain } from "../types";
 import {
-  createContainerEnv,
   getChainConfig,
   getChainDenom,
   getOwnerAccount,
@@ -11,11 +10,11 @@ import {
   waitForRpc,
 } from "./utils";
 import path from "path";
+import { IBCRelayerService } from "../services";
 
 export async function startAll(
   customAxelarConfig?: ChainConfig,
-  customWasmConfig?: ChainConfig,
-  relayerMnemonic?: string
+  customWasmConfig?: ChainConfig
 ) {
   const configAxelar = customAxelarConfig || defaultAxelarConfig;
   const configWasm = customWasmConfig || defaultWasmConfig;
@@ -26,11 +25,8 @@ export async function startAll(
     startTraefik(),
   ]).catch((e) => console.log(e));
 
-  // const ibcMnemonic =
-  // relayerMnemonic || (await DirectSecp256k1HdWallet.generate(12)).mnemonic;
-
-  // const ibcRelayer = await IBCRelayerRunner.create(ibcMnemonic);
-  // await ibcRelayer.setup();
+  const ibcRelayer = await IBCRelayerService.create();
+  await ibcRelayer.setup();
 
   return chains;
 }
@@ -55,7 +51,7 @@ export async function start(
   const { dockerPath } = options;
 
   // Create .env file for docker-compose
-  createContainerEnv(chain, options);
+  // createContainerEnv(chain, options);
 
   // Check if docker is running
   await throwIfDockerNotRunning(dockerPath);

@@ -25,12 +25,12 @@ export function convertCosmosAddress(address: string, prefix: string) {
   return bech32.encode(prefix, decoded.words);
 }
 
-export function createContainerEnv(chain: CosmosChain, options: ChainConfig) {
-  const { dockerPath } = options;
-  const envPath = path.join(dockerPath, ".env");
-  const env = `CHAIN_ID=${chain}\nMONIKER=${chain}`;
-  fs.writeFileSync(envPath, env);
-}
+// export function createContainerEnv(chain: CosmosChain, options: ChainConfig) {
+//   const { dockerPath } = options;
+//   const envPath = path.join(dockerPath, ".env");
+//   const env = `CHAIN_ID=${chain}\nMONIKER=${chain}`;
+//   fs.writeFileSync(envPath, env);
+// }
 
 export async function getOwnerAccount(chain: CosmosChain) {
   // Get mnemonic and address from the container

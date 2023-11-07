@@ -1,6 +1,6 @@
 import { CosmosClient, IBCRelayerClient, AxelarListener } from ".."; // Replace with your actual import path
 
-export class IBCRelayer {
+export class IBCRelayerService {
   wasmClient: CosmosClient;
   axelarClient: CosmosClient;
   relayerClient: IBCRelayerClient;
@@ -22,7 +22,7 @@ export class IBCRelayer {
     const axelarClient = await CosmosClient.create("axelar");
     const relayerClient = await IBCRelayerClient.create(testMnemonic);
 
-    return new IBCRelayer(wasmClient, axelarClient, relayerClient);
+    return new IBCRelayerService(wasmClient, axelarClient, relayerClient);
   }
 
   public async relay() {
