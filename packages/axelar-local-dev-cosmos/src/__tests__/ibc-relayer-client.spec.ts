@@ -1,4 +1,4 @@
-import { IBCRelayerClient } from "../clients/IBCRelayerClient";
+import { IBCRelayerClient } from "../clients";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 describe("IBCRelayerClient", () => {

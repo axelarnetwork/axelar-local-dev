@@ -1,12 +1,17 @@
+import path from "path";
 import { IDockerComposeOptions, v2 as compose } from "docker-compose";
 import { CosmosChain } from "../types";
-import path from "path";
 import { logger } from "@axelar-network/axelar-local-dev";
+import { retry } from "../utils";
 
 export async function stopAll() {
-  return Promise.all([stop("axelar"), stop("wasm"), stopTraefik()]).catch((e) =>
-    console.log(e)
-  );
+  retry(async () => {
+    console.log("Stopping all containers...");
+    await stop("axelar");
+    await stop("wasm");
+    await stopTraefik();
+    console.log("All containers stopped");
+  });
 }
 
 export async function stopTraefik() {

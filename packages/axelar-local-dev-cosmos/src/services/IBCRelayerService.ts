@@ -4,8 +4,8 @@ export class IBCRelayerService {
   wasmClient: CosmosClient;
   axelarClient: CosmosClient;
   relayerClient: IBCRelayerClient;
-  public srcChannelId?: string;
-  public destChannelId?: string;
+  srcChannelId?: string;
+  destChannelId?: string;
 
   private constructor(
     wasmClient: CosmosClient,
@@ -35,13 +35,19 @@ export class IBCRelayerService {
 
     // Initialize the connection and channel
     await this.relayerClient.initConnection(true);
+    console.log("Initialized IBC Connection");
     const { dest, src } = await this.relayerClient.createChannel("B", true);
     this.srcChannelId = src.channelId;
     this.destChannelId = dest.channelId;
-    console.log("Created IBC Channel:", src, dest);
+    // console.log("Created IBC Channel:", src, dest);
   }
 
   public async run(interval: number = 10000) {
+    if (!this.relayerClient.link) {
+      await this.setup();
+    }
+
+    // Use new account to relay packets
     return setInterval(async () => {
       await this.relay();
     }, interval);

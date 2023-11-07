@@ -7,5 +7,5 @@ module.exports = {
   transformIgnorePatterns: ['<rootDir>/node_modules/'],
   globalSetup: './jest/jest.global-setup.ts',
   globalTeardown: './jest/jest.global-teardown.ts',
-  testTimeout: 300000,
+  testTimeout: 120000,
 };

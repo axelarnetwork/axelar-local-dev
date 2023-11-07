@@ -11,6 +11,7 @@ import {
 } from "./utils";
 import path from "path";
 import { IBCRelayerService } from "../services";
+import { retry } from "../utils";
 
 export async function startAll(
   customAxelarConfig?: ChainConfig,
@@ -26,7 +27,13 @@ export async function startAll(
   ]).catch((e) => console.log(e));
 
   const ibcRelayer = await IBCRelayerService.create();
-  await ibcRelayer.setup();
+
+  // Add retry
+  console.log("Setting up IBC relayer");
+  retry(async () => {
+    await ibcRelayer.setup();
+  });
+  console.log("IBC relayer setup completed!");
 
   return chains;
 }
@@ -87,7 +94,7 @@ export async function start(
     wsUrl,
   };
 
-  options?.onCompleted(response);
+  await options?.onCompleted(response);
 
   return response;
 }

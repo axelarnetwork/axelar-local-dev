@@ -190,4 +190,29 @@ export class CosmosClient {
   async getOwnerAccount() {
     return this.owner.getAccounts().then((accounts) => accounts[0].address);
   }
+
+  async generateRandomSigningClient(
+    chain: CosmosChain = "wasm",
+    amount: string = "10000000"
+  ) {
+    const wallet = await DirectSecp256k1HdWallet.generate(12, {
+      prefix: chain,
+    });
+    const account = await wallet.getAccounts().then((accounts) => accounts[0]);
+
+    await this.fundWallet(account.address, amount);
+
+    const clientOptions = {
+      gasPrice: GasPrice.fromString(`1${this.chainInfo.denom}`),
+    };
+    const client = await SigningCosmWasmClient.connectWithSigner(
+      this.chainInfo.rpcUrl,
+      wallet,
+      clientOptions
+    );
+    return {
+      client,
+      address: account.address,
+    };
+  }
 }

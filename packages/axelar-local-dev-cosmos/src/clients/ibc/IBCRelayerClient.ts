@@ -70,7 +70,7 @@ export class IBCRelayerClient {
   getCurrentConnection() {
     try {
       const json = fs.readFileSync(
-        path.join(__dirname, "../../info/connection.json"),
+        path.join(__dirname, "../../../info/connection.json"),
         "utf8"
       );
       return JSON.parse(json);
@@ -82,7 +82,7 @@ export class IBCRelayerClient {
   getCurrentChannel(): ChannelPair | undefined {
     try {
       const json = fs.readFileSync(
-        path.join(__dirname, "../../info/channel.json"),
+        path.join(__dirname, "../../../info/channel.json"),
         "utf8"
       );
       return JSON.parse(json);
@@ -108,7 +108,7 @@ export class IBCRelayerClient {
     const connection = await this.getCurrentConnection();
 
     if (connection) {
-      console.log("Using existing connection", connection);
+      // console.log("Using existing connection", connection);
       this.link = await Link.createWithExistingConnections(
         axelarIBCClient,
         wasmIBCClient,
@@ -116,14 +116,14 @@ export class IBCRelayerClient {
         connection.wasm.connectionId
       );
     } else {
-      console.log("Creating new connection");
+      // console.log("Creating new connection");
       this.link = await Link.createWithNewConnections(
         axelarIBCClient,
         wasmIBCClient
       );
 
       if (saveToFile) {
-        const infoPath = path.join(__dirname, "../../info");
+        const infoPath = path.join(__dirname, "../../../info");
         await fs.promises
           .mkdir(infoPath, { recursive: true })
           .catch(console.error);
@@ -161,7 +161,7 @@ export class IBCRelayerClient {
 
     const channel = await this.getCurrentChannel();
     if (channel) {
-      console.log("Using existing channel", channel);
+      // console.log("Using existing channel", channel);
       return channel;
     }
 
@@ -174,7 +174,7 @@ export class IBCRelayerClient {
     );
 
     if (saveToFile) {
-      const infoPath = path.join(__dirname, "../../info");
+      const infoPath = path.join(__dirname, "../../../info");
       await fs.promises
         .mkdir(infoPath, { recursive: true })
         .catch(console.error);
