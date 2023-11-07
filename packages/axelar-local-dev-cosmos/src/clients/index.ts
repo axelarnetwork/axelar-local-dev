@@ -1,2 +1,2 @@
-export * from "./CosmosClient";
-export * from "./IBCRelayerClient";
+export * from "./cosmos";
+export * from "./ibc";

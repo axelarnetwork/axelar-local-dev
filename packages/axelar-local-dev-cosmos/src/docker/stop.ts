@@ -1,6 +1,4 @@
 import { IDockerComposeOptions, v2 as compose } from "docker-compose";
-import { defaultConfig as axelarConfig } from "../axelar";
-import { defaultConfig as wasmConfig } from "../wasm";
 import { CosmosChain } from "../types";
 import path from "path";
 import { logger } from "@axelar-network/axelar-local-dev";

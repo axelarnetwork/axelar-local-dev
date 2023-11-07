@@ -1,7 +1,7 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { CosmosChainInfo } from "../types";
 
-export class CosmosRelayerClient {
+export class CosmosRelayer {
   private wsMap: Map<string, ReconnectingWebSocket>;
 
   private constructor(config: Omit<CosmosChainInfo, "owner">) {

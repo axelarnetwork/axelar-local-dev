@@ -1,12 +1,11 @@
 import fs from "fs";
+import Long from "long";
+import crypto from "crypto";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice, StargateClient } from "@cosmjs/stargate";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { sha256 } from "@cosmjs/crypto";
-import crypto from "crypto";
-import { CosmosChain, CosmosChainInfo } from "../types";
-import { getOwnerAccount } from "../docker";
-import Long from "long";
+import { CosmosChain, CosmosChainInfo } from "../../types";
+import { getOwnerAccount } from "../../docker";
 
 export class CosmosClient {
   public chainInfo: Required<CosmosChainInfo>;
@@ -149,6 +148,7 @@ export class CosmosClient {
 
     const gasPrice = GasPrice.fromString(`1${this.chainInfo.denom}`);
 
+    // TODO: Handle when owner account doesn't have enough balance
     return this.client
       .sendTokens(
         ownerAddress,

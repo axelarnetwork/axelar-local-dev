@@ -2,8 +2,7 @@ import fs from "fs";
 import path from "path";
 import fetch from "node-fetch";
 import { ps } from "docker-compose";
-import { defaultConfig as axelarConfig } from "../axelar";
-import { defaultConfig as wasmConfig } from "../wasm";
+import { defaultAxelarConfig, defaultWasmConfig } from "../config";
 import { ChainConfig, CosmosChain } from "../types";
 import { logger } from "@axelar-network/axelar-local-dev";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
@@ -18,7 +17,7 @@ export function getChainPrefix(chain: CosmosChain) {
 }
 
 export function getChainConfig(chain: CosmosChain) {
-  return chain === "axelar" ? axelarConfig : wasmConfig;
+  return chain === "axelar" ? defaultAxelarConfig : defaultWasmConfig;
 }
 
 export function convertCosmosAddress(address: string, prefix: string) {

@@ -1,6 +1,5 @@
 import { IDockerComposeOptions, v2 as compose } from "docker-compose";
-import { defaultConfig as axelarConfig } from "../axelar";
-import { defaultConfig as wasmConfig } from "../wasm";
+import { defaultAxelarConfig, defaultWasmConfig } from "../config";
 import { CosmosChainInfo, ChainConfig, CosmosChain } from "../types";
 import {
   createContainerEnv,
@@ -12,16 +11,14 @@ import {
   waitForRpc,
 } from "./utils";
 import path from "path";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { IBCRelayerRunner } from "../ibc";
 
 export async function startAll(
   customAxelarConfig?: ChainConfig,
   customWasmConfig?: ChainConfig,
   relayerMnemonic?: string
 ) {
-  const configAxelar = customAxelarConfig || axelarConfig;
-  const configWasm = customWasmConfig || wasmConfig;
+  const configAxelar = customAxelarConfig || defaultAxelarConfig;
+  const configWasm = customWasmConfig || defaultWasmConfig;
 
   const chains = await Promise.all([
     start("axelar", configAxelar),
@@ -94,9 +91,7 @@ export async function start(
     wsUrl,
   };
 
-  if (chain === "axelar") {
-    options?.onCompleted(response);
-  }
+  options?.onCompleted(response);
 
   return response;
 }

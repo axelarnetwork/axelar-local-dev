@@ -1,13 +1,12 @@
+import path from "path";
+import fs from "fs";
 import { Order } from "cosmjs-types/ibc/core/channel/v1/channel";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { IbcClient, Link, RelayedHeights } from "@confio/relayer";
 import { ChannelPair } from "@confio/relayer/build/lib/link";
-import { CosmosClient } from "../clients/CosmosClient";
-import { ethers } from "ethers";
-import fs from "fs";
-import path from "path";
-import { convertCosmosAddress } from "../docker";
-import { CosmosChain } from "../types";
+import { CosmosClient } from "../cosmos/CosmosClient";
+import { convertCosmosAddress } from "../../docker";
+import { RelayerAccountManager } from ".";
 
 export class IBCRelayerClient {
   axelarClient: CosmosClient;
@@ -15,7 +14,7 @@ export class IBCRelayerClient {
   link?: Link;
   public channel?: ChannelPair;
   public lastRelayedHeight: RelayedHeights = {};
-  public relayerAccount: DirectSecp256k1HdWallet;
+  public relayerAccountManager: RelayerAccountManager;
 
   private constructor(
     axelarClient: CosmosClient,
@@ -24,14 +23,17 @@ export class IBCRelayerClient {
   ) {
     this.axelarClient = axelarClient;
     this.wasmClient = wasmClient;
-    this.relayerAccount = relayer;
+    this.relayerAccountManager = new RelayerAccountManager(
+      this.axelarClient,
+      this.wasmClient,
+      relayer
+    );
   }
 
   static async create(mnemonic?: string) {
     const axelarClient = await CosmosClient.create("axelar");
     const wasmClient = await CosmosClient.create("wasm");
-
-    const relayer = await IBCRelayerClient.createRelayerAccount(
+    const relayer = await RelayerAccountManager.createRelayerAccount(
       "wasm",
       mnemonic
     );
@@ -39,94 +41,11 @@ export class IBCRelayerClient {
     return new IBCRelayerClient(axelarClient, wasmClient, relayer);
   }
 
-  private static async createRelayerAccount(
-    prefix: CosmosChain,
-    mnemonic?: string
-  ) {
-    if (mnemonic) {
-      return await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix,
-      });
-    }
-
-    return await DirectSecp256k1HdWallet.generate(12, {
-      prefix,
-    });
-  }
-
-  async fundRelayerAccountsIfNeeded(minAmount = "10000000") {
-    const fund = await this.getRelayerFund();
-
-    if (
-      ethers.BigNumber.from(fund.wasm.balance).lt(minAmount) ||
-      ethers.BigNumber.from(fund.axelar.balance).lt(minAmount)
-    ) {
-      await this.fundRelayer(minAmount);
-    }
-  }
-
-  async fundRelayer(amount = "1000000000") {
-    const relayerAddress = await this.getRelayerAddress("wasm");
-    const relayerAxelarAddress = await this.getRelayerAddress("axelar");
-
-    // Fund the relayer address
-    await this.wasmClient.fundWallet(relayerAddress, amount);
-    console.log(
-      `Funded ${amount}${
-        this.wasmClient.getChainInfo().denom
-      } to relayer address on wasm:`,
-      relayerAddress
-    );
-    await this.axelarClient.fundWallet(relayerAxelarAddress, amount);
-    console.log(
-      `Funded ${amount}${
-        this.axelarClient.getChainInfo().denom
-      } to relayer address on axelar:`,
-      relayerAxelarAddress
-    );
-  }
-
-  async getRelayerFund() {
-    // check the fund
-    const relayerAddress = await this.getRelayerAddress("wasm");
-    const relayerAxelarAddress = await this.getRelayerAddress("axelar");
-
-    const balance = await this.wasmClient.getBalance(relayerAddress);
-    console.log("Relayer wasm balance", balance);
-    const axelarBalance = await this.axelarClient.getBalance(
-      relayerAxelarAddress
-    );
-    console.log("Relayer axelar balance", relayerAxelarAddress, axelarBalance);
-
-    return {
-      wasm: {
-        address: relayerAddress,
-        balance,
-      },
-      axelar: {
-        address: relayerAxelarAddress,
-        balance: axelarBalance,
-      },
-    };
-  }
-
-  async getRelayerAddress(prefix: CosmosChain = "wasm") {
-    const relayerAddress = await this.relayerAccount
-      .getAccounts()
-      .then((accounts) => accounts[0].address);
-
-    if (prefix === "wasm") {
-      return relayerAddress;
-    }
-
-    return convertCosmosAddress(relayerAddress, prefix);
-  }
-
   async getIBCClient(client: CosmosClient) {
-    const relayerAddress = await this.getRelayerAddress();
+    const relayerAddress = await this.relayerAccountManager.getRelayerAddress();
     const prefix = client.getChainInfo().prefix;
     const relayer = await DirectSecp256k1HdWallet.fromMnemonic(
-      this.relayerAccount.mnemonic,
+      this.relayerAccountManager.relayerAccount.mnemonic,
       {
         prefix,
       }
@@ -142,6 +61,10 @@ export class IBCRelayerClient {
         estimatedIndexerTime: 60,
       }
     );
+  }
+
+  getRelayerAccountManager() {
+    return this.relayerAccountManager;
   }
 
   getCurrentConnection() {

@@ -1,7 +1,7 @@
 import path from "path";
-import { ChainConfig } from "../types";
+import { ChainConfig } from "../../types";
 
-export const defaultConfig: ChainConfig = {
+export const defaultWasmConfig: ChainConfig = {
   dockerPath: path.join(__dirname, "../../docker/wasm"),
   onCompleted: () => {},
 };

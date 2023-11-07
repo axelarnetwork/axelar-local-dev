@@ -1,6 +1,6 @@
-import { CosmosClient, IBCRelayerClient, AxelarListener } from "../"; // Replace with your actual import path
+import { CosmosClient, IBCRelayerClient, AxelarListener } from ".."; // Replace with your actual import path
 
-export class IBCRelayerRunner {
+export class IBCRelayer {
   wasmClient: CosmosClient;
   axelarClient: CosmosClient;
   relayerClient: IBCRelayerClient;
@@ -17,12 +17,12 @@ export class IBCRelayerRunner {
     this.relayerClient = relayerClient;
   }
 
-  static async create(testMnemonic: string) {
+  static async create(testMnemonic?: string) {
     const wasmClient = await CosmosClient.create("wasm");
     const axelarClient = await CosmosClient.create("axelar");
     const relayerClient = await IBCRelayerClient.create(testMnemonic);
 
-    return new IBCRelayerRunner(wasmClient, axelarClient, relayerClient);
+    return new IBCRelayer(wasmClient, axelarClient, relayerClient);
   }
 
   public async relay() {
@@ -30,8 +30,10 @@ export class IBCRelayerRunner {
   }
 
   public async setup() {
+    const relayerAccountManager = this.relayerClient.getRelayerAccountManager();
+    await relayerAccountManager.fundRelayerAccountsIfNeeded();
+
     // Initialize the connection and channel
-    await this.relayerClient.fundRelayerAccountsIfNeeded();
     await this.relayerClient.initConnection(true);
     const { dest, src } = await this.relayerClient.createChannel("B", true);
     this.srcChannelId = src.channelId;

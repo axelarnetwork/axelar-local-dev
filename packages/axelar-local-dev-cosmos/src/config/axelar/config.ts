@@ -1,6 +1,6 @@
 import path from "path";
 import { exec } from "child_process";
-import { ChainConfig } from "../types";
+import { ChainConfig } from "../../types";
 
 const dockerPath = path.join(__dirname, "../../docker/axelar");
 
@@ -19,7 +19,7 @@ const runChainSetup = () => {
   });
 };
 
-export const defaultConfig: ChainConfig = {
+export const defaultAxelarConfig: ChainConfig = {
   dockerPath,
   onCompleted: async () => {
     // wait for 10 sec
