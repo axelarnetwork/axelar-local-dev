@@ -20,4 +20,3 @@ docker exec axelar /bin/sh -c "cat ${HOME}/unsigned_msg.json"
 
 sh "$DIR/../libs/broadcast-unsigned-multi-tx.sh"
 
-sh "$DIR/../libs/activate-chain.sh" ${CHAIN}

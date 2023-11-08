@@ -90,6 +90,9 @@ axelard gentx owner 70000000${DENOM} \
 axelard collect-gentxs \
 --home ${HOME} > /dev/null 2>&1 && echo "Collected genesis transactions"
 
+# Read the content of the local file and append it to the file inside the Docker container
+cat /root/private/bin/libs/evm-rpc.toml >> "$HOME"/config/config.toml
+
 # Starting the blockchain node with the specified home directory
 axelard start --home ${HOME} \
 --minimum-gas-prices 0${DENOM} \
