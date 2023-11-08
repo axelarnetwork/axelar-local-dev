@@ -50,12 +50,12 @@ export class AxelarListener {
       console.info(`[AxelarListener] Listening to "${event.type}" event`);
     });
 
-    // ws.addEventListener("close", () => {
-    //   console.debug(
-    //     `[AxelarListener] ws connection for ${event.type} is closed. Reconnect Ws...`
-    //   );
-    //   ws.reconnect();
-    // });
+    ws.addEventListener("close", () => {
+      console.debug(
+        `[AxelarListener] ws connection for ${event.type} is closed. Reconnect Ws...`
+      );
+      ws.reconnect();
+    });
 
     ws.addEventListener("message", (ev: MessageEvent<any>) => {
       // convert buffer to json
