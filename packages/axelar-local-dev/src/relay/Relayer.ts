@@ -43,6 +43,7 @@ export abstract class Relayer {
         this.commands['aptos'] = [];
         this.commands['sui'] = [];
         this.commands['near'] = [];
+        this.commands['wasm'] = [];
         // Update all events at the source chains
         await this.updateEvents();
 

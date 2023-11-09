@@ -4,6 +4,7 @@ import {
   hexlify,
   hexStripZeros,
   arrayify,
+  toUtf8String,
 } from "ethers/lib/utils";
 
 export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
@@ -38,8 +39,12 @@ export function decodeVersionedPayload(versionedPayload: Uint8Array) {
 
   // The rest of the payload is the JSON object
   const jsonStringBytes = versionedPayload.slice(4);
+
+  console.log(versionNumber, jsonStringBytes);
+
   // Convert the UTF-8 bytes to a string
-  const jsonString = new TextDecoder().decode(jsonStringBytes);
+  const jsonString = toUtf8String(jsonStringBytes);
+
   // Parse the JSON string to an object
   const jsonObject = JSON.parse(jsonString);
 

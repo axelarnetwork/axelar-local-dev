@@ -1,0 +1,98 @@
+import {
+  Network,
+  createNetwork,
+  deployContract,
+  evmRelayer,
+  relay,
+  RelayerType,
+} from "@axelar-network/axelar-local-dev";
+import { Contract, ethers } from "ethers";
+import path from "path";
+import {
+  AxelarListener,
+  AxelarRelayerService,
+  CosmosClient,
+  IBCRelayerService,
+  defaultAxelarChainInfo,
+  encodeVersionedPayload,
+  start,
+} from "../..";
+import SendReceive from "../../../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json";
+
+describe.only("Relayer", () => {
+  let cosmosRelayer: AxelarRelayerService;
+  let evmNetwork: Network;
+  let wasmClient: CosmosClient;
+  let srcChannelId: string;
+  let axelarListener: AxelarListener;
+  let ibcRelayer: IBCRelayerService;
+  let wasmContractAddress: string;
+  let evmContract: Contract;
+  let testMnemonic =
+    "illness step primary sibling donkey body sphere pigeon inject antique head educate";
+
+  beforeAll(async () => {
+    ibcRelayer = await IBCRelayerService.create(testMnemonic);
+    await ibcRelayer.setup();
+    axelarListener = new AxelarListener(defaultAxelarChainInfo);
+    wasmClient = ibcRelayer.wasmClient;
+    srcChannelId = ibcRelayer.srcChannelId || "channel-0";
+
+    cosmosRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
+    evmNetwork = await createNetwork();
+
+    // Contract Deployment
+    const evmSendReceive = await deployContract(
+      evmNetwork.userWallets[0],
+      SendReceive,
+      [evmNetwork.gateway.address, evmNetwork.gasService.address]
+    );
+
+    console.log("Deploy EVM Contract", evmSendReceive.address);
+
+    // Upload the wasm contract
+    const _path = path.resolve(__dirname, "../../..", "wasm/send_receive.wasm");
+    const response = await wasmClient.uploadWasm(_path);
+    console.log("Uploaded wasm:", response.codeId);
+
+    // Instantiate the contract
+    const { client, address: senderAddress } =
+      await wasmClient.generateRandomSigningClient();
+
+    const { contractAddress } = await client.instantiate(
+      senderAddress,
+      response.codeId,
+      {
+        channel: srcChannelId,
+      },
+      "amazing random contract",
+      "auto"
+    );
+
+    console.log("Deployed Wasm contract:", contractAddress);
+    wasmContractAddress = contractAddress;
+    evmContract = evmSendReceive;
+  });
+
+  it("should be able to relay from wasm to evm chain", async () => {
+    evmRelayer.setRelayer(RelayerType.Wasm, cosmosRelayer);
+
+    await evmContract.send("wasm", wasmContractAddress, "hello from ethereum", {
+      value: ethers.utils.parseEther("0.001"),
+    });
+
+    await relay({
+      evm: evmRelayer,
+      wasm: cosmosRelayer,
+    });
+
+    // const msg = await wasmClient.client.queryContractSmart(
+    //   wasmContractAddress,
+    //   {
+    //     get_stored_message: {},
+    //   }
+    // );
+
+    // console.log("Message:", msg);
+  });
+});

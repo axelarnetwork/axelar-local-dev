@@ -67,6 +67,8 @@ export class Command {
         );
 
         relayData.callContract[commandId].execution = tx.transactionHash;
+
+        console.log(tx)
         return tx;
       },
       "wasm"

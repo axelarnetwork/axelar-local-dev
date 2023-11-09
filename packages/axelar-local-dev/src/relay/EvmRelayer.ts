@@ -413,8 +413,9 @@ export class EvmRelayer extends Relayer {
                 payloadHash: args.payloadHash,
                 transactionHash,
                 sourceEventIndex,
-            };
-            this.relayData.callContract[commandId] = contractCallArgs;
+              };
+              this.relayData.callContract[commandId] = contractCallArgs;
+              console.log(args)
             let command;
             if (args.destinationChain.toLowerCase() === 'aptos') {
                 command = this.otherRelayers?.aptos?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
@@ -422,6 +423,8 @@ export class EvmRelayer extends Relayer {
                 command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() === 'sui') {
                 command = this.otherRelayers?.sui?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() === 'wasm') {
+                command = this.otherRelayers?.wasm?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else {
                 command = this.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             }

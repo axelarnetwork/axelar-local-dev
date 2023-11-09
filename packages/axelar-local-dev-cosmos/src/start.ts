@@ -1,7 +1,8 @@
 import { AxelarRelayerService } from "./services";
-import { defaultAxelarConfig } from './'
+import { defaultAxelarChainInfo, defaultAxelarConfig } from "./";
 
-export const startRelayer = () => [
-  const relayer = await AxelarRelayerService.create(defaultAxelarConfig);
+export let cosmosRelayer: AxelarRelayerService;
 
-]
+export const createRelayer = async () => {
+  cosmosRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
+};

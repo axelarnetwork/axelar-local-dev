@@ -5,7 +5,7 @@ import {
   IBCRelayerService,
   AxelarCosmosContractCallEvent,
   AxelarIBCEvent,
-} from "..";
+} from "../..";
 
 describe("E2E - Listener", () => {
   let wasmClient: CosmosClient;
@@ -30,7 +30,7 @@ describe("E2E - Listener", () => {
 
   async function executeContractCall() {
     // Upload the wasm contract
-    const _path = path.resolve(__dirname, "../..", "wasm/send_receive.wasm");
+    const _path = path.resolve(__dirname, "../../..", "wasm/send_receive.wasm");
     const response = await wasmClient.uploadWasm(_path);
     console.log("Uploaded wasm:", response.codeId);
 

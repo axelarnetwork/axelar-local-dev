@@ -1,5 +1,5 @@
 import path from "path";
-import { CosmosClient, IBCRelayerClient } from "..";
+import { CosmosClient, IBCRelayerClient } from "../..";
 import { ChannelInfo } from "@confio/relayer/build/lib/ibcclient";
 
 describe.skip("E2E - IBC", () => {
