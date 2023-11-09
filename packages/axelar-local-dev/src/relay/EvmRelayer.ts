@@ -19,6 +19,7 @@ interface EvmRelayerOptions {
     nearRelayer?: Relayer;
     aptosRelayer?: Relayer;
     suiRelayer?: Relayer;
+    wasmRelayer?: Relayer;
 }
 
 export class EvmRelayer extends Relayer {
@@ -29,6 +30,7 @@ export class EvmRelayer extends Relayer {
         this.otherRelayers.near = options.nearRelayer;
         this.otherRelayers.aptos = options.aptosRelayer;
         this.otherRelayers.sui = options.suiRelayer;
+        this.otherRelayers.wasm = options.wasmRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {

@@ -7,6 +7,7 @@ export enum RelayerType {
     Evm = 'evm',
     Aptos = 'aptos',
     Near = 'near',
+    Wasm = 'wasm',
 }
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 

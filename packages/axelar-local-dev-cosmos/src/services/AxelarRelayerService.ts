@@ -4,41 +4,84 @@ import {
   CallContractArgs,
   CallContractWithTokenArgs,
   Command,
+  getSignedExecuteInput,
+  logger,
+  Network,
+  networks,
   RelayCommand,
   RelayData,
   Relayer,
   RelayerType,
 } from "@axelar-network/axelar-local-dev";
+import { Command as WasmCommand } from "../Command";
+import { ethers } from "ethers";
+import { arrayify, defaultAbiCoder } from "ethers/lib/utils";
+import { CosmosClient } from "../clients";
 
 export class AxelarRelayerService extends Relayer {
   private axelarListener: AxelarListener;
-  private wasmConfig: Omit<CosmosChainInfo, "owner">;
+  private wasmClient: CosmosClient;
+  private listened = false;
 
   private constructor(
-    axelarConfig: Omit<CosmosChainInfo, "owner">,
-    wasmConfig: Omit<CosmosChainInfo, "owner">
+    axelarListener: AxelarListener,
+    wasmClient: CosmosClient
   ) {
     super();
-    this.axelarListener = new AxelarListener(axelarConfig);
-    this.wasmConfig = wasmConfig;
+    this.axelarListener = axelarListener;
+    this.wasmClient = wasmClient;
   }
 
-  async listenCallContract() {
-    this.axelarListener.listen(AxelarCosmosContractCallEvent, async (args) => {
-      console.log("Received ContractCall", args);
-      if (this.validateContractCall(args)) {
-      }
-    });
+  static async create(axelarConfig: Omit<CosmosChainInfo, "owner">) {
+    const axelarListener = new AxelarListener(axelarConfig);
+    const wasmClient = await CosmosClient.create("wasm");
+    return new AxelarRelayerService(axelarListener, wasmClient);
   }
 
   updateEvents(): Promise<void> {
-    // no-op since the events will be updated in listenCallContract function.
+    if (this.listened) return Promise.resolve();
+
+    this.axelarListener.listen(AxelarCosmosContractCallEvent, async (args) => {
+      console.log("Received ContractCall", args);
+      this.updateCallContractEvents(args);
+    });
+
+    this.listened = true;
     return Promise.resolve();
   }
 
-  execute(commands: RelayCommand): Promise<void> {
-    throw new Error("Method not implemented.");
-    // use the cosmos client here execute method on wasm contract...
+  async execute(commands: RelayCommand): Promise<void> {
+    await this.executeWasmToEvm(commands);
+    await this.executeEvmToWasm(commands);
+  }
+
+  private async executeEvmToWasm(command: RelayCommand) {
+    const toExecute = command["wasm"];
+    if (toExecute?.length === 0) return;
+
+    await this.executeWasmExecutable(toExecute);
+  }
+
+  private async executeWasmExecutable(commands: Command[]) {
+    for (const command of commands) {
+      if (command.post == null) continue;
+
+      try {
+        await command.post(this.wasmClient);
+      } catch (e) {
+        logger.log(e);
+      }
+    }
+  }
+
+  private async executeWasmToEvm(command: RelayCommand) {
+    for (const to of networks) {
+      const commands = command[to.name];
+      if (commands.length == 0) continue;
+
+      const execution = await this.executeEvmGateway(to, commands);
+      await this.executeEvmExecutable(to, commands, execution);
+    }
   }
 
   createCallContractCommand(
@@ -46,7 +89,11 @@ export class AxelarRelayerService extends Relayer {
     relayData: RelayData,
     contractCallArgs: CallContractArgs
   ): Command {
-    throw new Error("Method not implemented.");
+    return WasmCommand.createWasmContractCallCommand(
+      commandId,
+      relayData,
+      contractCallArgs
+    );
   }
 
   createCallContractWithTokenCommand(
@@ -67,25 +114,85 @@ export class AxelarRelayerService extends Relayer {
     // this.relayer = relayer;
   }
 
-  // Response
-  // {
-  //   hash: '45AD7FC99B99AC51A0D5D380B0ECB7920612E5A11BCFD64EF23602DAFF0C2042',
-  //   srcChannel: 'channel-0',
-  //   destChannel: 'channel-0',
-  //   args: {
-  //     messageId: '0x45ad7fc99b99ac51a0d5d380b0ecb7920612e5a11bcfd64ef23602daff0c2042-0',
-  //     sender: 'wasm14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s0phg4d',
-  //     sourceChain: 'wasm',
-  //     destinationChain: 'Ethereum',
-  //     contractAddress: '0x49324C7f83568861AB1b66E547BB1B66431f1070',
-  //     payload: '0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000000002b7761736d313264737676706a3566386336756a357475366e33707230646c3264366175617a6d6c33373935000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000548656c6c6f000000000000000000000000000000000000000000000000000000',
-  //     payloadHash: '0xfd9cfe7a2a8e928ed3fe02131dcc235ea5717d77a9410b9b80dff5fa13e0598c'
-  //   }
-  // }
-  private validateContractCall(args: IBCEvent<ContractCallSubmitted>) {
-    // TODO: Check if the contract call is valid
-    // 1: Check if the destination chain is valid
-    // 2: How do we craft the data for the approve gateway at the destination chain
-    // 3:
+  private async updateCallContractEvents(
+    event: IBCEvent<ContractCallSubmitted>
+  ) {
+    const { args } = event;
+    const contractCallArgs: CallContractArgs = {
+      from: "wasm",
+      to: args.destinationChain,
+      sourceAddress: args.sender,
+      destinationContractAddress: args.contractAddress,
+      payload: args.payload,
+      payloadHash: args.payloadHash,
+      transactionHash: event.hash,
+      sourceEventIndex: 0,
+    };
+    const commandId = this.getWasmLogID(event);
+    this.relayData.callContract[commandId] = contractCallArgs;
+    const command = Command.createEVMContractCallCommand(
+      commandId,
+      this.relayData,
+      contractCallArgs
+    );
+    this.commands[contractCallArgs.to].push(command);
+  }
+
+  private getWasmLogID(event: IBCEvent<ContractCallSubmitted>) {
+    return ethers.utils.id(
+      `${event.args.messageId}-${event.args.sourceChain}-${event.args.destinationChain}`
+    );
+  }
+
+  private async executeEvmGateway(
+    to: Network,
+    commands: Command[]
+  ): Promise<void> {
+    const data = arrayify(
+      defaultAbiCoder.encode(
+        ["uint256", "bytes32[]", "string[]", "bytes[]"],
+        [
+          to.chainId,
+          commands.map((com) => com.commandId),
+          commands.map((com) => com.name),
+          commands.map((com) => com.encodedData),
+        ]
+      )
+    );
+    const signedData = await getSignedExecuteInput(data, to.operatorWallet);
+
+    return to.gateway
+      .connect(to.ownerWallet)
+      .execute(signedData, { gasLimit: BigInt(8e6) })
+      .then((tx: any) => tx.wait());
+  }
+
+  private async executeEvmExecutable(
+    to: Network,
+    commands: Command[],
+    execution: any
+  ): Promise<void> {
+    for (const command of commands) {
+      if (command.post == null) continue;
+
+      const isExecuted = !execution.events.find((event: any) => {
+        return event.event === "Executed" && event.args[0] == command.commandId;
+      });
+
+      if (isExecuted) {
+        continue;
+      }
+
+      try {
+        const blockLimit = Number(
+          (await to.provider.getBlock("latest")).gasLimit
+        );
+        await command.post({
+          gasLimit: blockLimit,
+        });
+      } catch (e) {
+        logger.log(e);
+      }
+    }
   }
 }
