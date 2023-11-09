@@ -415,7 +415,6 @@ export class EvmRelayer extends Relayer {
                 sourceEventIndex,
               };
               this.relayData.callContract[commandId] = contractCallArgs;
-              console.log(args)
             let command;
             if (args.destinationChain.toLowerCase() === 'aptos') {
                 command = this.otherRelayers?.aptos?.createCallContractCommand(commandId, this.relayData, contractCallArgs);

@@ -50,17 +50,25 @@ export class Command {
       ],
       [],
       async (wasmClient: CosmosClient) => {
-        const bytesPayload = arrayify(args.payload);
-        const [version, payload] = decodeVersionedPayload(bytesPayload);
-        console.log(version, payload);
+        const { argNames, argValues, methodName } = decodeVersionedPayload(
+          args.payload
+        );
 
         const { client } = wasmClient;
         const senderAddress = await wasmClient.getOwnerAccount();
 
+        const msg = {
+          [methodName]: {
+            [argNames[0]]: argValues[0],
+            [argNames[1]]: argValues[1],
+            [argNames[2]]: argValues[2],
+          },
+        };
+
         const tx = await client.execute(
           senderAddress,
           args.destinationContractAddress,
-          payload,
+          msg,
           "auto",
           "call_contract: evm_to_wasm",
           [{ amount: "100000", denom: wasmClient.chainInfo.denom }]
@@ -68,7 +76,6 @@ export class Command {
 
         relayData.callContract[commandId].execution = tx.transactionHash;
 
-        console.log(tx)
         return tx;
       },
       "wasm"

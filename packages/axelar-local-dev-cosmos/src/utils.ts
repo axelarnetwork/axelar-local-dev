@@ -2,9 +2,8 @@ import {
   hexZeroPad,
   toUtf8Bytes,
   hexlify,
-  hexStripZeros,
+  defaultAbiCoder,
   arrayify,
-  toUtf8String,
 } from "ethers/lib/utils";
 
 export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
@@ -24,29 +23,41 @@ export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
 
 export function encodeVersionedPayload(
   version: number,
-  payload: any
+  payload: string
 ): Uint8Array {
   const versionHex = hexZeroPad(hexlify(version), 4);
   const payloadString = hexlify(toUtf8Bytes(JSON.stringify(payload)));
   return arrayify(versionHex.concat(payloadString));
 }
 
-export function decodeVersionedPayload(versionedPayload: Uint8Array) {
-  // The version number is in the first 4 bytes
-  const versionBytes = versionedPayload.slice(0, 4);
-  // Convert the version bytes to a number
-  const versionNumber = parseInt(hexStripZeros(versionBytes), 16);
+export function decodeVersionedPayload(versionedPayload: string) {
+  // Skip the first 4 bytes (version number) and create an array of types that match the encoded data structure
+  const encodedData = "0x" + versionedPayload.substring(10); // substring(10) to skip '0x' and the 4 version bytes
 
-  // The rest of the payload is the JSON object
-  const jsonStringBytes = versionedPayload.slice(4);
+  // Define the structure of the encoded data based on how it was encoded in Solidity
+  const types = [
+    "string", // Method name
+    "string[]", // Argument name array
+    "string[]", // ABI type array
+    "bytes",
+  ];
+  // Decode the payload
+  const decoded = defaultAbiCoder.decode(types, encodedData);
 
-  console.log(versionNumber, jsonStringBytes);
+  // Extract the method name and argument values
+  const [methodName, argNames, argTypes, argValues] = decoded;
 
-  // Convert the UTF-8 bytes to a string
-  const jsonString = toUtf8String(jsonStringBytes);
+  const [sourceChain, sourceAddress, executeMsgPayload] =
+    defaultAbiCoder.decode(["string", "string", "bytes"], argValues);
 
-  // Parse the JSON string to an object
-  const jsonObject = JSON.parse(jsonString);
-
-  return [versionNumber, jsonObject];
+  return {
+    methodName,
+    argNames,
+    argTypes,
+    argValues: [
+      sourceChain,
+      sourceAddress,
+      Buffer.from(executeMsgPayload.slice(2), "hex").toString("base64"),
+    ],
+  };
 }

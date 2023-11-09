@@ -56,11 +56,8 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private async executeEvmToWasm(command: RelayCommand) {
-    console.log(command)
     const toExecute = command["wasm"];
     if (!toExecute || toExecute?.length === 0) return;
-
-    console.log(toExecute);
 
     await this.executeWasmExecutable(toExecute);
   }

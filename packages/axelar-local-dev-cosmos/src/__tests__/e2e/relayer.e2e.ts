@@ -45,7 +45,7 @@ describe.only("Relayer", () => {
     const evmSendReceive = await deployContract(
       evmNetwork.userWallets[0],
       SendReceive,
-      [evmNetwork.gateway.address, evmNetwork.gasService.address]
+      [evmNetwork.gateway.address, evmNetwork.gasService.address, "ethereum"]
     );
 
     console.log("Deploy EVM Contract", evmSendReceive.address);
@@ -76,8 +76,9 @@ describe.only("Relayer", () => {
 
   it("should be able to relay from wasm to evm chain", async () => {
     evmRelayer.setRelayer(RelayerType.Wasm, cosmosRelayer);
+    const message = "hello from ethereum";
 
-    await evmContract.send("wasm", wasmContractAddress, "hello from ethereum", {
+    await evmContract.send("wasm", wasmContractAddress, message, {
       value: ethers.utils.parseEther("0.001"),
     });
 
@@ -86,13 +87,14 @@ describe.only("Relayer", () => {
       wasm: cosmosRelayer,
     });
 
-    // const msg = await wasmClient.client.queryContractSmart(
-    //   wasmContractAddress,
-    //   {
-    //     get_stored_message: {},
-    //   }
-    // );
+    const response = await wasmClient.client.queryContractSmart(
+      wasmContractAddress,
+      {
+        get_stored_message: {},
+      }
+    );
 
-    // console.log("Message:", msg);
+    expect(response.sender.toLowerCase()).toBe(evmNetwork.userWallets[0].address.toLowerCase());
+    expect(response.message).toBe(message);
   });
 });
