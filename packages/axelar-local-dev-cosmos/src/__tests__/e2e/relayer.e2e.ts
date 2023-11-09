@@ -74,7 +74,7 @@ describe.only("Relayer", () => {
     evmContract = evmSendReceive;
   });
 
-  it("should be able to relay from wasm to evm chain", async () => {
+  it("should be able to relay from evm to wasm chain", async () => {
     evmRelayer.setRelayer(RelayerType.Wasm, cosmosRelayer);
     const message = "hello from ethereum";
 
@@ -96,5 +96,9 @@ describe.only("Relayer", () => {
 
     expect(response.sender.toLowerCase()).toBe(evmNetwork.userWallets[0].address.toLowerCase());
     expect(response.message).toBe(message);
+  });
+
+  it("should be able to relay from wasm to evm chain", async () => {
+
   });
 });
