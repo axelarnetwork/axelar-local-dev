@@ -77,7 +77,6 @@ export class AxelarRelayerService extends Relayer {
   private async executeWasmToEvm(command: RelayCommand) {
     for (const to of networks) {
       const commands = command[to.name];
-      console.log(commands);
       if (commands.length == 0) continue;
 
       const execution = await this.executeEvmGateway(to, commands);

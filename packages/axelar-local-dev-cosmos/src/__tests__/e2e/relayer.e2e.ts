@@ -116,7 +116,7 @@ describe.only("Relayer", () => {
       {
         send_message_evm: {
           destination_chain: "ethereum",
-          destination_address: "0x49324C7f83568861AB1b66E547BB1B66431f1070",
+          destination_address: evmContract.address,
           message,
         },
       },
@@ -135,5 +135,7 @@ describe.only("Relayer", () => {
     const response = await evmContract.storedMessage();
 
     console.log(response);
+    expect(response.sender).toBe(senderAddress);
+    expect(response.message).toBe(message);
   });
 });
