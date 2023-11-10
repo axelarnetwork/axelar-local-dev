@@ -105,7 +105,7 @@ describe.only("Relayer", () => {
       wasm: cosmosRelayer,
     });
 
-    const senderAddress = await wasmClient.getOwnerAccount();
+    const senderAddress = wasmClient.getOwnerAccount();
 
     const message = "hello from cosmos";
     const execution = await wasmClient.client.execute(
