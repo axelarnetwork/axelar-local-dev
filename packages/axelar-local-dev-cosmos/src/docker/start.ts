@@ -12,6 +12,7 @@ import {
 import path from "path";
 import { IBCRelayerService } from "../services";
 import { retry } from "../utils";
+import { Path } from "../path";
 
 export async function startAll(
   customAxelarConfig?: ChainConfig,
@@ -39,7 +40,7 @@ export async function startAll(
 }
 
 export async function startTraefik() {
-  const traefikPath = path.join(__dirname, "../../docker/traefik");
+  const traefikPath = path.join(Path.base, "docker/traefik");
   const config: IDockerComposeOptions = {
     cwd: traefikPath,
   };

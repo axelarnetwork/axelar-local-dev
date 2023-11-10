@@ -8,6 +8,7 @@ import { CosmosClient } from "../cosmos/CosmosClient";
 import { convertCosmosAddress } from "../../docker";
 import { RelayerAccountManager } from ".";
 import { readFileSync } from "../../utils";
+import { Path } from "../../path";
 
 export class IBCRelayerClient {
   axelarClient: CosmosClient;
@@ -71,7 +72,7 @@ export class IBCRelayerClient {
   getCurrentConnection() {
     try {
       const json = readFileSync(
-        path.join(__dirname, "../../../info/connection.json"),
+        path.join(Path.info, "connection.json"),
         "utf8"
       );
       return JSON.parse(json);
@@ -82,8 +83,8 @@ export class IBCRelayerClient {
 
   getCurrentChannel(): ChannelPair | undefined {
     try {
-      const json = fs.readFileSync(
-        path.join(__dirname, "../../../info/channel.json"),
+      const json = readFileSync(
+        path.join(Path.info, "connection.json"),
         "utf8"
       );
       return JSON.parse(json);
@@ -124,11 +125,10 @@ export class IBCRelayerClient {
       );
 
       if (saveToFile) {
-        const infoPath = path.join(__dirname, "../../../info");
         await fs.promises
-          .mkdir(infoPath, { recursive: true })
+          .mkdir(Path.info, { recursive: true })
           .catch(console.error);
-        const channelPath = path.join(infoPath, "connection.json");
+        const channelPath = path.join(Path.info, "connection.json");
         fs.writeFileSync(
           channelPath,
           JSON.stringify({
@@ -175,11 +175,10 @@ export class IBCRelayerClient {
     );
 
     if (saveToFile) {
-      const infoPath = path.join(__dirname, "../../../info");
       await fs.promises
-        .mkdir(infoPath, { recursive: true })
+        .mkdir(Path.info, { recursive: true })
         .catch(console.error);
-      const channelPath = path.join(infoPath, "channel.json");
+      const channelPath = path.join(Path.info, "channel.json");
       fs.writeFileSync(channelPath, JSON.stringify(this.channel));
     }
 

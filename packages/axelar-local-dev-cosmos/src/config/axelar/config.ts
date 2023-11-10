@@ -1,8 +1,8 @@
-import path from "path";
 import { exec } from "child_process";
 import { ChainConfig, CosmosChainInfo } from "../../types";
+import { Path } from "../../path";
 
-const dockerPath = path.join(__dirname, "../../../docker/axelar");
+const dockerPath = Path.docker("axelar");
 
 const runChainSetup = () => {
   return new Promise((resolve, reject) => {

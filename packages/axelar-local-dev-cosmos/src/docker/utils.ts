@@ -8,6 +8,7 @@ import { logger } from "@axelar-network/axelar-local-dev";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import bech32 from "bech32";
 import { readFileSync } from "../utils";
+import { Path } from "../path";
 
 export function getChainDenom(chain: CosmosChain) {
   return chain === "axelar" ? "uaxl" : "uwasm";
@@ -35,9 +36,7 @@ export function convertCosmosAddress(address: string, prefix: string) {
 
 export async function getOwnerAccount(chain: CosmosChain) {
   // Get mnemonic and address from the container
-  const homedir = `./.${chain}`;
-  const dockerPath = path.join(__dirname, `../../docker/${chain}`);
-  const homePath = path.join(dockerPath, homedir);
+  const homePath = path.join(Path.docker(chain), `.${chain}`);
   const mnemonic = readFileSync(`${homePath}/mnemonic.txt`, "utf8");
   const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: getChainPrefix(chain),

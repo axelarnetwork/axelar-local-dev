@@ -3,6 +3,7 @@ import { IDockerComposeOptions, v2 as compose } from "docker-compose";
 import { CosmosChain } from "../types";
 import { logger } from "@axelar-network/axelar-local-dev";
 import { retry } from "../utils";
+import { Path } from "../path";
 
 export async function stopAll() {
   retry(async () => {
@@ -15,7 +16,7 @@ export async function stopAll() {
 }
 
 export async function stopTraefik() {
-  const traefikPath = path.join(__dirname, "../../docker/traefik");
+  const traefikPath = path.join(Path.base, "docker/traefik");
   const config: IDockerComposeOptions = {
     cwd: traefikPath,
   };
@@ -32,10 +33,9 @@ export async function stopTraefik() {
  */
 export async function stop(chain: CosmosChain) {
   logger.log(`Stopping ${chain} container...`);
-  const dockerPath = path.join(__dirname, `../../docker/${chain}`);
   try {
     await compose.down({
-      cwd: dockerPath,
+      cwd: Path.docker(chain),
     });
   } catch (e: any) {
     logger.log(e);

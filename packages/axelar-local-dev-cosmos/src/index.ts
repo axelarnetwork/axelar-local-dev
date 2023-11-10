@@ -5,3 +5,4 @@ export * from "./docker";
 export * from "./config";
 export * from "./utils";
 export * from "./start";
+export * from './path';

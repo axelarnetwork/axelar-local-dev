@@ -1,8 +1,9 @@
 import path from "path";
 import { ChainConfig, CosmosChainInfo } from "../../types";
+import { Path } from "../../path";
 
 export const defaultWasmConfig: ChainConfig = {
-  dockerPath: path.join(__dirname, "../../../docker/wasm"),
+  dockerPath: Path.docker("wasm"),
   onCompleted: () => {},
 };
 
