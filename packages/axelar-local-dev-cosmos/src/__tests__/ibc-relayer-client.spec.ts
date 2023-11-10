@@ -23,13 +23,15 @@ describe("IBCRelayerClient", () => {
     );
     const result = await IBCRelayerClient.create(mockMnemonic);
 
-    expect(result.relayerAccount.mnemonic).toEqual(mockMnemonic);
+    expect(result.relayerAccountManager.relayerAccount.mnemonic).toEqual(
+      mockMnemonic
+    );
   });
 
   it("should generate a new wallet if no mnemonic is provided", async () => {
     const result = await IBCRelayerClient.create();
 
     expect(result).toBeDefined();
-    expect(result.relayerAccount.mnemonic).toBeDefined();
+    expect(result.relayerAccountManager.relayerAccount.mnemonic).toBeDefined();
   });
 });
