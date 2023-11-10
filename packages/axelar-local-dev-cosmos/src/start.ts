@@ -1,5 +1,5 @@
 import { AxelarRelayerService } from "./services";
-import { defaultAxelarChainInfo, defaultAxelarConfig } from "./";
+import { defaultAxelarChainInfo } from "./";
 
 export let cosmosRelayer: AxelarRelayerService;
 

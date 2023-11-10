@@ -109,8 +109,6 @@ export class AxelarRelayerService extends Relayer {
     if (type !== "evm") {
       return console.log(`${type} not supported yet`);
     }
-
-    // this.relayer = relayer;
   }
 
   private async updateCallContractEvents(

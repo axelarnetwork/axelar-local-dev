@@ -1,7 +1,7 @@
 "use strict";
 
 import { ethers } from "ethers";
-const { defaultAbiCoder, arrayify } = ethers.utils;
+const { defaultAbiCoder } = ethers.utils;
 import { CallContractArgs, RelayData } from "@axelar-network/axelar-local-dev";
 import { decodeVersionedPayload } from "./utils";
 import { CosmosClient } from "./clients";
@@ -55,7 +55,7 @@ export class Command {
         );
 
         const { client } = wasmClient;
-        const senderAddress = await wasmClient.getOwnerAccount();
+        const senderAddress = wasmClient.getOwnerAccount();
 
         const msg = {
           [methodName]: {
