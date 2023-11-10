@@ -7,6 +7,7 @@ import { ChannelPair } from "@confio/relayer/build/lib/link";
 import { CosmosClient } from "../cosmos/CosmosClient";
 import { convertCosmosAddress } from "../../docker";
 import { RelayerAccountManager } from ".";
+import { readFileSync } from "../../utils";
 
 export class IBCRelayerClient {
   axelarClient: CosmosClient;
@@ -69,7 +70,7 @@ export class IBCRelayerClient {
 
   getCurrentConnection() {
     try {
-      const json = fs.readFileSync(
+      const json = readFileSync(
         path.join(__dirname, "../../../info/connection.json"),
         "utf8"
       );

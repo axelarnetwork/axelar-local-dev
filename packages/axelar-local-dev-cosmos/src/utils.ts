@@ -5,6 +5,8 @@ import {
   defaultAbiCoder,
   arrayify,
 } from "ethers/lib/utils";
+import crypto from "crypto";
+import fs from "fs";
 
 export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
   let attempts = 0;
@@ -19,6 +21,18 @@ export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
       await new Promise((resolve) => setTimeout(resolve, interval));
     }
   }
+}
+
+export function getIBCDenom(channel: string, denom: string, port = "transfer") {
+  const path = `${port}/${channel}/${denom}`;
+  // Compute the SHA-256 hash of the path
+  const hash = crypto.createHash("sha256").update(path).digest();
+
+  // Convert the hash to a hexadecimal representation
+  const hexHash = hash.toString("hex").toUpperCase();
+
+  // Construct the denom by prefixing the hex hash with 'ibc/'
+  return `ibc/${hexHash}`;
 }
 
 export function encodeVersionedPayload(
@@ -60,4 +74,21 @@ export function decodeVersionedPayload(versionedPayload: string) {
       Buffer.from(executeMsgPayload.slice(2), "hex").toString("base64"),
     ],
   };
+}
+
+// Overload signatures
+export function readFileSync(path: string): Buffer;
+export function readFileSync(path: string, flag: BufferEncoding): string;
+export function readFileSync(path: string, flag?: BufferEncoding) {
+  try {
+    return fs.readFileSync(path, flag);
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      // Custom handling for file not found
+      throw new Error(`File not found at path: ${path}`);
+    } else {
+      // Re-throw the original error if it's not a 'file not found' error
+      throw error;
+    }
+  }
 }
