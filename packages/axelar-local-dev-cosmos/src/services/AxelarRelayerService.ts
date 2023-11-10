@@ -42,7 +42,6 @@ export class AxelarRelayerService extends Relayer {
     if (this.listened) return;
 
     this.axelarListener.listen(AxelarCosmosContractCallEvent, async (args) => {
-      console.log("Received ContractCall", args);
       this.updateCallContractEvents(args);
       this.execute(this.commands);
     });
@@ -80,13 +79,7 @@ export class AxelarRelayerService extends Relayer {
       if (commands.length == 0) continue;
 
       const execution = await this.executeEvmGateway(to, commands);
-      console.log("Executed Gateway:", execution);
-      const executeExecutable = await this.executeEvmExecutable(
-        to,
-        commands,
-        execution
-      );
-      console.log("Executed Executable:", executeExecutable);
+      await this.executeEvmExecutable(to, commands, execution);
     }
   }
 
@@ -136,8 +129,6 @@ export class AxelarRelayerService extends Relayer {
     };
     const commandId = this.getWasmLogID(event);
     this.relayData.callContract[commandId] = contractCallArgs;
-    console.log(contractCallArgs);
-    console.log(this.commands);
     const command = Command.createEVMContractCallCommand(
       commandId,
       this.relayData,

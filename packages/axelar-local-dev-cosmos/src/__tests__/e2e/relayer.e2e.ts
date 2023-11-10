@@ -14,8 +14,6 @@ import {
   CosmosClient,
   IBCRelayerService,
   defaultAxelarChainInfo,
-  encodeVersionedPayload,
-  start,
 } from "../..";
 import SendReceive from "../../../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json";
 
@@ -102,7 +100,7 @@ describe.only("Relayer", () => {
     expect(response.message).toBe(message);
   });
 
-  it.only("should be able to relay from wasm to evm chain", async () => {
+  it("should be able to relay from wasm to evm chain", async () => {
     await relay({
       wasm: cosmosRelayer,
     });
@@ -124,7 +122,6 @@ describe.only("Relayer", () => {
       "test",
       [{ amount: "100000", denom: "uwasm" }]
     );
-    console.log("Executed:", execution.transactionHash);
 
     await ibcRelayer.relay();
 
@@ -134,7 +131,6 @@ describe.only("Relayer", () => {
 
     const response = await evmContract.storedMessage();
 
-    console.log(response);
     expect(response.sender).toBe(senderAddress);
     expect(response.message).toBe(message);
   });
