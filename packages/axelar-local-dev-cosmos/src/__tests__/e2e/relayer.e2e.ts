@@ -120,7 +120,7 @@ describe.only("Relayer", () => {
       wasmContractAddress,
       {
         send_message_evm: {
-          destination_chain: "Ethereum",
+          destination_chain: "ethereum",
           destination_address: evmContract.address,
           message,
         },

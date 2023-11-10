@@ -171,7 +171,7 @@ export class IBCRelayerClient {
       await fs.promises
         .mkdir(Path.info, { recursive: true })
         .catch(console.error);
-      const channelPath = path.join(Path.info, "channel.json");
+      const channelPath = path.join(Path.info, "channels.json");
       fs.writeFileSync(channelPath, JSON.stringify(this.channel));
     }
 
