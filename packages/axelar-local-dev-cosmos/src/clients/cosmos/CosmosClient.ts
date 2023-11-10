@@ -3,8 +3,7 @@ import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { CosmosChain, CosmosChainInfo } from "../../types";
-import { getOwnerAccount } from "../../docker";
-import { readFileSync } from "../../utils";
+import { exportOwnerAccountFromContainer, readFileSync } from "../../utils";
 
 export class CosmosClient {
   public chainInfo: Required<CosmosChainInfo>;
@@ -39,7 +38,7 @@ export class CosmosClient {
       prefix: chain,
     };
 
-    const { address, mnemonic } = await getOwnerAccount(chain);
+    const { address, mnemonic } = await exportOwnerAccountFromContainer(chain);
 
     const owner = await DirectSecp256k1HdWallet.fromMnemonic(
       mnemonic,

@@ -2,7 +2,7 @@ import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { ethers } from "ethers";
 import { CosmosChain } from "../../types";
 import { CosmosClient } from "../cosmos/CosmosClient";
-import { convertCosmosAddress } from "../../docker";
+import { convertCosmosAddress } from "../..";
 
 /**
  * RelayerAccountManager manages the relayer account on wasm and axelar.

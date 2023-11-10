@@ -39,9 +39,14 @@ export class AxelarRelayerService extends Relayer {
   }
 
   async updateEvents() {
+    // no-op
+  }
+
+  async listenForEvents() {
     if (this.listened) return;
 
     this.axelarListener.listen(AxelarCosmosContractCallEvent, async (args) => {
+      console.log("AxelarCosmosContractCallEvent", args);
       this.updateCallContractEvents(args);
       this.execute(this.commands);
     });
@@ -79,7 +84,9 @@ export class AxelarRelayerService extends Relayer {
       if (commands.length == 0) continue;
 
       const execution = await this.executeEvmGateway(to, commands);
-      await this.executeEvmExecutable(to, commands, execution);
+      console.log(execution);
+      const test = await this.executeEvmExecutable(to, commands, execution);
+      console.log(test);
     }
   }
 

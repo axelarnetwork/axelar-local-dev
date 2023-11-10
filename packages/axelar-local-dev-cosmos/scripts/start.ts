@@ -1,3 +1,3 @@
-import { startAll } from "../src/docker";
+import { startAll } from "../src/setup";
 
 startAll();

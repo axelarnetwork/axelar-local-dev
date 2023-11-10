@@ -13,6 +13,7 @@ import {
   AxelarRelayerService,
   CosmosClient,
   IBCRelayerService,
+  TestIBCEvent,
   defaultAxelarChainInfo,
 } from "../..";
 import SendReceive from "../../../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json";
@@ -100,12 +101,18 @@ describe.only("Relayer", () => {
     expect(response.message).toBe(message);
   });
 
-  it("should be able to relay from wasm to evm chain", async () => {
-    await relay({
-      wasm: cosmosRelayer,
+  it.only("should be able to relay from wasm to evm chain", async () => {
+    // await relay({
+    // wasm: cosmosRelayer,
+    // });
+    await cosmosRelayer.listenForEvents();
+    axelarListener.listen(TestIBCEvent, (args) => {
+      console.log("TestIBCEvent", args);
     });
 
     const senderAddress = wasmClient.getOwnerAccount();
+
+    console.log(senderAddress);
 
     const message = "hello from cosmos";
     const execution = await wasmClient.client.execute(
@@ -113,7 +120,7 @@ describe.only("Relayer", () => {
       wasmContractAddress,
       {
         send_message_evm: {
-          destination_chain: "ethereum",
+          destination_chain: "Ethereum",
           destination_address: evmContract.address,
           message,
         },
@@ -123,7 +130,10 @@ describe.only("Relayer", () => {
       [{ amount: "100000", denom: "uwasm" }]
     );
 
-    await ibcRelayer.relay();
+    console.log(execution);
+
+    const heights = await ibcRelayer.relay();
+    console.log(heights);
 
     await relay({
       wasm: cosmosRelayer,

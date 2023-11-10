@@ -1,0 +1,181 @@
+import path from "path";
+import fetch from "node-fetch";
+import { logger } from "@axelar-network/axelar-local-dev";
+import { IDockerComposeOptions, v2 as compose, ps } from "docker-compose";
+import { CosmosChain, ChainConfig, CosmosChainInfo } from "../types";
+import { defaultAxelarConfig, defaultWasmConfig } from "../config";
+import { Path } from "../path";
+import { retry, exportOwnerAccountFromContainer } from "../utils";
+
+export class DockerService {
+  private axelarConfig: ChainConfig;
+  private wasmConfig: ChainConfig;
+
+  constructor(axelarConfig?: ChainConfig, wasmConfig?: ChainConfig) {
+    this.axelarConfig = axelarConfig || defaultAxelarConfig;
+    this.wasmConfig = wasmConfig || defaultWasmConfig;
+  }
+
+  async startAll() {
+    const [axelar, wasm] = await Promise.all([
+      this.start("axelar", this.axelarConfig),
+      this.start("wasm", this.wasmConfig),
+      this.startTraefik(),
+    ]);
+
+    return [axelar, wasm];
+  }
+
+  async start(
+    chain: CosmosChain,
+    options: ChainConfig = this.getChainConfig(chain)
+  ): Promise<CosmosChainInfo> {
+    const { dockerPath } = options;
+
+    await this.throwIfDockerNotRunning(dockerPath);
+
+    const config: IDockerComposeOptions = {
+      cwd: dockerPath,
+    };
+
+    logger.log(`Starting ${chain} container...`);
+    await compose.upOne(chain, config);
+
+    await this.waitForRpc(chain);
+    await this.waitForLcd(chain);
+
+    const rpcUrl = `http://localhost/${chain}-rpc`;
+    const lcdUrl = `http://localhost/${chain}-lcd`;
+    const wsUrl = `ws://localhost/${chain}-rpc/websocket`;
+
+    logger.log(`RPC server for ${chain} is started at ${rpcUrl}`);
+    logger.log(`LCD server for ${chain} is started at ${lcdUrl}`);
+    logger.log(`WS server for ${chain} is started at ${wsUrl}`);
+
+    const response = {
+      prefix: chain,
+      owner: await exportOwnerAccountFromContainer(chain),
+      denom: this.getChainDenom(chain),
+      lcdUrl,
+      rpcUrl,
+      wsUrl,
+    };
+
+    await options?.onCompleted?.(response);
+
+    return response;
+  }
+
+  async startTraefik() {
+    const traefikPath = path.join(Path.base, "docker/traefik");
+    const config: IDockerComposeOptions = {
+      cwd: traefikPath,
+    };
+
+    logger.log("Starting traefik container...");
+    await compose.upOne("traefik", config);
+    logger.log("Traefik started at http://localhost:8080");
+  }
+
+  async stopAll() {
+    await retry(async () => {
+      logger.log("Stopping all containers...");
+      await this.stop("axelar");
+      await this.stop("wasm");
+      await this.stopTraefik();
+      logger.log("All containers stopped");
+    });
+  }
+
+  async stop(chain: CosmosChain) {
+    logger.log(`Stopping ${chain} container...`);
+    try {
+      await compose.down({
+        cwd: Path.docker(chain),
+      });
+    } catch (e: any) {
+      logger.log(e);
+    }
+    logger.log(`${chain} stopped`);
+  }
+
+  async stopTraefik() {
+    const traefikPath = path.join(Path.base, "docker/traefik");
+    const config: IDockerComposeOptions = {
+      cwd: traefikPath,
+    };
+
+    logger.log("Stopping traefik container...");
+    await compose.down(config);
+    logger.log("Traefik stopped");
+  }
+
+  private getChainDenom(chain: CosmosChain): string {
+    return chain === "axelar" ? "uaxl" : "uwasm";
+  }
+
+  private getChainConfig(chain: CosmosChain): ChainConfig {
+    return chain === "axelar" ? defaultAxelarConfig : defaultWasmConfig;
+  }
+
+  async waitForRpc(chain: CosmosChain, timeout = 120000): Promise<void> {
+    const start = Date.now();
+    const interval = 3000;
+    const url = `http://localhost/${chain}-rpc/health`;
+    let status = 0;
+    while (Date.now() - start < timeout) {
+      try {
+        status = await fetch(url).then((res: any) => res.status);
+        if (status === 200) {
+          break;
+        }
+      } catch (e) {
+        // do nothing
+      }
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+    if (status !== 200) {
+      throw new Error(`${chain} rpc server failed to start in ${timeout}ms`);
+    }
+  }
+
+  async waitForLcd(chain: CosmosChain, timeout = 60000): Promise<void> {
+    const testUrl = "cosmos/base/tendermint/v1beta1/node_info";
+    const start = Date.now();
+    const interval = 3000;
+    const url = `http://localhost/${chain}-lcd/${testUrl}`;
+    let result, network;
+    while (Date.now() - start < timeout) {
+      try {
+        result = await fetch(url).then((res: any) => res.json());
+        network = result.default_node_info.network;
+        if (network === chain) {
+          break;
+        }
+      } catch (e) {
+        // do nothing
+      }
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+    if (network !== chain) {
+      throw new Error(`${chain} lcd server failed to start in ${timeout}ms`);
+    }
+  }
+
+  async isDockerRunning(dockerPath: string): Promise<boolean> {
+    return ps({ cwd: dockerPath })
+      .then(() => true)
+      .catch((e) => {
+        logger.log(e);
+        return false;
+      });
+  }
+
+  private async throwIfDockerNotRunning(dockerPath: string): Promise<void> {
+    if (!(await this.isDockerRunning(dockerPath))) {
+      throw new Error(
+        "Docker is not running. Please start Docker and try again."
+      );
+    }
+  }
+}

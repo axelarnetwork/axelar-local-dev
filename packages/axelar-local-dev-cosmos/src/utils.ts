@@ -7,6 +7,12 @@ import {
 } from "ethers/lib/utils";
 import crypto from "crypto";
 import fs from "fs";
+import bech32 from "bech32";
+import { CosmosChain } from "./types";
+
+import path from "path";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { Path } from "./path";
 
 export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
   let attempts = 0;
@@ -42,6 +48,20 @@ export function encodeVersionedPayload(
   const versionHex = hexZeroPad(hexlify(version), 4);
   const payloadString = hexlify(toUtf8Bytes(JSON.stringify(payload)));
   return arrayify(versionHex.concat(payloadString));
+}
+
+export async function exportOwnerAccountFromContainer(
+  chain: CosmosChain
+): Promise<{ mnemonic: string; address: string }> {
+  const homePath = path.join(Path.docker(chain), `.${chain}`);
+  const mnemonic = readFileSync(`${homePath}/mnemonic.txt`, "utf8");
+  const address = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    prefix: chain,
+  })
+    .then((wallet) => wallet.getAccounts())
+    .then((accounts) => accounts[0].address);
+
+  return { mnemonic, address };
 }
 
 export function decodeVersionedPayload(versionedPayload: string) {
@@ -83,7 +103,7 @@ export function readFileSync(path: string, flag?: BufferEncoding) {
   try {
     return fs.readFileSync(path, flag);
   } catch (error: any) {
-    if (error.code === 'ENOENT') {
+    if (error.code === "ENOENT") {
       // Custom handling for file not found
       throw new Error(`File not found at path: ${path}`);
     } else {
@@ -91,4 +111,9 @@ export function readFileSync(path: string, flag?: BufferEncoding) {
       throw error;
     }
   }
+}
+
+export function convertCosmosAddress(address: string, prefix: string) {
+  const decoded = bech32.decode(address);
+  return bech32.encode(prefix, decoded.words);
 }

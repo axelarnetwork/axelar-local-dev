@@ -5,9 +5,8 @@ import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { IbcClient, Link, RelayedHeights } from "@confio/relayer";
 import { ChannelPair } from "@confio/relayer/build/lib/link";
 import { CosmosClient } from "../cosmos/CosmosClient";
-import { convertCosmosAddress } from "../../docker";
 import { RelayerAccountManager } from ".";
-import { readFileSync } from "../../utils";
+import { readFileSync, convertCosmosAddress } from "../../utils";
 import { Path } from "../../path";
 
 export class IBCRelayerClient {
@@ -83,10 +82,7 @@ export class IBCRelayerClient {
 
   getCurrentChannel(): ChannelPair | undefined {
     try {
-      const json = readFileSync(
-        path.join(Path.info, "connection.json"),
-        "utf8"
-      );
+      const json = readFileSync(path.join(Path.info, "channels.json"), "utf8");
       return JSON.parse(json);
     } catch (e) {
       return undefined;
@@ -110,7 +106,6 @@ export class IBCRelayerClient {
     const connection = await this.getCurrentConnection();
 
     if (connection) {
-      // console.log("Using existing connection", connection);
       this.link = await Link.createWithExistingConnections(
         axelarIBCClient,
         wasmIBCClient,
@@ -118,7 +113,6 @@ export class IBCRelayerClient {
         connection.wasm.connectionId
       );
     } else {
-      // console.log("Creating new connection");
       this.link = await Link.createWithNewConnections(
         axelarIBCClient,
         wasmIBCClient
@@ -162,7 +156,6 @@ export class IBCRelayerClient {
 
     const channel = await this.getCurrentChannel();
     if (channel) {
-      // console.log("Using existing channel", channel);
       return channel;
     }
 

@@ -1,7 +1,4 @@
-import {
-  ContractCallSubmitted,
-  IBCEvent,
-} from "../types";
+import { ContractCallSubmitted, IBCEvent } from "../types";
 
 const decodeBase64 = (str: string) => {
   return Buffer.from(str, "base64").toString("hex");

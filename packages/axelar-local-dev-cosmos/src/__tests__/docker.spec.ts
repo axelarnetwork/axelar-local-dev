@@ -1,5 +1,5 @@
 import { setLogger } from "@axelar-network/axelar-local-dev";
-import { getOwnerAccount } from "../docker";
+import { exportOwnerAccountFromContainer } from "../utils";
 import { fetchAxelarLcd } from "./lib/fetchLcd";
 import { CosmosClient } from "../";
 import fetch from "node-fetch";
@@ -23,7 +23,7 @@ describe("docker", () => {
   });
 
   it("should have some balance in the owner account", async () => {
-    const owner = await getOwnerAccount("wasm");
+    const owner = await exportOwnerAccountFromContainer("wasm");
     const cosmosClient = await CosmosClient.create();
 
     const balance = await cosmosClient.getBalance(owner.address);

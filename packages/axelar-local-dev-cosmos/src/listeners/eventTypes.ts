@@ -11,6 +11,15 @@ export interface AxelarListenerEvent<T> {
   parseEvent: (event: any) => Promise<T>;
 }
 
+export const TestIBCEvent: AxelarListenerEvent<IBCEvent<any>> = {
+  type: "Test",
+  topicId: `tm.event='Tx'`,
+  parseEvent: (event: any) => {
+    console.log(event);
+    return Promise.resolve(event);
+  },
+};
+
 export const AxelarCosmosContractCallEvent: AxelarListenerEvent<
   IBCEvent<ContractCallSubmitted>
 > = {
