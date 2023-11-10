@@ -39,7 +39,9 @@ describe.only("Relayer", () => {
     srcChannelId = ibcRelayer.srcChannelId || "channel-0";
 
     cosmosRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
-    evmNetwork = await createNetwork();
+    evmNetwork = await createNetwork({
+      name: "Ethereum",
+    });
 
     // Contract Deployment
     const evmSendReceive = await deployContract(
@@ -94,11 +96,44 @@ describe.only("Relayer", () => {
       }
     );
 
-    expect(response.sender.toLowerCase()).toBe(evmNetwork.userWallets[0].address.toLowerCase());
+    expect(response.sender.toLowerCase()).toBe(
+      evmNetwork.userWallets[0].address.toLowerCase()
+    );
     expect(response.message).toBe(message);
   });
 
-  it("should be able to relay from wasm to evm chain", async () => {
+  it.only("should be able to relay from wasm to evm chain", async () => {
+    await relay({
+      wasm: cosmosRelayer,
+    });
 
+    const senderAddress = await wasmClient.getOwnerAccount();
+
+    const message = "hello from cosmos";
+    const execution = await wasmClient.client.execute(
+      senderAddress,
+      wasmContractAddress,
+      {
+        send_message_evm: {
+          destination_chain: "ethereum",
+          destination_address: "0x49324C7f83568861AB1b66E547BB1B66431f1070",
+          message,
+        },
+      },
+      "auto",
+      "test",
+      [{ amount: "100000", denom: "uwasm" }]
+    );
+    console.log("Executed:", execution.transactionHash);
+
+    await ibcRelayer.relay();
+
+    await relay({
+      wasm: cosmosRelayer,
+    });
+
+    const response = await evmContract.storedMessage();
+
+    console.log(response);
   });
 });

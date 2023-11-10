@@ -38,19 +38,19 @@ export class AxelarRelayerService extends Relayer {
     return new AxelarRelayerService(axelarListener, wasmClient);
   }
 
-  updateEvents(): Promise<void> {
-    if (this.listened) return Promise.resolve();
+  async updateEvents() {
+    if (this.listened) return;
 
     this.axelarListener.listen(AxelarCosmosContractCallEvent, async (args) => {
       console.log("Received ContractCall", args);
       this.updateCallContractEvents(args);
+      this.execute(this.commands);
     });
 
     this.listened = true;
-    return Promise.resolve();
   }
 
-  async execute(commands: RelayCommand): Promise<void> {
+  async execute(commands: RelayCommand) {
     await this.executeWasmToEvm(commands);
     await this.executeEvmToWasm(commands);
   }
@@ -77,10 +77,17 @@ export class AxelarRelayerService extends Relayer {
   private async executeWasmToEvm(command: RelayCommand) {
     for (const to of networks) {
       const commands = command[to.name];
+      console.log(commands);
       if (commands.length == 0) continue;
 
       const execution = await this.executeEvmGateway(to, commands);
-      await this.executeEvmExecutable(to, commands, execution);
+      console.log("Executed Gateway:", execution);
+      const executeExecutable = await this.executeEvmExecutable(
+        to,
+        commands,
+        execution
+      );
+      console.log("Executed Executable:", executeExecutable);
     }
   }
 
@@ -130,6 +137,8 @@ export class AxelarRelayerService extends Relayer {
     };
     const commandId = this.getWasmLogID(event);
     this.relayData.callContract[commandId] = contractCallArgs;
+    console.log(contractCallArgs);
+    console.log(this.commands);
     const command = Command.createEVMContractCallCommand(
       commandId,
       this.relayData,
@@ -187,7 +196,7 @@ export class AxelarRelayerService extends Relayer {
         const blockLimit = Number(
           (await to.provider.getBlock("latest")).gasLimit
         );
-        await command.post({
+        return command.post({
           gasLimit: blockLimit,
         });
       } catch (e) {
