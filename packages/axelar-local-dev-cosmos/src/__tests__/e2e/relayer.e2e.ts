@@ -73,6 +73,12 @@ describe.only("Relayer", () => {
     console.log("Deployed Wasm contract:", contractAddress);
     wasmContractAddress = contractAddress;
     evmContract = evmSendReceive;
+
+    // Initialize relay commands
+    await relay({
+      wasm: cosmosRelayer,
+      evm: evmRelayer,
+    });
   });
 
   it("should be able to relay from evm to wasm chain", async () => {
@@ -102,25 +108,17 @@ describe.only("Relayer", () => {
   });
 
   it.only("should be able to relay from wasm to evm chain", async () => {
-    // await relay({
-    // wasm: cosmosRelayer,
-    // });
     await cosmosRelayer.listenForEvents();
-    axelarListener.listen(TestIBCEvent, (args) => {
-      console.log("TestIBCEvent", args);
-    });
 
     const senderAddress = wasmClient.getOwnerAccount();
 
-    console.log(senderAddress);
-
     const message = "hello from cosmos";
-    const execution = await wasmClient.client.execute(
+    await wasmClient.client.execute(
       senderAddress,
       wasmContractAddress,
       {
         send_message_evm: {
-          destination_chain: "ethereum",
+          destination_chain: "Ethereum",
           destination_address: evmContract.address,
           message,
         },
@@ -130,10 +128,7 @@ describe.only("Relayer", () => {
       [{ amount: "100000", denom: "uwasm" }]
     );
 
-    console.log(execution);
-
-    const heights = await ibcRelayer.relay();
-    console.log(heights);
+    await ibcRelayer.relay();
 
     await relay({
       wasm: cosmosRelayer,
