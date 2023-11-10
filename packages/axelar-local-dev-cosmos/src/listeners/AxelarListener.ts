@@ -27,15 +27,6 @@ export class AxelarListener {
     return ws;
   }
 
-  public stop() {
-    this.wsMap.forEach((ws) => {
-      ws.removeEventListener("message", () => {});
-      ws.removeEventListener("close", () => {});
-      ws.removeEventListener("open", () => {});
-      ws.close();
-    });
-  }
-
   public listen<T>(event: AxelarListenerEvent<T>, callback: (args: T) => void) {
     const ws = this.initWs(event.topicId);
     ws.addEventListener("open", () => {

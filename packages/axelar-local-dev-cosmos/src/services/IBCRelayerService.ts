@@ -39,7 +39,6 @@ export class IBCRelayerService {
     const { dest, src } = await this.relayerClient.createChannel("B", true);
     this.srcChannelId = src.channelId;
     this.destChannelId = dest.channelId;
-    // console.log("Created IBC Channel:", src, dest);
   }
 
   public async run(interval: number = 10000) {
