@@ -13,7 +13,6 @@ import {
   AxelarRelayerService,
   CosmosClient,
   IBCRelayerService,
-  TestIBCEvent,
   defaultAxelarChainInfo,
 } from "../..";
 import SendReceive from "../../../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json";
@@ -107,7 +106,7 @@ describe.only("Relayer", () => {
     expect(response.message).toBe(message);
   });
 
-  it.only("should be able to relay from wasm to evm chain", async () => {
+  it("should be able to relay from wasm to evm chain", async () => {
     await cosmosRelayer.listenForEvents();
 
     const senderAddress = wasmClient.getOwnerAccount();
