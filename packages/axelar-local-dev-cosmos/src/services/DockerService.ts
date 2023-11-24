@@ -128,13 +128,11 @@ export class DockerService {
     let status = 0;
     while (Date.now() - start < timeout) {
       try {
-        console.log("FETCHING..");
         status = await fetch(url).then((res: any) => res.status);
         if (status === 200) {
           break;
         }
       } catch (e) {
-        console.log(e);
         // do nothing
       }
       await new Promise((resolve) => setTimeout(resolve, interval));
