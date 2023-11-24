@@ -5,7 +5,10 @@
   "files": [
     "dist/",
     "!dist/types",
-    "!dist/artifacts"
+    "!dist/artifacts",
+    "docker",
+    "!docker/**/.*",
+    "!docker/**/*.log"
   ],
   "scripts": {
     "test": "jest --testMatch='**/*.spec.ts'",
@@ -37,5 +40,5 @@
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1"
   },
-  "gitHead": "9f1ac43e7ea756f2f205c8501094b206154879d2"
+  "gitHead": "a9fb169ca4fdca7d98d8ed932ce4df88625768e8"
 }
