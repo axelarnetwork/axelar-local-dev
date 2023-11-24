@@ -71,5 +71,6 @@
     },
     "optionalDependencies": {
         "near-workspaces": "^3.3.0"
-    }
+    },
+    "gitHead": "fde030eb5259dcbda8fc6d136a77ce145ce1b492"
 }
