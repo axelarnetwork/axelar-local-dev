@@ -38,7 +38,7 @@ export const stopAll = async () => {
 
 export const startCosmosChains = async () => {
   // Start all docker containers including wasm chain, axelar chain, and traefik
-  await dockerService.startAll();
+  await dockerService.startAll()
 };
 
 export const stopCosmosChains = async () => {
