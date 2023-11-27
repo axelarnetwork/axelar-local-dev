@@ -2,16 +2,15 @@
 
 pragma solidity 0.8.9;
 
-// Axelar CGP SDK
+// Interchain Token Service
 import { TokenManagerDeployer } from '@axelar-network/interchain-token-service/contracts/utils/TokenManagerDeployer.sol';
-import { StandardizedTokenLockUnlock } from '@axelar-network/interchain-token-service/contracts/token-implementations/StandardizedTokenLockUnlock.sol';
-import { StandardizedTokenMintBurn } from '@axelar-network/interchain-token-service/contracts/token-implementations/StandardizedTokenMintBurn.sol';
-import { StandardizedTokenDeployer } from '@axelar-network/interchain-token-service/contracts/utils/StandardizedTokenDeployer.sol';
-import { StandardizedToken } from '@axelar-network/interchain-token-service/contracts/token-implementations/StandardizedToken.sol';
-import { RemoteAddressValidator } from '@axelar-network/interchain-token-service/contracts/remote-address-validator/RemoteAddressValidator.sol';
-import { RemoteAddressValidatorProxy } from '@axelar-network/interchain-token-service/contracts/proxies/RemoteAddressValidatorProxy.sol';
-import { TokenManagerLockUnlock } from '@axelar-network/interchain-token-service/contracts/token-manager/implementations/TokenManagerLockUnlock.sol';
-import { TokenManagerMintBurn } from '@axelar-network/interchain-token-service/contracts/token-manager/implementations/TokenManagerMintBurn.sol';
-import { TokenManagerLiquidityPool } from '@axelar-network/interchain-token-service/contracts/token-manager/implementations/TokenManagerLiquidityPool.sol';
-import { InterchainTokenService } from '@axelar-network/interchain-token-service/contracts/interchain-token-service/InterchainTokenService.sol';
+import { InterchainToken } from '@axelar-network/interchain-token-service/contracts/interchain-token/InterchainToken.sol';
+import { InterchainTokenDeployer } from '@axelar-network/interchain-token-service/contracts/utils/InterchainTokenDeployer.sol';
+import { TokenManagerLockUnlock } from '@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerLockUnlock.sol';
+import { TokenManagerLockUnlockFee } from '@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerLockUnlockFee.sol';
+import { TokenManagerMintBurn } from '@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerMintBurn.sol';
+import { TokenManagerMintBurnFrom } from '@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerMintBurnFrom.sol';
+import { InterchainTokenService } from '@axelar-network/interchain-token-service/contracts/InterchainTokenService.sol';
 import { InterchainTokenServiceProxy } from '@axelar-network/interchain-token-service/contracts/proxies/InterchainTokenServiceProxy.sol';
+import { InterchainTokenFactory } from '@axelar-network/interchain-token-service/contracts/InterchainTokenFactory.sol';
+import { InterchainTokenFactoryProxy } from '@axelar-network/interchain-token-service/contracts/proxies/InterchainTokenFactoryProxy.sol';

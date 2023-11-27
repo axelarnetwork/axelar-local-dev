@@ -60,9 +60,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             seed: name,
             ganacheOptions: {},
         });
-        const testnet = testnetInfo.find((info: any) => {
-            return info.name === name;
-        });
+        const testnet = (testnetInfo.chains as any)[name];
         const info = chain.getCloneInfo() as any;
         info.rpc = `http://localhost:${_options.port}/${i}`;
         (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), localChains.push(info);

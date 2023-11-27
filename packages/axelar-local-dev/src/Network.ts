@@ -12,22 +12,25 @@ import {
     ConstAddressDeployer,
     Create3Deployer,
     TokenManagerDeployer,
-    StandardizedTokenLockUnlock,
-    StandardizedTokenMintBurn,
-    StandardizedTokenDeployer,
-    RemoteAddressValidator,
-    RemoteAddressValidatorProxy,
-    TokenManagerLockUnlock,
+    InterchainTokenDeployer,
+    InterchainToken,
     TokenManagerMintBurn,
-    TokenManagerLiquidityPool,
+    TokenManagerMintBurnFrom,
+    TokenManagerLockUnlock,
+    TokenManagerLockUnlockFee,
     InterchainTokenService as InterchainTokenServiceContract,
+    InterchainTokenFactory as InterchainTokenFactoryContract,
     InterchainTokenServiceProxy,
+    IntercahinTokenFactoryProxy,
 } from './contracts';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
-import { InterchainTokenService } from './types';
+import { InterchainTokenService, InterchainTokenFactory } from './types';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
-import { InterchainTokenService__factory as InterchainTokenServiceFactory } from './types';
+import {
+    InterchainTokenService__factory as InterchainTokenServiceFactory,
+    InterchainTokenFactory__factory as InterchainTokenFactoryFactory,
+} from './types';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
 import http from 'http';
 import { EvmRelayer } from './relay/EvmRelayer';
@@ -63,6 +66,7 @@ export interface NetworkInfo {
     constAddressDeployerAddress: string;
     create3DeployerAddress: string;
     InterchainTokenService: string;
+    InterchainTokenFactory: string;
     tokens: { [key: string]: string };
 }
 export interface NetworkSetup {
@@ -98,6 +102,7 @@ export class Network {
     constAddressDeployer: Contract;
     create3Deployer: Contract;
     interchainTokenService: InterchainTokenService;
+    interchainTokenFactory: InterchainTokenFactory;
     isRemote: boolean | undefined;
     url: string | undefined;
     ganacheProvider: any;
@@ -122,6 +127,7 @@ export class Network {
         this.constAddressDeployer = networkish.constAddressDeployer;
         this.create3Deployer = networkish.create3Deployer;
         this.interchainTokenService = networkish.interchainTokenService;
+        this.interchainTokenFactory = networkish.interchainTokenFactory;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
         this.tokens = networkish.tokens;
@@ -225,49 +231,51 @@ export class Network {
 
     async deployInterchainTokenService() {
         logger.log(`Deploying the InterchainTokenService for ${this.name}... `);
-        const deploymentSalt = keccak256('0x1234');
+        const deploymentSalt = keccak256(defaultAbiCoder.encode(['string'], ['interchain-token-service-salt']));
+        const factorySalt = keccak256(defaultAbiCoder.encode(['string'], ['interchain-token-factory-salt']));
         const wallet = this.ownerWallet;
-        const tokenManagerDeployer = await deployContract(wallet, TokenManagerDeployer, [this.create3Deployer.address]);
-        const standardizedTokenLockUnlock = await deployContract(wallet, StandardizedTokenLockUnlock);
-        const standardizedTokenMintBurn = await deployContract(wallet, StandardizedTokenMintBurn);
-        const standardizedTokenDeployer = await deployContract(wallet, StandardizedTokenDeployer, [
-            this.create3Deployer.address,
-            standardizedTokenLockUnlock.address,
-            standardizedTokenMintBurn.address,
-        ]);
-        const interchainTokenServiceAddress = await this.create3Deployer.deployedAddress(wallet.address, deploymentSalt);
-        const linkerRouterImpl = await deployContract(wallet, RemoteAddressValidator, [interchainTokenServiceAddress]);
-        const params = defaultAbiCoder.encode(['string[]', 'string[]'], [[], []]);
+        const tokenManagerDeployer = await deployContract(wallet, TokenManagerDeployer);
+        const intercahinToken = await deployContract(wallet, InterchainToken);
+        const interchainTokenDeployer = await deployContract(wallet, InterchainTokenDeployer, [intercahinToken.address]);
 
-        const linkerRouterProxy = await deployContract(wallet, RemoteAddressValidatorProxy, [linkerRouterImpl.address, wallet.address, params]);
-        const linkerRouter = new Contract(linkerRouterProxy.address, linkerRouterImpl.interface, wallet);
-
+        const interchainTokenServiceAddress = await this.create3Deployer.deployedAddress('0x', wallet.address, deploymentSalt);
         const tokenManagerImplementations = [
-            await deployContract(wallet, TokenManagerLockUnlock, [interchainTokenServiceAddress]),
             await deployContract(wallet, TokenManagerMintBurn, [interchainTokenServiceAddress]),
-            await deployContract(wallet, TokenManagerLiquidityPool, [interchainTokenServiceAddress]),
-        ].map(contract => contract.address);
+            await deployContract(wallet, TokenManagerMintBurnFrom, [interchainTokenServiceAddress]),
+            await deployContract(wallet, TokenManagerLockUnlock, [interchainTokenServiceAddress]),
+            await deployContract(wallet, TokenManagerLockUnlockFee, [interchainTokenServiceAddress]),
+        ].map((contract) => contract.address);
 
-        const implementation = await deployContract(wallet, InterchainTokenServiceContract, [
+        const interchainTokenFactoryAddress = await this.create3Deployer.deployedAddress('0x', wallet.address, factorySalt);
+
+        let implementation = await deployContract(wallet, InterchainTokenServiceContract, [
             tokenManagerDeployer.address,
-            standardizedTokenDeployer.address,
+            interchainTokenDeployer.address,
             this.gateway.address,
             this.gasService.address,
-            linkerRouter.address,
-            tokenManagerImplementations,
+            interchainTokenFactoryAddress,
             this.name,
+            tokenManagerImplementations,
         ]);
-        const factory = new ContractFactory(InterchainTokenServiceProxy.abi, InterchainTokenServiceProxy.bytecode);
-        const bytecode = factory.getDeployTransaction(
+        let factory = new ContractFactory(InterchainTokenServiceProxy.abi, InterchainTokenServiceProxy.bytecode);
+        let bytecode = factory.getDeployTransaction(
             implementation.address,
             wallet.address,
-            wallet.address,
+            defaultAbiCoder.encode(['address', 'string', 'string[]', 'string[]'], [wallet.address, this.name, [], []])
         ).data;
-        await this.create3Deployer.connect(wallet).deploy(bytecode, deploymentSalt)
-        const service = new Contract(interchainTokenServiceAddress, implementation.interface, wallet);
-        this.interchainTokenService = InterchainTokenServiceFactory.connect(service.address, this.ownerWallet);
+        await this.create3Deployer.connect(wallet).deploy(bytecode, deploymentSalt);
+        this.interchainTokenService = InterchainTokenServiceFactory.connect(interchainTokenServiceAddress, wallet);
+
+        implementation = await deployContract(wallet, InterchainTokenFactoryContract, [interchainTokenServiceAddress]);
+
+        factory = new ContractFactory(IntercahinTokenFactoryProxy.abi, IntercahinTokenFactoryProxy.bytecode);
+        bytecode = factory.getDeployTransaction(implementation.address, wallet.address).data;
+
+        await this.create3Deployer.connect(wallet).deploy(bytecode, factorySalt);
+        this.interchainTokenFactory = InterchainTokenFactoryFactory.connect(interchainTokenFactoryAddress, wallet);
+
         await setupITS(this);
-        logger.log(`Deployed at ${service.address}.`);
+        logger.log(`Deployed at ${this.interchainTokenService.address}.`);
         return this.interchainTokenService;
     }
 
@@ -340,6 +348,7 @@ export class Network {
             constAddressDeployerAddress: this.constAddressDeployer.address,
             create3DeployerAddress: this.create3Deployer.address,
             InterchainTokenService: this.interchainTokenService.address,
+            InterchainTokenFactory: this.interchainTokenFactory.address,
             tokens: this.tokens,
         };
         return info;

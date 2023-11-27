@@ -4,7 +4,7 @@
 import chai from 'chai';
 import { Contract, Wallet } from 'ethers';
 const { expect } = chai;
-import { relay, stopAll, setLogger, forkNetwork, mainnetInfo, networks, getFee } from '../';
+import { relay, stopAll, setLogger, forkNetwork, mainnetInfo, networks, getFee, ChainCloneData } from '../';
 import { keccak256, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from '../Network';
 
@@ -14,18 +14,17 @@ interface NetworkUsdc extends Network {
     usdc?: Contract;
 }
 
-describe.skip("forking", () => {
-
+describe.skip('forking', () => {
     afterEach(async () => {
         await stopAll();
     });
 
     it.skip('should fork Avalanche mainnet', async () => {
-        const chainName = 'Avalanche';
+        const chainName = 'avalanche';
         const tokenAlias = 'uusdc';
         const testAmount = 1234;
         const chains = mainnetInfo;
-        const avalanche = chains.find((chain: { name: string }) => chain.name === chainName) as any;
+        const avalanche = (chains.chains as any)[chainName] as ChainCloneData;
         const chain: NetworkUsdc = await forkNetwork(avalanche, {
             ganacheOptions: {
                 fork: { deleteCache: true },
@@ -43,8 +42,8 @@ describe.skip("forking", () => {
         const chains = mainnetInfo;
         const alias = 'uusdc';
 
-        for (const chainName of ['Avalanche', 'Ethereum']) {
-            const chainInfo = chains.find((chain: { name: string }) => chain.name === chainName) as any;
+        for (const chainName of ['avalanche', 'ethereum']) {
+            const chainInfo = (chains.chains as any)[chainName] as ChainCloneData;
             const chain = (await forkNetwork(chainInfo)) as any;
             chain.usdc = await chain.getTokenContract(alias);
         }
