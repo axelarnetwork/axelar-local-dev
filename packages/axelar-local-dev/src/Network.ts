@@ -1,6 +1,7 @@
 'use strict';
 
 import { ethers, Wallet, Contract, providers, ContractFactory } from 'ethers';
+import http from 'http';
 import { logger } from './utils';
 import { getSignedExecuteInput, getRandomID, deployContract } from './utils';
 import {
@@ -32,9 +33,6 @@ import {
     InterchainTokenFactory__factory as InterchainTokenFactoryFactory,
 } from './types';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
-import http from 'http';
-import { EvmRelayer } from './relay/EvmRelayer';
-import { evmRelayer } from './relay';
 import { ITS, setupITS } from './its';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';

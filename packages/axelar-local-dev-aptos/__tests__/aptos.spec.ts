@@ -1,11 +1,10 @@
 import { HexString, TxnBuilderTypes } from 'aptos';
-import { AptosNetwork, AptosRelayer, createAptosNetwork, findNodeModulesPath } from '..';
+import { AptosNetwork, AptosRelayer, createAptosNetwork } from '..';
 import fs from 'fs';
 import path from 'path';
 import { ethers } from 'ethers';
-import { Network, createNetwork, deployContract, relay, setLogger } from '@axelar-network/axelar-local-dev';
+import { Network, createNetwork, deployContract, relay, setLogger, EvmRelayer } from '@axelar-network/axelar-local-dev';
 import HelloWorld from '../artifacts/__tests__/contracts/HelloWorld.sol/HelloWorld.json';
-import { EvmRelayer } from '@axelar-network/axelar-local-dev/dist/relay/EvmRelayer';
 const { keccak256, toUtf8Bytes } = ethers.utils;
 
 setLogger(() => undefined);

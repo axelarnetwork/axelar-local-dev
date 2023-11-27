@@ -1,4 +1,5 @@
-import testnetInfo from '@axelar-network/axelar-contract-deployments/axelar-chains-config/info/testnet.json';
-import mainnetInfo from '@axelar-network/axelar-contract-deployments/axelar-chains-config/info/mainnet.json';
+import mainnet from '@axelar-network/axelar-chains-config/info/mainnet.json';
+import testnet from '@axelar-network/axelar-chains-config/info/testnet.json';
 
-export { testnetInfo, mainnetInfo };
+export const mainnetInfo = mainnet.chains;
+export const testnetInfo = testnet.chains;

@@ -4,6 +4,7 @@ import { RelayerMap } from './Relayer';
 export * from './Command';
 export * from './types';
 export * from './Relayer';
+export * from './EvmRelayer';
 
 export const evmRelayer = new EvmRelayer();
 

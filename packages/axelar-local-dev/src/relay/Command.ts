@@ -25,7 +25,9 @@ export class Command {
         this.commandId = commandId;
         this.name = name;
         this.data = data;
-        this.encodedData = chain === 'aptos' && name === 'approve_contract_call' ? '' : defaultAbiCoder.encode(dataSignature, data);
+        
+        this.encodedData =
+            (chain === 'aptos' || chain === 'sui') && name === 'approve_contract_call' ? '' : defaultAbiCoder.encode(dataSignature, data);
         this.post = post;
     }
 
