@@ -6,7 +6,7 @@ export class IBCRelayerService {
   relayerClient: IBCRelayerClient;
   srcChannelId?: string;
   destChannelId?: string;
-  currentInterval?: NodeJS.Timer;
+  currentInterval?: NodeJS.Timeout;
 
   private constructor(
     wasmClient: CosmosClient,

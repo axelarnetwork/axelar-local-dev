@@ -1,5 +1,6 @@
 import path from "path";
 import fetch from "node-fetch";
+import { execSync } from "child_process";
 import { logger } from "@axelar-network/axelar-local-dev";
 import { IDockerComposeOptions, v2 as compose, ps } from "docker-compose";
 import { CosmosChain, ChainConfig, CosmosChainInfo } from "../types";
@@ -31,6 +32,8 @@ export class DockerService {
     options: ChainConfig = this.getChainConfig(chain)
   ): Promise<CosmosChainInfo> {
     const { dockerPath } = options;
+
+    await this.throwIfDockerNotFound();
 
     await this.throwIfDockerNotRunning(dockerPath);
 
@@ -169,6 +172,16 @@ export class DockerService {
         logger.log(e);
         return false;
       });
+  }
+
+  async throwIfDockerNotFound() {
+    try {
+      execSync(`command -v docker 2>/dev/null`);
+    } catch (error) {
+      throw new Error(
+        '"docker" command is not available.'
+      );
+    }
   }
 
   private async throwIfDockerNotRunning(dockerPath: string): Promise<void> {
