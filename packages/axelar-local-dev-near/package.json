@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-near",
-    "version": "2.1.1",
+    "version": "2.1.2",
     "description": "",
     "main": "dist/index.js",
     "files": [
@@ -21,7 +21,7 @@
     },
     "dependencies": {
         "@axelar-network/axelar-cgp-near": "^1.0.0",
-        "@axelar-network/axelar-local-dev": "2.1.1"
+        "@axelar-network/axelar-local-dev": "2.1.2"
     },
     "author": "",
     "license": "ISC"
