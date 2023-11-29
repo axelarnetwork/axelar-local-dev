@@ -14,7 +14,7 @@ import { ConstAddressDeployer, Create3Deployer, IInterchainTokenService } from '
 import {
     InterchainTokenService__factory as InterchainTokenServiceFactory,
     InterchainTokenFactory__factory as InterchainTokenFactoryFactory,
-} from './types';
+} from './types/factories/@axelar-network/interchain-token-service/contracts';
 import { setupITS } from './its';
 
 const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
