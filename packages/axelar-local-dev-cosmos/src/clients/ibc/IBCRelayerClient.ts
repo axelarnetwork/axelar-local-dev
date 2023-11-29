@@ -106,13 +106,17 @@ export class IBCRelayerClient {
     const connection = await this.getCurrentConnection();
 
     if (connection) {
-      this.link = await Link.createWithExistingConnections(
-        axelarIBCClient,
-        wasmIBCClient,
-        connection.axelar.connectionId,
-        connection.wasm.connectionId
-      );
-    } else {
+      try {
+        this.link = await Link.createWithExistingConnections(
+          axelarIBCClient,
+          wasmIBCClient,
+          connection.axelar.connectionId,
+          connection.wasm.connectionId
+        );
+      } catch (e) {}
+    }
+
+    if (!this.link) {
       this.link = await Link.createWithNewConnections(
         axelarIBCClient,
         wasmIBCClient
