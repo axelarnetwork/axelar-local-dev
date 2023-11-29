@@ -2,12 +2,13 @@
 
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
-import { Network, NetworkOptions } from './Network';
+import { Network, NetworkOptions, networks } from './Network';
 import { RelayData, RelayerMap, relay } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
 import { testnetInfo } from './info';
 import { EvmRelayer } from './relay/EvmRelayer';
 import { getChainArray } from '@axelar-network/axelar-chains-config';
+import { registerRemoteITS } from './its';
 
 let interval: any;
 
@@ -85,6 +86,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
 
         i++;
     }
+    await registerRemoteITS(networks);
     listen(_options.port);
     interval = setInterval(async () => {
         if (relaying) return;

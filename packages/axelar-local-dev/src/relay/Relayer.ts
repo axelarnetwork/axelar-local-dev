@@ -44,7 +44,7 @@ export abstract class Relayer {
         this.commands['near'] = [];
         // Update all events at the source chains
         await this.updateEvents();
-        
+
         await this.execute(this.commands);
     }
 

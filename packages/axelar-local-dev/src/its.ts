@@ -1,14 +1,12 @@
 import { BigNumberish, Contract, Wallet } from 'ethers';
-import {
-    IInterchainToken,
-    ITokenManager,
-} from './types/@axelar-network/interchain-token-service/contracts/interfaces';
+import { IInterchainToken, ITokenManager } from './types/@axelar-network/interchain-token-service/contracts/interfaces';
 import {
     IInterchainToken__factory as IInterchainTokenFactory,
     ITokenManager__factory as TokenManagerFactory,
 } from './types/factories/@axelar-network/interchain-token-service/contracts/interfaces';
 import { Network, networks } from './Network';
 import { relay } from './relay';
+import { logger } from './utils';
 
 export interface ITS {
     registerCanonicalToken: (tokenAddress: string, wallet?: Wallet) => Promise<ITokenManager>;
@@ -101,4 +99,23 @@ export async function setupITS(network: Network) {
         const tokenAddress = await factory.interchainTokenAddress(wallet.address, salt);
         return IInterchainTokenFactory.connect(tokenAddress, destinationChain.provider);
     };
+}
+
+export async function registerRemoteITS(networks: Network[]) {
+    for (const network of networks) {
+        logger.log(`Registerring ITS for ${networks.length} other chain for ${network.name}...`);
+        const data = [] as string[];
+        for (const otherNetwork of networks) {
+            data.push(
+                (
+                    await network.interchainTokenService.populateTransaction.setTrustedAddress(
+                        otherNetwork.name,
+                        otherNetwork.interchainTokenService.address
+                    )
+                ).data as string
+            );
+        }
+        await (await network.interchainTokenService.multicall(data)).wait();
+        logger.log(`Done`);
+    }
 }
