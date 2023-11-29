@@ -26,12 +26,12 @@ import {
 } from './contracts';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
-import { InterchainTokenService, InterchainTokenFactory } from './types';
+import { InterchainTokenService, InterchainTokenFactory } from './types/@axelar-network/interchain-token-service/contracts';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
 import {
     InterchainTokenService__factory as InterchainTokenServiceFactory,
     InterchainTokenFactory__factory as InterchainTokenFactoryFactory,
-} from './types';
+} from './types/factories/@axelar-network/interchain-token-service/contracts';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
 import { ITS, setupITS } from './its';
 
