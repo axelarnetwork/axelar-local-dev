@@ -1,10 +1,12 @@
 import { BigNumberish, Contract, Wallet } from 'ethers';
 import {
     IInterchainToken,
-    IInterchainToken__factory as IInterchainTokenFactory,
     ITokenManager,
+} from './types/@axelar-network/interchain-token-service/contracts/interfaces';
+import {
+    IInterchainToken__factory as IInterchainTokenFactory,
     ITokenManager__factory as TokenManagerFactory,
-} from './types';
+} from './types/factories/@axelar-network/interchain-token-service/contracts/interfaces';
 import { Network, networks } from './Network';
 import { relay } from './relay';
 

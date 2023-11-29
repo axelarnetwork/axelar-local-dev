@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-sui",
-    "version": "2.1.2",
+    "version": "2.1.3",
     "main": "dist/index.js",
     "files": [
         "dist/",
@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "@axelar-network/axelar-cgp-sui": "https://github.com/axelarnetwork/axelar-cgp-sui.git",
-        "@axelar-network/axelar-local-dev": "2.1.2",
+        "@axelar-network/axelar-local-dev": "2.1.3",
         "@mysten/sui.js": "^0.41.0"
     },
     "author": "euro@axelar.network",
