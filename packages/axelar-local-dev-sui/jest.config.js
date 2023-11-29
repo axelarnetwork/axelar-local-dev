@@ -7,4 +7,6 @@ module.exports = {
     testRegex: '/__tests__/.*\\.(test|spec)?\\.(ts)$',
     transformIgnorePatterns: ['<rootDir>/node_modules/'],
     testTimeout: 300000,
+    maxConcurrency: 1,
+    maxWorkers: 1,
 };

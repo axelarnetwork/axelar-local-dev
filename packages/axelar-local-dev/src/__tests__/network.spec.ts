@@ -11,7 +11,6 @@ import chai from 'chai';
 const { expect } = chai;
 setLogger(() => null);
 
-
 function validateNetwork(network: Network) {
     // wallets
     expect(network.provider).to.not.be.undefined;
@@ -25,6 +24,8 @@ function validateNetwork(network: Network) {
     expect(network.constAddressDeployer).to.not.be.undefined;
     expect(network.create3Deployer).to.not.be.undefined;
     expect(network.gateway).to.not.be.undefined;
+    expect(network.its).to.not.be.undefined;
+    expect(network.interchainTokenService).to.not.be.undefined;
 }
 
 describe('Network', () => {

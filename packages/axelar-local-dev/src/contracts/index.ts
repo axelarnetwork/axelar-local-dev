@@ -11,6 +11,20 @@ import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/artifa
 import Create3Deployer from '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
 
+import TokenManagerDeployer from '../artifacts/@axelar-network/interchain-token-service/contracts/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json';
+import InterchainToken from '../artifacts/@axelar-network/interchain-token-service/contracts/interchain-token/InterchainToken.sol/InterchainToken.json';
+import InterchainTokenDeployer from '../artifacts/@axelar-network/interchain-token-service/contracts/utils/InterchainTokenDeployer.sol/InterchainTokenDeployer.json';
+import TokenManagerLockUnlock from '../artifacts/@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerLockUnlock.sol/TokenManagerLockUnlock.json';
+import TokenManagerLockUnlockFee from '../artifacts/@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerLockUnlockFee.sol/TokenManagerLockUnlockFee.json';
+import TokenManagerMintBurn from '../artifacts/@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerMintBurn.sol/TokenManagerMintBurn.json';
+import TokenManagerMintBurnFrom from '../artifacts/@axelar-network/interchain-token-service/contracts/token-manager/TokenManagerMintBurnFrom.sol/TokenManagerMintBurnFrom.json';
+import InterchainTokenService from '../artifacts/@axelar-network/interchain-token-service/contracts/InterchainTokenService.sol/InterchainTokenService.json';
+import InterchainTokenFactory from '../artifacts/@axelar-network/interchain-token-service/contracts/InterchainTokenFactory.sol/InterchainTokenFactory.json';
+import InterchainTokenServiceProxy from '../artifacts/@axelar-network/interchain-token-service/contracts/proxies/InterchainTokenServiceProxy.sol/InterchainTokenServiceProxy.json';
+import IntercahinTokenFactoryProxy from '../artifacts/@axelar-network/interchain-token-service/contracts/proxies/InterchainTokenFactoryProxy.sol/InterchainTokenFactoryProxy.json';
+import IInterchainTokenService from '../artifacts/@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json';
+import IInterchainTokenFactory from '../artifacts/@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenFactory.sol/IInterchainTokenFactory.json';
+
 export {
     TokenDeployer,
     AxelarGatewayProxy,
@@ -24,4 +38,17 @@ export {
     Create3Deployer,
     IAxelarGasService,
     IAxelarExecutable,
+    TokenManagerDeployer,
+    InterchainToken,
+    InterchainTokenDeployer,
+    TokenManagerLockUnlock,
+    TokenManagerLockUnlockFee,
+    TokenManagerMintBurn,
+    TokenManagerMintBurnFrom,
+    InterchainTokenService,
+    InterchainTokenServiceProxy,
+    InterchainTokenFactory,
+    IntercahinTokenFactoryProxy,
+    IInterchainTokenService,
+    IInterchainTokenFactory,
 };

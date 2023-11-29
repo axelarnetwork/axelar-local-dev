@@ -9,7 +9,6 @@ const { expect } = chai;
 
 setLogger(() => undefined);
 
-
 describe('token', () => {
     let chain: Network;
     let usdc: Contract;

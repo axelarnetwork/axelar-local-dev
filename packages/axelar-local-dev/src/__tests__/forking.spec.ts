@@ -4,7 +4,7 @@
 import chai from 'chai';
 import { Contract, Wallet } from 'ethers';
 const { expect } = chai;
-import { relay, stopAll, setLogger, forkNetwork, mainnetInfo, networks, getFee } from '../';
+import { relay, stopAll, setLogger, forkNetwork, mainnetInfo, networks, getFee, ChainCloneData } from '../';
 import { keccak256, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from '../Network';
 
@@ -20,7 +20,7 @@ describe.skip('forking', () => {
     });
 
     it.skip('should fork Avalanche mainnet', async () => {
-        const chainName = 'Avalanche';
+        const chainName = 'avalanche';
         const tokenAlias = 'uusdc';
         const testAmount = 1234;
         const chains = mainnetInfo as any;
