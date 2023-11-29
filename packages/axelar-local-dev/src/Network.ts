@@ -360,6 +360,8 @@ export class Network {
             gasService: this.gasService.address,
             constAddressDeployer: this.constAddressDeployer.address,
             create3Deployer: this.create3Deployer.address,
+            interchainTokenService: this.interchainTokenService.address,
+            interchainTokenFactory: this.interchainTokenFactory.address,
             tokens: this.tokens,
         };
     }
