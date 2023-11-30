@@ -88,17 +88,8 @@ export class RelayerAccountManager {
 
     // Fund the relayer address on wasm
     await this.wasmClient.fundWallet(relayerAddress, amount);
-    // console.log(
-    //   `Funded ${amount}${this.wasmClient.getChainInfo().denom} to relayer address on wasm:`,
-    //   relayerAddress
-    // );
-
     // Fund the relayer address on axelar
     await this.axelarClient.fundWallet(relayerAxelarAddress, amount);
-    // console.log(
-    //   `Funded ${amount}${this.axelarClient.getChainInfo().denom} to relayer address on axelar:`,
-    //   relayerAxelarAddress
-    // );
   }
 
   /**

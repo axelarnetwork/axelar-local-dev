@@ -1,4 +1,3 @@
-import fs from "fs";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
@@ -35,20 +34,13 @@ export class CosmosClient {
       wsUrl: config.wsUrl || `ws://localhost/${chain}-rpc/websocket`,
     };
 
-    const walletOptions = {
-      prefix: chain,
-    };
-
     let _mnemonic = mnemonic;
     if (!_mnemonic) {
       const response = await exportOwnerAccountFromContainer(chain);
       _mnemonic = response.mnemonic;
     }
 
-    const owner = await DirectSecp256k1HdWallet.fromMnemonic(
-      _mnemonic,
-      walletOptions
-    );
+    const owner = await CosmosClient.createOrImportAccount(chain, _mnemonic);
 
     const address = await owner
       .getAccounts()
@@ -72,6 +64,22 @@ export class CosmosClient {
       owner,
       client
     );
+  }
+
+  /**
+   * Create a relayer account from mnemonic or generate a new one if not provided
+   * @param prefix chain prefix. Available options: wasm, axelar
+   * @param mnemonic mnemonic of the relayer account
+   * @returns an instance of DirectSecp256k1HdWallet
+   */
+  static async createOrImportAccount(
+    prefix: CosmosChain,
+    mnemonic?: string
+  ): Promise<DirectSecp256k1HdWallet> {
+    if (mnemonic) {
+      return DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix });
+    }
+    return DirectSecp256k1HdWallet.generate(12, { prefix });
   }
 
   getBalance(address: string, denom?: string) {
@@ -146,6 +154,7 @@ export class CosmosClient {
         gasPrice: this.gasPrice,
       }
     );
+
 
     return {
       client,
