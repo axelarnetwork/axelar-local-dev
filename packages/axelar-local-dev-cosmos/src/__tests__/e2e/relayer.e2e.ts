@@ -9,7 +9,6 @@ import {
 import { Contract, ethers } from "ethers";
 import path from "path";
 import {
-  AxelarListener,
   AxelarRelayerService,
   CosmosClient,
   IBCRelayerService,
@@ -22,7 +21,6 @@ describe.only("Relayer", () => {
   let evmNetwork: Network;
   let wasmClient: CosmosClient;
   let srcChannelId: string;
-  let axelarListener: AxelarListener;
   let ibcRelayer: IBCRelayerService;
   let wasmContractAddress: string;
   let evmContract: Contract;
@@ -32,7 +30,6 @@ describe.only("Relayer", () => {
   beforeAll(async () => {
     ibcRelayer = await IBCRelayerService.create(testMnemonic);
     await ibcRelayer.setup();
-    axelarListener = new AxelarListener(defaultAxelarChainInfo);
     wasmClient = ibcRelayer.wasmClient;
     srcChannelId = ibcRelayer.srcChannelId || "channel-0";
 

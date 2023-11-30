@@ -24,6 +24,7 @@ export class CosmosClient {
 
   static async create(
     chain: CosmosChain = "wasm",
+    mnemonic?: string,
     config: Omit<CosmosChainInfo, "owner"> = { prefix: chain }
   ) {
     const defaultDenom = chain === "wasm" ? "uwasm" : "uaxl";
@@ -38,12 +39,20 @@ export class CosmosClient {
       prefix: chain,
     };
 
-    const { address, mnemonic } = await exportOwnerAccountFromContainer(chain);
+    let _mnemonic = mnemonic;
+    if (!_mnemonic) {
+      const response = await exportOwnerAccountFromContainer(chain);
+      _mnemonic = response.mnemonic;
+    }
 
     const owner = await DirectSecp256k1HdWallet.fromMnemonic(
-      mnemonic,
+      _mnemonic,
       walletOptions
     );
+
+    const address = await owner
+      .getAccounts()
+      .then((accounts) => accounts[0].address);
 
     const client = await SigningCosmWasmClient.connectWithSigner(
       chainInfo.rpcUrl,
@@ -55,7 +64,7 @@ export class CosmosClient {
       {
         ...chainInfo,
         owner: {
-          mnemonic,
+          mnemonic: _mnemonic,
           address,
         },
         prefix: chain,
