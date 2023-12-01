@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-sui",
-    "version": "2.2.0-alpha.11",
+    "version": "2.2.0-alpha.12",
     "main": "dist/index.js",
     "files": [
         "dist/",
@@ -17,7 +17,7 @@
         "build-sui": "cd move && sui move build"
     },
     "dependencies": {
-        "@axelar-network/axelar-local-dev": "2.2.0-alpha.11",
+        "@axelar-network/axelar-local-dev": "2.2.0-alpha.12",
         "@mysten/sui.js": "^0.41.0"
     },
     "author": "euro@axelar.network",

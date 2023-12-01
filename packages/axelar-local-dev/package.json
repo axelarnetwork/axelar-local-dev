@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev",
-    "version": "2.2.0-alpha.11",
+    "version": "2.2.0-alpha.12",
     "description": "",
     "main": "dist/index.js",
     "files": [
