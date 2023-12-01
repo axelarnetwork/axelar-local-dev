@@ -49,7 +49,7 @@ export class IBCRelayerService {
 
     // Use new account to relay packets
     this.currentInterval = setInterval(async () => {
-      await this.relay();
+      await this.relay().catch((err) => {});
     }, interval);
   }
 
