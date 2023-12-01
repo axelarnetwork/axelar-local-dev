@@ -18,12 +18,11 @@ export class DockerService {
   }
 
   async startAll() {
+    await this.startTraefik();
     const [axelar, wasm] = await Promise.all([
       this.start("axelar", this.axelarConfig),
       this.start("wasm", this.wasmConfig),
-      this.startTraefik(),
     ]);
-
     return [axelar, wasm];
   }
 
@@ -178,9 +177,7 @@ export class DockerService {
     try {
       execSync(`command -v docker 2>/dev/null`);
     } catch (error) {
-      throw new Error(
-        '"docker" command is not available.'
-      );
+      throw new Error('"docker" command is not available.');
     }
   }
 

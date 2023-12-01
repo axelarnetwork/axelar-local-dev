@@ -3,16 +3,10 @@ services:
   wasm:
     image: cosmwasm/wasmd:v0.42.0
     container_name: wasm
-    # env_file: ".env"
     command: "/root/private/bin/init_wasm.sh"
     volumes:
       - "./bin:/root/private/bin"
       - "./.wasm:/root/private/.wasm"
-    # ports:
-    # - "${CHAIN_RPC_PORT}:26657"
-    # - "${CHAIN_LCD_PORT}:1317"
-    #   - "26656:26656"
-    #   - "9090:9090"
     labels:
       - "traefik.enable=true"
 
