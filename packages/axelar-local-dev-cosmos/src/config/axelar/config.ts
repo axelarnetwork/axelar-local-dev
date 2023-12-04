@@ -21,6 +21,8 @@ const runChainSetup = () => {
 
 export const defaultAxelarConfig: ChainConfig = {
   dockerPath,
+  lcdWaitTimeout: 300000,
+  rpcWaitTimeout: 300000,
   onCompleted: async () => {
     // wait for 10 sec
     await new Promise((resolve) => setTimeout(resolve, 5000));

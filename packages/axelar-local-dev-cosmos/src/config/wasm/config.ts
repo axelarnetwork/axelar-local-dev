@@ -4,6 +4,8 @@ import { Path } from "../../path";
 
 export const defaultWasmConfig: ChainConfig = {
   dockerPath: Path.docker("wasm"),
+  lcdWaitTimeout: 180000,
+  rpcWaitTimeout: 180000,
   onCompleted: () => {},
 };
 

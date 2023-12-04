@@ -15,6 +15,8 @@ export interface CosmosChainInfo {
 
 export type ChainConfig = {
   dockerPath: string;
+  rpcWaitTimeout?: number;
+  lcdWaitTimeout?: number;
   onCompleted: (chainInfo: CosmosChainInfo) => void;
 };
 
