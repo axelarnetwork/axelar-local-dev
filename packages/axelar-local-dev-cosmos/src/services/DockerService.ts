@@ -43,8 +43,8 @@ export class DockerService {
     logger.log(`Starting ${chain} container...`);
     await compose.upOne(chain, config);
 
-    await this.waitForRpc(chain);
-    await this.waitForLcd(chain);
+    await this.waitForRpc(chain, options?.rpcWaitTimeout);
+    await this.waitForLcd(chain, options?.lcdWaitTimeout);
 
     const rpcUrl = `http://localhost/${chain}-rpc`;
     const lcdUrl = `http://localhost/${chain}-lcd`;
