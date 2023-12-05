@@ -8,12 +8,14 @@ ifndef VERSION
 endif
 
 push-arm64:
-	docker build --build-arg ARCH=arm64 -t $(IMAGE_NAME):$(VERSION)-arm64 . --push
+	docker buildx build --platform linux/arm64 --build-arg ARCH=arm64 -t $(IMAGE_NAME):$(VERSION)-arm64 . --push
 
 push-amd64:
-	docker build --build-arg ARCH=amd64 -t $(IMAGE_NAME):$(VERSION)-amd64 . --push
+	docker buildx build --platform linux/amd64 --build-arg ARCH=amd64 -t $(IMAGE_NAME):$(VERSION)-amd64 . --push
 
-push: push-arm64 push-amd64
+push:
+	make push-arm64
+	make push-amd64
 
 manifest:
 	docker manifest create $(IMAGE_NAME):$(VERSION) $(IMAGE_NAME):$(VERSION)-arm64 $(IMAGE_NAME):$(VERSION)-amd64

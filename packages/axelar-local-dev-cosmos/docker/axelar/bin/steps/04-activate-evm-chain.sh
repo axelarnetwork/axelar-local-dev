@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 CHAIN=${1:-ethereum}
 DIR="$(dirname "$0")"
