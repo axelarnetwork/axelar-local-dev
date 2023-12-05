@@ -1,11 +1,13 @@
 # Download axelar binary for alpine image
-FROM alpine:3.14.2
+FROM ubuntu:22.04
 
-# APK to install wget
-RUN apk add --no-cache wget
+# Define a build argument for architecture
+ARG ARCH=amd64
+
+RUN apt update && apt install -y wget
 
 # Download axelar binary for alpine image
-RUN wget https://github.com/axelarnetwork/axelar-core/releases/download/v0.34.1/axelard-linux-arm64-v0.34.1 -O axelard \
+RUN wget https://github.com/axelarnetwork/axelar-core/releases/download/v0.34.2/axelard-linux-${ARCH}-v0.34.2 -O axelard \
   && chmod +x axelard \
   && mv axelard /usr/local/bin/
 

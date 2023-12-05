@@ -6,16 +6,7 @@ MONIKER=axelar
 HOME=/root/private/.axelar
 
 # Removing the existing directory to start with a clean slate
-rm -rf ${HOME}
-
-# # Download the latest axelard binary
-# echo "Downloading axelard binary..."
-# wget https://github.com/axelarnetwork/axelar-core/releases/download/v0.34.1/axelard-linux-arm64-v0.34.1 -O axelard > /dev/null 2>&1 && echo "Downloaded axelard binary"
-
-# # Make the binary executable
-# chmod +x axelard
-# # Move the binary to the /usr/local/bin directory
-# mv axelard /usr/local/bin/axelard
+rm -rf ${HOME}/*
 
 DEFAULT_KEYS_FLAGS="--keyring-backend test --home ${HOME}"
 ASSETS="100000000000000000000${DENOM}"
