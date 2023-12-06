@@ -34,6 +34,7 @@ export const startAll = async () => {
 
 export const stopAll = async () => {
   await stopCosmosChains();
+  await stopIBCRelayer();
 };
 
 export const startCosmosChains = async () => {

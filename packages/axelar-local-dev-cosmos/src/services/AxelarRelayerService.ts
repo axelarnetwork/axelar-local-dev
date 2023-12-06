@@ -53,6 +53,12 @@ export class AxelarRelayerService extends Relayer {
     this.listened = true;
   }
 
+  async stopListening() {
+    await this.axelarListener.stop();
+
+    this.listened = false;
+  }
+
   async execute(commands: RelayCommand) {
     await this.executeWasmToEvm(commands);
     await this.executeEvmToWasm(commands);
