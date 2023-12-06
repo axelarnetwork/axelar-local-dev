@@ -47,6 +47,12 @@ export class AxelarListener {
       console.info(`[AxelarListener] Listening to "${event.type}" event`);
     });
 
+    ws.addEventListener("close", () => {
+      console.debug(`[AxelarListener] Closed connection. Reconnecting...`);
+
+      ws.reconnect();
+    });
+
     ws.addEventListener("message", (ev: MessageEvent<any>) => {
       // convert buffer to json
       const _event = JSON.parse(ev.data.toString());
