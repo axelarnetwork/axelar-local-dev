@@ -29,50 +29,61 @@ export class AxelarListener {
 
   public stop() {
     this.wsMap.forEach((ws) => {
+      ws.removeEventListener("close", () => this.onClose(ws));
       ws.close();
     });
   }
 
+  private onOpen<T>(ws: ReconnectingWebSocket, event: AxelarListenerEvent<T>) {
+    ws.send(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "subscribe",
+        params: [event.topicId],
+      })
+    );
+    console.info(`[AxelarListener] Listening to "${event.type}" event`);
+  }
+
+  private onClose(ws: ReconnectingWebSocket) {
+    console.debug(`[AxelarListener] Closed connection. Reconnecting...`);
+    ws.reconnect();
+  }
+
+  private onMessage<T>(
+    ws: ReconnectingWebSocket,
+    event: AxelarListenerEvent<T>,
+    ev: MessageEvent<any>,
+    callback: (args: T) => void
+  ) {
+    // convert buffer to json
+    const _event = JSON.parse(ev.data.toString());
+
+    // check if the event topic is matched
+    if (!_event.result || _event.result.query !== event.topicId) return;
+
+    console.debug(`[AxelarListener] Received ${event.type} event`);
+
+    // parse the event data
+    event
+      .parseEvent(_event.result.events)
+      .then((ev) => {
+        callback(ev);
+      })
+      .catch((e) => {
+        console.debug(
+          `[AxelarListener] Failed to parse topic ${event.topicId} GMP event: ${e}`
+        );
+      });
+  }
+
   public listen<T>(event: AxelarListenerEvent<T>, callback: (args: T) => void) {
     const ws = this.getOrInit(event.topicId);
-    ws.addEventListener("open", () => {
-      ws.send(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "subscribe",
-          params: [event.topicId],
-        })
-      );
-      console.info(`[AxelarListener] Listening to "${event.type}" event`);
-    });
-
-    ws.addEventListener("close", () => {
-      console.debug(`[AxelarListener] Closed connection. Reconnecting...`);
-
-      ws.reconnect();
-    });
-
+    ws.addEventListener("open", () => this.onOpen(ws, event));
+    ws.addEventListener("close", () => this.onClose(ws));
     ws.addEventListener("message", (ev: MessageEvent<any>) => {
-      // convert buffer to json
-      const _event = JSON.parse(ev.data.toString());
-
-      // check if the event topic is matched
-      if (!_event.result || _event.result.query !== event.topicId) return;
-
-      console.debug(`[AxelarListener] Received ${event.type} event`);
-
-      // parse the event data
-      event
-        .parseEvent(_event.result.events)
-        .then((ev) => {
-          callback(ev);
-        })
-        .catch((e) => {
-          console.debug(
-            `[AxelarListener] Failed to parse topic ${event.topicId} GMP event: ${e}`
-          );
-        });
+      this.onMessage(ws, event, ev, callback);
     });
   }
 }
