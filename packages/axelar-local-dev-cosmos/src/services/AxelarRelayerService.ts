@@ -45,12 +45,17 @@ export class AxelarRelayerService extends Relayer {
   async listenForEvents() {
     if (this.listened) return;
 
-    this.axelarListener.listen(AxelarCosmosContractCallEvent, async (args) => {
-      this.updateCallContractEvents(args);
-      this.execute(this.commands);
-    });
+    this.axelarListener.listen(
+      AxelarCosmosContractCallEvent,
+      this.handleContractCallEvent.bind(this)
+    );
 
     this.listened = true;
+  }
+
+  private async handleContractCallEvent(args: any) {
+    this.updateCallContractEvents(args);
+    await this.execute(this.commands);
   }
 
   async stopListening() {
@@ -151,11 +156,15 @@ export class AxelarRelayerService extends Relayer {
     );
   }
 
-  private async executeEvmGateway(
-    to: Network,
-    commands: Command[]
-  ): Promise<void> {
-    const data = arrayify(
+  private async executeEvmGateway(to: Network, commands: Command[]) {
+    const data = this.encodeGatewayData(to, commands);
+    const signedData = await getSignedExecuteInput(data, to.operatorWallet);
+
+    return this.sendExecuteTransaction(to, signedData);
+  }
+
+  private encodeGatewayData(to: Network, commands: Command[]) {
+    return arrayify(
       defaultAbiCoder.encode(
         ["uint256", "bytes32[]", "string[]", "bytes[]"],
         [
@@ -166,8 +175,9 @@ export class AxelarRelayerService extends Relayer {
         ]
       )
     );
-    const signedData = await getSignedExecuteInput(data, to.operatorWallet);
+  }
 
+  private async sendExecuteTransaction(to: Network, signedData: any) {
     return to.gateway
       .connect(to.ownerWallet)
       .execute(signedData, { gasLimit: BigInt(8e6) })

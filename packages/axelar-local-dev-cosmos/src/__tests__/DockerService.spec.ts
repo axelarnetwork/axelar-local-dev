@@ -70,7 +70,7 @@ describe("DockerService", () => {
         port_id: "transfer",
         channel_id: "channel-0",
       },
-      connection_hops: ["connection-2"],
+      connection_hops: ["connection-1"],
       version: "ics20-1",
       port_id: "transfer",
       channel_id: "channel-0",
