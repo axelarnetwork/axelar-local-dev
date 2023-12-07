@@ -31,8 +31,6 @@ describe("DockerService", () => {
     expect(parseInt(balance)).toBeGreaterThan(1);
   });
 
-  it("should have governance account", async () => {});
-
   it("should have registered evm chain", async () => {
     const response = await fetchAxelarLcd("axelar/evm/v1beta1/params/Ethereum");
     const { token_code, network, chain, burnable } = response.params;
