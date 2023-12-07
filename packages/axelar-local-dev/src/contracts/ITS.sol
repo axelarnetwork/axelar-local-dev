@@ -9,5 +9,5 @@ import { InterchainTokenDeployer } from '@axelar-network/interchain-token-servic
 import { TokenManager } from '@axelar-network/interchain-token-service/contracts/token-manager/TokenManager.sol';
 import { TokenHandler } from '@axelar-network/interchain-token-service/contracts/TokenHandler.sol';
 import { InterchainTokenService } from '@axelar-network/interchain-token-service/contracts/InterchainTokenService.sol';
-import { Proxy } from '@axelar-network/interchain-token-service/contracts/proxies/Proxy.sol';
+import { InterchainProxy } from '@axelar-network/interchain-token-service/contracts/proxies/InterchainProxy.sol';
 import { InterchainTokenFactory } from '@axelar-network/interchain-token-service/contracts/InterchainTokenFactory.sol';
