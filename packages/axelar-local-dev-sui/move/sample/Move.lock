@@ -2,30 +2,30 @@
 
 [move]
 version = 0
-manifest_digest = "40E7CC48C373DB6DD2C189111F63B77B78F93EE3EA2E1256D46DF2BD70069755"
-deps_digest = "C6C93A018C0B43F8AA8899B23B42E757DF9300785637696481F59EBFA35625D2"
+manifest_digest = "0EDEB57066A8F166917A87099F7DEC502108CDA37430B4E948FE20B60EA16A71"
+deps_digest = "3C4103934B1E040BB6B23F1D610B4EF9F2F1166A50A104EADCF77467C004C600"
+
+dependencies = [
+  { name = "Axelar" },
+  { name = "Sui" },
+]
+
+[[move.package]]
+name = "Axelar"
+source = { local = "../../../../node_modules/@axelar-network/axelar-cgp-sui/move/axelar" }
 
 dependencies = [
   { name = "Sui" },
-  { name = "axelar" },
 ]
 
 [[move.package]]
 name = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "77a9e0d", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/testnet", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 name = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "77a9e0d", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/testnet", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { name = "MoveStdlib" },
-]
-
-[[move.package]]
-name = "axelar"
-source = { local = "../axelar" }
-
-dependencies = [
-  { name = "Sui" },
 ]

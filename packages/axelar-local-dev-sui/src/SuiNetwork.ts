@@ -5,6 +5,7 @@ import { requestSuiFromFaucetV0, getFaucetHost } from '@mysten/sui.js/faucet';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { execSync, exec } from 'child_process';
 import { PublishedPackage } from './types';
+const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 
 /**
  * `SuiNetwork` class provides methods and functionalities to interact with the Sui network.
@@ -16,7 +17,6 @@ import { PublishedPackage } from './types';
  * @property {Ed25519Keypair} executor - Represents the keypair of the executor.
  * @property {string} faucetUrl - URL of the faucet for fetching tokens.
  * @property {string} nodeUrl - URL of the node to connect to the Sui network.
- * @property {PublishedPackage[]} gatewayObjects - Array to store packages compatible with gateway.
  *
  * Main Features:
  * - Initialize and fund the executor account.
@@ -28,7 +28,9 @@ export class SuiNetwork extends SuiClient {
     private executor: Ed25519Keypair;
     private faucetUrl: string;
     public nodeUrl: string;
-    public gatewayObjects: PublishedPackage[] = [];
+    public axelarValidators: string = '';
+    public axelarPackageId: string = '';
+    public axelarDiscoveryId: string = '';
 
     /**
      * Constructs an instance of SuiNetwork
@@ -37,6 +39,7 @@ export class SuiNetwork extends SuiClient {
      * @param faucetUrl - Optional faucet URL; defaults to localnet if not provided
      */
     constructor(nodeUrl?: string, faucetUrl?: string) {
+
         super({ url: nodeUrl || getFullnodeUrl('localnet') });
         this.nodeUrl = nodeUrl || getFullnodeUrl('localnet');
         this.faucetUrl = faucetUrl || getFaucetHost('localnet');
@@ -49,6 +52,22 @@ export class SuiNetwork extends SuiClient {
     async init() {
         // Fund executor account
         await this.fundWallet(this.getExecutorAddress());
+        
+        updateMoveToml('axelar', '0x0');
+        const {packageId, publishTxn } = await publishPackage('../move/axelar', this, this.executor);
+        updateMoveToml('axelar', packageId);
+        
+        const validators = publishTxn.objectChanges?.find((obj: any) => {
+            return obj.objectType && obj.objectType.endsWith('validators::AxelarValidators');
+        }) as any;
+        this.axelarValidators = validators.objectId;
+
+        const discovery = publishTxn.objectChanges?.find((obj: any) => {
+            return obj.objectType && obj.objectType.endsWith('discovery::RelayerDiscovery');
+        }) as any;
+        this.axelarDiscoveryId = discovery.objectId;
+
+        this.axelarPackageId = validators.objectType.slice(0, 66);
     }
 
     /**
@@ -77,7 +96,7 @@ export class SuiNetwork extends SuiClient {
         }
 
         const { modules, dependencies } = JSON.parse(
-            execSync(`sui move build --dump-bytecode-as-base64 --path ${modulePath} --with-unpublished-dependencies`, {
+            execSync(`sui move build --dump-bytecode-as-base64 --path ${modulePath}`, {
                 encoding: 'utf-8',
                 stdio: 'pipe', // silent the output
             }),
@@ -106,12 +125,10 @@ export class SuiNetwork extends SuiClient {
             throw new Error('No published packages');
         }
 
-        // add gateway compatible modules
-        this.gatewayObjects.push(...publishedPackages.filter((p: any) => p.modules.includes('gateway')));
-
         return {
             digest: result.digest,
             packages: publishedPackages,
+            publishTxn: result,
         };
     }
 
@@ -124,7 +141,7 @@ export class SuiNetwork extends SuiClient {
      * @returns A Promise with details of the transaction execution
      */
     public async execute(tx: TransactionBlock, keypair: Keypair = this.executor, options?: SuiTransactionBlockResponseOptions) {
-      // todo: add check for sui command
+        // todo: add check for sui command
         return this.signAndExecuteTransactionBlock({
             signer: keypair || this.executor,
             transactionBlock: tx,
@@ -137,6 +154,21 @@ export class SuiNetwork extends SuiClient {
                 showRawInput: true,
                 ...options,
             },
+        });
+    }
+
+    /**
+     * Signs and executes a transaction block
+     *
+     * @param tx - The transaction block to execute
+     * @param sender - Optional sender address to execute as, defaults to the executor address
+     * @returns A Promise with details of the transaction dev inspect
+     */
+    public async devInspect(tx: TransactionBlock, sender: string = this.executor.getPublicKey().toSuiAddress()) {
+        // todo: add check for sui command
+        return this.devInspectTransactionBlock({
+            sender: sender || this.executor.getPublicKey().toSuiAddress(),
+            transactionBlock: tx,
         });
     }
 

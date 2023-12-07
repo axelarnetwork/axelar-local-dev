@@ -2,8 +2,10 @@ import { ethers } from 'ethers';
 import { CallContractArgs, RelayData } from '@axelar-network/axelar-local-dev';
 import { SuiNetwork } from './SuiNetwork';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { BCS, getSuiMoveConfig } from '@mysten/bcs';
+import { getMoveCallFromTx } from './utils';
 
-const { defaultAbiCoder } = ethers.utils;
+const { defaultAbiCoder, arrayify } = ethers.utils;
 
 export class Command {
     commandId: string;
@@ -34,11 +36,36 @@ export class Command {
             [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.payload],
             [],
             async () => {
-                const tx = new TransactionBlock();
+
+
+                let tx = new TransactionBlock();
                 tx.moveCall({
-                    target: `${args.destinationContractAddress}::execute` as any,
-                    arguments: [tx.pure(commandId), tx.pure(args.from), tx.pure(args.sourceAddress), tx.pure(args.payload.slice(2))],
+                    target: `${suiNetwork.axelarPackageId}::discovery::get_transaction`,
+                    arguments: [tx.object(suiNetwork.axelarDiscoveryId), tx.pure(args.destinationContractAddress)]
                 });
+                let resp = await suiNetwork.devInspect(tx) as any;
+
+                tx = new TransactionBlock();
+                tx.moveCall(getMoveCallFromTx(tx, resp.results[0].returnValues[0][0], args.payload));
+                resp = await suiNetwork.devInspect(tx) as any;
+
+                tx = new TransactionBlock();
+                
+                const approvedCall = tx.moveCall({
+                    target: `${suiNetwork.axelarPackageId}::gateway::take_approved_call`,
+                    arguments: [
+                        tx.object(suiNetwork.axelarValidators as string),
+                        tx.pure(commandId),
+                        tx.pure(args.from),
+                        tx.pure(args.sourceAddress),
+                        tx.pure(args.destinationContractAddress),
+                        tx.pure(String.fromCharCode(...arrayify(args.payload))),
+                    ],
+                    typeArguments: [],
+                });
+
+                tx.moveCall(getMoveCallFromTx(tx, resp.results[0].returnValues[0][0], '', approvedCall));
+
                 return suiNetwork.execute(tx);
             },
             'sui',

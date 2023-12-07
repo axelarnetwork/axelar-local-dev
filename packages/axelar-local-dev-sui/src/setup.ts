@@ -1,3 +1,4 @@
+import { evmRelayer } from '@axelar-network/axelar-local-dev';
 import { SuiNetwork } from './SuiNetwork';
 import { SuiRelayer } from './SuiRelayer';
 
@@ -23,10 +24,10 @@ export async function initSui(
 }> {
     try {
         suiNetwork = new SuiNetwork(nodeUrl, faucetUrl);
-
         await suiNetwork.init();
 
         suiRelayer = new SuiRelayer(suiNetwork);
+        evmRelayer.otherRelayers.sui = suiRelayer;
 
         return { suiNetwork, suiRelayer };
     } catch (error) {

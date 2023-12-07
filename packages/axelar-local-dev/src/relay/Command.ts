@@ -25,6 +25,7 @@ export class Command {
         this.commandId = commandId;
         this.name = name;
         this.data = data;
+
         this.encodedData =
             ['sui', 'aptos', 'wasm'].includes(chain || '') && name === 'approve_contract_call'
                 ? ''
