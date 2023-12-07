@@ -6,7 +6,7 @@ import fetch from "node-fetch";
 
 setLogger(() => undefined);
 
-describe("docker", () => {
+describe("DockerService", () => {
   it("should start containers successfully", async () => {
     const testLcd = "cosmos/base/tendermint/v1beta1/node_info";
     const healthAxelarRpc = await fetch("http://localhost/axelar-rpc");

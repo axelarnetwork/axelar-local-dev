@@ -16,7 +16,7 @@ import {
 } from "../..";
 import SendReceive from "../../../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json";
 
-describe.only("Relayer", () => {
+describe("Relayer", () => {
   let cosmosRelayer: AxelarRelayerService;
   let evmNetwork: Network;
   let wasmClient: CosmosClient;
