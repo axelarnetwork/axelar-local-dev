@@ -6,7 +6,8 @@ export class AxelarListener {
   private wsMap: Map<string, ReconnectingWebSocket>;
   private wsOptions = {
     WebSocket, // custom WebSocket constructor
-    maxRetries: Infinity,
+    connectionTimeout: 1000,
+    maxRetries: 10,
   };
 
   private wsUrl: string;
@@ -85,7 +86,7 @@ export class AxelarListener {
     const ws = this.getOrInit(event.topicId);
     this.onCloseHandler = () => this.onClose(ws);
     ws.addEventListener("open", () => this.onOpen(ws, event));
-    ws.addEventListener("close", this.onCloseHandler);
+    // ws.addEventListener("close", this.onCloseHandler);
     ws.addEventListener("message", (ev: MessageEvent<any>) => {
       this.onMessage(ws, event, ev, callback);
     });

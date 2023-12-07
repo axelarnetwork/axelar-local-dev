@@ -1,6 +1,6 @@
 {
   "name": "@axelar-network/axelar-local-dev-cosmos",
-  "version": "2.2.0-alpha.22",
+  "version": "2.2.0-alpha.23",
   "main": "dist/index.js",
   "files": [
     "dist/",
@@ -40,5 +40,5 @@
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1"
   },
-  "gitHead": "edb9fdf483ef580883ff962e0a1b7430b2dd768e"
+  "gitHead": "fb3e90d22771db6f6f2b0fb054009f5ca74e966b"
 }
