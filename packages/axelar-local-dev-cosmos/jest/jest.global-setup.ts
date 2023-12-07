@@ -1,3 +1,5 @@
+import { startAll } from "../src/setup";
+
 async function waitForRpc(chain: string, timeout = 120000): Promise<void> {
   const start = Date.now();
   const interval = 3000;
@@ -21,8 +23,7 @@ async function waitForRpc(chain: string, timeout = 120000): Promise<void> {
 
 export default async () => {
   try {
-    await waitForRpc("axelar", 5000);
-    await waitForRpc("wasm", 5000);
+    await startAll();
   } catch (e) {
     console.error(
       "\nPlease make sure you have started the docker containers by running `npm start` before running tests"

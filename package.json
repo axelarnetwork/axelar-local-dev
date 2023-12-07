@@ -21,6 +21,7 @@
     "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
     "test:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run test",
     "test:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run test",
+    "test-e2e:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run test:e2e",
     "build": "lerna run build",
     "build:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run build",
     "build:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run build",
