@@ -1,4 +1,4 @@
-import ReconnectingWebSocket from "reconnecting-websocket";
+import ReconnectingWebSocket, { CloseEvent } from "reconnecting-websocket";
 import WebSocket from "isomorphic-ws";
 import { AxelarListenerEvent, CosmosChainInfo } from "../types";
 
@@ -10,6 +10,7 @@ export class AxelarListener {
   };
 
   private wsUrl: string;
+  private onCloseHandler?: (event: CloseEvent) => void;
 
   constructor(config: Pick<CosmosChainInfo, "wsUrl">) {
     this.wsMap = new Map();
@@ -29,7 +30,9 @@ export class AxelarListener {
 
   public stop() {
     this.wsMap.forEach((ws) => {
-      ws.removeEventListener("close", () => this.onClose(ws));
+      if (this.onCloseHandler) {
+        ws.removeEventListener("close", this.onCloseHandler);
+      }
       ws.close();
     });
   }
@@ -80,8 +83,9 @@ export class AxelarListener {
 
   public listen<T>(event: AxelarListenerEvent<T>, callback: (args: T) => void) {
     const ws = this.getOrInit(event.topicId);
+    this.onCloseHandler = () => this.onClose(ws);
     ws.addEventListener("open", () => this.onOpen(ws, event));
-    ws.addEventListener("close", () => this.onClose(ws));
+    ws.addEventListener("close", this.onCloseHandler);
     ws.addEventListener("message", (ev: MessageEvent<any>) => {
       this.onMessage(ws, event, ev, callback);
     });
