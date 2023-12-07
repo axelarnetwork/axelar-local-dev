@@ -1,7 +1,7 @@
 import { setLogger } from "@axelar-network/axelar-local-dev";
 import { exportOwnerAccountFromContainer } from "../utils";
 import { fetchAxelarLcd } from "./lib/fetchLcd";
-import { CosmosClient } from "../";
+import { CosmosClient } from "..";
 import fetch from "node-fetch";
 
 setLogger(() => undefined);

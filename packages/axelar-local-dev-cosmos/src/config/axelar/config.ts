@@ -1,12 +1,13 @@
 import { exec } from "child_process";
 import { ChainConfig, CosmosChainInfo } from "../../types";
 import { Path } from "../../path";
+import { logger } from "@axelar-network/axelar-local-dev";
 
 const dockerPath = Path.docker("axelar");
 
 const runChainSetup = () => {
   return new Promise((resolve, reject) => {
-    console.debug(`You can monitor the setup log at ${dockerPath}/setup.log`);
+    logger.log(`You can monitor the setup log at ${dockerPath}/setup.log`);
     exec(
       `${dockerPath}/bin/setup.sh > ${dockerPath}/setup.log 2>&1`,
       (error: any, stdout: any, stderr: any) => {

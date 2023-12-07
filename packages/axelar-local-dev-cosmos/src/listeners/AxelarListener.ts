@@ -1,6 +1,7 @@
 import ReconnectingWebSocket, { CloseEvent } from "reconnecting-websocket";
 import WebSocket from "isomorphic-ws";
 import { AxelarListenerEvent, CosmosChainInfo } from "../types";
+import { logger } from "@axelar-network/axelar-local-dev";
 
 export class AxelarListener {
   private wsMap: Map<string, ReconnectingWebSocket>;
@@ -47,7 +48,7 @@ export class AxelarListener {
         params: [event.topicId],
       })
     );
-    console.info(`[AxelarListener] Listening to "${event.type}" event`);
+    logger.log(`[AxelarListener] Listening to "${event.type}" event`);
   }
 
   private onClose(ws: ReconnectingWebSocket) {
@@ -67,7 +68,7 @@ export class AxelarListener {
     // check if the event topic is matched
     if (!_event.result || _event.result.query !== event.topicId) return;
 
-    console.debug(`[AxelarListener] Received ${event.type} event`);
+    logger.log(`[AxelarListener] Received ${event.type} event`);
 
     // parse the event data
     event
@@ -76,7 +77,7 @@ export class AxelarListener {
         callback(ev);
       })
       .catch((e) => {
-        console.debug(
+        logger.log(
           `[AxelarListener] Failed to parse topic ${event.topicId} GMP event: ${e}`
         );
       });
@@ -86,7 +87,6 @@ export class AxelarListener {
     const ws = this.getOrInit(event.topicId);
     this.onCloseHandler = () => this.onClose(ws);
     ws.addEventListener("open", () => this.onOpen(ws, event));
-    // ws.addEventListener("close", this.onCloseHandler);
     ws.addEventListener("message", (ev: MessageEvent<any>) => {
       this.onMessage(ws, event, ev, callback);
     });
