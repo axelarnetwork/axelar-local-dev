@@ -13,18 +13,20 @@ export class CosmosClient {
   private constructor(
     chainInfo: Required<CosmosChainInfo>,
     owner: DirectSecp256k1HdWallet,
-    client: SigningCosmWasmClient
+    client: SigningCosmWasmClient,
+    gasPrice: GasPrice = GasPrice.fromString(`1${chainInfo.denom}`)
   ) {
     this.chainInfo = chainInfo;
     this.owner = owner;
     this.client = client;
-    this.gasPrice = GasPrice.fromString(`1${chainInfo.denom}`);
+    this.gasPrice = gasPrice;
   }
 
   static async create(
     chain: CosmosChain = "wasm",
     mnemonic?: string,
-    config: Omit<CosmosChainInfo, "owner"> = { prefix: chain }
+    config: Omit<CosmosChainInfo, "owner"> = { prefix: chain },
+    gasPrice: GasPrice = GasPrice.fromString(`1${config.denom}`)
   ) {
     const defaultDenom = chain === "wasm" ? "uwasm" : "uaxl";
     const chainInfo = {
@@ -49,7 +51,7 @@ export class CosmosClient {
     const client = await SigningCosmWasmClient.connectWithSigner(
       chainInfo.rpcUrl,
       owner,
-      { gasPrice: GasPrice.fromString(`1${chainInfo.denom}`) }
+      { gasPrice: gasPrice }
     );
 
     return new CosmosClient(
@@ -62,7 +64,8 @@ export class CosmosClient {
         prefix: chain,
       },
       owner,
-      client
+      client,
+      gasPrice
     );
   }
 
@@ -82,6 +85,12 @@ export class CosmosClient {
     return DirectSecp256k1HdWallet.generate(12, { prefix });
   }
 
+  /**
+   * Retrieves the balance of a given address. Defaults to the chain's denom.
+   * @param address The address to query the balance for.
+   * @param denom The denomination of the tokens.
+   * @returns Promise<string> The balance of the account.
+   */
   getBalance(address: string, denom?: string) {
     return this.client
       .getBalance(address, denom || this.chainInfo.denom)
@@ -154,7 +163,6 @@ export class CosmosClient {
         gasPrice: this.gasPrice,
       }
     );
-
 
     return {
       client,

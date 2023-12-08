@@ -33,7 +33,6 @@ export class DockerService {
     const { dockerPath } = options;
 
     await this.throwIfDockerNotFound();
-
     await this.throwIfDockerNotRunning(dockerPath);
 
     const config: IDockerComposeOptions = {
