@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-sui",
-    "version": "2.1.8",
+    "version": "2.2.0-beta.1",
     "main": "dist/index.js",
     "files": [
         "dist/",
