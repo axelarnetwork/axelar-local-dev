@@ -12,7 +12,11 @@ The `axelar-local-dev` package is all you need for cross-chain applications betw
 
 - [EVM <-> Aptos Integration Guide](./packages/axelar-local-dev-aptos/README.md#configuration)
 - [EVM <-> Near Integration Guide](./packages/axelar-local-dev-near/README.md#configuration)
-- [Evm <-> Sui Integration Guide](./packages/axelar-local-dev-sui/README.md)
+- [Evm <-> Sui Integration Guide](./packages/axelar-local-dev-sui/README.md)\
+
+## Prerequisites
+
+- This project is developed with Ethers.js version 5. Please note that it may not function correctly if you are using Ethers.js version 6 or later. It is recommended to use version 5 to ensure compatibility and proper operation of the project.
 
 ## Installation
 
