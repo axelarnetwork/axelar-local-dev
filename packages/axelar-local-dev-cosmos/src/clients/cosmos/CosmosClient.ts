@@ -10,6 +10,13 @@ export class CosmosClient {
   public client: SigningCosmWasmClient;
   public gasPrice: GasPrice;
 
+  /**
+   * Constructs a new instance of the CosmosClient.
+   * @param chainInfo The required information about the Cosmos chain.
+   * @param owner The DirectSecp256k1HdWallet instance representing the owner's account.
+   * @param client The SigningCosmWasmClient instance for interacting with the blockchain.
+   * @param gasPrice The gas price to be used for transactions. Defaults to `1denom`.
+   */
   private constructor(
     chainInfo: Required<CosmosChainInfo>,
     owner: DirectSecp256k1HdWallet,
@@ -22,6 +29,14 @@ export class CosmosClient {
     this.gasPrice = gasPrice;
   }
 
+  /**
+   * Asynchronously creates a new instance of the CosmosClient.
+   * @param chain The Cosmos chain to interact with. Defaults to 'wasm'.
+   * @param mnemonic The mnemonic for generating the wallet. If not provided, one is generated.
+   * @param config Additional configuration for the chain, excluding the owner's info.
+   * @param gasPrice The gas price to be used for transactions. Defaults to `1denom`.
+   * @returns A promise that resolves to an instance of CosmosClient.
+   */
   static async create(
     chain: CosmosChain = "wasm",
     mnemonic?: string,
@@ -90,6 +105,12 @@ export class CosmosClient {
    * @param address The address to query the balance for.
    * @param denom The denomination of the tokens.
    * @returns Promise<string> The balance of the account.
+   *
+   * @example
+   * const balance = await cosmosClient.getBalance("cosmos1...", "uatom");
+   * console.log(balance); // Outputs the balance, e.g., "1000"
+   *
+   * @throws {Error} Throws an error if the network request fails.
    */
   getBalance(address: string, denom?: string) {
     return this.client
@@ -97,6 +118,10 @@ export class CosmosClient {
       .then((res) => res.amount);
   }
 
+  /**
+   * Retrieves the chain information of the CosmosClient instance.
+   * @returns An object containing the chain's information, excluding the owner's details.
+   */
   getChainInfo(): Omit<CosmosChainInfo, "owner"> {
     return {
       prefix: this.chainInfo.prefix,
@@ -107,6 +132,13 @@ export class CosmosClient {
     };
   }
 
+  /**
+   * Sends tokens from the owner's account to another address.
+   * @param address The address to send tokens to.
+   * @param amount The amount of tokens to send.
+   * @returns A promise that resolves to the transaction result.
+   * @throws An error if the transaction fails.
+   */
   async fundWallet(address: string, amount: string) {
     const ownerAddress = await this.getOwnerAccount();
 
@@ -131,6 +163,12 @@ export class CosmosClient {
       });
   }
 
+  /**
+   * Uploads a WebAssembly module to the blockchain.
+   * @param path The file path of the WebAssembly module.
+   * @returns A promise that resolves to the upload transaction result.
+   * @throws An error if the upload fails.
+   */
   async uploadWasm(path: string) {
     const wasm = readFileSync(path);
 
@@ -145,6 +183,12 @@ export class CosmosClient {
     return this.chainInfo.owner.address;
   }
 
+  /**
+   * Generates a random signing client with a new account and funds it.
+   * @param chain The chain for which to generate the client. Defaults to 'wasm'.
+   * @param amount The amount of tokens to fund the new account. Defaults to '10000000'.
+   * @returns A promise that resolves to an object containing the new client and its address.
+   */
   async generateRandomSigningClient(
     chain: CosmosChain = "wasm",
     amount: string = "10000000"
