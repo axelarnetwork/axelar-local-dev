@@ -41,7 +41,7 @@ export class CosmosClient {
     chain: CosmosChain = "wasm",
     mnemonic?: string,
     config: Omit<CosmosChainInfo, "owner"> = { prefix: chain },
-    gasPrice: GasPrice = GasPrice.fromString(`1${config.denom}`)
+    gasPrice?: GasPrice
   ) {
     const defaultDenom = chain === "wasm" ? "uwasm" : "uaxl";
     const chainInfo = {
@@ -50,6 +50,7 @@ export class CosmosClient {
       rpcUrl: config.rpcUrl || `http://localhost/${chain}-rpc`,
       wsUrl: config.wsUrl || `ws://localhost/${chain}-rpc/websocket`,
     };
+    gasPrice = gasPrice || GasPrice.fromString(`1${chainInfo.denom}`);
 
     let _mnemonic = mnemonic;
     if (!_mnemonic) {
