@@ -16,6 +16,10 @@ The `axelar-local-dev` package is all you need for cross-chain applications betw
 - [Evm <-> Sui Integration Guide](./packages/axelar-local-dev-sui/README.md)
 - [Evm <-> Cosmos Integration Guide](./packages/axelar-local-dev-cosmos/README.md)
 
+## Prerequisites
+
+- This project is developed with Ethers.js version 5. Please note that it may not function correctly if you are using Ethers.js version 6 or later. It is recommended to use version 5 to ensure compatibility and proper operation of the project.
+
 ## Installation
 
 To install the core package, use the following command:
