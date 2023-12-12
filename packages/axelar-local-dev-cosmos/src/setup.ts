@@ -36,7 +36,7 @@ export const setupIBCChannels = async () => {
 
   logger.log("Setting up IBC Channels");
   await retry(async () => {
-    await ibcRelayer.setup();
+    await ibcRelayer.createIBCChannelIfNeeded();
   });
   logger.log("IBC Channels setup completed!");
 };

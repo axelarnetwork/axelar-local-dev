@@ -28,12 +28,10 @@ describe("Relayer", () => {
     "illness step primary sibling donkey body sphere pigeon inject antique head educate";
 
   beforeAll(async () => {
-    ibcRelayer = await IBCRelayerService.create(testMnemonic);
-    await ibcRelayer.setup();
+    cosmosRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
+    ibcRelayer = cosmosRelayer.ibcRelayer;
     wasmClient = ibcRelayer.wasmClient;
     srcChannelId = ibcRelayer.srcChannelId || "channel-0";
-
-    cosmosRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
     evmNetwork = await createNetwork({
       name: "Ethereum",
     });
@@ -70,11 +68,11 @@ describe("Relayer", () => {
     wasmContractAddress = contractAddress;
     evmContract = evmSendReceive;
 
-    // Initialize relay commands
-    await relay({
-      wasm: cosmosRelayer,
-      evm: evmRelayer,
-    });
+    // // Initialize relay commands
+    // await relay({
+    //   wasm: cosmosRelayer,
+    //   evm: evmRelayer,
+    // });
   });
 
   it("should be able to relay from evm to wasm chain", async () => {
@@ -104,7 +102,7 @@ describe("Relayer", () => {
   });
 
   it("should be able to relay from wasm to evm chain", async () => {
-    await cosmosRelayer.listenForEvents();
+    // await cosmosRelayer.listenForEvents();
 
     const senderAddress = wasmClient.getOwnerAccount();
 
@@ -124,7 +122,7 @@ describe("Relayer", () => {
       [{ amount: "100000", denom: "uwasm" }]
     );
 
-    await ibcRelayer.relay();
+    // await ibcRelayer.relay();
 
     await relay({
       wasm: cosmosRelayer,

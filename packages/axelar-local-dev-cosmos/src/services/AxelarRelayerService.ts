@@ -17,29 +17,40 @@ import { Command as WasmCommand } from "../Command";
 import { ethers } from "ethers";
 import { arrayify, defaultAbiCoder } from "ethers/lib/utils";
 import { CosmosClient } from "../clients";
+import { IBCRelayerService } from "./IBCRelayerService";
 
 export class AxelarRelayerService extends Relayer {
   private axelarListener: AxelarListener;
   private wasmClient: CosmosClient;
   private listened = false;
+  public ibcRelayer: IBCRelayerService;
 
   private constructor(
     axelarListener: AxelarListener,
-    wasmClient: CosmosClient
+    wasmClient: CosmosClient,
+    ibcRelayer: IBCRelayerService
   ) {
     super();
     this.axelarListener = axelarListener;
     this.wasmClient = wasmClient;
+    this.ibcRelayer = ibcRelayer;
   }
 
-  static async create(axelarConfig: Omit<CosmosChainInfo, "owner">) {
+  static async create(
+    axelarConfig: Omit<CosmosChainInfo, "owner">,
+    ibcRelayer?: IBCRelayerService
+  ) {
     const axelarListener = new AxelarListener(axelarConfig);
     const wasmClient = await CosmosClient.create("wasm");
-    return new AxelarRelayerService(axelarListener, wasmClient);
+    const _ibcRelayer = ibcRelayer || (await IBCRelayerService.create());
+    await _ibcRelayer.createIBCChannelIfNeeded();
+
+    return new AxelarRelayerService(axelarListener, wasmClient, _ibcRelayer);
   }
 
   async updateEvents() {
-    // no-op
+    await this.listenForEvents();
+    await this.ibcRelayer.relay();
   }
 
   async listenForEvents() {
