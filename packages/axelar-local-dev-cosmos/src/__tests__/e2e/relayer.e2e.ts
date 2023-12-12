@@ -50,7 +50,7 @@ describe("Relayer", () => {
 
     // Instantiate the contract
     const { client, address: senderAddress } =
-      await wasmClient.generateRandomSigningClient();
+      await wasmClient.createFundedSigningClient();
 
     const { contractAddress } = await client.instantiate(
       senderAddress,

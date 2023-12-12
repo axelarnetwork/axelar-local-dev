@@ -185,12 +185,12 @@ export class CosmosClient {
   }
 
   /**
-   * Generates a random signing client with a new account and funds it.
+   * Creates a random signing client with a new account and funds it.
    * @param chain The chain for which to generate the client. Defaults to 'wasm'.
    * @param amount The amount of tokens to fund the new account. Defaults to '10000000'.
    * @returns A promise that resolves to an object containing the new client and its address.
    */
-  async generateRandomSigningClient(
+  async createFundedSigningClient(
     chain: CosmosChain = "wasm",
     amount: string = "10000000"
   ) {
