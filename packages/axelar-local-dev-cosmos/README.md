@@ -1,10 +1,12 @@
 # Axelar Local Dev Cosmos
 
-> Note: This package is under development and may have unstable functionalities.
+Axelar Local Dev Cosmos offers a comprehensive suite of tools for local development involving Cosmos chains. With this package, developers can easily deploy WebAssembly (Wasm) contracts on a Wasm chain and seamlessly send cross-chain messages to the Ethereum Virtual Machine (EVM) chain.
+
+> **Note:** This package is currently under development. Some functionalities might be unstable.
 
 ## Prerequisite
 
-- Docker running on your local machine.
+- Docker installed and running on your local machine.
 
 ## Quick Start
 
@@ -16,31 +18,19 @@ Run the following command to pull the Docker image, set up the chains, and estab
 npm run start
 ```
 
-or just call the start function like the following:
+Alternatively, you can start the chains programmatically:
 
 ```ts
-import { startAll } from "@axelar-network/axelar-local-dev-cosmos";
+import { startChains } from "@axelar-network/axelar-local-dev-cosmos";
 
-startAll();
+startChains();
 ```
 
-## Run IBC Relayer and Axelar Event Listener
+## Running IBC Relayer and Axelar Event Listener
 
-Now, you have to run the Axelar Listener to keep listening to incoming IBC events from IBC Relayer which relays message from Wasm chain to Axelar chain.
+After setting up the chains, follow these steps to run the IBC Relayer and Axelar Event Listener:
 
-1. **Run IBC Relayer** to relay messages periodically:
-
-```ts
-const {
-  IBCRelayerService,
-} = require("@axelar-network/axelar-local-dev-cosmos");
-
-const ibcRelayer = await IBCRelayerService.create();
-await ibcRelayer.setup();
-await ibcRelayer.runInterval();
-```
-
-2. **Run Axelar Relayer Service** to keep listening to incoming events:
+**Create Axelar Relayer Service** for initailizing the IBC channels and keep listening to incoming events:
 
 ```ts
 import {
@@ -51,16 +41,19 @@ import {
 const axelarRelayerService = await AxelarRelayerService.create(
   defaultAxelarChainInfo
 );
-
-await axelarRelayerService.listenForEvents();
 ```
 
-### Relaying Messages
+## Relaying Messages
 
-After submitting a message from `Ethereum` or `Wasm` chain, use the relay function:
+To relay messages after they have been submitted on the Ethereum or Wasm chains, use the following method:
 
 ```ts
-import { evmRelayer } from "@axelar-network/axelar-local-dev";
+import {
+  evmRelayer,
+  createNetwork,
+  relay,
+  RelayerType,
+} from "@axelar-network/axelar-local-dev";
 import {
   defaultAxelarChainInfo,
   AxelarRelayerService,
@@ -70,10 +63,10 @@ import {
 const evmNetwork = await createNetwork({ name: "Ethereum" });
 const wasmRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
 
-// Deploy contracts, send message, and call relay function
+// Deploy contracts, send messages, and call the relay function
 // ...
 
-// evmRelayer is initialized prior to export.
+evmRelayer.setRelayer(RelayerType.Wasm, wasmRelayer);
 await relay({
   wasm: wasmRelayer,
   evm: evmRelayer,
@@ -85,7 +78,7 @@ await relay({
 
 ### Examples
 
-- Currently, we support Ethereum as the destination chain for messages from the Wasm chain.
-- See our [Local E2E Test](src/__tests__/e2e/relayer.e2e.ts) and [Axelar Example](https://github.com/axelarnetwork/axelar-examples/tree/feat/add-cosmos-examples/examples/cosmos/call-contract) for implementation details.
+- We currently support `Ethereum` as the destination chain for messages originating from the Wasm chain.
+- For implementation details, see our [Local Example](docs/example.md) and [Axelar Example](https://github.com/axelarnetwork/axelar-examples/tree/feat/add-cosmos-examples/examples/cosmos/call-contract).
 
-> The Local E2E test utilizes the same contracts as in the Axelar Examples.
+> The Local Example utilizes the same contracts as in the Axelar Examples.
