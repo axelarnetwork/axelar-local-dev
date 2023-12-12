@@ -1,6 +1,6 @@
 {
   "name": "@axelar-network/axelar-local-dev-cosmos",
-  "version": "2.2.0-alpha.26",
+  "version": "2.2.0-alpha.27",
   "main": "dist/index.js",
   "files": [
     "dist/",
@@ -21,7 +21,7 @@
     "stop": "ts-node scripts/stop.ts"
   },
   "dependencies": {
-    "@axelar-network/axelar-local-dev": "2.2.0-alpha.26",
+    "@axelar-network/axelar-local-dev": "^2.2.0-alpha.27",
     "@confio/relayer": "^0.10.0",
     "@cosmjs/cosmwasm-stargate": "^0.31.1",
     "@cosmjs/stargate": "^0.31.1",
