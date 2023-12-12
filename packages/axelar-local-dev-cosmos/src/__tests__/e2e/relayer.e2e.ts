@@ -24,8 +24,6 @@ describe("Relayer", () => {
   let ibcRelayer: IBCRelayerService;
   let wasmContractAddress: string;
   let evmContract: Contract;
-  let testMnemonic =
-    "illness step primary sibling donkey body sphere pigeon inject antique head educate";
 
   beforeAll(async () => {
     cosmosRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
