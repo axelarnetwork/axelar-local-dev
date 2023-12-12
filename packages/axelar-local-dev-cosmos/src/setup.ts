@@ -45,7 +45,7 @@ export const setupIBCChannels = async () => {
  * Starts all necessary services including Axelar, Wasm Chains in docker containers and IBC channels.
  * This function is a high-level method to initiate all the required components for the relayer service.
  */
-export const startAll = async () => {
+export const startChains = async () => {
   await startCosmosChains();
   await setupIBCChannels();
 };
@@ -61,15 +61,15 @@ export const stopAll = async () => {
 
 /**
  * Starts all Cosmos chains using the DockerService.
- * It invokes the `DockerService.startAll` method to spin up Axelar and Wasm chains.
+ * It invokes the `DockerService.startChains` method to spin up Axelar and Wasm chains.
  */
 export const startCosmosChains = async () => {
-  await dockerService.startAll();
+  await dockerService.startChains();
 };
 
 /**
  * Stop all Cosmos chains.
- * It invokes the `DockerService.startAll` method to spin up Axelar and Wasm chains.
+ * It invokes the `DockerService.startChains` method to spin up Axelar and Wasm chains.
  */
 export const stopCosmosChains = async () => {
   await dockerService.stopAll();

@@ -17,7 +17,7 @@ export class DockerService {
     this.wasmConfig = wasmConfig || defaultWasmConfig;
   }
 
-  async startAll() {
+  async startChains() {
     await this.startTraefik();
     const [axelar, wasm] = await Promise.all([
       this.start("axelar", this.axelarConfig),

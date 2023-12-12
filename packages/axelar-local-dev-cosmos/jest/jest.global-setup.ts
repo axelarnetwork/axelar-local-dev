@@ -1,4 +1,4 @@
-import { startAll } from "../src/setup";
+import { startChains } from "../src/setup";
 
 async function waitForRpc(chain: string, timeout = 120000): Promise<void> {
   const start = Date.now();
@@ -23,7 +23,7 @@ async function waitForRpc(chain: string, timeout = 120000): Promise<void> {
 
 export default async () => {
   try {
-    await startAll();
+    await startChains();
   } catch (e) {
     console.error(
       "\nPlease make sure you have started the docker containers by running `npm start` before running tests"
