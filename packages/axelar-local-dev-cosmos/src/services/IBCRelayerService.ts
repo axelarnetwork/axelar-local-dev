@@ -1,4 +1,4 @@
-import { CosmosClient, IBCRelayerClient, AxelarListener } from ".."; // Replace with your actual import path
+import { CosmosClient, IBCRelayerClient, AxelarListener, retry } from ".."; // Replace with your actual import path
 
 export class IBCRelayerService {
   wasmClient: CosmosClient;
@@ -27,7 +27,9 @@ export class IBCRelayerService {
   }
 
   public async relay() {
-    return this.relayerClient.relayPackets();
+    return retry(async () => {
+      return this.relayerClient.relayPackets();
+    });
   }
 
   public async setup() {
@@ -48,7 +50,7 @@ export class IBCRelayerService {
 
     // Use new account to relay packets
     this.currentInterval = setInterval(async () => {
-      await this.relay().catch((err) => {});
+      await this.relay();
     }, interval);
   }
 

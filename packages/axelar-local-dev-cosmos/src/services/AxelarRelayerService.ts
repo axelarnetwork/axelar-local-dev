@@ -140,6 +140,7 @@ export class AxelarRelayerService extends Relayer {
       transactionHash: event.hash,
       sourceEventIndex: 0,
     };
+
     const commandId = this.getWasmLogID(event);
     this.relayData.callContract[commandId] = contractCallArgs;
     const command = Command.createEVMContractCallCommand(
@@ -147,6 +148,11 @@ export class AxelarRelayerService extends Relayer {
       this.relayData,
       contractCallArgs
     );
+
+    if (!this.commands[contractCallArgs.to]) {
+      this.commands[contractCallArgs.to] = [];
+    }
+
     this.commands[contractCallArgs.to].push(command);
   }
 

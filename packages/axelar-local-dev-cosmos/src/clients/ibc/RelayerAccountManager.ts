@@ -12,8 +12,8 @@ import { convertCosmosAddress } from "../..";
  * - Get the relayer fund on wasm and axelar
  */
 export class RelayerAccountManager {
-  public static DEFAULT_FUND_AMOUNT = "1000000000";
-  public static DEFAULT_MIN_FUND_AMOUNT = "10000000";
+  public static DEFAULT_FUND_AMOUNT = "10000000000";
+  public static DEFAULT_MIN_FUND_AMOUNT = "100000000";
   private axelarClient: CosmosClient;
   private wasmClient: CosmosClient;
   public relayerAccount: DirectSecp256k1HdWallet;
