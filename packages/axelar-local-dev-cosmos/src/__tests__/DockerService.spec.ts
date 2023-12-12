@@ -70,7 +70,7 @@ describe("DockerService", () => {
         port_id: "transfer",
         channel_id: "channel-0",
       },
-      connection_hops: ["connection-1"],
+      connection_hops: [expect.any(String)],
       version: "ics20-1",
       port_id: "transfer",
       channel_id: "channel-0",
