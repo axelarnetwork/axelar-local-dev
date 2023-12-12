@@ -26,6 +26,7 @@
     "@cosmjs/cosmwasm-stargate": "^0.31.1",
     "@cosmjs/stargate": "^0.31.1",
     "@types/sinon": "^17.0.2",
+    "bech32": "^2.0.0",
     "docker-compose": "^0.24.3",
     "node-fetch": "^2.7.0",
     "reconnecting-websocket": "^4.4.0",
@@ -41,5 +42,5 @@
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1"
   },
-  "gitHead": "23eb1208544f8669e0a38c3936ee0a6f80597f0f"
+  "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70"
 }

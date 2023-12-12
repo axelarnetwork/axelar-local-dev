@@ -7,7 +7,7 @@ import {
 } from "ethers/lib/utils";
 import crypto from "crypto";
 import fs from "fs";
-import bech32 from "bech32";
+import { bech32 } from "bech32";
 import { CosmosChain } from "./types";
 
 import path from "path";
