@@ -29,6 +29,11 @@ import { MultiversXConfig } from './multiversXNetworkUtils';
 import { ContractQueryResponse } from '@multiversx/sdk-network-providers/out/contractQueryResponse';
 import createKeccakHash from 'keccak';
 
+const MULTIVERSX_SIGNED_MESSAGE_PREFIX = '\x19MultiversX Signed Message:\n';
+const CHAIN_ID = 'multiversx-localnet';
+
+const codec = new BinaryCodec();
+
 export class MultiversXNetwork extends ProxyNetworkProvider {
     public owner: Address;
     public ownerAccount: Account;
@@ -126,7 +131,10 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             throw new Error(`Could not deploy Contract...`);
         }
 
-        const contractAddress = SmartContract.computeAddress(deployTransaction.getSender(), deployTransaction.getNonce());
+        const contractAddress = SmartContract.computeAddress(
+            deployTransaction.getSender(),
+            deployTransaction.getNonce()
+        );
 
         return contractAddress.bech32();
     }
@@ -174,11 +182,11 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(authTransaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not deploy Axelar Auth contract... ${ authTransaction.getHash() }`);
+            throw new Error(`Could not deploy Axelar Auth contract... ${authTransaction.getHash()}`);
         }
 
         const axelarAuthAddress = SmartContract.computeAddress(authTransaction.getSender(), authTransaction.getNonce());
-        console.log(`Auth contract deployed at ${ axelarAuthAddress } with transaction ${ authTransaction.getHash() }`);
+        console.log(`Auth contract deployed at ${axelarAuthAddress} with transaction ${authTransaction.getHash()}`);
 
         return axelarAuthAddress.bech32();
     }
@@ -195,7 +203,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             codeMetadata: new CodeMetadata(true, true, false, false),
             initArguments: [
                 new AddressValue(Address.fromBech32(axelarAuthAddress)),
-                new AddressValue(Address.fromBech32('erd1qqqqqqqqqqqqqpgq7ykazrzd905zvnlr88dpfw06677lxe9w0n4suz00uh')) // TODO: This is currently not used
+                new StringValue(CHAIN_ID),
             ],
             gasLimit: 50_000_000,
             chainID: 'localnet'
@@ -205,11 +213,14 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(gatewayTransaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not deploy Axelar Gateway contract... ${ gatewayTransaction.getHash() }`);
+            throw new Error(`Could not deploy Axelar Gateway contract... ${gatewayTransaction.getHash()}`);
         }
 
-        const axelarGatewayAddress = SmartContract.computeAddress(gatewayTransaction.getSender(), gatewayTransaction.getNonce());
-        console.log(`Gateway contract deployed at ${ axelarGatewayAddress } with transaction ${ gatewayTransaction.getHash() }`);
+        const axelarGatewayAddress = SmartContract.computeAddress(
+            gatewayTransaction.getSender(),
+            gatewayTransaction.getNonce()
+        );
+        console.log(`Gateway contract deployed at ${axelarGatewayAddress} with transaction ${gatewayTransaction.getHash()}`);
 
         return axelarGatewayAddress.bech32();
     }
@@ -229,7 +240,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(transaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not change owner of Axelar Gateway contract... ${ transaction.getHash() }`);
+            throw new Error(`Could not change owner of Axelar Gateway contract... ${transaction.getHash()}`);
         }
 
         console.log('Changed contract owner of Auth contract...');
@@ -256,11 +267,14 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(gasReceiverTransaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not deploy Axelar Auth contract... ${ gasReceiverTransaction.getHash() }`);
+            throw new Error(`Could not deploy Axelar Auth contract... ${gasReceiverTransaction.getHash()}`);
         }
 
-        const axelarGasReceiverAddress = SmartContract.computeAddress(gasReceiverTransaction.getSender(), gasReceiverTransaction.getNonce());
-        console.log(`Gas Receiver contract deployed at ${ axelarGasReceiverAddress } with transaction ${ gasReceiverTransaction.getHash() }`);
+        const axelarGasReceiverAddress = SmartContract.computeAddress(
+            gasReceiverTransaction.getSender(),
+            gasReceiverTransaction.getNonce()
+        );
+        console.log(`Gas Receiver contract deployed at ${axelarGasReceiverAddress} with transaction ${gasReceiverTransaction.getHash()}`);
 
         return axelarGasReceiverAddress.bech32();
     }
@@ -277,7 +291,9 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             return ReturnCode.Unknown;
         }
 
-        const transactionOnNetwork = await new TransactionWatcher(this).awaitCompleted(transaction);
+        const transactionOnNetwork = await new TransactionWatcher({
+            getTransaction: async (hash: string) => { return await this.getTransaction(hash, true); }
+        }).awaitCompleted(transaction);
         const { returnCode } = new ResultsParser().parseUntypedOutcome(transactionOnNetwork);
 
         return returnCode;
@@ -300,38 +316,44 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceAddress: string,
         destinationAddress: string,
         payloadHash: string,
-        sourceTxHash: string,
-        sourceTxIndex: number
     ) {
         const gatewayContract = new SmartContract({ address: this.gatewayAddress as Address });
 
-        const nestedData = Tuple.fromItems([
+        const approveContractCallData = Tuple.fromItems([
             new StringValue(sourceChain),
             new StringValue(sourceAddress),
             new AddressValue(Address.fromBech32(destinationAddress)),
-            new BytesValue(Buffer.from(payloadHash, 'hex')),
-            new StringValue(sourceTxHash),
-            new BigUIntValue(sourceTxIndex)
+            new H256Value(Buffer.from(payloadHash, 'hex')),
         ]);
-        const encodedNestedData = new BinaryCodec().encodeTopLevel(nestedData);
+        const encodedApproveContractCallData = codec.encodeTopLevel(approveContractCallData);
 
         const executeData = Tuple.fromItems([
-            List.fromItems([new StringValue(commandId)]),
+            new StringValue(CHAIN_ID),
+            List.fromItems([new H256Value(Buffer.from(commandId, 'hex'))]),
             List.fromItems([new StringValue(commandName)]),
             List.fromItems([
-                new BytesValue(encodedNestedData)
-            ])
+                new BytesValue(encodedApproveContractCallData),
+            ]),
         ]);
+        const encodedExecuteData = codec.encodeTopLevel(executeData);
 
-        const proof = this.generateProof(executeData);
+        console.log('Command id', commandId);
+        console.log('MultiversX execute data', executeData);
+
+        const proof = this.generateProof(encodedExecuteData);
+        const encodedProof = codec.encodeTopLevel(proof);
+
+        console.log('MultiversX execute proof', encodedProof.toString('hex'));
 
         const transaction = gatewayContract.call({
             caller: this.owner,
             func: new ContractFunction('execute'),
             gasLimit: 50_000_000,
             args: [
-                executeData,
-                proof
+                Tuple.fromItems([
+                    new BytesValue(encodedExecuteData),
+                    new BytesValue(encodedProof),
+                ]),
             ],
             chainID: 'localnet'
         });
@@ -344,7 +366,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(transaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not execute MultiversX Gateway transaction... ${ transaction.getHash() }`);
+            throw new Error(`Could not execute MultiversX Gateway transaction... ${transaction.getHash()}`);
         }
 
         return transaction;
@@ -380,29 +402,35 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(transaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not call MultiversX contract execute endpoint... ${ transaction.getHash() }`);
+            throw new Error(`Could not call MultiversX contract execute endpoint... ${transaction.getHash()}`);
         }
 
         return transaction;
     }
 
-    private generateProof(executeData: Tuple) {
-        const encodedData = new BinaryCodec().encodeTopLevel(executeData);
+    private generateProof(encodedData: Buffer) {
+        const messageHashData = Buffer.concat([
+            Buffer.from(MULTIVERSX_SIGNED_MESSAGE_PREFIX),
+            encodedData
+        ]);
 
-        const dataHash = createKeccakHash('keccak256').update(encodedData).digest('hex');
+        const messageHash = createKeccakHash('keccak256').update(messageHashData).digest('hex');
 
         const homedir = os.homedir();
         const operatorWalletFile = path.resolve(homedir, 'multiversx-sdk/testwallets/latest/users/bob.pem');
 
         const file = fs.readFileSync(operatorWalletFile).toString();
 
-        const signature = UserSecretKey.fromPem(file).sign(Buffer.from(dataHash, 'hex'));
+        const signature = UserSecretKey.fromPem(file).sign(Buffer.from(messageHash, 'hex'));
+
+        console.log('Data hash', messageHash);
+        console.log('Signature', signature.toString('hex'));
 
         return Tuple.fromItems([
-            List.fromItems([new AddressValue(this.operatorWallet)]),
+            List.fromItems([new H256Value(Buffer.from(this.operatorWallet.hex(), 'hex'))]),
             List.fromItems([new BigUIntValue(1)]),
             new BigUIntValue(1),
-            List.fromItems([new H256Value(signature)])
+            List.fromItems([new H256Value(signature)]),
         ]);
     }
 }

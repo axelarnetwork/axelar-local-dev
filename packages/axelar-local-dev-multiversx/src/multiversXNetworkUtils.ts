@@ -72,7 +72,7 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
             console.error(e);
         }
     } else {
-        console.log('MultiversX Axelar Gateway contract is already deployed');
+        console.log(`MultiversX Axelar Gateway contract is already deployed at ${loadingMultiversXNetwork.gatewayAddress}`);
     }
 
     multiversXNetwork = loadingMultiversXNetwork;
