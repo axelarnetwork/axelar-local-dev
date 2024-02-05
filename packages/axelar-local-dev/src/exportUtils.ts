@@ -2,11 +2,13 @@
 
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
-import { Network, NetworkOptions } from './Network';
+import { Network, NetworkOptions, networks } from './Network';
 import { RelayData, RelayerMap, relay } from './relay';
 import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
-import { testnetInfo, mainnetInfo } from './info';
+import { testnetInfo } from './info';
 import { EvmRelayer } from './relay/EvmRelayer';
+import { getChainArray } from '@axelar-network/axelar-chains-config';
+import { registerRemoteITS } from './its';
 
 let interval: any;
 
@@ -60,9 +62,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             seed: name,
             ganacheOptions: {},
         });
-        const testnet = testnetInfo.find((info: any) => {
-            return info.name === name;
-        });
+        const testnet = (testnetInfo as any)[name];
         const info = chain.getCloneInfo() as any;
         info.rpc = `http://localhost:${_options.port}/${i}`;
         (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), localChains.push(info);
@@ -86,6 +86,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
 
         i++;
     }
+    await registerRemoteITS(networks);
     listen(_options.port);
     interval = setInterval(async () => {
         if (relaying) return;
@@ -94,12 +95,14 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         if (options.afterRelay) {
             const evmRelayData = _options.relayers.evm?.relayData;
             const nearRelayData = _options.relayers.near?.relayData;
-            const aptosRelayDAta = _options.relayers.aptos?.relayData;
+            const aptosRelayData = _options.relayers.aptos?.relayData;
+            const suiRelayData = _options.relayers.sui?.relayData;
             const multiversXRelayData = _options.relayers.multiversx?.relayData;
 
             evmRelayData && (await options.afterRelay(evmRelayData));
             nearRelayData && (await options.afterRelay(nearRelayData));
-            aptosRelayDAta && (await options.afterRelay(aptosRelayDAta));
+            aptosRelayData && (await options.afterRelay(aptosRelayData));
+            suiRelayData && (await options.afterRelay(suiRelayData));
             multiversXRelayData && (await options.afterRelay(multiversXRelayData));
         }
         relaying = false;
@@ -130,7 +133,8 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     if (_options.env != 'mainnet' && _options.env != 'testnet') {
         console.log(`Forking ${_options.env.length} chains from custom data.`);
     }
-    const chainsRaw = _options.env == 'mainnet' ? mainnetInfo : _options.env == 'testnet' ? testnetInfo : _options.env;
+    const chainsRaw =
+        _options.env == 'mainnet' ? getChainArray('mainnet') : _options.env == 'testnet' ? getChainArray('testnet') : _options.env;
 
     const chains =
         _options.chains?.length == 0

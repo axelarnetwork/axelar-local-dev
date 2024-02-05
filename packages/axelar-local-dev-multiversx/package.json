@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-multiversx",
-    "version": "3.0.0",
+    "version": "2.2.0",
     "main": "dist/index.js",
     "files": [
         "dist/",
@@ -15,15 +15,15 @@
         "prettier": "prettier --write 'src/**/*.ts'"
     },
     "dependencies": {
-        "@axelar-network/axelar-local-dev": "3.0.0",
-        "@multiversx/sdk-core": "^12.5.0",
-        "@multiversx/sdk-network-providers": "^1.5.0",
-        "@multiversx/sdk-wallet": "^4.2.0",
-        "keccak": "^3.0.3",
-        "@elastic/elasticsearch": "^8.9.0"
+        "@axelar-network/axelar-local-dev": "2.2.0",
+        "@multiversx/sdk-core": "^12.18.0",
+        "@multiversx/sdk-network-providers": "^2.2.1",
+        "@multiversx/sdk-wallet": "^4.3.0",
+        "keccak": "^3.0.4",
+        "@elastic/elasticsearch": "^8.12.0"
     },
     "devDependencies": {
-        "@types/keccak": "^3.0.1"
+        "@types/keccak": "^3.0.4"
     },
     "author": "",
     "license": "ISC",

@@ -1,15 +1,7 @@
-## Axelar Local Dev: MultiversX Integration
+# Axelar Local Dev: MultiversX Integration
 
-This package allows you to create a local development environment for cross-chain communication using the [MultiversX](https://multiversx.com/) protocol.
-At present, we support general message passing with EVM chain but integration with other blockchains is not currently supported.
-
-## Installation
-
-To install this package, use the following command:
-
-```bash
-npm install @axelar-network/axelar-local-dev-multiversx
-```
+Welcome to the Axelar Local Development MultiversX featuring MultiversX Integration. This package empowers developers to establish a local development environment for streamlined cross-chain communication utilizing the [MultiversX protocol](https://multiversx.com/).
+Currently, the integration facilitates general message passing exclusively with the EVM chain.
 
 ## Prerequisite
 
@@ -17,15 +9,15 @@ npm install @axelar-network/axelar-local-dev-multiversx
 
 1. Install Mxpy CLI Tool
 
-Download from here: https://docs.multiversx.com/sdk-and-tools/sdk-py/installing-mxpy#install-using-mxpy-up-recommended
+Download from here: https://docs.multiversx.com/sdk-and-tools/sdk-py/installing-mxpy/
 
-_Note: Our examples are tested on Mxpy version `7.3.0`, but newer versions might also work._
+> **Note**: Our examples are tested on Mxpy version `9.4.1`, but newer versions might also work.
 
-2Run Elasticsearch
+2. Run Elasticsearch
 
 `dcker-compose up -d` (in this folder)
 
-3Create & run a MultiversX Localnet
+3. Create & run a MultiversX Localnet
 
 More info: https://docs.multiversx.com/developers/setup-local-testnet
 
@@ -43,6 +35,14 @@ and overwrite the existing file.
 This will setup connection to Elasticsearch to index events used by the MultiversXRelayer.
 
 Start again the localnet: `mxpy localnet start`
+
+## Installation
+
+To install this package, use the following command:
+
+```bash
+npm install @axelar-network/axelar-local-dev-multiversx
+```
 
 ## Configuration
 

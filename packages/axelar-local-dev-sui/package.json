@@ -1,0 +1,27 @@
+{
+    "name": "@axelar-network/axelar-local-dev-sui",
+    "version": "2.2.0",
+    "main": "dist/index.js",
+    "files": [
+        "dist/",
+        "!dist/types",
+        "!dist/artifacts"
+    ],
+    "scripts": {
+        "test": "jest",
+        "clean": "rm -rf src/types dist artifacts",
+        "prettier": "prettier --write 'src/**/*.ts'",
+        "build": "npm run clean && npm run build-ts && npm run build-contract",
+        "build-ts": "tsc",
+        "build-contract": "hardhat compile",
+        "build-sui": "cd move && sui move build"
+    },
+    "dependencies": {
+        "@axelar-network/axelar-cgp-sui": "https://github.com/axelarnetwork/axelar-cgp-sui.git",
+        "@axelar-network/axelar-local-dev": "2.2.0",
+        "@mysten/sui.js": "^0.41.0"
+    },
+    "author": "euro@axelar.network",
+    "license": "ISC",
+    "description": ""
+}

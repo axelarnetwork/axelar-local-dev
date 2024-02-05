@@ -18,11 +18,13 @@
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
     "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
     "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
+    "test:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run test",
     "test:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run test",
     "build": "lerna run build",
     "build:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run build",
     "build:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run build",
     "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build",
+    "build:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run build",
     "build:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run build"
   },
   "devDependencies": {

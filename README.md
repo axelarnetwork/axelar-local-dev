@@ -6,13 +6,22 @@ Welcome to the Axelar Local Development Environment! This monorepo contains esse
 - **Optional Packages**:
   - [@axelar-network/axelar-local-dev-aptos](./packages/axelar-local-dev-aptos/)
   - [@axelar-network/axelar-local-dev-near](./packages/axelar-local-dev-near/)
+<<<<<<< HEAD
   - [@axelar-network/axelar-local-dev-multiversx](./packages/axelar-local-dev-multiversx/)
+=======
+  - [@axelar-network/axelar-local-dev-sui](./packages/axelar-local-dev-sui/)
+>>>>>>> main
 
 The `axelar-local-dev` package is all you need for cross-chain applications between EVM chains. However, if you wish to explore cross-chain applications between EVM chains and other chain stacks, check out our specific guides:
 
 - [EVM <-> Aptos Integration Guide](./packages/axelar-local-dev-aptos/README.md#configuration)
 - [EVM <-> Near Integration Guide](./packages/axelar-local-dev-near/README.md#configuration)
+- [Evm <-> Sui Integration Guide](./packages/axelar-local-dev-sui/README.md)\
 - [EVM <-> MultiversX Integration Guide](./packages/axelar-local-dev-multiversx/README.md#configuration)
+
+## Prerequisites
+
+- This project is developed with Ethers.js version 5. Please note that it may not function correctly if you are using Ethers.js version 6 or later. It is recommended to use version 5 to ensure compatibility and proper operation of the project.
 
 ## Installation
 
@@ -36,6 +45,8 @@ Visit our [axelar-examples repo](https://github.com/axelarnetwork/axelar-example
 
 We currently support the following chain stacks:
 
+- [EVM](./packages/axelar-local-dev/)
 - [Aptos](./packages/axelar-local-dev-aptos/)
 - [Near](./packages/axelar-local-dev-near/)
+- [Sui](./packages/axelar-local-dev-sui/)
 - [MultiversX](./packages/axelar-local-dev-multiversx/)
