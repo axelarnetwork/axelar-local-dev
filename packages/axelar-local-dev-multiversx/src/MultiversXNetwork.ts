@@ -1,6 +1,6 @@
 import {
     Account,
-    Address,
+    Address, AddressType,
     AddressValue,
     BigUIntValue,
     BinaryCodec,
@@ -9,15 +9,15 @@ import {
     ContractFunction,
     H256Value,
     Interaction,
-    List,
+    List, OptionType, OptionValue,
     ResultsParser,
     ReturnCode,
-    SmartContract,
+    SmartContract, StringType,
     StringValue,
     Transaction,
     TransactionWatcher,
     Tuple,
-    TypedValue
+    TypedValue, U8Value, VariadicValue
 } from '@multiversx/sdk-core/out';
 import { ProxyNetworkProvider } from '@multiversx/sdk-network-providers/out';
 import { Code } from '@multiversx/sdk-core';
@@ -41,6 +41,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
     public gatewayAddress?: Address;
     public authAddress?: Address;
     public gasReceiverAddress?: Address;
+    public interchainTokenServiceAddress?: Address;
+    public interchainTokenFactoryAddress?: Address;
     public contractAddress?: string;
 
     private readonly ownerPrivateKey: UserSecretKey;
@@ -50,6 +52,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         gatewayAddress: string | undefined,
         authAddress: string | undefined,
         gasReceiverAddress: string | undefined,
+        interchainTokenServiceAddress: string | undefined,
+        interchainTokenFactoryAddress: string | undefined,
         contractAddress: string | undefined = undefined
     ) {
         super(url);
@@ -68,6 +72,16 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             this.gasReceiverAddress = gasReceiverAddress ? Address.fromBech32(gasReceiverAddress) : undefined;
         } catch (e) {
         }
+        try {
+            this.interchainTokenServiceAddress = interchainTokenServiceAddress ? Address.fromBech32(
+                interchainTokenServiceAddress) : undefined;
+        } catch (e) {
+        }
+        try {
+            this.interchainTokenFactoryAddress = interchainTokenFactoryAddress ? Address.fromBech32(
+                interchainTokenFactoryAddress) : undefined;
+        } catch (e) {
+        }
 
         this.contractAddress = contractAddress;
 
@@ -82,7 +96,13 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const accountOnNetwork = await this.getAccount(this.owner);
         this.ownerAccount.update(accountOnNetwork);
 
-        if (!this.gatewayAddress || !this.authAddress || !this.gasReceiverAddress) {
+        if (
+            !this.gatewayAddress
+            || !this.authAddress
+            || !this.gasReceiverAddress
+            || !this.interchainTokenServiceAddress
+            || !this.interchainTokenFactoryAddress
+        ) {
             return false;
         }
 
@@ -90,8 +110,16 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             const accountGateway = await this.getAccount(this.gatewayAddress);
             const accountAuth = await this.getAccount(this.authAddress);
             const accountGasReceiver = await this.getAccount(this.gasReceiverAddress);
+            const interchainTokenServiceAddress = await this.getAccount(this.interchainTokenServiceAddress);
+            const interchainTokenFactoryAddress = await this.getAccount(this.interchainTokenFactoryAddress);
 
-            if (!accountGateway.code || !accountAuth.code || !accountGasReceiver.code) {
+            if (
+                !accountGateway.code
+                || !accountAuth.code
+                || !accountGasReceiver.code
+                || !interchainTokenServiceAddress.code
+                || !interchainTokenFactoryAddress.code
+            ) {
                 return false;
             }
 
@@ -150,14 +178,27 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const axelarGasReceiverAddress = await this.deployGasReceiverContract(contractFolder);
 
+        const baseTokenManager = await this.deployBaseTokenManager(contractFolder);
+        const interchainTokenServiceAddress = await this.deployInterchainTokenService(
+            contractFolder,
+            axelarGatewayAddress,
+            axelarGasReceiverAddress,
+            baseTokenManager
+        );
+        const interchainTokenFactoryAddress = await this.deployInterchainTokenFactory(contractFolder, interchainTokenServiceAddress);
+
         this.gatewayAddress = Address.fromBech32(axelarGatewayAddress);
         this.authAddress = Address.fromBech32(axelarAuthAddress);
         this.gasReceiverAddress = Address.fromBech32(axelarGasReceiverAddress);
+        this.interchainTokenServiceAddress = Address.fromBech32(interchainTokenServiceAddress);
+        this.interchainTokenFactoryAddress = Address.fromBech32(interchainTokenFactoryAddress);
 
         return {
             axelarAuthAddress,
             axelarGatewayAddress,
-            axelarGasReceiverAddress
+            axelarGasReceiverAddress,
+            interchainTokenServiceAddress,
+            interchainTokenFactoryAddress,
         };
     }
 
@@ -207,7 +248,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             codeMetadata: new CodeMetadata(true, true, false, false),
             initArguments: [
                 new AddressValue(Address.fromBech32(axelarAuthAddress)),
-                new StringValue(CHAIN_ID),
+                new StringValue(CHAIN_ID)
             ],
             gasLimit: 50_000_000,
             chainID: 'localnet'
@@ -271,7 +312,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const returnCode = await this.signAndSendTransaction(gasReceiverTransaction);
 
         if (!returnCode.isSuccess()) {
-            throw new Error(`Could not deploy Axelar Auth contract... ${gasReceiverTransaction.getHash()}`);
+            throw new Error(`Could not deploy Axelar Gas Receiver contract... ${gasReceiverTransaction.getHash()}`);
         }
 
         const axelarGasReceiverAddress = SmartContract.computeAddress(
@@ -281,6 +322,167 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         console.log(`Gas Receiver contract deployed at ${axelarGasReceiverAddress} with transaction ${gasReceiverTransaction.getHash()}`);
 
         return axelarGasReceiverAddress.bech32();
+    }
+
+    private async deployBaseTokenManager(contractFolder: string): Promise<string> {
+        const buffer = await promises.readFile(contractFolder + '/token-manager.wasm');
+
+        const code = Code.fromBuffer(buffer);
+        const contract = new SmartContract();
+
+        // Deploy parameters don't matter since they will be overwritten
+        const tokenManagerTransaction = contract.deploy({
+            deployer: this.owner,
+            code,
+            codeMetadata: new CodeMetadata(true, true, false, false),
+            initArguments: [
+                new AddressValue(this.owner),
+                new U8Value(2),
+                new H256Value(Buffer.from('01b3d64c8c6530a3aad5909ae7e0985d4438ce8eafd90e51ce48fbc809bced39', 'hex')),
+                Tuple.fromItems([
+                    new OptionValue(new OptionType(new AddressType()), new AddressValue(this.owner)),
+                    new OptionValue(new OptionType(new StringType()), new StringValue('EGLD')),
+                ])
+            ],
+            gasLimit: 50_000_000,
+            chainID: 'localnet'
+        });
+        tokenManagerTransaction.setNonce(this.ownerAccount.getNonceThenIncrement());
+
+        const returnCode = await this.signAndSendTransaction(tokenManagerTransaction);
+
+        if (!returnCode.isSuccess()) {
+            throw new Error(`Could not deploy Axelar Token Manager contract... ${tokenManagerTransaction.getHash()}`);
+        }
+
+        const address = SmartContract.computeAddress(
+            tokenManagerTransaction.getSender(),
+            tokenManagerTransaction.getNonce()
+        );
+        console.log(`Base Token Manager contract deployed at ${address} with transaction ${tokenManagerTransaction.getHash()}`);
+
+        return address.bech32();
+    }
+
+    private async deployInterchainTokenService(
+        contractFolder: string,
+        gateway: string,
+        gasService: string,
+        baseTokenManager: string
+    ): Promise<string> {
+        const buffer = await promises.readFile(contractFolder + '/interchain-token-service.wasm');
+
+        const code = Code.fromBuffer(buffer);
+        const contract = new SmartContract();
+
+        const itsTransaction = contract.deploy({
+            deployer: this.owner,
+            code,
+            codeMetadata: new CodeMetadata(true, true, false, false),
+            initArguments: [
+                new AddressValue(Address.fromBech32(gateway)),
+                new AddressValue(Address.fromBech32(gasService)),
+                new AddressValue(Address.fromBech32(baseTokenManager)),
+                new AddressValue(this.owner),
+                new StringValue('multiversx'),
+                VariadicValue.fromItemsCounted(), // empty trusted chains
+                VariadicValue.fromItemsCounted(),
+            ],
+            gasLimit: 200_000_000,
+            chainID: 'localnet'
+        });
+        itsTransaction.setNonce(this.ownerAccount.getNonceThenIncrement());
+
+        const returnCode = await this.signAndSendTransaction(itsTransaction);
+
+        if (!returnCode.isSuccess()) {
+            throw new Error(`Could not deploy Axelar Interchain Token Service contract... ${itsTransaction.getHash()}`);
+        }
+
+        const address = SmartContract.computeAddress(
+            itsTransaction.getSender(),
+            itsTransaction.getNonce()
+        );
+        console.log(`Interchain Token Service contract deployed at ${address} with transaction ${itsTransaction.getHash()}`);
+
+        return address.bech32();
+    }
+
+    private async deployInterchainTokenFactory(contractFolder: string, interchainTokenService: string): Promise<string> {
+        const buffer = await promises.readFile(contractFolder + '/interchain-token-factory.wasm');
+
+        const code = Code.fromBuffer(buffer);
+        const contract = new SmartContract();
+        const itsAddress = Address.fromBech32(interchainTokenService);
+
+        const factoryTransaction = contract.deploy({
+            deployer: this.owner,
+            code,
+            codeMetadata: new CodeMetadata(true, true, false, false),
+            initArguments: [
+                new AddressValue(itsAddress),
+            ],
+            gasLimit: 200_000_000,
+            chainID: 'localnet'
+        });
+        factoryTransaction.setNonce(this.ownerAccount.getNonceThenIncrement());
+
+        let returnCode = await this.signAndSendTransaction(factoryTransaction);
+
+        if (!returnCode.isSuccess()) {
+            throw new Error(`Could not deploy Axelar Interchain Token Factory contract... ${factoryTransaction.getHash()}`);
+        }
+
+        const address = SmartContract.computeAddress(
+            factoryTransaction.getSender(),
+            factoryTransaction.getNonce()
+        );
+        console.log(`Interchain Token Factory contract deployed at ${address} with transaction ${factoryTransaction.getHash()}`);
+
+        const itsContract = new SmartContract({ address: itsAddress });
+        // Set interchain token factory contract on its
+        const transaction = itsContract.call({
+            caller: this.owner,
+            func: new ContractFunction('setInterchainTokenFactory'),
+            gasLimit: 50_000_000,
+            args: [
+                new AddressValue(address),
+            ],
+            chainID: 'localnet'
+        });
+
+        transaction.setNonce(this.ownerAccount.getNonceThenIncrement());
+
+        returnCode = await this.signAndSendTransaction(transaction);
+
+        if (!returnCode.isSuccess()) {
+            throw new Error(`Could not set Axelar ITS address on Axelar Interchain Token Factory... ${transaction.getHash()}`);
+        }
+
+        return address.bech32();
+    }
+
+    async setInterchainTokenServiceTrustedAddress(chainName: string, address: string) {
+        console.log(`Registerring ITS for ${chainName} for MultiversX`);
+        const itsContract = new SmartContract({ address: this.interchainTokenServiceAddress });
+        const transaction = itsContract.call({
+            caller: this.owner,
+            func: new ContractFunction('setTrustedAddress'),
+            gasLimit: 50_000_000,
+            args: [
+                new StringValue(chainName),
+                new StringValue(address),
+            ],
+            chainID: 'localnet'
+        });
+
+        transaction.setNonce(this.ownerAccount.getNonceThenIncrement());
+
+        const returnCode = await this.signAndSendTransaction(transaction);
+
+        if (!returnCode.isSuccess()) {
+            throw new Error(`Could not call setTrustedAddress on MultiversX ITS contract form ${chainName}... ${transaction.getHash()}`);
+        }
     }
 
     async signAndSendTransaction(transaction: Transaction, privateKey: UserSecretKey = this.ownerPrivateKey): Promise<ReturnCode> {
@@ -319,7 +521,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceChain: string,
         sourceAddress: string,
         destinationAddress: string,
-        payloadHash: string,
+        payloadHash: string
     ) {
         // Remove 0x added by Ethereum for hex strings
         commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;
@@ -330,7 +532,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             new StringValue(sourceChain),
             new StringValue(sourceAddress),
             new AddressValue(Address.fromBech32(destinationAddress)),
-            new H256Value(Buffer.from(payloadHash, 'hex')),
+            new H256Value(Buffer.from(payloadHash, 'hex'))
         ]);
         const encodedApproveContractCallData = codec.encodeTopLevel(approveContractCallData);
 
@@ -339,8 +541,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             List.fromItems([new H256Value(Buffer.from(commandId, 'hex'))]),
             List.fromItems([new StringValue(commandName)]),
             List.fromItems([
-                new BytesValue(encodedApproveContractCallData),
-            ]),
+                new BytesValue(encodedApproveContractCallData)
+            ])
         ]);
         const encodedExecuteData = codec.encodeTopLevel(executeData);
 
@@ -354,8 +556,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             args: [
                 Tuple.fromItems([
                     new BytesValue(encodedExecuteData),
-                    new BytesValue(encodedProof),
-                ]),
+                    new BytesValue(encodedProof)
+                ])
             ],
             chainID: 'localnet'
         });
@@ -432,7 +634,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             List.fromItems([new H256Value(Buffer.from(this.operatorWallet.hex(), 'hex'))]),
             List.fromItems([new BigUIntValue(1)]),
             new BigUIntValue(1),
-            List.fromItems([new H256Value(signature)]),
+            List.fromItems([new H256Value(signature)])
         ]);
     }
 }

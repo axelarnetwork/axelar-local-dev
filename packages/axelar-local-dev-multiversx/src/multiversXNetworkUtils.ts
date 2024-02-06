@@ -12,6 +12,8 @@ export interface MultiversXConfig {
     axelarAuthAddress: string;
     axelarGatewayAddress: string;
     axelarGasReceiverAddress: string;
+    interchainTokenServiceAddress: string;
+    interchainTokenFactoryAddress: string;
     contractAddress?: string;
 }
 
@@ -54,6 +56,8 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
         configFile?.axelarGatewayAddress,
         configFile?.axelarAuthAddress,
         configFile?.axelarGasReceiverAddress,
+        configFile?.interchainTokenServiceAddress,
+        configFile?.interchainTokenFactoryAddress,
         configFile?.contractAddress,
     );
 
@@ -90,6 +94,8 @@ export async function loadMultiversXNetwork(
         configFile?.axelarGatewayAddress,
         configFile?.axelarAuthAddress,
         configFile?.axelarGasReceiverAddress,
+        configFile?.interchainTokenServiceAddress,
+        configFile?.interchainTokenFactoryAddress,
         configFile?.contractAddress,
     );
 
