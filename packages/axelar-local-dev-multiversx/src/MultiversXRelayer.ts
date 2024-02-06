@@ -275,6 +275,10 @@ export class MultiversXRelayer extends Relayer {
     }
 
     createCallContractCommand(commandId: string, relayData: RelayData, contractCallArgs: CallContractArgs): Command {
+        if (contractCallArgs.destinationContractAddress === multiversXNetwork.interchainTokenServiceAddress?.bech32()) {
+            return MultiversXCommand.createContractCallCommandIts(commandId, relayData, contractCallArgs);
+        }
+
         return MultiversXCommand.createContractCallCommand(commandId, relayData, contractCallArgs);
     }
 

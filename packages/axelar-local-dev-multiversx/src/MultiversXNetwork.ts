@@ -581,7 +581,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         destinationContractAddress: string,
         sourceChain: string,
         sourceAddress: string,
-        payloadHex: string
+        payloadHex: string,
+        value: string = '0',
     ): Promise<Transaction> {
         // Remove 0x added by Ethereum for hex strings
         commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;
@@ -591,13 +592,14 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const transaction = contract.call({
             caller: this.owner,
             func: new ContractFunction('execute'),
-            gasLimit: 50_000_000,
+            gasLimit: 200_000_000,
             args: [
                 new H256Value(Buffer.from(commandId, 'hex')),
                 new StringValue(sourceChain),
                 new StringValue(sourceAddress),
                 new BytesValue(Buffer.from(payloadHex, 'hex'))
             ],
+            value,
             chainID: 'localnet'
         });
 
