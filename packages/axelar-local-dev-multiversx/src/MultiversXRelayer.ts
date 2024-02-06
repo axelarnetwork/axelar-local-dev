@@ -56,8 +56,8 @@ export class MultiversXRelayer extends Relayer {
     }
 
     setRelayer(type: RelayerType, _: Relayer) {
-        if (type === 'near' || type === 'aptos') {
-            console.log('near or aptos not supported yet');
+        if (type !== RelayerType.Evm) {
+            console.log('Only evm is supported for multiversx');
         }
     }
 

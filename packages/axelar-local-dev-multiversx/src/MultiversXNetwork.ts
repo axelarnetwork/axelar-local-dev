@@ -150,6 +150,10 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const axelarGasReceiverAddress = await this.deployGasReceiverContract(contractFolder);
 
+        this.gatewayAddress = Address.fromBech32(axelarGatewayAddress);
+        this.authAddress = Address.fromBech32(axelarAuthAddress);
+        this.gasReceiverAddress = Address.fromBech32(axelarGasReceiverAddress);
+
         return {
             axelarAuthAddress,
             axelarGatewayAddress,
@@ -169,7 +173,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             codeMetadata: new CodeMetadata(true, true, false, false),
             initArguments: [
                 Tuple.fromItems([
-                    List.fromItems([new AddressValue(this.operatorWallet)]),
+                    List.fromItems([new H256Value(Buffer.from(this.operatorWallet.hex(), 'hex'))]),
                     List.fromItems([new BigUIntValue(1)]),
                     new BigUIntValue(1)
                 ])
@@ -317,6 +321,9 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         destinationAddress: string,
         payloadHash: string,
     ) {
+        // Remove 0x added by Ethereum for hex strings
+        commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;
+
         const gatewayContract = new SmartContract({ address: this.gatewayAddress as Address });
 
         const approveContractCallData = Tuple.fromItems([
@@ -337,13 +344,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         ]);
         const encodedExecuteData = codec.encodeTopLevel(executeData);
 
-        console.log('Command id', commandId);
-        console.log('MultiversX execute data', executeData);
-
         const proof = this.generateProof(encodedExecuteData);
         const encodedProof = codec.encodeTopLevel(proof);
-
-        console.log('MultiversX execute proof', encodedProof.toString('hex'));
 
         const transaction = gatewayContract.call({
             caller: this.owner,
@@ -379,6 +381,9 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceAddress: string,
         payloadHex: string
     ): Promise<Transaction> {
+        // Remove 0x added by Ethereum for hex strings
+        commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;
+
         const contract = new SmartContract({ address: Address.fromBech32(destinationContractAddress) });
 
         const transaction = contract.call({
@@ -386,7 +391,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             func: new ContractFunction('execute'),
             gasLimit: 50_000_000,
             args: [
-                new StringValue(commandId),
+                new H256Value(Buffer.from(commandId, 'hex')),
                 new StringValue(sourceChain),
                 new StringValue(sourceAddress),
                 new BytesValue(Buffer.from(payloadHex, 'hex'))
@@ -422,9 +427,6 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         const file = fs.readFileSync(operatorWalletFile).toString();
 
         const signature = UserSecretKey.fromPem(file).sign(Buffer.from(messageHash, 'hex'));
-
-        console.log('Data hash', messageHash);
-        console.log('Signature', signature.toString('hex'));
 
         return Tuple.fromItems([
             List.fromItems([new H256Value(Buffer.from(this.operatorWallet.hex(), 'hex'))]),
