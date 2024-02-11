@@ -141,7 +141,7 @@ export async function setupAndExport(options: SetupLocalOptions) {
 
     const localChains: Record<string, any>[] = [];
     for (let i = 0; i < rpcUrls.length; i++) {
-        const chain = await setupNetwork(rpcUrls[i], { seed });
+        const chain = await setupNetwork(rpcUrls[i], { seed, name: chains[i] });
 
         const info = chain.getCloneInfo() as any;
         info.rpc = rpcUrls[i];
