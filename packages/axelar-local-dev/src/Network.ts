@@ -67,8 +67,9 @@ export interface NetworkInfo {
 export interface NetworkSetup {
     name?: string;
     chainId?: number;
+    seed?: string;
     userKeys?: Wallet[];
-    ownerKey: Wallet;
+    ownerKey?: Wallet;
     operatorKey?: Wallet;
     relayerKey?: Wallet;
     adminKeys?: Wallet[];

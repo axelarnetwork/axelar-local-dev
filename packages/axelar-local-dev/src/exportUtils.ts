@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import { setJSON } from './utils';
 import { Network, NetworkOptions, networks } from './Network';
 import { RelayData, RelayerMap, relay } from './relay';
-import { createNetwork, forkNetwork, listen, stopAll } from './networkUtils';
+import { createNetwork, forkNetwork, getNetwork, listen, setupNetwork, stopAll } from './networkUtils';
 import { testnetInfo } from './info';
 import { EvmRelayer } from './relay/EvmRelayer';
 import { getChainArray } from '@axelar-network/axelar-chains-config';
@@ -22,6 +22,16 @@ export interface CreateLocalOptions {
     relayers?: RelayerMap;
     afterRelay?: (relayData: RelayData) => void;
     callback?: (network: Network, info: any) => Promise<void>;
+}
+
+export interface SetupLocalOptions {
+    rpcUrls: string[];
+    chains: string[];
+    seed?: string;
+    relayInterval?: number;
+    afterRelay?: (relayData: RelayData) => void;
+    callback?: (network: Network, info: any) => Promise<void>;
+    chainOutputPath?: string;
 }
 
 export interface CloneLocalOptions {
@@ -102,6 +112,59 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
             nearRelayData && (await options.afterRelay(nearRelayData));
             aptosRelayData && (await options.afterRelay(aptosRelayData));
             suiRelayData && (await options.afterRelay(suiRelayData));
+        }
+        relaying = false;
+    }, _options.relayInterval);
+
+    const evmRelayer = _options.relayers['evm'];
+    evmRelayer?.subscribeExpressCall();
+
+    setJSON(localChains, _options.chainOutputPath);
+}
+
+export async function setupAndExport(options: SetupLocalOptions) {
+    const { afterRelay, callback, rpcUrls, chainOutputPath, chains, relayInterval, seed } = options;
+
+    if (chains.length < 2) {
+        console.log('At least 2 chains are required to setup and export');
+        return;
+    }
+
+    const _options = {
+        chainOutputPath: chainOutputPath || './local.json',
+        chains,
+        afterRelay: afterRelay || null,
+        relayers: { evm: defaultEvmRelayer },
+        callback: callback || null,
+        relayInterval: relayInterval || 2000,
+    };
+
+    const localChains: Record<string, any>[] = [];
+    for (let i = 0; i < rpcUrls.length; i++) {
+        const chain = await setupNetwork(rpcUrls[i], { seed });
+
+        const info = chain.getCloneInfo() as any;
+        info.rpc = rpcUrls[i];
+        localChains.push(info);
+
+        if (_options.callback) await _options.callback(chain, info);
+        if (Object.keys(chain.tokens).length > 0) {
+            // Check if there is a USDC token.
+            const alias = Object.keys(chain.tokens).find((alias) => alias.toLowerCase().includes('usdc'));
+
+            // If there is no USDC token, return.
+            if (!alias) return;
+        }
+    }
+    await registerRemoteITS(networks);
+
+    interval = setInterval(async () => {
+        if (relaying) return;
+        relaying = true;
+        await relay(_options.relayers).catch(() => undefined);
+        if (options.afterRelay) {
+            const evmRelayData = _options.relayers.evm?.relayData;
+            evmRelayData && (await options.afterRelay(evmRelayData));
         }
         relaying = false;
     }, _options.relayInterval);
