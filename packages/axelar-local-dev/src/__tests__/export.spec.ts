@@ -154,6 +154,7 @@ describe('export', () => {
             await destroyExported();
         });
 
+        // Note: This test is expecting the host to run a local blockchain on port 8545 and 8546.
         it('should be able to relay tokens from chain A to chain B', async () => {
             const contract1 = await deployContract(srcOwner, ExecuteWithToken, [chain1.gateway.address, chain1.gasService.address]).then(
                 (contract) => ExecuteWithTokenFactory.connect(contract.address, srcOwner)
