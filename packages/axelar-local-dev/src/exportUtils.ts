@@ -2,7 +2,7 @@
 
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
-import { Network, networks } from './Network';
+import { networks } from './Network';
 import { RelayerMap, relay } from './relay';
 import { createNetwork, forkNetwork, listen, setupNetwork, stopAll } from './networkUtils';
 import { testnetInfo } from './info';

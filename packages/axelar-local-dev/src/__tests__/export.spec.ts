@@ -37,6 +37,7 @@ describe('export', () => {
                 callback: (chain: Network) => deployAndFundUsdc(chain),
                 relayers: { evm: evmRelayer },
                 chains,
+                port: 18500,
                 relayInterval: 500,
             });
 
