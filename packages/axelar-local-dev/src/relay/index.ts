@@ -9,7 +9,12 @@ export * from './EvmRelayer';
 
 export const evmRelayer = new EvmRelayer();
 
-export const relay = async (relayers?: RelayerMap, networks?: Network[]) => {
+/**
+ * This function will be used to relay the messages between chains. It's called by exported functions in `exportUtils.ts`.
+ * @param relayers - The relayers to be used for relaying
+ * @param externalEvmNetworks  - The external networks to be used for relaying. (EVM only)
+ */
+export const relay = async (relayers?: RelayerMap, externalEvmNetworks?: Network[]) => {
     if (!relayers) {
         relayers = { evm: evmRelayer };
     }
@@ -18,7 +23,7 @@ export const relay = async (relayers?: RelayerMap, networks?: Network[]) => {
         const relayer = relayers[relayerType];
 
         if (relayerType === 'evm') {
-            await relayer?.relay(networks);
+            await relayer?.relay(externalEvmNetworks);
         } else {
             await relayer?.relay();
         }

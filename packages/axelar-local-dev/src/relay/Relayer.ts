@@ -35,9 +35,9 @@ export abstract class Relayer {
 
     abstract setRelayer(type: RelayerType, relayer: Relayer): void;
 
-    async relay(remoteNetworks?: Network[]) {
-        const _networks = remoteNetworks || networks;
-        for (const to of _networks) {
+    async relay(externalNetworks?: Network[]) {
+        const actualNetworks = externalNetworks || networks;
+        for (const to of actualNetworks) {
             this.commands[to.name] = [];
         }
         this.commands['aptos'] = [];
