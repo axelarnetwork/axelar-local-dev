@@ -2,7 +2,7 @@
 
 import { ethers } from 'ethers';
 import { setJSON } from './utils';
-import { networks } from './Network';
+import { Network, networks } from './Network';
 import { RelayerMap, relay } from './relay';
 import { createNetwork, forkNetwork, listen, setupNetwork, stopAll } from './networkUtils';
 import { testnetInfo } from './info';
@@ -91,8 +91,7 @@ export async function setupAndExport(options: SetupLocalOptions) {
     const { afterRelay, callback, chainOutputPath, chains, relayInterval, seed } = options;
 
     if (chains.length < 2) {
-        console.log('At least 2 chains are required to setup and export');
-        return;
+        throw Error('At least 2 chains are required to setup and export');
     }
 
     const _options = {
@@ -104,13 +103,15 @@ export async function setupAndExport(options: SetupLocalOptions) {
         relayInterval: relayInterval || 2000,
     };
 
-    const localChains: Record<string, any>[] = [];
+    const networkInfos = [];
+    const networks = [];
     for (let i = 0; i < chains.length; i++) {
         const network = await setupNetwork(chains[i].rpcUrl, { seed, name: chains[i].name });
+        networks.push(network);
 
-        const networkInfo = network.getCloneInfo() as any;
+        const networkInfo = network.getInfo() as any;
         networkInfo.rpc = chains[i].rpcUrl;
-        localChains.push(networkInfo);
+        networkInfos.push(networkInfo);
 
         if (_options.callback) await _options.callback(network, networkInfo);
         if (Object.keys(network.tokens).length > 0) {
@@ -137,7 +138,8 @@ export async function setupAndExport(options: SetupLocalOptions) {
     const evmRelayer = _options.relayers['evm'];
     evmRelayer?.subscribeExpressCall();
 
-    setJSON(localChains, _options.chainOutputPath);
+    setJSON(networkInfos, _options.chainOutputPath);
+    return networks;
 }
 
 export async function forkAndExport(options: CloneLocalOptions = {}) {
