@@ -180,6 +180,7 @@ export async function getAllNetworks(url: string) {
 }
 
 function getDefaultLocalWallets() {
+    // This is a default seed for anvil that generates 10 wallets
     const defaultSeed = 'test test test test test test test test test test test junk';
 
     const wallets = [];
@@ -201,15 +202,15 @@ export async function setupNetwork(urlOrProvider: string | providers.Provider, o
     chain.provider = typeof urlOrProvider === 'string' ? ethers.getDefaultProvider(urlOrProvider) : urlOrProvider;
     chain.chainId = (await chain.provider.getNetwork()).chainId;
 
-    const wallets = getDefaultLocalWallets();
+    const defaultWalelts = getDefaultLocalWallets();
 
     logger.log(`Setting up ${chain.name} on a network with a chainId of ${chain.chainId}...`);
-    if (options.userKeys == null) options.userKeys = options.userKeys || wallets.slice(5, 10);
-    if (options.relayerKey == null) options.relayerKey = options.ownerKey || wallets[2];
-    if (options.operatorKey == null) options.operatorKey = options.ownerKey || wallets[3];
-    if (options.adminKeys == null) options.adminKeys = options.ownerKey ? [options.ownerKey] : [wallets[4]];
+    if (options.userKeys == null) options.userKeys = options.userKeys || defaultWalelts.slice(5, 10);
+    if (options.relayerKey == null) options.relayerKey = options.ownerKey || defaultWalelts[2];
+    if (options.operatorKey == null) options.operatorKey = options.ownerKey || defaultWalelts[3];
+    if (options.adminKeys == null) options.adminKeys = options.ownerKey ? [options.ownerKey] : [defaultWalelts[4]];
 
-    options.ownerKey = options.ownerKey || wallets[0];
+    options.ownerKey = options.ownerKey || defaultWalelts[0];
 
     chain.userWallets = options.userKeys.map((x) => new Wallet(x, chain.provider));
     chain.ownerWallet = new Wallet(options.ownerKey, chain.provider);
