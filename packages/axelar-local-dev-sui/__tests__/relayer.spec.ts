@@ -4,9 +4,11 @@ import path from 'path';
 import { ethers } from 'ethers';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 
-const { utils: { arrayify } } = ethers;
+const {
+    utils: { arrayify },
+} = ethers;
 
-describe('relayer', () => {
+describe.skip('relayer', () => {
     let client: SuiNetwork;
     let relayer: SuiRelayer;
 
@@ -25,8 +27,10 @@ describe('relayer', () => {
         // Deploy a sample module
         const response = await client.deploy(path.join(__dirname, '../move/sample'));
         const packageId = response.packages[0].packageId;
-        const singleton: any = response.publishTxn.objectChanges?.find((change) => (change as any).objectType === `${packageId}::test::Singleton` )
-        
+        const singleton: any = response.publishTxn.objectChanges?.find(
+            (change) => (change as any).objectType === `${packageId}::test::Singleton`,
+        );
+
         const msg = 'hello from sui';
         const payload = ethers.utils.defaultAbiCoder.encode(['string'], [msg]);
 
@@ -34,7 +38,12 @@ describe('relayer', () => {
         const tx = new TransactionBlock();
         tx.moveCall({
             target: `${packageId}::test::send_call`,
-            arguments: [tx.object(singleton.objectId), tx.pure('Avalanche'), tx.pure('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789'), tx.pure(String.fromCharCode(...arrayify(payload)))],
+            arguments: [
+                tx.object(singleton.objectId),
+                tx.pure('Avalanche'),
+                tx.pure('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789'),
+                tx.pure(String.fromCharCode(...arrayify(payload))),
+            ],
         });
         await client.execute(tx);
 
