@@ -28,6 +28,7 @@ import * as os from 'os';
 import { MultiversXConfig } from './multiversXNetworkUtils';
 import { ContractQueryResponse } from '@multiversx/sdk-network-providers/out/contractQueryResponse';
 import createKeccakHash from 'keccak';
+import { MultiversXITS } from './its';
 
 const MULTIVERSX_SIGNED_MESSAGE_PREFIX = '\x19MultiversX Signed Message:\n';
 const CHAIN_ID = 'multiversx-localnet';
@@ -44,6 +45,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
     public interchainTokenServiceAddress?: Address;
     public interchainTokenFactoryAddress?: Address;
     public contractAddress?: string;
+    public its: MultiversXITS;
 
     private readonly ownerPrivateKey: UserSecretKey;
 
@@ -90,6 +92,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const file = fs.readFileSync(ownerWalletFile).toString();
         this.ownerPrivateKey = UserSecretKey.fromPem(file);
+        this.its = new MultiversXITS(this, interchainTokenServiceAddress as string);
     }
 
     async isGatewayDeployed(): Promise<boolean> {
@@ -185,20 +188,24 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             axelarGasReceiverAddress,
             baseTokenManager
         );
-        const interchainTokenFactoryAddress = await this.deployInterchainTokenFactory(contractFolder, interchainTokenServiceAddress);
+        const interchainTokenFactoryAddress = await this.deployInterchainTokenFactory(
+            contractFolder,
+            interchainTokenServiceAddress
+        );
 
         this.gatewayAddress = Address.fromBech32(axelarGatewayAddress);
         this.authAddress = Address.fromBech32(axelarAuthAddress);
         this.gasReceiverAddress = Address.fromBech32(axelarGasReceiverAddress);
         this.interchainTokenServiceAddress = Address.fromBech32(interchainTokenServiceAddress);
         this.interchainTokenFactoryAddress = Address.fromBech32(interchainTokenFactoryAddress);
+        this.its = new MultiversXITS(this, interchainTokenServiceAddress);
 
         return {
             axelarAuthAddress,
             axelarGatewayAddress,
             axelarGasReceiverAddress,
             interchainTokenServiceAddress,
-            interchainTokenFactoryAddress,
+            interchainTokenFactoryAddress
         };
     }
 
@@ -324,6 +331,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         return axelarGasReceiverAddress.bech32();
     }
 
+    // This is a custom version of the token manager with ESDT issue cost set for localnet (5000000000000000000 / 5 EGLD)
     private async deployBaseTokenManager(contractFolder: string): Promise<string> {
         const buffer = await promises.readFile(contractFolder + '/token-manager.wasm');
 
@@ -341,7 +349,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
                 new H256Value(Buffer.from('01b3d64c8c6530a3aad5909ae7e0985d4438ce8eafd90e51ce48fbc809bced39', 'hex')),
                 Tuple.fromItems([
                     new OptionValue(new OptionType(new AddressType()), new AddressValue(this.owner)),
-                    new OptionValue(new OptionType(new StringType()), new StringValue('EGLD')),
+                    new OptionValue(new OptionType(new StringType()), new StringValue('EGLD'))
                 ])
             ],
             gasLimit: 50_000_000,
@@ -386,7 +394,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
                 new AddressValue(this.owner),
                 new StringValue('multiversx'),
                 VariadicValue.fromItemsCounted(), // empty trusted chains
-                VariadicValue.fromItemsCounted(),
+                VariadicValue.fromItemsCounted()
             ],
             gasLimit: 200_000_000,
             chainID: 'localnet'
@@ -420,7 +428,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             code,
             codeMetadata: new CodeMetadata(true, true, false, false),
             initArguments: [
-                new AddressValue(itsAddress),
+                new AddressValue(itsAddress)
             ],
             gasLimit: 200_000_000,
             chainID: 'localnet'
@@ -446,7 +454,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             func: new ContractFunction('setInterchainTokenFactory'),
             gasLimit: 50_000_000,
             args: [
-                new AddressValue(address),
+                new AddressValue(address)
             ],
             chainID: 'localnet'
         });
@@ -471,7 +479,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             gasLimit: 50_000_000,
             args: [
                 new StringValue(chainName),
-                new StringValue(address),
+                new StringValue(address)
             ],
             chainID: 'localnet'
         });
@@ -582,7 +590,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceChain: string,
         sourceAddress: string,
         payloadHex: string,
-        value: string = '0',
+        value: string = '0'
     ): Promise<Transaction> {
         // Remove 0x added by Ethereum for hex strings
         commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;

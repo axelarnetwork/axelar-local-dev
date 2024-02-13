@@ -87,7 +87,7 @@ export class Command {
                         args.from,
                         args.sourceAddress,
                         payloadHex,
-                        '50000000000000000' // 0.05 EGLD for ESDT issue cost
+                        '5000000000000000000' // 5 EGLD for ESDT issue cost on localnet
                     );
                 }
 
