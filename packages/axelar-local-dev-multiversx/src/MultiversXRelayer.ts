@@ -22,9 +22,12 @@ import {
     AddressValue,
     BigUIntType,
     BigUIntValue,
-    BinaryCodec, BytesType, BytesValue,
+    BinaryCodec,
+    BytesType,
+    BytesValue,
     H256Type,
     H256Value,
+    StringType,
     TupleType
 } from '@multiversx/sdk-core/out';
 import { getMultiversXLogID } from './utils';
@@ -199,6 +202,7 @@ export class MultiversXRelayer extends Relayer {
             try {
                 const cost = getGasPrice();
                 const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
+
                 await command.post({
                     gasLimit: BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost))
                 });
@@ -209,21 +213,40 @@ export class MultiversXRelayer extends Relayer {
     }
 
     private async updateGasEvents(events: MultiversXEvent[]) {
-        const newEvents = events.filter((event) => event.identifier === 'payNativeGasForContractCall');
+        const newEvents = events.filter(
+            (event) => event.identifier === 'payNativeGasForContractCall' || event.identifier === 'payGasForContractCall'
+        );
 
         for (const event of newEvents) {
+            const eventName = Buffer.from(event.topics[0], 'base64').toString();
             const sender = new Address(Buffer.from(event.topics[1], 'base64'));
             const destinationChain = Buffer.from(event.topics[2], 'base64').toString();
             const destinationAddress = Buffer.from(event.topics[3], 'base64').toString();
 
-            const decoded = new BinaryCodec().decodeTopLevel(
-                Buffer.from(event.data, 'base64'),
-                new TupleType(new H256Type(), new BigUIntType(), new AddressType())
-            ).valueOf();
-            // Need to add '0x' in front of hex encoded strings for EVM
-            const payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
-            const gasFeeAmount = (decoded.field1 as BigUIntValue).toString();
-            const refundAddress = (decoded.field2 as AddressValue).valueOf().bech32();
+            let payloadHash = '0x', gasFeeAmount = '', refundAddress = '';
+            if (eventName === 'native_gas_paid_for_contract_call_event') {
+                const decoded = new BinaryCodec().decodeTopLevel(
+                    Buffer.from(event.data, 'base64'),
+                    new TupleType(new H256Type(), new BigUIntType(), new AddressType())
+                ).valueOf();
+
+                // Need to add '0x' in front of hex encoded strings for EVM
+                payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
+                gasFeeAmount = (decoded.field1 as BigUIntValue).toString();
+                refundAddress = (decoded.field2 as AddressValue).valueOf().bech32();
+            } else if (eventName === 'gas_paid_for_contract_call_event') {
+                const decoded = new BinaryCodec().decodeTopLevel(
+                    Buffer.from(event.data, 'base64'),
+                    new TupleType(new H256Type(), new StringType(), new BigUIntType(), new AddressType())
+                ).valueOf();
+
+                // Need to add '0x' in front of hex encoded strings for EVM
+                payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
+                // Gas token not currently used for MultiversX. Gas value is multiplied by 100_000_000 to be enough for EVM
+                // const gasToken = (decoded.field1 as StringValue).valueOf().toString();
+                gasFeeAmount = (BigInt((decoded.field2 as BigUIntValue).toString()) * BigInt('100000000')).toString();
+                refundAddress = (decoded.field3 as AddressValue).valueOf().bech32();
+            }
 
             const args: NativeGasPaidForContractCallArgs = {
                 sourceAddress: sender.bech32(),

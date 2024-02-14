@@ -1,6 +1,7 @@
 import {
     Account,
-    Address, AddressType,
+    Address,
+    AddressType,
     AddressValue,
     BigUIntValue,
     BinaryCodec,
@@ -9,15 +10,20 @@ import {
     ContractFunction,
     H256Value,
     Interaction,
-    List, OptionType, OptionValue,
+    List,
+    OptionType,
+    OptionValue,
     ResultsParser,
     ReturnCode,
-    SmartContract, StringType,
+    SmartContract,
+    StringType,
     StringValue,
     Transaction,
     TransactionWatcher,
     Tuple,
-    TypedValue, U8Value, VariadicValue
+    TypedValue,
+    U8Value,
+    VariadicValue
 } from '@multiversx/sdk-core/out';
 import { ProxyNetworkProvider } from '@multiversx/sdk-network-providers/out';
 import { Code } from '@multiversx/sdk-core';

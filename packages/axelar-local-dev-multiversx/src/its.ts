@@ -33,7 +33,14 @@ export class MultiversXITS {
         }
     }
 
-    async interchainTransfer(tokenId: string, destinationChain: string, destinationAddress: string, tokenIdentifier: string, amount: string) {
+    async interchainTransfer(
+        tokenId: string,
+        destinationChain: string,
+        destinationAddress: string,
+        tokenIdentifier: string,
+        amount: string,
+        gasValue: string
+    ) {
         // Remove 0x added by Ethereum for hex strings
         tokenId = tokenId.startsWith('0x') ? tokenId.substring(2) : tokenId;
 
@@ -43,7 +50,7 @@ export class MultiversXITS {
             new StringValue(destinationChain),
             new StringValue(destinationAddress),
             new BytesValue(Buffer.from('')),
-            new BigUIntValue(0),
+            new BigUIntValue(gasValue),
         ];
         const transaction = new Interaction(contract, new ContractFunction("interchainTransfer"), args)
             .withSingleESDTTransfer(TokenTransfer.fungibleFromBigInteger(tokenIdentifier, amount))
