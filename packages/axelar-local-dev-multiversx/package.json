@@ -10,7 +10,8 @@
     "scripts": {
         "test": "jest",
         "build-ts": "tsc",
-        "build": "run-s clean build-ts",
+        "build-contract": "hardhat clean && hardhat compile",
+        "build": "run-s clean build-ts build-contract",
         "clean": "rm -rf src/types dist artifacts",
         "prettier": "prettier --write 'src/**/*.ts'"
     },

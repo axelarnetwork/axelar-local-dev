@@ -9,6 +9,15 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         arch: [amd64]
+    # Elasticsearch used by MultiversX test
+    services:
+      elasticsearch:
+        image: "docker.elastic.co/elasticsearch/elasticsearch:8.12.0"
+        env:
+          discovery.type: single-node
+          xpack.security: "enabled=false"
+        ports:
+          - "9200:9200"
     steps:
       - name: Download and Install Aptos Binary
         run: |
@@ -25,6 +34,23 @@ jobs:
           tar -xvf sui-mainnet-v1.11.2-ubuntu-x86_64.tgz
           sudo mv ./target/release/sui-test-validator-ubuntu-x86_64 /usr/local/bin/sui-test-validator
           sudo mv ./target/release/sui-ubuntu-x86_64 /usr/local/bin/sui
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - name: Download and Install Multiversx Binary
+        run: |
+          pip3 install multiversx-sdk-cli==v9.3.0
+          mkdir -p /usr/local/multiversx-localnet && cd /usr/local/multiversx-localnet
+          mxpy localnet setup
+          cd ~
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml /usr/local/multiversx-localnet/localnet/validator00/config
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml /usr/local/multiversx-localnet/localnet/validator01/config
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml /usr/local/multiversx-localnet/localnet/validator02/config
+          cd /usr/local/multiversx-localnet
+          mxpy localnet start &
+          sleep 20
 
       - name: Cleanup
         run: rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip sui-devnet-v1.7.0-ubuntu-x86_64.tgz
