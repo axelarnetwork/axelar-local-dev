@@ -98,7 +98,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const file = fs.readFileSync(ownerWalletFile).toString();
         this.ownerPrivateKey = UserSecretKey.fromPem(file);
-        this.its = new MultiversXITS(this, interchainTokenServiceAddress as string);
+        this.its = new MultiversXITS(this, interchainTokenServiceAddress as string, interchainTokenFactoryAddress as string);
     }
 
     async isGatewayDeployed(): Promise<boolean> {
@@ -204,7 +204,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         this.gasReceiverAddress = Address.fromBech32(axelarGasReceiverAddress);
         this.interchainTokenServiceAddress = Address.fromBech32(interchainTokenServiceAddress);
         this.interchainTokenFactoryAddress = Address.fromBech32(interchainTokenFactoryAddress);
-        this.its = new MultiversXITS(this, interchainTokenServiceAddress);
+        this.its = new MultiversXITS(this, interchainTokenServiceAddress, interchainTokenFactoryAddress);
 
         return {
             axelarAuthAddress,

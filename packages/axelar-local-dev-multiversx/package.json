@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-multiversx",
-    "version": "2.2.0",
+    "version": "2.2.1",
     "main": "dist/index.js",
     "files": [
         "dist/",
@@ -16,7 +16,7 @@
         "prettier": "prettier --write 'src/**/*.ts'"
     },
     "dependencies": {
-        "@axelar-network/axelar-local-dev": "2.2.0",
+        "@axelar-network/axelar-local-dev": "2.2.1",
         "@multiversx/sdk-core": "^12.18.0",
         "@multiversx/sdk-network-providers": "^2.2.1",
         "@multiversx/sdk-wallet": "^4.3.0",

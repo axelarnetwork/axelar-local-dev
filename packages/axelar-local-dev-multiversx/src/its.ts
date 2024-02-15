@@ -1,21 +1,23 @@
 import { logger, Network } from '@axelar-network/axelar-local-dev';
 import { MultiversXNetwork } from './MultiversXNetwork';
 import {
-    Address, BigUIntValue, BytesValue,
+    Address, AddressValue, BigUIntValue, BytesValue,
     ContractFunction,
     H256Value, Interaction,
     ResultsParser,
     SmartContract,
-    StringValue, TokenTransfer
+    StringValue, TokenTransfer, U8Value
 } from '@multiversx/sdk-core/out';
 
 export class MultiversXITS {
     private readonly client;
     private readonly itsContract;
+    private readonly itsFactoryContract;
 
-    constructor(client: MultiversXNetwork, itsContract: string) {
+    constructor(client: MultiversXNetwork, itsContract: string, itsFactoryContract: string) {
         this.client = client;
         this.itsContract = itsContract;
+        this.itsFactoryContract = itsFactoryContract;
     }
 
     async getValidTokenIdentifier(tokenId: string): Promise<string | null> {
@@ -31,6 +33,109 @@ export class MultiversXITS {
         } catch (e) {
             return null;
         }
+    }
+
+    async interchainTokenId(address: Address, salt: string): Promise<string> {
+        // Remove 0x added by Ethereum for hex strings
+        salt = salt.startsWith('0x') ? salt.substring(2) : salt;
+
+        const result = await this.client.callContract(this.itsFactoryContract, "interchainTokenId", [
+            new AddressValue(address),
+            new H256Value(Buffer.from(salt, 'hex'))
+        ]);
+
+        const parsedResult = new ResultsParser().parseUntypedQueryResponse(result);
+
+        return parsedResult.values[0].toString('hex');
+    }
+
+    async deployInterchainToken(
+        salt: string,
+        name: string,
+        symbol: string,
+        decimals: number,
+        amount: number,
+        minter: Address,
+    ) {
+        // Remove 0x added by Ethereum for hex strings
+        salt = salt.startsWith('0x') ? salt.substring(2) : salt;
+
+        const contract = new SmartContract({ address: Address.fromBech32(this.itsFactoryContract) });
+        const args = [
+            new H256Value(Buffer.from(salt, 'hex')),
+            new StringValue(name),
+            new StringValue(symbol),
+            new U8Value(decimals),
+            new BigUIntValue(amount),
+            new AddressValue(minter),
+        ];
+        const transaction = new Interaction(contract, new ContractFunction("deployInterchainToken"), args)
+            .withSender(this.client.owner)
+            .withChainID('localnet')
+            .withGasLimit(300_000_000)
+            .buildTransaction();
+
+        const accountOnNetwork = await this.client.getAccount(this.client.owner);
+        this.client.ownerAccount.update(accountOnNetwork);
+
+        transaction.setNonce(this.client.ownerAccount.getNonceThenIncrement());
+
+        // First transaction deploys token manager
+        let returnCode = await this.client.signAndSendTransaction(transaction);
+        if (!returnCode.isSuccess()) {
+            return false;
+        }
+
+        // Second transaction deploys token
+        transaction.setValue('5000000000000000000'); // 5 EGLD for ESDT issue cost on localnet
+        transaction.setNonce(this.client.ownerAccount.getNonceThenIncrement());
+
+        returnCode = await this.client.signAndSendTransaction(transaction);
+        if (!returnCode.isSuccess()) {
+            return false;
+        }
+
+        // Third transaction mints tokens
+        transaction.setValue('0');
+        transaction.setNonce(this.client.ownerAccount.getNonceThenIncrement());
+
+        returnCode = await this.client.signAndSendTransaction(transaction);
+
+        return returnCode.isSuccess();
+    }
+
+    async deployRemoteInterchainToken(
+        chainName: string,
+        salt: string,
+        minter: Address,
+        destinationChain: string,
+        fee: number
+    ) {
+        // Remove 0x added by Ethereum for hex strings
+        salt = salt.startsWith('0x') ? salt.substring(2) : salt;
+
+        const contract = new SmartContract({ address: Address.fromBech32(this.itsFactoryContract) });
+        const args = [
+            new StringValue(chainName),
+            new H256Value(Buffer.from(salt, 'hex')),
+            new AddressValue(minter),
+            new StringValue(destinationChain),
+        ];
+        const transaction = new Interaction(contract, new ContractFunction("deployRemoteInterchainToken"), args)
+            .withSender(this.client.owner)
+            .withChainID('localnet')
+            .withGasLimit(300_000_000)
+            .withValue(fee)
+            .buildTransaction();
+
+        const accountOnNetwork = await this.client.getAccount(this.client.owner);
+        this.client.ownerAccount.update(accountOnNetwork);
+
+        transaction.setNonce(this.client.ownerAccount.getNonceThenIncrement());
+
+        const returnCode = await this.client.signAndSendTransaction(transaction);
+
+        return !returnCode.isSuccess();
     }
 
     async interchainTransfer(
