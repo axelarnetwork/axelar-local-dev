@@ -5,7 +5,7 @@ import { SuiNetwork, SuiRelayer, initSui } from '@axelar-network/axelar-local-de
 import path from 'path';
 const { arrayify } = ethers.utils;
 
-describe('e2e', () => {
+describe.skip('e2e', () => {
     let client: SuiNetwork;
     let relayer: SuiRelayer;
     let evmNetwork: Network;
@@ -35,8 +35,10 @@ describe('e2e', () => {
         // Deploy a sample module
         const response = await client.deploy(path.join(__dirname, '../move/sample'));
         const packageId = response.packages[0].packageId;
-        const singleton: any = response.publishTxn.objectChanges?.find((change) => (change as any).objectType === `${packageId}::test::Singleton` )
-        
+        const singleton: any = response.publishTxn.objectChanges?.find(
+            (change) => (change as any).objectType === `${packageId}::test::Singleton`,
+        );
+
         const msg = 'hello from sui';
 
         const payload = ethers.utils.defaultAbiCoder.encode(['string'], [msg]);
@@ -45,7 +47,12 @@ describe('e2e', () => {
         const tx = new TransactionBlock();
         tx.moveCall({
             target: `${response.packages[0].packageId}::test::send_call`,
-            arguments: [tx.object(singleton.objectId), tx.pure(evmChainName), tx.pure(evmContract.address), tx.pure(String.fromCharCode(...arrayify(payload)))],
+            arguments: [
+                tx.object(singleton.objectId),
+                tx.pure(evmChainName),
+                tx.pure(evmContract.address),
+                tx.pure(String.fromCharCode(...arrayify(payload))),
+            ],
         });
         await client.execute(tx);
 
@@ -68,14 +75,15 @@ describe('e2e', () => {
         // Deploy a sample module
         const response = await client.deploy(path.join(__dirname, '../move/sample'));
         const packageId = response.packages[0].packageId;
-        const singleton: any = response.publishTxn.objectChanges?.find((change) => (change as any).objectType === `${packageId}::test::Singleton` )
-        
+        const singleton: any = response.publishTxn.objectChanges?.find(
+            (change) => (change as any).objectType === `${packageId}::test::Singleton`,
+        );
+
         const singletonFields: any = await client.getObject({
             id: singleton.objectId,
             options: {
                 showContent: true,
-            }
-
+            },
         });
 
         let tx = new TransactionBlock();

@@ -67,8 +67,9 @@ export interface NetworkInfo {
 export interface NetworkSetup {
     name?: string;
     chainId?: number;
+    seed?: string;
     userKeys?: Wallet[];
-    ownerKey: Wallet;
+    ownerKey?: Wallet;
     operatorKey?: Wallet;
     relayerKey?: Wallet;
     adminKeys?: Wallet[];
@@ -208,7 +209,7 @@ export class Network {
     }
 
     async deployCreate3Deployer(): Promise<Contract> {
-        logger.log(`Deploying the ConstAddressDeployer for ${this.name}... `);
+        logger.log(`Deploying the Create3Deployer for ${this.name}... `);
         const create3DeployerPrivateKey = keccak256(toUtf8Bytes('const-address-deployer-deployer'));
         const deployerWallet = new Wallet(create3DeployerPrivateKey, this.provider);
         await this.ownerWallet
@@ -220,7 +221,7 @@ export class Network {
         const create3Deployer = await deployContract(deployerWallet, Create3Deployer, []);
 
         this.create3Deployer = new Contract(create3Deployer.address, Create3Deployer.abi, this.provider);
-        logger.log(`Deployed at ${this.constAddressDeployer.address}`);
+        logger.log(`Deployed at ${this.create3Deployer.address}`);
         return this.create3Deployer;
     }
 

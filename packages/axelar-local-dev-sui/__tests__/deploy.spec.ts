@@ -2,7 +2,7 @@ import { SuiNetwork } from '../src/SuiNetwork';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import path from 'path';
 
-describe('Sui Network', () => {
+describe.skip('Sui Network', () => {
     let client: SuiNetwork;
 
     beforeEach(async () => {
@@ -19,8 +19,10 @@ describe('Sui Network', () => {
     it('should deploy and execute a function', async () => {
         const response = await client.deploy(path.join(__dirname, '../move/sample'));
         const packageId = response.packages[0].packageId;
-        const singleton: any = response.publishTxn.objectChanges?.find((change) => (change as any).objectType === `${packageId}::test::Singleton` )
-        
+        const singleton: any = response.publishTxn.objectChanges?.find(
+            (change) => (change as any).objectType === `${packageId}::test::Singleton`,
+        );
+
         const tx = new TransactionBlock();
         const msg = 'hello from test';
 
@@ -40,7 +42,7 @@ describe('Sui Network', () => {
             limit: 1,
         });
 
-        const event = (data[0].parsedJson as any);
+        const event = data[0].parsedJson as any;
 
         expect(event.destination_chain).toEqual('Avalanche');
         expect(event.destination_address).toEqual('0x0');

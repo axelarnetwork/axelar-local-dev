@@ -1,4 +1,4 @@
-import { networks } from '../Network';
+import { networks, Network } from '../Network';
 import { Command } from './Command';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 
@@ -35,8 +35,9 @@ export abstract class Relayer {
 
     abstract setRelayer(type: RelayerType, relayer: Relayer): void;
 
-    async relay() {
-        for (const to of networks) {
+    async relay(externalNetworks?: Network[]) {
+        const actualNetworks = externalNetworks || networks;
+        for (const to of actualNetworks) {
             this.commands[to.name] = [];
         }
         this.commands['aptos'] = [];
