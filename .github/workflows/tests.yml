@@ -15,7 +15,7 @@ jobs:
         image: "docker.elastic.co/elasticsearch/elasticsearch:8.12.0"
         env:
           discovery.type: single-node
-          xpack.security: "enabled=false"
+          xpack.security.enabled: false
         ports:
           - "9200:9200"
     steps:
@@ -35,16 +35,6 @@ jobs:
           sudo mv ./target/release/sui-test-validator-ubuntu-x86_64 /usr/local/bin/sui-test-validator
           sudo mv ./target/release/sui-ubuntu-x86_64 /usr/local/bin/sui
 
-      - name: Download and Install Multiversx Binary
-        run: |
-          pip3 install multiversx-sdk-cli==v9.3.1
-          mxpy localnet setup
-          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator00/config
-          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator01/config
-          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator02/config
-          mxpy localnet start &
-          sleep 20
-
       - name: Cleanup
         run: rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip sui-devnet-v1.7.0-ubuntu-x86_64.tgz
 
@@ -55,6 +45,14 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Download and Install Multiversx Binary
+        run: |
+          pip3 install multiversx-sdk-cli==v9.3.1
+          mxpy localnet setup
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator00/config
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator01/config
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator02/config
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -76,7 +74,8 @@ jobs:
         run: |
           nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
           nohup sh -c "aptos node run-local-testnet --with-faucet" > nohup.out 2> nohup.err < /dev/null &
+          nohup sh -c "mxpy localnet start" > nohup.out 2> nohup.err < /dev/null &
           nohup sh -c "anvil" < /dev/null &
           nohup sh -c "anvil -p 8546" < /dev/null &
-          sleep 10
+          sleep 30
           npm run test
