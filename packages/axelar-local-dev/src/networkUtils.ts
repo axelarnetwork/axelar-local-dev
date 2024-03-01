@@ -179,20 +179,38 @@ export async function getAllNetworks(url: string) {
     return networks;
 }
 
+function getDefaultLocalWallets() {
+    // This is a default seed for anvil that generates 10 wallets
+    const defaultSeed = 'test test test test test test test test test test test junk';
+
+    const wallets = [];
+
+    for (let i = 0; i < 10; i++) {
+        wallets.push(Wallet.fromMnemonic(defaultSeed, `m/44'/60'/0'/0/${i}`));
+    }
+
+    return wallets;
+}
+
 /**
  * @returns {Network}
  */
 export async function setupNetwork(urlOrProvider: string | providers.Provider, options: NetworkSetup) {
     const chain = new Network();
+
     chain.name = options.name != null ? options.name : `Chain ${networks.length + 1}`;
     chain.provider = typeof urlOrProvider === 'string' ? ethers.getDefaultProvider(urlOrProvider) : urlOrProvider;
     chain.chainId = (await chain.provider.getNetwork()).chainId;
 
+    const defaultWalelts = getDefaultLocalWallets();
+
     logger.log(`Setting up ${chain.name} on a network with a chainId of ${chain.chainId}...`);
-    if (options.userKeys == null) options.userKeys = [];
-    if (options.operatorKey == null) options.operatorKey = options.ownerKey;
-    if (options.relayerKey == null) options.relayerKey = options.ownerKey;
-    if (options.adminKeys == null) options.adminKeys = [options.ownerKey];
+    if (options.userKeys == null) options.userKeys = options.userKeys || defaultWalelts.slice(5, 10);
+    if (options.relayerKey == null) options.relayerKey = options.ownerKey || defaultWalelts[2];
+    if (options.operatorKey == null) options.operatorKey = options.ownerKey || defaultWalelts[3];
+    if (options.adminKeys == null) options.adminKeys = options.ownerKey ? [options.ownerKey] : [defaultWalelts[4]];
+
+    options.ownerKey = options.ownerKey || defaultWalelts[0];
 
     chain.userWallets = options.userKeys.map((x) => new Wallet(x, chain.provider));
     chain.ownerWallet = new Wallet(options.ownerKey, chain.provider);
@@ -209,7 +227,6 @@ export async function setupNetwork(urlOrProvider: string | providers.Provider, o
     await chain.deployGasReceiver();
     await chain.deployInterchainTokenService();
     chain.tokens = {};
-    //chain.usdc = await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e70));
     networks.push(chain);
     return chain;
 }

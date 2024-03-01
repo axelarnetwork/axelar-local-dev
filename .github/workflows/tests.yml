@@ -35,20 +35,13 @@ jobs:
           sudo mv ./target/release/sui-test-validator-ubuntu-x86_64 /usr/local/bin/sui-test-validator
           sudo mv ./target/release/sui-ubuntu-x86_64 /usr/local/bin/sui
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-          cache: 'pip'
       - name: Download and Install Multiversx Binary
         run: |
-          pip3 install multiversx-sdk-cli==v9.3.0
-          mkdir -p /usr/local/multiversx-localnet && cd /usr/local/multiversx-localnet
+          pip3 install multiversx-sdk-cli==v9.3.1
           mxpy localnet setup
-          cd ~
-          cp -rf ./packages/axelar-local-dev-multiversx/external.toml /usr/local/multiversx-localnet/localnet/validator00/config
-          cp -rf ./packages/axelar-local-dev-multiversx/external.toml /usr/local/multiversx-localnet/localnet/validator01/config
-          cp -rf ./packages/axelar-local-dev-multiversx/external.toml /usr/local/multiversx-localnet/localnet/validator02/config
-          cd /usr/local/multiversx-localnet
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator00/config
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator01/config
+          cp -rf ./packages/axelar-local-dev-multiversx/external.toml ./localnet/validator02/config
           mxpy localnet start &
           sleep 20
 
@@ -62,6 +55,9 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
 
       - name: Cache node_modules
         uses: actions/cache@v3
@@ -80,5 +76,7 @@ jobs:
         run: |
           nohup sh -c "sui-test-validator" > nohup.out 2> nohup.err < /dev/null &
           nohup sh -c "aptos node run-local-testnet --with-faucet" > nohup.out 2> nohup.err < /dev/null &
+          nohup sh -c "anvil" < /dev/null &
+          nohup sh -c "anvil -p 8546" < /dev/null &
           sleep 10
           npm run test
