@@ -66,17 +66,19 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
     interval = setInterval(async () => {
         if (relaying) return;
         relaying = true;
-        await relay(_options.relayers).catch(() => undefined);
+        await relay(_options.relayers).catch((e) => console.error(e));
         if (options.afterRelay) {
             const evmRelayData = _options.relayers.evm?.relayData;
             const nearRelayData = _options.relayers.near?.relayData;
             const aptosRelayData = _options.relayers.aptos?.relayData;
             const suiRelayData = _options.relayers.sui?.relayData;
+            const multiversXRelayData = _options.relayers.multiversx?.relayData;
 
             evmRelayData && (await options.afterRelay(evmRelayData));
             nearRelayData && (await options.afterRelay(nearRelayData));
             aptosRelayData && (await options.afterRelay(aptosRelayData));
             suiRelayData && (await options.afterRelay(suiRelayData));
+            multiversXRelayData && (await options.afterRelay(multiversXRelayData));
         }
         relaying = false;
     }, _options.relayInterval);
