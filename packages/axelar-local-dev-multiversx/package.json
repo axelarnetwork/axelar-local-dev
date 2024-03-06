@@ -1,9 +1,10 @@
 {
     "name": "@axelar-network/axelar-local-dev-multiversx",
-    "version": "2.2.0",
+    "version": "2.2.1",
     "main": "dist/index.js",
     "files": [
         "dist/",
+        "contracts/",
         "!dist/types",
         "!dist/artifacts"
     ],
