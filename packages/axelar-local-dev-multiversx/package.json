@@ -4,6 +4,7 @@
     "main": "dist/index.js",
     "files": [
         "dist/",
+        "contracts/",
         "!dist/types",
         "!dist/artifacts"
     ],
