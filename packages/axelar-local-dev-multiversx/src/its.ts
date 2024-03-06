@@ -177,6 +177,10 @@ export class MultiversXITS {
 
 export async function registerMultiversXRemoteITS(multiversxNetwork: MultiversXNetwork, networks: Network[]) {
     logger.log(`Registerring ITS for ${networks.length} other chain for MultiversX...`);
+
+    const accountOnNetwork = await multiversxNetwork.getAccount(multiversxNetwork.owner);
+    multiversxNetwork.ownerAccount.update(accountOnNetwork);
+
     for (const network of networks) {
         const data = [] as string[];
         data.push(
