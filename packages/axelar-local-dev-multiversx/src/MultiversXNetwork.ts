@@ -50,8 +50,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
     public gasReceiverAddress?: Address;
     public interchainTokenServiceAddress?: Address;
     public interchainTokenFactoryAddress?: Address;
-    public contractAddress?: string;
     public its: MultiversXITS;
+    public contractAddress?: string;
 
     private readonly ownerPrivateKey: UserSecretKey;
 
@@ -211,7 +211,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             axelarGatewayAddress,
             axelarGasReceiverAddress,
             interchainTokenServiceAddress,
-            interchainTokenFactoryAddress
+            interchainTokenFactoryAddress,
         };
     }
 
@@ -261,7 +261,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             codeMetadata: new CodeMetadata(true, true, false, false),
             initArguments: [
                 new AddressValue(Address.fromBech32(axelarAuthAddress)),
-                new StringValue(CHAIN_ID)
+                new StringValue(CHAIN_ID),
             ],
             gasLimit: 50_000_000,
             chainID: 'localnet'
@@ -535,7 +535,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceChain: string,
         sourceAddress: string,
         destinationAddress: string,
-        payloadHash: string
+        payloadHash: string,
     ) {
         // Remove 0x added by Ethereum for hex strings
         commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;
@@ -546,7 +546,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             new StringValue(sourceChain),
             new StringValue(sourceAddress),
             new AddressValue(Address.fromBech32(destinationAddress)),
-            new H256Value(Buffer.from(payloadHash, 'hex'))
+            new H256Value(Buffer.from(payloadHash, 'hex')),
         ]);
         const encodedApproveContractCallData = codec.encodeTopLevel(approveContractCallData);
 
@@ -555,8 +555,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             List.fromItems([new H256Value(Buffer.from(commandId, 'hex'))]),
             List.fromItems([new StringValue(commandName)]),
             List.fromItems([
-                new BytesValue(encodedApproveContractCallData)
-            ])
+                new BytesValue(encodedApproveContractCallData),
+            ]),
         ]);
         const encodedExecuteData = codec.encodeTopLevel(executeData);
 
@@ -570,8 +570,8 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             args: [
                 Tuple.fromItems([
                     new BytesValue(encodedExecuteData),
-                    new BytesValue(encodedProof)
-                ])
+                    new BytesValue(encodedProof),
+                ]),
             ],
             chainID: 'localnet'
         });
@@ -596,7 +596,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceChain: string,
         sourceAddress: string,
         payloadHex: string,
-        value: string = '0'
+        value: string = '0',
     ): Promise<Transaction> {
         // Remove 0x added by Ethereum for hex strings
         commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;
@@ -650,7 +650,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             List.fromItems([new H256Value(Buffer.from(this.operatorWallet.hex(), 'hex'))]),
             List.fromItems([new BigUIntValue(1)]),
             new BigUIntValue(1),
-            List.fromItems([new H256Value(signature)])
+            List.fromItems([new H256Value(signature)]),
         ]);
     }
 }

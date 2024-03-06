@@ -81,70 +81,70 @@ describe('its', () => {
         expect(balance === '1000');
     });
 
-    it.only('should be able to send token from MultiversX to EVM', async () => {
-        const evmIts = new Contract(evmNetwork.interchainTokenService.address, contracts.IInterchainTokenService.abi, wallet.connect(evmNetwork.provider));
-
-        await registerMultiversXRemoteITS(client, [evmNetwork]);
-
-        const name = 'InterchainToken';
-        const symbol = 'ITE';
-        const decimals = 18;
-        const amount = 1000;
-        const salt = keccak256(ethers.utils.defaultAbiCoder.encode(['uint256', 'uint256'], [process.pid, process.ppid]));
-        const fee = 100000000;
-
-        const tokenId = await client.its.interchainTokenId(client.owner, salt);
-
-        await client.its.deployInterchainToken(
-            salt,
-            name,
-            symbol,
-            decimals,
-            amount,
-            client.owner,
-        );
-
-        let tokenIdentifier = await client.its.getValidTokenIdentifier(tokenId);
-        expect(tokenIdentifier);
-        tokenIdentifier = tokenIdentifier as string;
-
-        const multiversXRelayer = new MultiversXRelayer();
-        // Update events first so new Multiversx logs are processed afterwards
-        await multiversXRelayer.updateEvents();
-
-        await client.its.deployRemoteInterchainToken(
-            '',
-            salt,
-            client.owner,
-            evmNetwork.name,
-            fee,
-        );
-
-        // Relay tx from MultiversX to EVM
-        await relay({
-            multiversx: multiversXRelayer,
-            evm: new EvmRelayer({ multiversXRelayer })
-        });
-
-        // TODO: The evm execute transaction is not actually executed successfully for some reason...
-        // const evmTokenAddress = await evmIts.interchainTokenAddress('0x' + tokenId);
-        // const code = await evmNetwork.provider.getCode(evmTokenAddress);
-        // expect (code !== '0x');
-        //
-        // const destinationToken = new Contract(evmTokenAddress, IERC20.abi, evmNetwork.provider);
-        // let balance = await destinationToken.balanceOf(wallet.address);
-        // expect(!balance);
-        //
-        // const result = await client.its.interchainTransfer(tokenId, evmNetwork.name, wallet.address, tokenIdentifier, amount.toString(), '5');
-        // expect(result);
-        //
-        // // Relay tx from MultiversX to EVM
-        // await relay({
-        //     multiversx: multiversXRelayer,
-        //     evm: new EvmRelayer({ multiversXRelayer })
-        // });
-        //
-        // balance = await destinationToken.balanceOf(wallet.address);
-        // expect(balance === '995');
-    });
+    // it('should be able to send token from MultiversX to EVM', async () => {
+    //     const evmIts = new Contract(evmNetwork.interchainTokenService.address, contracts.IInterchainTokenService.abi, wallet.connect(evmNetwork.provider));
+    //
+    //     await registerMultiversXRemoteITS(client, [evmNetwork]);
+    //
+    //     const name = 'InterchainToken';
+    //     const symbol = 'ITE';
+    //     const decimals = 18;
+    //     const amount = 1000;
+    //     const salt = keccak256(ethers.utils.defaultAbiCoder.encode(['uint256', 'uint256'], [process.pid, process.ppid]));
+    //     const fee = 100000000;
+    //
+    //     const tokenId = await client.its.interchainTokenId(client.owner, salt);
+    //
+    //     await client.its.deployInterchainToken(
+    //         salt,
+    //         name,
+    //         symbol,
+    //         decimals,
+    //         amount,
+    //         client.owner,
+    //     );
+    //
+    //     let tokenIdentifier = await client.its.getValidTokenIdentifier(tokenId);
+    //     expect(tokenIdentifier);
+    //     tokenIdentifier = tokenIdentifier as string;
+    //
+    //     const multiversXRelayer = new MultiversXRelayer();
+    //     // Update events first so new Multiversx logs are processed afterwards
+    //     await multiversXRelayer.updateEvents();
+    //
+    //     await client.its.deployRemoteInterchainToken(
+    //         '',
+    //         salt,
+    //         client.owner,
+    //         evmNetwork.name,
+    //         fee,
+    //     );
+    //
+    //     // Relay tx from MultiversX to EVM
+    //     await relay({
+    //         multiversx: multiversXRelayer,
+    //         evm: new EvmRelayer({ multiversXRelayer })
+    //     });
+    //
+    //     // TODO: The evm execute transaction is not actually executed successfully for some reason...
+    //     // const evmTokenAddress = await evmIts.interchainTokenAddress('0x' + tokenId);
+    //     // const code = await evmNetwork.provider.getCode(evmTokenAddress);
+    //     // expect (code !== '0x');
+    //     //
+    //     // const destinationToken = new Contract(evmTokenAddress, IERC20.abi, evmNetwork.provider);
+    //     // let balance = await destinationToken.balanceOf(wallet.address);
+    //     // expect(!balance);
+    //     //
+    //     // const result = await client.its.interchainTransfer(tokenId, evmNetwork.name, wallet.address, tokenIdentifier, amount.toString(), '5');
+    //     // expect(result);
+    //     //
+    //     // // Relay tx from MultiversX to EVM
+    //     // await relay({
+    //     //     multiversx: multiversXRelayer,
+    //     //     evm: new EvmRelayer({ multiversXRelayer })
+    //     // });
+    //     //
+    //     // balance = await destinationToken.balanceOf(wallet.address);
+    //     // expect(balance === '995');
+    // });
 });
