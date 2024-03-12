@@ -56,4 +56,46 @@ export class Command {
             'multiversx'
         );
     };
+
+    static createContractCallCommandIts = (commandId: string, relayData: RelayData, args: CallContractArgs) => {
+        // Remove 0x added by Ethereum for hex strings
+        const payloadHex = args.payload.startsWith('0x') ? args.payload.substring(2) : args.payload;
+        const payloadHash = createKeccakHash('keccak256').update(Buffer.from(payloadHex, 'hex')).digest('hex');
+
+        return new Command(
+            commandId,
+            'approveContractCall',
+            [args.from, args.sourceAddress, args.destinationContractAddress, payloadHash, args.transactionHash, args.sourceEventIndex],
+            [],
+            async () => {
+                const result = defaultAbiCoder.decode(['uint256'], Buffer.from(payloadHex, 'hex'));
+                const messageType = Number(result[0]);
+
+                let tx = await multiversXNetwork.executeContract(
+                    commandId,
+                    args.destinationContractAddress,
+                    args.from,
+                    args.sourceAddress,
+                    payloadHex
+                );
+
+                // In case of deploy interchain token, call 2nd time with EGLD value
+                if (messageType === 1) {
+                    tx = await multiversXNetwork.executeContract(
+                        commandId,
+                        args.destinationContractAddress,
+                        args.from,
+                        args.sourceAddress,
+                        payloadHex,
+                        '5000000000000000000' // 5 EGLD for ESDT issue cost on localnet
+                    );
+                }
+
+                relayData.callContract[commandId].execution = tx.getHash();
+
+                return tx;
+            },
+            'multiversx'
+        );
+    };
 }
