@@ -24,6 +24,5 @@
         "@axelar-network/axelar-local-dev": "2.2.0"
     },
     "author": "",
-    "license": "ISC",
-    "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70"
+    "license": "ISC"
 }
