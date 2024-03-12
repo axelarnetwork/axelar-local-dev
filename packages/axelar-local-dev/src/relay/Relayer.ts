@@ -1,4 +1,4 @@
-import { networks } from '../Network';
+import { networks, Network } from '../Network';
 import { Command } from './Command';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
 
@@ -8,6 +8,7 @@ export enum RelayerType {
     Aptos = 'aptos',
     Near = 'near',
     Wasm = 'wasm',
+    MultiversX = 'multiversx',
 }
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 
@@ -36,14 +37,16 @@ export abstract class Relayer {
 
     abstract setRelayer(type: RelayerType, relayer: Relayer): void;
 
-    async relay() {
-        for (const to of networks) {
+    async relay(externalNetworks?: Network[]) {
+        const actualNetworks = externalNetworks || networks;
+        for (const to of actualNetworks) {
             this.commands[to.name] = [];
         }
         this.commands['aptos'] = [];
         this.commands['sui'] = [];
         this.commands['near'] = [];
         this.commands['wasm'] = [];
+        this.commands['multiversx'] = [];
         // Update all events at the source chains
         await this.updateEvents();
 

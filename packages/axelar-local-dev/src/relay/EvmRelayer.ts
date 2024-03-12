@@ -20,6 +20,7 @@ interface EvmRelayerOptions {
     aptosRelayer?: Relayer;
     suiRelayer?: Relayer;
     wasmRelayer?: Relayer;
+    multiversXRelayer?: Relayer;
 }
 
 export class EvmRelayer extends Relayer {
@@ -31,6 +32,7 @@ export class EvmRelayer extends Relayer {
         this.otherRelayers.aptos = options.aptosRelayer;
         this.otherRelayers.sui = options.suiRelayer;
         this.otherRelayers.wasm = options.wasmRelayer;
+        this.otherRelayers.multiversx = options.multiversXRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {
@@ -413,10 +415,12 @@ export class EvmRelayer extends Relayer {
                 payloadHash: args.payloadHash,
                 transactionHash,
                 sourceEventIndex,
-              };
-              this.relayData.callContract[commandId] = contractCallArgs;
+            };
+            this.relayData.callContract[commandId] = contractCallArgs;
             let command;
-            if (args.destinationChain.toLowerCase() === 'aptos') {
+            if (args.destinationChain.toLowerCase() === 'multiversx') {
+                command = this.otherRelayers?.multiversx?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() === 'aptos') {
                 command = this.otherRelayers?.aptos?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() === 'near') {
                 command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
