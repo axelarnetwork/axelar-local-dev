@@ -19,6 +19,7 @@ interface EvmRelayerOptions {
     nearRelayer?: Relayer;
     aptosRelayer?: Relayer;
     suiRelayer?: Relayer;
+    wasmRelayer?: Relayer;
     multiversXRelayer?: Relayer;
 }
 
@@ -30,6 +31,7 @@ export class EvmRelayer extends Relayer {
         this.otherRelayers.near = options.nearRelayer;
         this.otherRelayers.aptos = options.aptosRelayer;
         this.otherRelayers.sui = options.suiRelayer;
+        this.otherRelayers.wasm = options.wasmRelayer;
         this.otherRelayers.multiversx = options.multiversXRelayer;
     }
 
@@ -424,6 +426,8 @@ export class EvmRelayer extends Relayer {
                 command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() === 'sui') {
                 command = this.otherRelayers?.sui?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() === 'wasm') {
+                command = this.otherRelayers?.wasm?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else {
                 command = this.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             }

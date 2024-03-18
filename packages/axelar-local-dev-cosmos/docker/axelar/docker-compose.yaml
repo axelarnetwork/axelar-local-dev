@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  axelar:
+    image: nptytn/local-axelard:v0.0.5
+    container_name: axelar
+    command: "/root/private/bin/init_axelar.sh"
+    volumes:
+      - "./bin:/root/private/bin"
+      - "./.axelar:/root/private/.axelar"
+    labels:
+      - "traefik.enable=true"
+
+      # RPC
+      - "traefik.http.routers.axelar-rpc.rule=Host(`localhost`) && PathPrefix(`/axelar-rpc`)"
+      - "traefik.http.services.axelar-rpc.loadbalancer.server.port=26657"
+      - "traefik.http.routers.axelar-rpc.entrypoints=web"
+      - "traefik.http.routers.axelar-rpc.service=axelar-rpc"
+      - "traefik.http.middlewares.axelar-rpc.stripprefix.prefixes=/axelar-rpc"
+      - "traefik.http.routers.axelar-rpc.middlewares=axelar-rpc"
+
+      # LCD
+      - "traefik.http.routers.axelar-lcd.rule=Host(`localhost`) && PathPrefix(`/axelar-lcd`)"
+      - "traefik.http.services.axelar-lcd.loadbalancer.server.port=1317"
+      - "traefik.http.routers.axelar-lcd.entrypoints=web"
+      - "traefik.http.routers.axelar-lcd.service=axelar-lcd"
+      - "traefik.http.middlewares.axelar-lcd.stripprefix.prefixes=/axelar-lcd"
+      - "traefik.http.routers.axelar-lcd.middlewares=axelar-lcd"
+networks:
+  default:
+    name: traefik_default
+    external: true

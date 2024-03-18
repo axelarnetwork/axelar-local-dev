@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-aptos",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "main": "dist/index.js",
     "files": [
         "dist/",
@@ -19,10 +19,11 @@
     },
     "dependencies": {
         "@axelar-network/axelar-cgp-aptos": "^1.0.5",
-        "@axelar-network/axelar-local-dev": "2.2.0",
+        "@axelar-network/axelar-local-dev": "2.3.0",
         "aptos": "1.3.16"
     },
     "author": "",
     "license": "ISC",
-    "description": ""
+    "description": "",
+    "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70"
 }

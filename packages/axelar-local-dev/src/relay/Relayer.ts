@@ -7,7 +7,8 @@ export enum RelayerType {
     Evm = 'evm',
     Aptos = 'aptos',
     Near = 'near',
-    MultiversX = 'multiversx'
+    Wasm = 'wasm',
+    MultiversX = 'multiversx',
 }
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 
@@ -44,6 +45,7 @@ export abstract class Relayer {
         this.commands['aptos'] = [];
         this.commands['sui'] = [];
         this.commands['near'] = [];
+        this.commands['wasm'] = [];
         this.commands['multiversx'] = [];
         // Update all events at the source chains
         await this.updateEvents();

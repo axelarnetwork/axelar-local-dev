@@ -137,4 +137,4 @@ target/
 **/*.rs.bk
 
 # Near wasm contract
-*.wasm
+packages/axelar-local-dev-near/**/*.wasm

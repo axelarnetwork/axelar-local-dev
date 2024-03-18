@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "description": "",
     "main": "dist/index.js",
     "files": [
@@ -72,5 +72,6 @@
     },
     "optionalDependencies": {
         "near-workspaces": "^3.3.0"
-    }
+    },
+    "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70"
 }

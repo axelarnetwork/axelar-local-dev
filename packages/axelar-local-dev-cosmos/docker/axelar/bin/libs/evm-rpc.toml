@@ -1,0 +1,24 @@
+[[axelar_bridge_evm]]
+name = "Ethereum"
+rpc_addr = "localhost:8500/0"
+start-with-bridge = false
+
+[[axelar_bridge_evm]]
+name = "Avalanche"
+rpc_addr = "localhost:8500/1"
+start-with-bridge = false
+
+[[axelar_bridge_evm]]
+name = "Fantom"
+rpc_addr = "localhost:8500/2"
+start-with-bridge = false
+
+[[axelar_bridge_evm]]
+name = "Moonbeam"
+rpc_addr = "localhost:8500/3"
+start-with-bridge = false
+
+[[axelar_bridge_evm]]
+name = "Polygon"
+rpc_addr = "localhost:8500/4"
+start-with-bridge = false
