@@ -39,7 +39,7 @@ jobs:
         run: rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip sui-devnet-v1.7.0-ubuntu-x86_64.tgz
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
