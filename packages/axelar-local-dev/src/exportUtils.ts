@@ -96,6 +96,14 @@ export async function setupAndExport(options: SetupLocalOptions) {
         throw Error('At least 2 chains are required to setup and export');
     }
 
+    for (const chain of chains) {
+        // check if given rpc url is valid using ethers.js to get latest block
+        const provider = new ethers.providers.JsonRpcProvider(chain.rpcUrl);
+        await provider.getBlockNumber().catch((e) => {
+            throw Error(`Please check if the ${chain.name} chain is running on ${chain.rpcUrl}`)
+        });
+    }
+
     const _options = {
         chainOutputPath: chainOutputPath || './local.json',
         chains,
