@@ -138,3 +138,7 @@ target/
 
 # Near wasm contract
 packages/axelar-local-dev-near/**/*.wasm
+
+# Multiversx
+localnet
+localnet.toml

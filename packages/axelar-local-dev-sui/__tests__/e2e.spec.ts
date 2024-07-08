@@ -5,7 +5,7 @@ import { SuiNetwork, SuiRelayer, initSui } from '@axelar-network/axelar-local-de
 import path from 'path';
 const { arrayify } = ethers.utils;
 
-describe.skip('e2e', () => {
+describe('e2e', () => {
     let client: SuiNetwork;
     let relayer: SuiRelayer;
     let evmNetwork: Network;

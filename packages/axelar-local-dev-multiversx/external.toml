@@ -7,7 +7,7 @@
     Enabled           = true
     IndexerCacheSize  = 0
     BulkRequestMaxSizeInBytes = 4194304 # 4MB
-    URL               = "http://localhost:9200"
+    URL               = "http://127.0.0.1:9200"
     UseKibana         = false
     Username          = ""
     Password          = ""
@@ -27,7 +27,7 @@
 
     # ProxyUrl is used to communicate with the subscriptions hub
     # The indexer instance will broadcast data using ProxyUrl
-    ProxyUrl = "http://localhost:5000"
+    ProxyUrl = "http://127.0.0.1:5000"
 
     # Username and Password need to be specified if UseAuthorization is set to true
     Username = ""

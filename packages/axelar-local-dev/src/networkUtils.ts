@@ -350,5 +350,5 @@ export function getDepositAddress(
         };
         return address;
     }
-    return httpGet(`http:/localhost:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${alias}`);
+    return httpGet(`http:/127.0.0.1:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${alias}`);
 }
