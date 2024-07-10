@@ -58,7 +58,7 @@ describe('Network', () => {
         await createNetwork({
             port,
         });
-        network = await getNetwork(`http://localhost:${port}`);
+        network = await getNetwork(`http://127.0.0.1:${port}`);
         validateNetwork(network);
     });
 
@@ -74,7 +74,7 @@ describe('Network', () => {
             logging: { quiet: true },
         });
         await server.listen(port);
-        network = await setupNetwork(`http://localhost:${port}`, {
+        network = await setupNetwork(`http://127.0.0.1:${port}`, {
             ownerKey: new Wallet(accounts[0].secretKey),
         });
         validateNetwork(network);

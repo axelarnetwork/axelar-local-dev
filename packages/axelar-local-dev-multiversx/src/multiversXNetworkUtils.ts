@@ -50,7 +50,7 @@ function getMultiversXConfig(): MultiversXConfig | undefined {
 export async function createMultiversXNetwork(config?: MultiversXNetworkConfig): Promise<MultiversXNetwork> {
     const configFile = getMultiversXConfig();
 
-    const gatewayUrl = config?.gatewayUrl || 'http://localhost:7950';
+    const gatewayUrl = config?.gatewayUrl || 'http://127.0.0.1:7950';
     const loadingMultiversXNetwork = new MultiversXNetwork(
         gatewayUrl,
         configFile?.axelarGatewayAddress,
@@ -85,7 +85,7 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
 }
 
 export async function loadMultiversXNetwork(
-    gatewayUrl = 'http://localhost:7950',
+    gatewayUrl = 'http://127.0.0.1:7950',
 ) {
     const configFile = getMultiversXConfig();
 
