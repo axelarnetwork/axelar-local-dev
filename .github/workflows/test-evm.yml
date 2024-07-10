@@ -1,4 +1,4 @@
-name: Run Tests for Core
+name: Run Tests for EVM
 on: pull_request
 
 jobs:
