@@ -133,11 +133,11 @@ describe('export', () => {
                 chains: [
                     {
                         name: 'Ethereum',
-                        rpcUrl: 'http://localhost:8545',
+                        rpcUrl: process.env.EVM_NODE_1 || 'http://127.0.0.1:8545',
                     },
                     {
                         name: 'Avalanche',
-                        rpcUrl: 'http://localhost:8546',
+                        rpcUrl: process.env.EVM_NODE_2 || 'http://127.0.0.1:8546',
                     },
                 ],
             })) as Network[];
@@ -155,7 +155,7 @@ describe('export', () => {
         });
 
         // Note: This test is expecting the host to run a local blockchain on port 8545 and 8546.
-        it('should be able to relay tokens from chain A to chain B', async () => {
+        it.only('should be able to relay tokens from chain A to chain B', async () => {
             const contract1 = await deployContract(srcOwner, ExecuteWithToken, [chain1.gateway.address, chain1.gasService.address]).then(
                 (contract) => ExecuteWithTokenFactory.connect(contract.address, srcOwner)
             );

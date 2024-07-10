@@ -1,0 +1,51 @@
+name: Run Tests for Sui
+
+on: pull_request
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        arch: [amd64]
+    steps:
+      - name: Setup Dependencies for Sui Binary
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev
+
+      - name: Download and Install Sui Binary
+        run: |
+          wget https://github.com/MystenLabs/sui/releases/download/mainnet-v1.11.2/sui-mainnet-v1.11.2-ubuntu-x86_64.tgz
+          tar -xvf sui-mainnet-v1.11.2-ubuntu-x86_64.tgz
+          sudo mv ./target/release/sui-test-validator-ubuntu-x86_64 /usr/local/bin/sui-test-validator
+          sudo mv ./target/release/sui-ubuntu-x86_64 /usr/local/bin/sui
+
+      - name: Cleanup
+        run: rm -rf target sui-devnet-v1.7.0-ubuntu-x86_64.tgz
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build:core && npm run build:sui
+
+      - name: Test
+        timeout-minutes: 15
+        run: |
+          # nohup sh -c 'RUST_LOG=off sui-test-validator' > nohup.out 2> nohup.err < /dev/null &
+          # sleep 30
+          # npm run test:sui

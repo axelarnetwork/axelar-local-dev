@@ -2,7 +2,7 @@ import { SuiNetwork } from '../src/SuiNetwork';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import path from 'path';
 
-describe.skip('Sui Network', () => {
+describe('Sui Network', () => {
     let client: SuiNetwork;
 
     beforeEach(async () => {

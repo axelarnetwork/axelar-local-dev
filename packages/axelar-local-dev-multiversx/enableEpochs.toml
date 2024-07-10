@@ -1,0 +1,131 @@
+[EnableEpochs]
+SCDeployEnableEpoch = 0
+BuiltInFunctionsEnableEpoch = 0
+RelayedTransactionsEnableEpoch = 0
+PenalizedTooMuchGasEnableEpoch = 0
+SwitchJailWaitingEnableEpoch = 0
+BelowSignedThresholdEnableEpoch = 0
+SwitchHysteresisForMinNodesEnableEpoch = 1
+TransactionSignedWithTxHashEnableEpoch = 1
+MetaProtectionEnableEpoch = 1
+AheadOfTimeGasUsageEnableEpoch = 0
+GasPriceModifierEnableEpoch = 0
+RepairCallbackEnableEpoch = 0
+BlockGasAndFeesReCheckEnableEpoch = 0
+BalanceWaitingListsEnableEpoch = 1
+ReturnDataToLastTransferEnableEpoch = 0
+SenderInOutTransferEnableEpoch = 0
+StakeEnableEpoch = 0
+StakingV2EnableEpoch = 1
+DoubleKeyProtectionEnableEpoch = 1
+ESDTEnableEpoch = 0
+GovernanceEnableEpoch = 1
+DelegationManagerEnableEpoch = 0
+DelegationSmartContractEnableEpoch = 1
+CorrectLastUnjailedEnableEpoch = 1
+RelayedTransactionsV2EnableEpoch = 1
+UnbondTokensV2EnableEpoch = 1
+SaveJailedAlwaysEnableEpoch = 1
+ReDelegateBelowMinCheckEnableEpoch = 1
+ValidatorToDelegationEnableEpoch = 1
+IncrementSCRNonceInMultiTransferEnableEpoch = 0
+ESDTMultiTransferEnableEpoch = 0
+GlobalMintBurnDisableEpoch = 0
+ESDTTransferRoleEnableEpoch = 0
+ComputeRewardCheckpointEnableEpoch = 1
+SCRSizeInvariantCheckEnableEpoch = 1
+BackwardCompSaveKeyValueEnableEpoch = 1
+ESDTNFTCreateOnMultiShardEnableEpoch = 1
+MetaESDTSetEnableEpoch = 0
+AddTokensToDelegationEnableEpoch = 1
+MultiESDTTransferFixOnCallBackOnEnableEpoch = 0
+OptimizeGasUsedInCrossMiniBlocksEnableEpoch = 1
+CorrectFirstQueuedEpoch = 0
+DeleteDelegatorAfterClaimRewardsEnableEpoch = 1
+FixOOGReturnCodeEnableEpoch = 0
+RemoveNonUpdatedStorageEnableEpoch = 0
+OptimizeNFTStoreEnableEpoch = 1
+CreateNFTThroughExecByCallerEnableEpoch = 1
+StopDecreasingValidatorRatingWhenStuckEnableEpoch = 1
+FrontRunningProtectionEnableEpoch = 1
+IsPayableBySCEnableEpoch = 1
+CleanUpInformativeSCRsEnableEpoch = 1
+StorageAPICostOptimizationEnableEpoch = 1
+TransformToMultiShardCreateEnableEpoch = 1
+ESDTRegisterAndSetAllRolesEnableEpoch = 1
+ScheduledMiniBlocksEnableEpoch = 1
+CorrectJailedNotUnstakedEmptyQueueEpoch = 1
+DoNotReturnOldBlockInBlockchainHookEnableEpoch = 1
+AddFailedRelayedTxToInvalidMBsDisableEpoch = 1
+SCRSizeInvariantOnBuiltInResultEnableEpoch = 1
+CheckCorrectTokenIDForTransferRoleEnableEpoch = 1
+DisableExecByCallerEnableEpoch = 1
+RefactorContextEnableEpoch = 1
+FailExecutionOnEveryAPIErrorEnableEpoch = 1
+ManagedCryptoAPIsEnableEpoch = 1
+CheckFunctionArgumentEnableEpoch = 1
+CheckExecuteOnReadOnlyEnableEpoch = 1
+ESDTMetadataContinuousCleanupEnableEpoch = 1
+MiniBlockPartialExecutionEnableEpoch = 1
+FixAsyncCallBackArgsListEnableEpoch = 1
+FixOldTokenLiquidityEnableEpoch = 1
+RuntimeMemStoreLimitEnableEpoch = 1
+SetSenderInEeiOutputTransferEnableEpoch = 1
+RefactorPeersMiniBlocksEnableEpoch = 1
+MaxBlockchainHookCountersEnableEpoch = 1
+WipeSingleNFTLiquidityDecreaseEnableEpoch = 1
+AlwaysSaveTokenMetaDataEnableEpoch = 1
+RuntimeCodeSizeFixEnableEpoch = 1
+RelayedNonceFixEnableEpoch = 1
+SetGuardianEnableEpoch = 1
+DeterministicSortOnValidatorsInfoEnableEpoch = 1
+SCProcessorV2EnableEpoch = 1
+AutoBalanceDataTriesEnableEpoch = 1
+MigrateDataTrieEnableEpoch = 1
+KeepExecOrderOnCreatedSCRsEnableEpoch = 1
+MultiClaimOnDelegationEnableEpoch = 1
+ChangeUsernameEnableEpoch = 4
+ConsistentTokensValuesLengthCheckEnableEpoch = 1
+FixDelegationChangeOwnerOnAccountEnableEpoch = 1
+DynamicGasCostForDataTrieStorageLoadEnableEpoch = 1
+ScToScLogEventEnableEpoch = 1
+NFTStopCreateEnableEpoch = 1
+ChangeOwnerAddressCrossShardThroughSCEnableEpoch = 1
+FixGasRemainingForSaveKeyValueBuiltinFunctionEnableEpoch = 1
+CurrentRandomnessOnSortingEnableEpoch = 1
+StakeLimitsEnableEpoch = 1
+StakingV4Step1EnableEpoch = 1
+StakingV4Step2EnableEpoch = 2
+StakingV4Step3EnableEpoch = 3
+CleanupAuctionOnLowWaitingListEnableEpoch = 1
+AlwaysMergeContextsInEEIEnableEpoch = 1
+BuiltInFunctionOnMetaEnableEpoch = 0
+ESDTNFTCreateOnMultiShard = 0
+[[EnableEpochs.BLSMultiSignerEnableEpoch]]
+EnableEpoch = 0
+Type = "no-KOSK"
+
+[[EnableEpochs.BLSMultiSignerEnableEpoch]]
+EnableEpoch = 1
+Type = "KOSK"
+
+[[EnableEpochs.MaxNodesChangeEnableEpoch]]
+EpochEnable = 0
+MaxNumNodes = 48
+NodesToShufflePerShard = 4
+
+[[EnableEpochs.MaxNodesChangeEnableEpoch]]
+EpochEnable = 1
+MaxNumNodes = 64
+NodesToShufflePerShard = 2
+
+[[EnableEpochs.MaxNodesChangeEnableEpoch]]
+EpochEnable = 3
+MaxNumNodes = 58
+NodesToShufflePerShard = 2
+
+[GasSchedule]
+[[GasSchedule.GasScheduleByEpochs]]
+StartEpoch = 0
+FileName = "gasScheduleV8.toml"
+

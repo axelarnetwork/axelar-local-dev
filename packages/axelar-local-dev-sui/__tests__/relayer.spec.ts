@@ -8,7 +8,7 @@ const {
     utils: { arrayify },
 } = ethers;
 
-describe.skip('relayer', () => {
+describe('relayer', () => {
     let client: SuiNetwork;
     let relayer: SuiRelayer;
 

@@ -1,0 +1,51 @@
+name: Run Tests for Aptos
+
+on: pull_request
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        arch: [amd64]
+    steps:
+      - name: Download and Install Aptos Binary
+        run: |
+          wget --no-check-certificate https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.4/aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+          unzip aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+          sudo mv aptos /usr/local/bin
+
+      - name: Cleanup
+        run: rm -rf target aptos-cli-1.0.4-Ubuntu-22.04-x86_64.zip
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build:core && npm run build:aptos
+
+      - name: Test
+        timeout-minutes: 15
+        run: |
+          nohup sh -c "aptos node run-local-testnet --with-faucet" > nohup.out 2> nohup.err < /dev/null &
+          nohup sh -c "anvil -p 8545 > /dev/null 2>&1" < /dev/null &
+          sleep 30
+          npm run test:aptos

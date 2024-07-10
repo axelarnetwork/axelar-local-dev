@@ -9,8 +9,8 @@ export interface AptosNetworkConfig {
 }
 
 export async function createAptosNetwork(config?: AptosNetworkConfig): Promise<AptosNetwork> {
-    const nodeUrl = config?.nodeUrl || 'http://localhost:8080';
-    const faucetUrl = config?.faucetUrl || 'http://localhost:8081';
+    const nodeUrl = config?.nodeUrl || 'http://127.0.0.1:8080';
+    const faucetUrl = config?.faucetUrl || 'http://127.0.0.1:8081';
     const loadingAptosNetwork = new AptosNetwork(nodeUrl);
 
     // fund the account with faucet
@@ -40,6 +40,6 @@ export async function createAptosNetwork(config?: AptosNetworkConfig): Promise<A
     return aptosNetwork;
 }
 
-export async function loadAptosNetwork(nodeUrl = 'http://localhost:8080') {
+export async function loadAptosNetwork(nodeUrl = 'http://127.0.0.1:8080') {
     aptosNetwork = new AptosNetwork(nodeUrl);
 }

@@ -54,7 +54,7 @@ export class MultiversXRelayer extends Relayer {
         super();
 
         this.elasticsearch = new Client({
-            node: 'http://localhost:9200'
+            node: 'http://127.0.0.1:9200'
         });
     }
 

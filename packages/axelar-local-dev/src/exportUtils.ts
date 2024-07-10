@@ -39,7 +39,7 @@ export async function createAndExport(options: CreateLocalOptions = {}) {
         });
         const testnet = (testnetInfo as any)[name];
         const info = chain.getCloneInfo() as any;
-        info.rpc = `http://localhost:${_options.port}/${i}`;
+        info.rpc = `http://127.0.0.1:${_options.port}/${i}`;
         (info.tokenName = testnet?.tokenName), (info.tokenSymbol = testnet?.tokenSymbol), localChains.push(info);
         const [user] = chain.userWallets;
         for (const account of _options.accountsToFund) {
@@ -185,7 +185,7 @@ export async function forkAndExport(options: CloneLocalOptions = {}) {
     for (const chain of chains) {
         const network = await forkNetwork(chain, _options.networkOptions);
         const info = network.getCloneInfo() as any;
-        info.rpc = `http://localhost:${options.port}/${i}`;
+        info.rpc = `http://127.0.0.1:${options.port}/${i}`;
         (info.tokenName = chain?.tokenName), (info.tokenSymbol = chain?.tokenSymbol), chains_local.push(info);
         const [user] = network.userWallets;
         for (const account of _options.accountsToFund) {

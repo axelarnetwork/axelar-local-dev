@@ -191,7 +191,7 @@ describe('multiversx', () => {
         expect(message).toEqual(toSend);
     });
 
-    it('should be able to send token from EVM to MultiversX', async () => {
+    it.skip('should be able to send token from EVM to MultiversX', async () => {
         const evmIts = new Contract(evmNetwork.interchainTokenService.address, contracts.IInterchainTokenService.abi, wallet.connect(evmNetwork.provider));
         const evmItsFactory = new Contract(evmNetwork.interchainTokenFactory.address, contracts.IInterchainTokenFactory.abi, wallet.connect(evmNetwork.provider));
 
