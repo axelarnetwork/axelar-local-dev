@@ -238,7 +238,7 @@ export class Network {
         const tokenHandler = await deployContract(wallet, TokenHandler, []);
         const interchainTokenFactoryAddress = await this.create3Deployer.deployedAddress('0x', wallet.address, factorySalt);
 
-        let implementation = await deployContract(wallet, InterchainTokenServiceContract, [
+        const tokenServiceImplementation = await deployContract(wallet, InterchainTokenServiceContract, [
             tokenManagerDeployer.address,
             interchainTokenDeployer.address,
             this.gateway.address,
@@ -250,16 +250,16 @@ export class Network {
         ]);
         const factory = new ContractFactory(InterchainProxy.abi, InterchainProxy.bytecode);
         let bytecode = factory.getDeployTransaction(
-            implementation.address,
+            tokenServiceImplementation.address,
             wallet.address,
             defaultAbiCoder.encode(['address', 'string', 'string[]', 'string[]'], [wallet.address, this.name, [], []])
         ).data;
         await this.create3Deployer.connect(wallet).deploy(bytecode, deploymentSalt);
         this.interchainTokenService = InterchainTokenServiceFactory.connect(interchainTokenServiceAddress, wallet);
 
-        implementation = await deployContract(wallet, InterchainTokenFactoryContract, [interchainTokenServiceAddress]);
+        const tokenFactoryImplementation = await deployContract(wallet, InterchainTokenFactoryContract, [interchainTokenServiceAddress]);
 
-        bytecode = factory.getDeployTransaction(implementation.address, wallet.address, '0x').data;
+        bytecode = factory.getDeployTransaction(tokenFactoryImplementation.address, wallet.address, '0x').data;
 
         await this.create3Deployer.connect(wallet).deploy(bytecode, factorySalt);
         this.interchainTokenFactory = InterchainTokenFactoryFactory.connect(interchainTokenFactoryAddress, wallet);
