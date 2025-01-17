@@ -41,7 +41,7 @@ export class AxelarRelayerService extends Relayer {
     ibcRelayer?: IBCRelayerService
   ) {
     const axelarListener = new AxelarListener(axelarConfig);
-    const wasmClient = await CosmosClient.create("wasm");
+    const wasmClient = await CosmosClient.create("agoric");
     const _ibcRelayer = ibcRelayer || (await IBCRelayerService.create());
     await _ibcRelayer.createIBCChannelIfNeeded();
 
@@ -65,6 +65,7 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private async handleContractCallEvent(args: any) {
+    console.log('fraz1', args)
     this.updateCallContractEvents(args);
     await this.execute(this.commands);
   }
@@ -81,7 +82,7 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private async executeEvmToWasm(command: RelayCommand) {
-    const toExecute = command["wasm"];
+    const toExecute = command["agoric"];
     if (!toExecute || toExecute?.length === 0) return;
 
     await this.executeWasmExecutable(toExecute);
@@ -142,7 +143,7 @@ export class AxelarRelayerService extends Relayer {
   ) {
     const { args } = event;
     const contractCallArgs: CallContractArgs = {
-      from: "wasm",
+      from: "agoric",
       to: args.destinationChain,
       sourceAddress: args.sender,
       destinationContractAddress: args.contractAddress,

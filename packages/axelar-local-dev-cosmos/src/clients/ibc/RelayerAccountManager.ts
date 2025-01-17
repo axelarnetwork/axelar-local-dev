@@ -49,11 +49,11 @@ export class RelayerAccountManager {
    * @param prefix chain prefix. Available options: wasm, axelar
    * @returns relayer address
    */
-  async getRelayerAddress(prefix: CosmosChain = "wasm"): Promise<string> {
+  async getRelayerAddress(prefix: CosmosChain = "agoric"): Promise<string> {
     const accounts = await this.relayerAccount.getAccounts();
     const relayerAddress = accounts[0].address;
 
-    if (prefix === "wasm") {
+    if (prefix === "agoric") {
       return relayerAddress;
     }
     return convertCosmosAddress(relayerAddress, prefix);
@@ -83,7 +83,7 @@ export class RelayerAccountManager {
   async fundRelayer(
     amount = RelayerAccountManager.DEFAULT_FUND_AMOUNT
   ): Promise<void> {
-    const relayerAddress = await this.getRelayerAddress("wasm");
+    const relayerAddress = await this.getRelayerAddress("agoric");
     const relayerAxelarAddress = await this.getRelayerAddress("axelar");
 
     // Fund the relayer address on wasm
@@ -97,7 +97,7 @@ export class RelayerAccountManager {
    * @returns relayer fund on wasm and axelar
    */
   async getRelayerFund() {
-    const relayerAddress = await this.getRelayerAddress("wasm");
+    const relayerAddress = await this.getRelayerAddress("agoric");
     const relayerAxelarAddress = await this.getRelayerAddress("axelar");
 
     const balance = await this.wasmClient.getBalance(relayerAddress);

@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import { Order } from "cosmjs-types/ibc/core/channel/v1/channel";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { IbcClient, Link, RelayedHeights } from "@confio/relayer";
+import { IbcClient, Link, NoopLogger, RelayedHeights } from "@confio/relayer";
 import { ChannelPair } from "@confio/relayer/build/lib/link";
 import { CosmosClient } from "../cosmos/CosmosClient";
 import { RelayerAccountManager } from ".";
@@ -12,6 +12,7 @@ import { Path } from "../../path";
 export class IBCRelayerClient {
   axelarClient: CosmosClient;
   wasmClient: CosmosClient;
+  logger: NoopLogger;
   link?: Link;
   public channel?: ChannelPair;
   public lastRelayedHeight: RelayedHeights = {};
@@ -24,6 +25,13 @@ export class IBCRelayerClient {
   ) {
     this.axelarClient = axelarClient;
     this.wasmClient = wasmClient;
+    this.logger = {
+      info: console.log, 
+      error: console.log, 
+      warn: console.log,
+      verbose: console.log,
+      debug: console.log,
+    } as NoopLogger;
     this.relayerAccountManager = new RelayerAccountManager(
       this.axelarClient,
       this.wasmClient,
@@ -33,9 +41,9 @@ export class IBCRelayerClient {
 
   static async create(mnemonic?: string) {
     const axelarClient = await CosmosClient.create("axelar");
-    const wasmClient = await CosmosClient.create("wasm");
+    const wasmClient = await CosmosClient.create("agoric");
     const relayer = await RelayerAccountManager.createRelayerAccount(
-      "wasm",
+      "agoric",
       mnemonic
     );
 
@@ -51,7 +59,6 @@ export class IBCRelayerClient {
         prefix,
       }
     );
-
     return IbcClient.connectWithSigner(
       client.chainInfo.rpcUrl,
       relayer,
@@ -60,6 +67,7 @@ export class IBCRelayerClient {
         gasPrice: client.gasPrice,
         estimatedBlockTime: 400,
         estimatedIndexerTime: 60,
+        logger: this.logger,
       }
     );
   }
@@ -111,9 +119,10 @@ export class IBCRelayerClient {
           axelarIBCClient,
           wasmIBCClient,
           connection.axelar.connectionId,
-          connection.wasm.connectionId
+          connection.wasm.connectionId,
+          this.logger,
         );
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (!this.link) {

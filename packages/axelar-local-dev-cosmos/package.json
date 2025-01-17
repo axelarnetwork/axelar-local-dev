@@ -18,13 +18,15 @@
     "build:ts": "rm -rf dist && tsc",
     "build:contract": "hardhat clean && hardhat compile",
     "start": "./scripts/clean.sh && ts-node scripts/start.ts",
-    "stop": "ts-node scripts/stop.ts"
+    "stop": "ts-node scripts/stop.ts",
+    "relay": "ts-node scripts/relay.ts"
   },
   "dependencies": {
     "@axelar-network/axelar-local-dev": "^2.3.2",
     "@confio/relayer": "^0.10.0",
     "@cosmjs/cosmwasm-stargate": "^0.31.1",
     "@cosmjs/stargate": "^0.31.1",
+    "@metamask/abi-utils": "^3.0.0",
     "@types/sinon": "^17.0.2",
     "bech32": "^2.0.0",
     "docker-compose": "^0.24.3",

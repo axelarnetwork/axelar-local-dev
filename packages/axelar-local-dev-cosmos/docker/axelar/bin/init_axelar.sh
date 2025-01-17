@@ -88,5 +88,5 @@ cat /root/private/bin/libs/evm-rpc.toml >> "$HOME"/config/config.toml
 axelard start --home ${HOME} \
 --minimum-gas-prices 0${DENOM} \
 --moniker ${MONIKER} \
---rpc.laddr "tcp://0.0.0.0:26657"
+--rpc.laddr "tcp://0.0.0.0:26657" 
 

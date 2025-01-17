@@ -1,13 +1,14 @@
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { GasPrice } from "@cosmjs/stargate";
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { CosmosChain, CosmosChainInfo } from "../../types";
-import { exportOwnerAccountFromContainer, readFileSync } from "../../utils";
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import { GasPrice } from '@cosmjs/stargate';
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { CosmosChain, CosmosChainInfo } from '../../types';
+import { exportOwnerAccountFromContainer, readFileSync } from '../../utils';
+import { stringToPath } from '@cosmjs/crypto';
 
 export class CosmosClient {
   public chainInfo: Required<CosmosChainInfo>;
   public owner: DirectSecp256k1HdWallet;
-  public client: SigningCosmWasmClient;
+  public client: SigningStargateClient;
   public gasPrice: GasPrice;
 
   /**
@@ -20,7 +21,7 @@ export class CosmosClient {
   private constructor(
     chainInfo: Required<CosmosChainInfo>,
     owner: DirectSecp256k1HdWallet,
-    client: SigningCosmWasmClient,
+    client: SigningStargateClient,
     gasPrice: GasPrice = GasPrice.fromString(`1${chainInfo.denom}`)
   ) {
     this.chainInfo = chainInfo;
@@ -38,12 +39,12 @@ export class CosmosClient {
    * @returns A promise that resolves to an instance of CosmosClient.
    */
   static async create(
-    chain: CosmosChain = "wasm",
+    chain: CosmosChain = 'agoric',
     mnemonic?: string,
-    config: Omit<CosmosChainInfo, "owner"> = { prefix: chain },
+    config: Omit<CosmosChainInfo, 'owner'> = { prefix: chain },
     gasPrice?: GasPrice
   ) {
-    const defaultDenom = chain === "wasm" ? "uwasm" : "uaxl";
+    const defaultDenom = chain === 'agoric' ? 'ubld' : 'uaxl';
     const chainInfo = {
       denom: config.denom || defaultDenom,
       lcdUrl: config.lcdUrl || `http://localhost/${chain}-lcd`,
@@ -58,13 +59,31 @@ export class CosmosClient {
       _mnemonic = response.mnemonic;
     }
 
-    const owner = await CosmosClient.createOrImportAccount(chain, _mnemonic);
+    const getAgoricSigner = async () => {
+      const Agoric = {
+        Bech32MainPrefix: 'agoric',
+        CoinType: 564,
+      };
+      const hdPath = (coinType = 118, account = 0) =>
+        stringToPath(`m/44'/${coinType}'/${account}'/0/0`);
 
+      return DirectSecp256k1HdWallet.fromMnemonic(_mnemonic, {
+        prefix: Agoric.Bech32MainPrefix,
+        hdPaths: [hdPath(Agoric.CoinType, 0), hdPath(Agoric.CoinType, 1)],
+      });
+    };
+
+    let owner;
+    if (chain === 'agoric') {
+      owner = await getAgoricSigner();
+    } else {
+      owner = await CosmosClient.createOrImportAccount(chain, _mnemonic);
+    }
     const address = await owner
       .getAccounts()
       .then((accounts) => accounts[0].address);
 
-    const client = await SigningCosmWasmClient.connectWithSigner(
+    const client = await SigningStargateClient.connectWithSigner(
       chainInfo.rpcUrl,
       owner,
       { gasPrice: gasPrice }
@@ -123,7 +142,7 @@ export class CosmosClient {
    * Retrieves the chain information of the CosmosClient instance.
    * @returns An object containing the chain's information, excluding the owner's details.
    */
-  getChainInfo(): Omit<CosmosChainInfo, "owner"> {
+  getChainInfo(): Omit<CosmosChainInfo, 'owner'> {
     return {
       prefix: this.chainInfo.prefix,
       denom: this.chainInfo.denom,
@@ -158,7 +177,7 @@ export class CosmosClient {
       )
       .then((res) => {
         if (res.code !== 0) {
-          throw new Error(res.rawLog || "Failed to fund wallet");
+          throw new Error(res.rawLog || 'Failed to fund wallet');
         }
         return res;
       });
@@ -170,15 +189,15 @@ export class CosmosClient {
    * @returns A promise that resolves to the upload transaction result.
    * @throws An error if the upload fails.
    */
-  async uploadWasm(path: string) {
-    const wasm = readFileSync(path);
+  // async uploadWasm(path: string) {
+  //   const wasm = readFileSync(path);
 
-    return this.client.upload(
-      this.getOwnerAccount(),
-      new Uint8Array(wasm),
-      1.8
-    );
-  }
+  //   return this.client.upload(
+  //     this.getOwnerAccount(),
+  //     new Uint8Array(wasm),
+  //     1.8
+  //   );
+  // }
 
   getOwnerAccount() {
     return this.chainInfo.owner.address;
@@ -191,8 +210,8 @@ export class CosmosClient {
    * @returns A promise that resolves to an object containing the new client and its address.
    */
   async createFundedSigningClient(
-    chain: CosmosChain = "wasm",
-    amount: string = "10000000"
+    chain: CosmosChain = 'wasm',
+    amount: string = '10000000'
   ) {
     const wallet = await DirectSecp256k1HdWallet.generate(12, {
       prefix: chain,
@@ -201,7 +220,7 @@ export class CosmosClient {
 
     await this.fundWallet(account.address, amount);
 
-    const client = await SigningCosmWasmClient.connectWithSigner(
+    const client = await SigningStargateClient.connectWithSigner(
       this.chainInfo.rpcUrl,
       wallet,
       {

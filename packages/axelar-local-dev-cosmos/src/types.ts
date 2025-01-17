@@ -20,7 +20,7 @@ export type ChainConfig = {
   onCompleted: (chainInfo: CosmosChainInfo) => void;
 };
 
-export type CosmosChain = "axelar" | "wasm";
+export type CosmosChain = "axelar" | "wasm" | "agoric";
 
 export type ChainDenom<T extends CosmosChain> = T extends "axelar"
   ? "uaxl"

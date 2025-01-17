@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  agoric:
+    image: ghcr.io/agoric/agoric-3-proposals:latest
+    container_name: agoric
+    command: "/root/private/bin/init_agoric.sh"
+    volumes:
+      - "./bin:/root/private/bin"
+      - "./.agoric:/root/private/.agoric"
+    labels:
+      - "traefik.enable=true"
+
+      # RPC
+      - "traefik.http.routers.agoric-rpc.rule=Host(`localhost`) && PathPrefix(`/agoric-rpc`)"
+      - "traefik.http.routers.agoric-rpc.entrypoints=web"
+      - "traefik.http.routers.agoric-rpc.service=agoric-rpc"
+      - "traefik.http.services.agoric-rpc.loadbalancer.server.port=26657"
+      - "traefik.http.middlewares.agoric-rpc.stripprefix.prefixes=/agoric-rpc"
+      - "traefik.http.routers.agoric-rpc.middlewares=agoric-rpc"
+
+      # LCD
+      - "traefik.http.routers.agoric-lcd.rule=Host(`localhost`) && PathPrefix(`/agoric-lcd`)"
+      - "traefik.http.routers.agoric-lcd.entrypoints=web"
+      - "traefik.http.routers.agoric-lcd.service=agoric-lcd"
+      - "traefik.http.services.agoric-lcd.loadbalancer.server.port=1317"
+      - "traefik.http.middlewares.agoric-lcd.stripprefix.prefixes=/agoric-lcd"
+      - "traefik.http.routers.agoric-lcd.middlewares=agoric-lcd"
+networks:
+  default:
+    name: traefik_default
+    external: true

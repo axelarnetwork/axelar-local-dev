@@ -77,7 +77,7 @@ describe("Relayer", () => {
     evmRelayer.setRelayer(RelayerType.Wasm, cosmosRelayer);
     const message = "hello from ethereum";
 
-    await evmContract.send("wasm", wasmContractAddress, message, {
+    await evmContract.send("agoric", wasmContractAddress, message, {
       value: ethers.utils.parseEther("0.001"),
     });
 
