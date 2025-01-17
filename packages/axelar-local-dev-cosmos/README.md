@@ -1,84 +1,45 @@
-# Axelar Local Dev Cosmos
+# Agoric <=> EVM
 
-Axelar Local Dev Cosmos offers a comprehensive suite of tools for local development involving Cosmos chains. With this package, developers can easily deploy WebAssembly (Wasm) contracts on a Wasm chain and seamlessly send cross-chain messages to the Ethereum Virtual Machine (EVM) chain.
+This updates the `axelar-local-dev` repository to use agoric chain instead of wasm chain in `agoric-local-dev-cosmos` package.
 
-> **Note:** This package is currently under development. Some functionalities might be unstable.
+This repository does not demonstrate a token trasnfer to eth but rather a message transfer
 
-## Prerequisite
+## Steps to run
 
-- Docker installed and running on your local machine.
-
-## Quick Start
-
-### Start Wasm and Axelar Chain
-
-Run the following command to pull the Docker image, set up the chains, and establish IBC connections:
-
+- In root of the workspace run:
 ```bash
-npm run start
+    npm install
+    npm run build
+```
+- Change to `axelar-local-dev-cosmos` dir
+```bash
+    cd packages/axelar-local-dev-cosmos
+```
+- start the agoric and axelar chains using:
+```bash
+    npm run start
+```
+- start the relaying process using
+```bash
+    npm run relay
+```
+- you should see this in the logs:
+```
+Message on Ethereum Contract: [
+  'agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl',
+  'Hello, world!',
+  sender: 'agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl',
+  message: 'Hello, world!'
+]
 ```
 
-Alternatively, you can start the chains programmatically:
+> **Note:** the `npm run relay` command will not exit by itself after receiving the message on ethereum and must be manually exited)
+## Main file
+The main file to look out for is the `packages/axelar-local-dev-cosmos/src/relayToEth.ts` in which the majority of the work is being done.
 
-```ts
-import { startChains } from "@axelar-network/axelar-local-dev-cosmos";
-
-startChains();
-```
-
-## Running IBC Relayer and Axelar Event Listener
-
-After setting up the chains, follow these steps to run the IBC Relayer and Axelar Event Listener:
-
-**Create Axelar Relayer Service** for initailizing the IBC channels and keep listening to incoming events:
-
-```ts
-import {
-  defaultAxelarChainInfo,
-  AxelarRelayerService,
-} from "@axelar-network/axelar-local-dev-cosmos";
-
-const axelarRelayerService = await AxelarRelayerService.create(
-  defaultAxelarChainInfo
-);
-```
-
-## Relaying Messages
-
-To relay messages after they have been submitted on the Ethereum or Wasm chains, use the following method:
-
-```ts
-import {
-  evmRelayer,
-  createNetwork,
-  relay,
-  RelayerType,
-} from "@axelar-network/axelar-local-dev";
-import {
-  defaultAxelarChainInfo,
-  AxelarRelayerService,
-} from "@axelar-network/axelar-local-dev-cosmos";
-
-// Setup for Ethereum Network and Wasm chain relayer
-const evmNetwork = await createNetwork({ name: "Ethereum" });
-const wasmRelayer = await AxelarRelayerService.create(defaultAxelarChainInfo);
-
-// Deploy contracts, send messages, and call the relay function
-// ...
-
-evmRelayer.setRelayer(RelayerType.Wasm, wasmRelayer);
-await relay({
-  wasm: wasmRelayer,
-  evm: evmRelayer,
-});
-
-// Verify results on the destination chain
-// ...
-```
-
-### Examples
-
-- We currently support `Ethereum` as the destination chain for messages originating from the Wasm chain.
-- For implementation details, see our [Local Example](docs/example.md) and [Axelar Example](https://github.com/axelarnetwork/axelar-examples/tree/feat/add-cosmos-examples/examples/cosmos/call-contract).
-
-> The Local Example utilizes the same contracts as in the Axelar Examples.
+This file is responsible for 
+- starting up an ethereum chain instance
+- adding a solidity contract to that instance (which receives the message from cosmos)
+- setting up a relayer between axelar and ethereum + axelar and agoric
+- sending an IBC transaction from agoric to axelar
+- finally, relaying the packets from agoric <=> axelar <=> ethereum
