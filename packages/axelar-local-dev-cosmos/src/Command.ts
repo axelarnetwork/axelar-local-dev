@@ -5,7 +5,6 @@ const { defaultAbiCoder } = ethers.utils;
 import { CallContractArgs, RelayData } from "@axelar-network/axelar-local-dev";
 import { decodeVersionedPayload } from "./utils";
 import { CosmosClient } from "./clients";
-import { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 
 //An internal class for handling axelar commands.
 export class Command {
@@ -20,7 +19,7 @@ export class Command {
     name: string,
     data: any[],
     dataSignature: string[],
-    post: (wasmClient: CosmosClient) => Promise<ExecuteResult>,
+    post: (wasmClient: CosmosClient) => Promise<any>,
     chain: string | null = null
   ) {
     this.commandId = commandId;
@@ -65,16 +64,9 @@ export class Command {
           },
         };
 
-        const tx = await client.execute(
-          senderAddress,
-          args.destinationContractAddress,
-          msg,
-          "auto",
-          "call_contract: evm_to_wasm",
-          [{ amount: "100000", denom: wasmClient.chainInfo.denom }]
-        );
+        const tx = "TODO"
 
-        relayData.callContract[commandId].execution = tx.transactionHash;
+        // relayData.callContract[commandId].execution = tx.transactionHash;
 
         return tx;
       },

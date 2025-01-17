@@ -67,7 +67,7 @@ export class CosmosClient {
       const hdPath = (coinType = 118, account = 0) =>
         stringToPath(`m/44'/${coinType}'/${account}'/0/0`);
 
-      return DirectSecp256k1HdWallet.fromMnemonic(_mnemonic, {
+      return DirectSecp256k1HdWallet.fromMnemonic(_mnemonic || '', {
         prefix: Agoric.Bech32MainPrefix,
         hdPaths: [hdPath(Agoric.CoinType, 0), hdPath(Agoric.CoinType, 1)],
       });

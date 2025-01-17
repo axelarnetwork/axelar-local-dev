@@ -10,7 +10,6 @@ import {
   RelayerType,
 } from '@axelar-network/axelar-local-dev';
 
-import SendReceive from '../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json';
 
 export const relayDataToEth = async () => {
   // Start both Axelar and Wasm Chains
@@ -20,6 +19,8 @@ export const relayDataToEth = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
     defaultAxelarChainInfo
   );
+
+  const SendReceive = require('../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json');
 
   const ethereumNetwork = await createNetwork({ name: 'Ethereum' });
   const ethereumContract = await deployContract(

@@ -3,7 +3,9 @@ services:
   agoric:
     image: ghcr.io/agoric/agoric-3-proposals:latest
     container_name: agoric
-    command: "/root/private/bin/init_agoric.sh"
+    entrypoint: ["/bin/sh", "-c", "/root/private/bin/init_agoric.sh && exec \"$@\"", "--"]
+    command: ["/bin/bash", "-c", "./start_agd.sh"]
+    # entrypoint: "/root/private/bin/init_agoric.sh && /bin/bash -c ./start_agd.sh"
     volumes:
       - "./bin:/root/private/bin"
       - "./.agoric:/root/private/.agoric"
