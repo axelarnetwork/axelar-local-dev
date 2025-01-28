@@ -28,7 +28,7 @@ contract SendReceive is AxelarExecutable {
     ) AxelarExecutable(gateway_) {
         gasService = IAxelarGasService(gasReceiver_);
         chainName = chainName_;
-        _count = 0;
+        _count = 10;
     }
 
     function send(
@@ -112,10 +112,21 @@ contract SendReceive is AxelarExecutable {
         string calldata /*sourceAddress*/,
         bytes calldata payload
     ) internal override {
-        (string memory sender, string memory message) = abi.decode(
-            payload,
-            (string, string)
-        );
-        storedMessage = Message(sender, message);
+        string memory methodToInvoke = abi.decode(payload, (string));
+
+        if (
+            keccak256(abi.encodePacked(methodToInvoke)) ==
+            keccak256(abi.encodePacked("increment"))
+        ) {
+            increment();
+            return;
+        }
+        if (
+            keccak256(abi.encodePacked(methodToInvoke)) ==
+            keccak256(abi.encodePacked("decrement"))
+        ) {
+            decrement();
+            return;
+        }
     }
 }

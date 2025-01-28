@@ -1,3 +1,3 @@
-import { relayDataToEth } from "../src/relayToEth";
+import { start } from '../src/agoric-to-evm';
 
-relayDataToEth();
+start();
