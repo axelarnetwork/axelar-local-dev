@@ -1,5 +1,5 @@
 import {
-  AxelarRelayerService,
+  // AxelarRelayerService,
   IBCRelayerService,
   defaultAxelarChainInfo,
 } from './index';
@@ -99,43 +99,55 @@ const ibcTransfer = async ({
   }
 };
 
+// export const start = async () => {
+//   const cosmosRelayer: AxelarRelayerService = await AxelarRelayerService.create(
+//     defaultAxelarChainInfo
+//   );
+//   const ibcRelayer: IBCRelayerService = cosmosRelayer.ibcRelayer;
+//   const signer: DirectSecp256k1HdWallet = ibcRelayer.wasmClient.owner;
+//   const srcChannelId: string = ibcRelayer.srcChannelId || 'channel-0';
+//   const evmNetwork: Network = await createNetwork({
+//     name: 'Ethereum',
+//   });
+
+//   // Deploy Contract
+//   const evmContract: Contract = await deployContract(
+//     evmNetwork.userWallets[0],
+//     SendReceive,
+//     [evmNetwork.gateway.address, evmNetwork.gasService.address, 'ethereum']
+//   );
+
+//   console.log('Deploy EVM Contract', evmContract.address);
+
+//   await ibcTransfer({
+//     signer,
+//     channelId: srcChannelId,
+//     DESTINATION_EVM_CHAIN: 'Ethereum',
+//     EVM_CONTRACT_ADDRESS: evmContract.address,
+//     // DENOM_SENDING_TOKEN: 'BF12D4A433705DF7C9485CA8D2CCB4FEDB541F32B9323004DA7FC73D7B98FB7D',
+//     DENOM_SENDING_TOKEN: 'ubld',
+//     AMOUNT_IN_ATOMIC_UNITS: '1000000',
+//     DENOM_GAS_FEE: 'ubld',
+//   });
+
+//   // Relay messages between Ethereum and Agoric
+//   await relay({
+//     agoric: cosmosRelayer,
+//     evm: evmRelayer,
+//   });
+
+//   const count = await evmContract.getCount();
+//   console.log('Count is', count.toString());
+// };
+
 export const start = async () => {
   const cosmosRelayer: AxelarRelayerService = await AxelarRelayerService.create(
     defaultAxelarChainInfo
   );
-  const ibcRelayer: IBCRelayerService = cosmosRelayer.ibcRelayer;
-  const signer: DirectSecp256k1HdWallet = ibcRelayer.wasmClient.owner;
-  const srcChannelId: string = ibcRelayer.srcChannelId || 'channel-0';
-  const evmNetwork: Network = await createNetwork({
-    name: 'Ethereum',
-  });
 
-  // Deploy Contract
-  const evmContract: Contract = await deployContract(
-    evmNetwork.userWallets[0],
-    SendReceive,
-    [evmNetwork.gateway.address, evmNetwork.gasService.address, 'ethereum']
-  );
-
-  console.log('Deploy EVM Contract', evmContract.address);
-
-  await ibcTransfer({
-    signer,
-    channelId: srcChannelId,
-    DESTINATION_EVM_CHAIN: 'Ethereum',
-    EVM_CONTRACT_ADDRESS: evmContract.address,
-    // DENOM_SENDING_TOKEN: 'BF12D4A433705DF7C9485CA8D2CCB4FEDB541F32B9323004DA7FC73D7B98FB7D',
-    DENOM_SENDING_TOKEN: 'ubld',
-    AMOUNT_IN_ATOMIC_UNITS: '1000000',
-    DENOM_GAS_FEE: 'ubld',
-  });
-
-  // Relay messages between Ethereum and Agoric
-  await relay({
-    agoric: cosmosRelayer,
+  cosmosRelayer.listenForEvents();
+  relay({
     evm: evmRelayer,
+    agoric: cosmosRelayer,
   });
-
-  const count = await evmContract.getCount();
-  console.log('Count is', count.toString());
 };

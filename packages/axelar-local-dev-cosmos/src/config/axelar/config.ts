@@ -1,9 +1,9 @@
-import { exec } from "child_process";
-import { ChainConfig, CosmosChainInfo } from "../../types";
-import { Path } from "../../path";
-import { logger } from "@axelar-network/axelar-local-dev";
+import { exec } from 'child_process';
+import { ChainConfig, CosmosChainInfo } from '../../types';
+import { Path } from '../../path';
+import { logger } from '@axelar-network/axelar-local-dev';
 
-const dockerPath = Path.docker("axelar");
+const dockerPath = Path.docker('axelar');
 
 const runChainSetup = () => {
   return new Promise((resolve, reject) => {
@@ -37,10 +37,10 @@ export const defaultAxelarConfig: ChainConfig = {
   },
 };
 
-export const defaultAxelarChainInfo: Omit<CosmosChainInfo, "owner"> = {
-  prefix: "axelar",
-  denom: "uaxl",
-  lcdUrl: "http://localhost/axelar-lcd",
-  rpcUrl: "http://localhost/axelar-rpc",
-  wsUrl: "ws://localhost/axelar-rpc/websocket",
+export const defaultAxelarChainInfo: Omit<CosmosChainInfo, 'owner'> = {
+  prefix: 'axelar',
+  denom: 'uaxl',
+  lcdUrl: 'https://lcd-axelar-testnet.imperator.co',
+  rpcUrl: 'https://axelartest-lcd.quickapi.com/',
+  wsUrl: 'wss://axelartest-rpc.quantnode.tech/websocket',
 };
