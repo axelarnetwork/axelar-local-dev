@@ -19,7 +19,8 @@
     "build:contract": "hardhat clean && hardhat compile",
     "start": "./scripts/clean.sh && ts-node scripts/start.ts",
     "stop": "ts-node scripts/stop.ts",
-    "relay": "ts-node scripts/relay.ts"
+    "relay": "ts-node scripts/relay.ts",
+    "relayWithTokens": "ts-node scripts/relayWithTokens.ts"
   },
   "dependencies": {
     "@axelar-network/axelar-local-dev": "^2.3.2",
