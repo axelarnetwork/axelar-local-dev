@@ -40,7 +40,7 @@ export class DockerService {
     };
 
     logger.log(`Starting ${chain} container...`);
-    await compose.upOne(chain, config);
+      await compose.upOne(chain, config);
 
     await this.waitForRpc(chain, options?.rpcWaitTimeout);
     await this.waitForLcd(chain, options?.lcdWaitTimeout);
