@@ -19,7 +19,8 @@
     "build:contract": "hardhat clean && hardhat compile",
     "start": "./scripts/clean.sh && ts-node scripts/start.ts",
     "stop": "ts-node scripts/stop.ts",
-    "relay": "ts-node scripts/relay.ts"
+    "relay": "ts-node scripts/relay.ts",
+    "relayWithTokens": "ts-node scripts/relayWithTokens.ts"
   },
   "dependencies": {
     "@axelar-network/axelar-local-dev": "^2.3.2",
@@ -39,6 +40,7 @@
   "description": "",
   "devDependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^5.6.2",
+    "@updated-axelar-network/axelar-gmp-sdk-solidity": "npm:@axelar-network/axelar-gmp-sdk-solidity@^6.0.4",
     "@types/node-fetch": "^2.6.5",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",

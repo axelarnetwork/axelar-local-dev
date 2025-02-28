@@ -4,7 +4,7 @@ This updates the `axelar-local-dev` repository to use agoric chain instead of wa
 
 This repository does not demonstrate a token trasnfer to eth but rather a message transfer
 
-## Steps to run
+## Steps to run contract call
 
 - In root of the workspace run:
 ```bash
@@ -31,6 +31,38 @@ Message on Ethereum Contract: [
   sender: 'agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl',
   message: 'Hello, world!'
 ]
+```
+
+## Steps to run contract call with token transfer
+
+- In root of the workspace run:
+```bash
+    npm install
+    npm run build
+```
+- Change to `axelar-local-dev-cosmos` dir
+```bash
+    cd packages/axelar-local-dev-cosmos
+```
+- start the agoric and axelar chains using:
+```bash
+    npm run start
+```
+- run the script to start an ibc-transfer
+```bash
+    bash ./docker/axelar/bin/steps/ibc-transfer.sh
+```
+- run this script to relay the ibc trasnsaction.
+```bash
+    npm run relayWithTokens
+```
+- After that run again to relay the token transfer
+```bash
+    npm run relayWithTokens
+```
+- you should see this in the logs:
+```
+Balance of account after relaying ...
 ```
 
 > **Note:** the `npm run relay` command will not exit by itself after receiving the message on ethereum and must be manually exited)

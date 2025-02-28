@@ -1,5 +1,5 @@
-import { ContractCallSubmitted, CosmosChainInfo, IBCEvent } from "../types";
-import { AxelarCosmosContractCallEvent, AxelarListener } from "../listeners";
+import { ContractCallSubmitted, ContractCallWithTokenSubmitted, CosmosChainInfo, IBCEvent } from "../types";
+import { AxelarCosmosContractCallEvent, AxelarCosmosContractCallWithTokenEvent, AxelarListener, AxelarTokenSentEvent } from "../listeners";
 import {
   CallContractArgs,
   CallContractWithTokenArgs,
@@ -61,14 +61,25 @@ export class AxelarRelayerService extends Relayer {
       this.handleContractCallEvent.bind(this)
     );
 
+    this.axelarListener.listen(
+      AxelarCosmosContractCallWithTokenEvent,
+      this.handleContractCallWithTokenEvent.bind(this)
+    );
+
+
     this.listened = true;
   }
 
   private async handleContractCallEvent(args: any) {
-    console.log('fraz1', args)
     this.updateCallContractEvents(args);
     await this.execute(this.commands);
   }
+
+  private async handleContractCallWithTokenEvent(args: any) {
+    this.updateCallContractWithTokenEvents(args);
+    await this.execute(this.commands);
+  }
+
 
   async stopListening() {
     await this.axelarListener.stop();
@@ -167,7 +178,42 @@ export class AxelarRelayerService extends Relayer {
 
     this.commands[contractCallArgs.to].push(command);
   }
+  private async updateCallContractWithTokenEvents(
+    event: IBCEvent<ContractCallWithTokenSubmitted>
+  ) {
+    const tokenMap: {[key:string]: string} = {
+      'uausdc': 'aUSDC',
+    } 
 
+    const { args } = event;
+    const contractCallWithTokenArgs: CallContractWithTokenArgs = {
+      from: "agoric",
+      to: args.destinationChain,
+      sourceAddress: args.sender,
+      destinationContractAddress: args.contractAddress,
+      payload: args.payload,
+      payloadHash: args.payloadHash,
+      alias: "??",
+      destinationTokenSymbol: tokenMap[args.symbol],
+      amountIn: args.amount,
+      amountOut: args.amount,
+    };
+
+    const commandId = this.getWasmLogID(event);
+    this.relayData.callContractWithToken[commandId] = contractCallWithTokenArgs;
+    const command = Command.createEVMContractCallWithTokenCommand(
+      commandId,
+      this.relayData,
+      contractCallWithTokenArgs
+    );
+
+    if (!this.commands[contractCallWithTokenArgs.to]) {
+      this.commands[contractCallWithTokenArgs.to] = [];
+    }
+
+    this.commands[contractCallWithTokenArgs.to].push(command);
+  }
+  
   private getWasmLogID(event: IBCEvent<ContractCallSubmitted>) {
     return ethers.utils.id(
       `${event.args.messageId}-${event.args.sourceChain}-${event.args.destinationChain}`
@@ -209,22 +255,22 @@ export class AxelarRelayerService extends Relayer {
   ): Promise<void> {
     for (const command of commands) {
       if (command.post == null) continue;
-
+      
       const isExecuted = !execution.events.find((event: any) => {
         return event.event === "Executed" && event.args[0] == command.commandId;
       });
-
-      if (isExecuted) {
-        continue;
-      }
-
-      try {
-        const blockLimit = Number(
-          (await to.provider.getBlock("latest")).gasLimit
-        );
-        return command.post({
-          gasLimit: blockLimit,
-        });
+        
+        if (isExecuted) {
+          continue;
+        }
+        
+        try {
+          const blockLimit = Number(
+            (await to.provider.getBlock("latest")).gasLimit
+          );
+          return command.post({
+            gasLimit: blockLimit,
+          });
       } catch (e) {
         logger.log(e);
       }
