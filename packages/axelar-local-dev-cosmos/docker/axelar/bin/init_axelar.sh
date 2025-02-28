@@ -53,6 +53,10 @@ final_output=$(
       "activated": false,
       "assets": [
         {
+          "denom": "ubld",
+          "is_native_asset": false
+        },
+        {
           "denom": "uausdc",
           "is_native_asset": false
         }
@@ -63,8 +67,14 @@ final_output=$(
     [{
       "denom": "uausdc",
       "is_native_asset": false
+    },
+    {
+      "denom": "ubld",
+      "is_native_asset": false
     }]')
 echo $final_output | jq . > "$HOME"/config/genesis.json
+
+cat "$HOME"/config/genesis.json
 
 
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory

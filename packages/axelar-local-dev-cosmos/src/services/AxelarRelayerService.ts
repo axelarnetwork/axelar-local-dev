@@ -183,7 +183,11 @@ export class AxelarRelayerService extends Relayer {
   ) {
     const tokenMap: {[key:string]: string} = {
       'uausdc': 'aUSDC',
-    } 
+      'ubld': 'aUSDC',
+      } 
+    if (!tokenMap[event.args.symbol]) {
+      throw new Error('Token not supported yet');
+    }
 
     const { args } = event;
     const contractCallWithTokenArgs: CallContractWithTokenArgs = {

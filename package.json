@@ -34,5 +34,8 @@
   "devDependencies": {
     "lerna": "^6.6.1",
     "lerna-update-wizard": "^1.1.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.2.0"
   }
 }

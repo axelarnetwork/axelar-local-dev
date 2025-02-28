@@ -1,6 +1,7 @@
 import { defaultAxelarChainInfo, AxelarRelayerService, startChains } from './index';
 import { SigningStargateClient } from '@cosmjs/stargate';
 import { encode } from '@metamask/abi-utils';
+import {Contract} from 'ethers';
 
 import {
   evmRelayer,
@@ -20,19 +21,29 @@ export const relayDataToEth = async () => {
     defaultAxelarChainInfo
   );
 
-  const SendReceive = require('../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json');
+  const Factory = require('../artifacts/src/__tests__/contracts/Factory.sol/Factory.json');
+  const Wallet = require('../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json');
+  const StakeContract = require('../artifacts/src/__tests__/contracts/StakingContract.sol/StakingContract.json');
 
   const ethereumNetwork = await createNetwork({ name: 'Ethereum' });
   const ethereumContract = await deployContract(
     ethereumNetwork.userWallets[0],
-    SendReceive,
+    Factory,
     [
       ethereumNetwork.gateway.address,
-      ethereumNetwork.gasService.address,
-      'Ethereum',
     ]
   );
 
+  const tokenContract = await ethereumNetwork.deployToken("USDC", "aUSDC", 6, BigInt(100_000e6));
+
+  const stakeContract = await deployContract(
+    ethereumNetwork.userWallets[0],
+    StakeContract,
+    [
+      tokenContract.address,
+    ]
+  );
+  
   const ibcRelayer = axelarRelayer.ibcRelayer;
 
   console.log('IBC RELAYER', JSON.stringify(ibcRelayer.srcChannelId));
@@ -40,7 +51,8 @@ export const relayDataToEth = async () => {
   const IBC_DENOM_AXL_USDC =
     'ubld';
   // 'ibc/295548A78785A1007F232DE286149A6FF512F180AF5657780FC89C009E2C348F';
-  const AMOUNT_IN_ATOMIC_UNITS = '1000000';
+  const AMOUNT_IN_ATOMIC_UNITS = '10000000';
+  const FEE = '1' + '000' + '000';
   const CHANNEL_ID = ibcRelayer.srcChannelId;
   const DENOM = 'ubld';
   const AXELAR_GMP_ADDRESS =
@@ -53,7 +65,8 @@ export const relayDataToEth = async () => {
   const DESTINATION_ADDRESS = ethereumContract.address;
   const DESTINATION_CHAIN = 'Ethereum';
 
-  const payload = encode(['string', 'string'], ['agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl', 'Hello, world!']);
+
+  const payload = encode(['address'], [stakeContract.address]);
 
   const memo = {
     destination_chain: DESTINATION_CHAIN,
@@ -103,89 +116,74 @@ export const relayDataToEth = async () => {
   );
   console.log('transaction response', response);
 
-  // Relay messages between Ethereum and Agoric chains
   await relay({
     agoric: axelarRelayer,
     evm: evmRelayer,
   });
-
-  // Setup for Ethereum Network and Wasm chain relayer
-  //
-
-  // // Deploy Smart Contract on the EVM (Ethereum Virtual Machine)
-  // // const ethereumContract = await deployContract(
-  // //   ethereumNetwork.userWallets[0],
-  // //   SendReceive,
-  // //   [
-  // //     ethereumNetwork.gateway.address,
-  // //     ethereumNetwork.gasService.address,
-  // //     'Ethereum',
-  // //   ]
-  // // );
-
-  // // Deploy Contract on the Wasm Chain
-  // const wasmFilePath = path.resolve(__dirname, '../wasm/send_receive.wasm');
-  // const wasmUploadResponse = await wasmClient1.uploadWasm(wasmFilePath);
-
-  // // Instantiate the Wasm Contract
-  // const { client: wasmClient, address: wasmSenderAddress } =
-  //   await wasmClient1.createFundedSigningClient();
-
-  // const wasmContractInstantiation = await wasmClient.instantiate(
-  //   wasmSenderAddress,
-  //   wasmUploadResponse.codeId,
-  //   {
-  //     channel: ibcRelayer.srcChannelId,
-  //   },
-  //   'send_receive',
-  //   'auto'
-  // );
-  // // ============ SETUP END ============
-
-  // const messageToEthereum = 'Hello from Ethereum';
-  // const messageToWasm = 'Hello from Wasm';
-
-  // // Send a message from Wasm Chain to Ethereum Chain
-  // const wasmTransaction = await wasmClient.execute(
-  //   wasmSenderAddress,
-  //   wasmContractInstantiation.contractAddress,
-  //   {
-  //     send_message_evm: {
-  //       destination_chain: 'Ethereum',
-  //       destination_address: ethereumContract.address,
-  //       message: messageToWasm,
-  //     },
-  //   },
-  //   'auto',
-  //   'test',
-  //   [{ amount: '100000', denom: 'uwasm' }]
-  // );
-  // console.log('Wasm Chain Transaction Hash:', wasmTransaction.transactionHash);
-
-  // // Send a message from Ethereum Chain to Wasm Chain
-  // const ethereumTransaction = await ethereumContract.send(
-  //   'agoric',
-  //   wasmContractInstantiation.contractAddress,
-  //   messageToEthereum,
-  //   {
-  //     value: ethers.utils.parseEther('0.001'),
-  //   }
-  // );
-  // console.log('Ethereum Chain Transaction Hash:', ethereumTransaction.hash);
-
-
+  // await axelarRelayer.stopListening();
 
   // // Verify the message on the Ethereum contract
-  const ethereumMessage = await ethereumContract.storedMessage();
-  console.log('Message on Ethereum Contract:', ethereumMessage);
+  const contractAddress = await ethereumContract.storedMessage();
+  console.log('Message on Ethereum Contract:', contractAddress);
 
-  // // Verify the message on the Wasm contract
-  // const wasmResponse = await wasmClient1.client.queryContractSmart(
-  //   wasmContractInstantiation.contractAddress,
-  //   {
-  //     get_stored_message: {},
-  //   }
-  // );
+  const addy = `0x${contractAddress}`;
 
-  // console.log('Message on Wasm Contract:', wasmResponse);
+  if (addy === '0x') {
+    console.error('Message not found on Ethereum Contract');
+    return;
+  }
+
+  const memo2 = {
+    destination_chain: DESTINATION_CHAIN,
+    destination_address: addy,
+    payload: Array.from(payload),
+    fee: {
+      amount: FEE,
+      recipient: 'axelar1zl3rxpp70lmte2xr6c4lgske2fyuj3hupcsvcd',
+  },
+    type: 2,
+  };
+
+  const message2 = [
+    {
+      typeUrl: '/ibc.applications.transfer.v1.MsgTransfer',
+      value: {
+        sender: senderAddress,
+        receiver: AXELAR_GMP_ADDRESS,
+        token: {
+          denom: IBC_DENOM_AXL_USDC,
+          amount: AMOUNT_IN_ATOMIC_UNITS,
+        },
+        timeoutTimestamp: (Math.floor(Date.now() / 1000) + 600) * 1e9,
+        sourceChannel: CHANNEL_ID,
+        sourcePort: 'transfer',
+        memo: JSON.stringify(memo2),
+      },
+    },
+  ];
+
+  
+  console.log('Sending transaction...', message2);
+  const response2 = await signingClient.signAndBroadcast(
+    senderAddress,
+    message2,
+    fee
+  );
+  console.log('transaction response', response2);
+
+  const wallet = new Contract(addy, Wallet.abi, ethereumNetwork.userWallets[0]);
+
+  await relay({
+    agoric: axelarRelayer,
+  });
+  await axelarRelayer.stopListening();
+
+
+  const walletMessage = await wallet.storedMessage();
+  console.log('Message on Wallet Contract:', walletMessage);
+
+  console.log('Stake Token Balance:', (await stakeContract.balanceOf(wallet.address)).toString());
+  console.log('USDC Balance:', (await tokenContract.balanceOf(wallet.address)).toString());
+  console.log('stake contract USDC Balance:', (await tokenContract.balanceOf(stakeContract.address)).toString());
+
 };
