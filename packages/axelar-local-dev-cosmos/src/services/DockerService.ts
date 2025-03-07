@@ -1,12 +1,12 @@
-import path from "path";
-import fetch from "node-fetch";
-import { execSync } from "child_process";
-import { logger } from "@axelar-network/axelar-local-dev";
-import { IDockerComposeOptions, v2 as compose, ps } from "docker-compose";
-import { CosmosChain, ChainConfig, CosmosChainInfo } from "../types";
-import { defaultAxelarConfig, defaultAgoricConfig } from "../config";
-import { Path } from "../path";
-import { retry, exportOwnerAccountFromContainer } from "../utils";
+import path from 'path';
+import fetch from 'node-fetch';
+import { execSync } from 'child_process';
+import { logger } from '@axelar-network/axelar-local-dev';
+import { IDockerComposeOptions, v2 as compose, ps } from 'docker-compose';
+import { CosmosChain, ChainConfig, CosmosChainInfo } from '../types';
+import { defaultAxelarConfig, defaultAgoricConfig } from '../config';
+import { Path } from '../path';
+import { retry, exportOwnerAccountFromContainer } from '../utils';
 
 export class DockerService {
   private axelarConfig: ChainConfig;
@@ -20,8 +20,8 @@ export class DockerService {
   async startChains() {
     await this.startTraefik();
     const [axelar, agoric] = await Promise.all([
-      this.start("axelar", this.axelarConfig),
-      this.start("agoric", this.agoricConfig),
+      this.start('axelar', this.axelarConfig),
+      this.start('agoric', this.agoricConfig),
     ]);
     return [axelar, agoric];
   }
@@ -40,7 +40,11 @@ export class DockerService {
     };
 
     logger.log(`Starting ${chain} container...`);
+    try {
       await compose.upOne(chain, config);
+    } catch (err: any) {
+      console.log(err, err?.out);
+    }
 
     await this.waitForRpc(chain, options?.rpcWaitTimeout);
     await this.waitForLcd(chain, options?.lcdWaitTimeout);
@@ -68,23 +72,23 @@ export class DockerService {
   }
 
   async startTraefik() {
-    const traefikPath = path.join(Path.base, "docker/traefik");
+    const traefikPath = path.join(Path.base, 'docker/traefik');
     const config: IDockerComposeOptions = {
       cwd: traefikPath,
     };
 
-    logger.log("Starting traefik container...");
-    await compose.upOne("traefik", config);
-    logger.log("Traefik started at http://localhost:8080");
+    logger.log('Starting traefik container...');
+    await compose.upOne('traefik', config);
+    logger.log('Traefik started at http://localhost:8080');
   }
 
   async stopAll() {
     await retry(async () => {
-      logger.log("Stopping all containers...");
-      await this.stop("axelar");
-      await this.stop("agoric");
+      logger.log('Stopping all containers...');
+      await this.stop('axelar');
+      await this.stop('agoric');
       await this.stopTraefik();
-      logger.log("All containers stopped");
+      logger.log('All containers stopped');
     });
   }
 
@@ -101,22 +105,22 @@ export class DockerService {
   }
 
   async stopTraefik() {
-    const traefikPath = path.join(Path.base, "docker/traefik");
+    const traefikPath = path.join(Path.base, 'docker/traefik');
     const config: IDockerComposeOptions = {
       cwd: traefikPath,
     };
 
-    logger.log("Stopping traefik container...");
+    logger.log('Stopping traefik container...');
     await compose.down(config);
-    logger.log("Traefik stopped");
+    logger.log('Traefik stopped');
   }
 
   private getChainDenom(chain: CosmosChain): string {
-    return chain === "axelar" ? "uaxl" : "ubld";
+    return chain === 'axelar' ? 'uaxl' : 'ubld';
   }
 
   private getChainConfig(chain: CosmosChain): ChainConfig {
-    return chain === "axelar" ? defaultAxelarConfig : defaultAgoricConfig;
+    return chain === 'axelar' ? defaultAxelarConfig : defaultAgoricConfig;
   }
 
   async waitForRpc(chain: CosmosChain, timeout = 120000): Promise<void> {
@@ -140,7 +144,7 @@ export class DockerService {
     }
   }
   async waitForLcd(chain: CosmosChain, timeout = 60000): Promise<void> {
-    const testUrl = "cosmos/base/tendermint/v1beta1/node_info";
+    const testUrl = 'cosmos/base/tendermint/v1beta1/node_info';
     const start = Date.now();
     const interval = 3000;
     const url = `http://localhost/${chain}-lcd/${testUrl}`;
@@ -182,7 +186,7 @@ export class DockerService {
   private async throwIfDockerNotRunning(dockerPath: string): Promise<void> {
     if (!(await this.isDockerRunning(dockerPath))) {
       throw new Error(
-        "Docker is not running. Please start Docker and try again."
+        'Docker is not running. Please start Docker and try again.'
       );
     }
   }
