@@ -2,16 +2,16 @@
 pragma solidity ^0.8.0;
 
 import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol';
-import { AxelarExpressExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/AxelarExpressExecutable.sol';
+import { AxelarExpressExecutableWithToken } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/AxelarExpressExecutableWithToken.sol';
 import { IAxelarGateway } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol';
 import { IERC20 } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol';
 import { IAxelarGasService } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol';
 import { Upgradable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/upgradable/Upgradable.sol';
 
-contract ExpressWithToken is AxelarExpressExecutable {
+contract ExpressWithToken is AxelarExpressExecutableWithToken {
     IAxelarGasService public immutable gasService;
 
-    constructor(address gateway_, address gasReceiver_) AxelarExpressExecutable(gateway_) {
+    constructor(address gateway_, address gasReceiver_) AxelarExpressExecutableWithToken(gateway_) {
         gasService = IAxelarGasService(gasReceiver_);
     }
 
