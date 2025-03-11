@@ -38,6 +38,7 @@ export const relayDataToAgoric = async () => {
     'Hi Agoric!',
     {
       value,
+      gasLimit: 500000,
     }
   );
   console.log('Ethereum Chain Transaction Hash:', ethereumTransaction.hash);
