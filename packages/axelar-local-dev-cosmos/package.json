@@ -20,6 +20,7 @@
     "start": "./scripts/clean.sh && ts-node scripts/start.ts",
     "stop": "ts-node scripts/stop.ts",
     "relay": "ts-node scripts/relay.ts",
+    "relay-to-agoric": "TO_AGORIC=true ts-node scripts/relay.ts",
     "relayWithTokens": "ts-node scripts/relayWithTokens.ts"
   },
   "dependencies": {
