@@ -35,7 +35,6 @@ export const relayDataToAgoric = async () => {
   const value = BigInt(0.001 * 10 ** 18);
   const ethereumTransaction = await ethereumContract.send(
     'agoric',
-    'agoric15fyl0hn0armakpfs07axfrxghcc9gz695vlan5an5q6h60fw6xysjyzsff',
     'Hi Agoric!',
     {
       value,
