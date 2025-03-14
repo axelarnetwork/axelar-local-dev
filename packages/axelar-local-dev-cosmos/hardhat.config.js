@@ -5,7 +5,7 @@ require("solidity-coverage");
  */
 module.exports = {
   solidity: {
-    version: "0.8.9",
+    version: "0.8.20",
     settings: {
       evmVersion: process.env.EVM_VERSION || "london",
       optimizer: {

@@ -21,6 +21,13 @@ sed -i '/\[api\]/,/\[/ s/swagger = false/swagger = true/' "$HOME"/config/app.tom
 # staking/governance token is hardcoded in config, change this
 sed -i "s/\"stake\"/\"$DENOM\"/" "$HOME"/config/genesis.json && echo "Updated staking token to $DENOM"
 
+# Counter for poll number, which is reset when chain is restarted
+echo '0' > $HOME/poll-counter.txt
+chmod 666 $HOME/poll-counter.txt
+
+mnemonic="sunset proud calm real denial process fish coconut sad glass toward duty argue aisle rack arrive bleak suffer invest general animal lift swarm front"
+gov1_mnemonic="smile unveil sketch gaze length bulb goddess street case exact table fetch robust chronic power choice endorse toward pledge dish access sad illegal dance"
+
 final_output=$(
     jq  '.app_state.nexus.chain_states += 
     [{
@@ -53,6 +60,10 @@ final_output=$(
       "activated": false,
       "assets": [
         {
+          "denom": "ubld",
+          "is_native_asset": false
+        },
+        {
           "denom": "uausdc",
           "is_native_asset": false
         }
@@ -63,17 +74,50 @@ final_output=$(
     [{
       "denom": "uausdc",
       "is_native_asset": false
-    }]')
+    },
+    {
+      "denom": "ubld",
+      "is_native_asset": false
+    }]' | jq '.app_state.evm.chains[0].gateway.address = 
+    [
+      65,  97, 201,  20, 243, 101,
+      90,  90, 204, 118, 189, 175,
+      227, 219, 229, 192, 249,  71,
+      75, 200
+    ]
+  ' | jq '.app_state.snapshot.proxied_validators += 
+    [{
+      "validator": "axelarvaloper1sufx2ryp5ndxdhl3zftdnsjwrgqqgd3q63svql",
+      "proxy": "axelar1kcreerqvlvtful5r6hp8nt7mj4fd0z0rq9mxk5",
+      "active": true
+    }]
+  '  | jq '.app_state.feegrant.allowances += 
+    [{
+      "granter": "axelar1sufx2ryp5ndxdhl3zftdnsjwrgqqgd3q6sxfjs",
+      "grantee": "axelar1kcreerqvlvtful5r6hp8nt7mj4fd0z0rq9mxk5",
+      "allowance": {
+        "@type": "/cosmos.feegrant.v1beta1.BasicAllowance",
+        "expiration": null,
+        "spend_limit": [{
+          "denom": "uaxl",
+          "amount": "10000000000000000000000000000000000000000000000000"
+        }]
+      }
+    }]
+  ')
+  
 echo $final_output | jq . > "$HOME"/config/genesis.json
+
+cat "$HOME"/config/genesis.json
 
 
 # Adding a new key named 'owner' with a test keyring-backend in the specified home directory
 # and storing the mnemonic in the mnemonic.txt file
-mnemonic=$(axelard keys add owner ${DEFAULT_KEYS_FLAGS} 2>&1 | tail -n 1)
+echo ${mnemonic} | axelard keys add owner --recover ${DEFAULT_KEYS_FLAGS} 2>&1 | tail -n 1
 echo ${mnemonic} | tr -d "\n" > ${HOME}/mnemonic.txt
 echo "Added new key 'owner'"
 
-gov1_mnemonic=$(axelard keys add gov1 ${DEFAULT_KEYS_FLAGS} 2>&1 | tail -n 1)
+echo ${gov1_mnemonic} | axelard keys add gov1 --recover ${DEFAULT_KEYS_FLAGS} 2>&1 | tail -n 1
 echo ${gov1_mnemonic} | tr -d "\n" > ${HOME}/mnemonic-gov1.txt
 echo "Added new key 'gov1'"
 

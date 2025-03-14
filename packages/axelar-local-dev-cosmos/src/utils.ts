@@ -1,15 +1,23 @@
 import {
   hexZeroPad,
-  toUtf8Bytes,
   hexlify,
   defaultAbiCoder,
   arrayify,
 } from "ethers/lib/utils";
 import crypto from "crypto";
-import fs from "fs";
+import fs, { promises as fsp } from "fs";
 import { bech32 } from "bech32";
 import { CosmosChain } from "./types";
-
+import { toAccAddress } from "@cosmjs/stargate/build/queryclient/utils";
+import { ConfirmGatewayTxRequest as EvmConfirmGatewayTxRequest } from "@axelar-network/axelarjs-types/axelar/evm/v1beta1/tx";
+import { VoteRequest } from "@axelar-network/axelarjs-types/axelar/vote/v1beta1/tx";
+import { RouteMessageRequest } from "@axelar-network/axelarjs-types/axelar/axelarnet/v1beta1/tx";
+import {
+  Event_Status,
+  VoteEvents,
+} from "@axelar-network/axelarjs-types/axelar/evm/v1beta1/types";
+import { DeliverTxResponse } from "@cosmjs/stargate";
+import { CallContractArgs } from "@axelar-network/axelar-local-dev";
 import path from "path";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Path } from "./path";
@@ -46,8 +54,7 @@ export function encodeVersionedPayload(
   payload: string
 ): Uint8Array {
   const versionHex = hexZeroPad(hexlify(version), 4);
-  const payloadString = hexlify(toUtf8Bytes(JSON.stringify(payload)));
-  return arrayify(versionHex.concat(payloadString));
+  return arrayify(versionHex.concat(payload.substring(2)));
 }
 
 export async function exportOwnerAccountFromContainer(
@@ -117,3 +124,101 @@ export function convertCosmosAddress(address: string, prefix: string) {
   const decoded = bech32.decode(address);
   return bech32.encode(prefix, decoded.words);
 }
+
+export const getConfirmGatewayTxPayload = (
+  sender: string,
+  chain: string,
+  txHash: string
+) => {
+  return [
+    {
+      typeUrl: `/axelar.evm.v1beta1.ConfirmGatewayTxRequest`,
+      value: EvmConfirmGatewayTxRequest.fromPartial({
+        sender: toAccAddress(sender),
+        chain,
+        txId: arrayify(txHash),
+      }),
+    },
+  ];
+};
+
+export const incrementPollCounter = async () => {
+  const filePath = path.join(
+    __dirname,
+    "../docker/axelar/.axelar/poll-counter.txt"
+  );
+  let number = null;
+  try {
+    const data = await fsp.readFile(filePath, "utf8");
+    number = parseInt(data.trim(), 10);
+    if (isNaN(number)) {
+      throw new Error("The file does not contain a valid number.");
+    }
+    await fsp.writeFile(filePath, (number + 1).toString(), "utf8");
+  } catch (error: any) {
+    throw new Error(`Error reading or writing file: ${error.message}`);
+  }
+  return number;
+};
+
+export const getVoteRequestPayload = (
+  sender: string,
+  callContractArgs: CallContractArgs,
+  confirmGatewayTx: DeliverTxResponse,
+  pollId: number
+) => {
+  const event = {
+    chain: callContractArgs.from,
+    txId: arrayify(`0x${confirmGatewayTx.transactionHash}`),
+    index: confirmGatewayTx.txIndex,
+    status: Event_Status.STATUS_UNSPECIFIED,
+    contractCall: {
+      sender: arrayify(callContractArgs.sourceAddress),
+      destinationChain: callContractArgs.to,
+      contractAddress: callContractArgs.destinationContractAddress,
+      payloadHash: arrayify(callContractArgs.payloadHash),
+    },
+  };
+
+  const voteEvents = VoteEvents.encode(
+    VoteEvents.fromPartial({
+      chain: callContractArgs.from,
+      events: [event],
+    })
+  ).finish();
+
+  return [
+    {
+      typeUrl: `/axelar.vote.v1beta1.VoteRequest`,
+      value: VoteRequest.fromPartial({
+        sender: toAccAddress(sender),
+        pollId: pollId,
+        vote: {
+          typeUrl: "/axelar.evm.v1beta1.VoteEvents",
+          value: voteEvents,
+        },
+      }),
+    },
+  ];
+};
+
+export const getRouteMessagePayload = (
+  sender: string,
+  callContractArgs: CallContractArgs,
+  eventId: string
+) => {
+  return [
+    {
+      typeUrl: `/axelar.axelarnet.v1beta1.RouteMessageRequest`,
+      value: RouteMessageRequest.fromPartial({
+        sender: toAccAddress(sender),
+        id: eventId,
+        payload: arrayify(callContractArgs.payload),
+        feegranter: toAccAddress(
+          // Address of gov1 wallet in the axelar chain
+          "axelar1sufx2ryp5ndxdhl3zftdnsjwrgqqgd3q6sxfjs"
+        ),
+      }),
+    },
+  ];
+};
