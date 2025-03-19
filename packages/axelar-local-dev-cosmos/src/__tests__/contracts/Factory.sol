@@ -147,13 +147,13 @@ contract Factory is AxelarExecutable {
         gasService.payNativeGasForContractCall{value: msg.value}(
             address(this),
             destinationChain,
-            "agoric1fmajpxpsrqyncyh4xduj9jsh3fcl820jwx3ce0rv5n6g2l4ddvss56we2y",
+            destinationAddress,
             payload,
             msg.sender
         );
 
         // 3. Make GMP call
-        gateway.callContract(destinationChain, "agoric1fmajpxpsrqyncyh4xduj9jsh3fcl820jwx3ce0rv5n6g2l4ddvss56we2y", payload);
+        gateway.callContract(destinationChain, destinationAddress, payload);
     }
 
     function _encodePayload(
