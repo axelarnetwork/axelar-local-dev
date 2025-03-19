@@ -13,7 +13,8 @@
         "contract-test": "npx hardhat test",
         "test": "jest",
         "build-ts": "rm -rf dist && tsc",
-        "build-contract": "rm -rf src/artifacts artifacts && hardhat clean && hardhat compile && mv artifacts src/artifacts",
+        "build-cgp-solidity-types": "npx typechain --target=ethers-v5 '../../node_modules/@axelar-network/axelar-cgp-solidity/artifacts/contracts/**/**.json' --out-dir=./src/types/@axelar-network/axelar-cgp-solidity/contracts",
+        "build-contract": "rm -rf src/artifacts artifacts && hardhat clean && hardhat compile && mv artifacts src/artifacts && npm run build-cgp-solidity-types",
         "build": "run-s build-contract build-ts",
         "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
@@ -33,7 +34,7 @@
     },
     "homepage": "https://github.com/axelarnetwork/axelar-local-dev#readme",
     "dependencies": {
-        "@axelar-network/axelar-cgp-solidity": "^6.3.0",
+        "@axelar-network/axelar-cgp-solidity": "^6.4.0",
         "@axelar-network/axelar-chains-config": "^1.3.0",
         "@axelar-network/axelar-gmp-sdk-solidity": "^6.0.6",
         "@axelar-network/interchain-token-service": "^2.1.0",

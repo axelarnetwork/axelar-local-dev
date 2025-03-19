@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol';
 import { AxelarExpressExecutableWithToken } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/express/AxelarExpressExecutableWithToken.sol';
-import { IAxelarGateway } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol';
+import { IAxelarGatewayWithToken } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGatewayWithToken.sol';
 import { IERC20 } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol';
 import { IAxelarGasService } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol';
 import { Upgradable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/upgradable/Upgradable.sol';
@@ -22,9 +22,9 @@ contract ExpressWithToken is AxelarExpressExecutableWithToken {
         string memory symbol,
         uint256 amount
     ) external payable {
-        address tokenAddress = gateway.tokenAddresses(symbol);
+        address tokenAddress = IAxelarGatewayWithToken(gatewayAddress).tokenAddresses(symbol);
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
-        IERC20(tokenAddress).approve(address(gateway), amount);
+        IERC20(tokenAddress).approve(gatewayAddress, amount);
         bytes memory payload = abi.encode(destinationAddresses);
         if (msg.value > 0) {
             gasService.payNativeGasForExpressCallWithToken{ value: msg.value }(
@@ -37,10 +37,18 @@ contract ExpressWithToken is AxelarExpressExecutableWithToken {
                 msg.sender
             );
         }
-        gateway.callContractWithToken(destinationChain, destinationAddress, payload, symbol, amount);
+        IAxelarGatewayWithToken(gatewayAddress).callContractWithToken(destinationChain, destinationAddress, payload, symbol, amount);
     }
 
+    function _execute(
+        bytes32 commandId,
+        string calldata sourceChain,
+        string calldata sourceAddress,
+        bytes calldata payload
+    ) internal override {}
+
     function _executeWithToken(
+        bytes32,
         string calldata,
         string calldata,
         bytes calldata payload,
@@ -48,13 +56,11 @@ contract ExpressWithToken is AxelarExpressExecutableWithToken {
         uint256 amount
     ) internal override {
         address[] memory recipients = abi.decode(payload, (address[]));
-        address tokenAddress = gateway.tokenAddresses(tokenSymbol);
+        address tokenAddress = IAxelarGatewayWithToken(gatewayAddress).tokenAddresses(tokenSymbol);
 
         uint256 sentAmount = amount / recipients.length;
         for (uint256 i = 0; i < recipients.length; i++) {
             IERC20(tokenAddress).transfer(recipients[i], sentAmount);
         }
     }
-
-    function _execute(string calldata, string calldata, bytes calldata payload) internal override {}
 }

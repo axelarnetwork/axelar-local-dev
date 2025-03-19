@@ -4,9 +4,10 @@ require('@typechain/hardhat');
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+
 module.exports = {
     solidity: {
-        version: '0.8.9',
+        version: '0.8.23',
         settings: {
             evmVersion: process.env.EVM_VERSION || 'london',
             optimizer: {
