@@ -21,6 +21,7 @@ import InterchainTokenFactory from '../artifacts/@axelar-network/interchain-toke
 import InterchainProxy from '../artifacts/@axelar-network/interchain-token-service/contracts/proxies/InterchainProxy.sol/InterchainProxy.json';
 import IInterchainTokenService from '../artifacts/@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json';
 import IInterchainTokenFactory from '../artifacts/@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenFactory.sol/IInterchainTokenFactory.json';
+import GatewayCaller from '../artifacts/@axelar-network/interchain-token-service/contracts/utils/GatewayCaller.sol/GatewayCaller.json';
 
 export {
     TokenDeployer,
@@ -45,4 +46,5 @@ export {
     InterchainTokenFactory,
     IInterchainTokenService,
     IInterchainTokenFactory,
+    GatewayCaller,
 };
