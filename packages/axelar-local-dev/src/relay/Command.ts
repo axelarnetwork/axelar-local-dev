@@ -4,7 +4,7 @@ import { ethers, Contract, ContractReceipt } from 'ethers';
 const { defaultAbiCoder } = ethers.utils;
 import { networks } from '../Network';
 import { CallContractArgs, CallContractWithTokenArgs, RelayData } from './types';
-import { IAxelarExecutable } from '../contracts';
+import { IAxelarExecutable, IAxelarExecutableWithToken } from '../contracts';
 
 //An internal class for handling axelar commands.
 export class Command {
@@ -64,7 +64,7 @@ export class Command {
                 const to = networks.find((chain) => chain.name == args.to);
                 if (!to) return;
 
-                const contract = new Contract(args.destinationContractAddress, IAxelarExecutable.abi, to.relayerWallet);
+                const contract = new Contract(args.destinationContractAddress, IAxelarExecutableWithToken.abi, to.relayerWallet);
                 const receipt = await contract
                     .executeWithToken(
                         commandId,

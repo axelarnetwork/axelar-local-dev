@@ -10,6 +10,7 @@ import IAxelarGasService from '../artifacts/@axelar-network/axelar-gmp-sdk-solid
 import ConstAddressDeployer from '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/ConstAddressDeployer.sol/ConstAddressDeployer.json';
 import Create3Deployer from '@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/Create3Deployer.sol/Create3Deployer.json';
 import IAxelarExecutable from '../artifacts/@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol/IAxelarExecutable.json';
+import IAxelarExecutableWithToken from '../artifacts/@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutableWithToken.sol/IAxelarExecutableWithToken.json';
 
 import TokenManagerDeployer from '../artifacts/@axelar-network/interchain-token-service/contracts/utils/TokenManagerDeployer.sol/TokenManagerDeployer.json';
 import InterchainToken from '../artifacts/@axelar-network/interchain-token-service/contracts/interchain-token/InterchainToken.sol/InterchainToken.json';
@@ -36,6 +37,7 @@ export {
     Create3Deployer,
     IAxelarGasService,
     IAxelarExecutable,
+    IAxelarExecutableWithToken,
     TokenManagerDeployer,
     InterchainToken,
     InterchainTokenDeployer,
