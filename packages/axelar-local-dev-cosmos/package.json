@@ -20,6 +20,7 @@
     "start": "./scripts/clean.sh && ts-node scripts/start.ts",
     "stop": "ts-node scripts/stop.ts",
     "relay": "ts-node scripts/relay.ts",
+    "relayToEth": "ts-node scripts/relayToEth.ts",
     "relayWithTokens": "ts-node scripts/relayWithTokens.ts",
     "relayFromEth": "ts-node scripts/relayFromEth.ts"
   },
