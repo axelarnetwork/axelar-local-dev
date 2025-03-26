@@ -4,6 +4,7 @@ import { Contract, ethers } from "ethers";
 import { encodeVersionedPayload } from "./utils";
 import { encode as b64encode, decode as b64decode } from 'js-base64';
 import { SigningStargateClient } from '@cosmjs/stargate';
+import createKeccakHash from 'keccak';
 
 import {
   evmRelayer,
@@ -13,6 +14,27 @@ import {
   RelayerType,
 } from "@axelar-network/axelar-local-dev";
 import { AxelarGateway } from "@axelar-network/axelar-local-dev/dist/contracts";
+
+const uint8ArrayToHex = (uint8Array: Uint8Array): string => {
+  return `0x${Array.from(uint8Array)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")}`;
+};
+
+const pack = (
+  functionSignature: string,
+  paramTypes: Array<string>,
+  params: Array<string>
+) => {
+  const functionHash = createKeccakHash("keccak256").update(functionSignature).digest();
+
+  return uint8ArrayToHex(
+    Uint8Array.from([
+      ...Uint8Array.from(functionHash.subarray(0, 4)),
+      ...encode(paramTypes, params),
+    ])
+  );
+};
 
 export const relayDataFromEth = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
@@ -31,43 +53,28 @@ export const relayDataFromEth = async () => {
       ethereumNetwork.gasService.address,
       'Ethereum',
     ]
+  );  
+  const ethereumWallet = await deployContract(
+    ethereumNetwork.userWallets[0],
+    WalletContract,
+    [
+      ethereumNetwork.gateway.address,
+      'Ethereum',
+    ]
   );
 
-  console.log('Ethereum Contract Address:', ethereumContract.address);
+  console.log('Ethereum Contract Address:', ethereumWallet.address);
 
-  // const gatewayContract = new Contract(
-  //   ethereumNetwork.gateway.address,
-  //   AxelarGateway.abi,
-  //   ethereumNetwork.ownerWallet
-  // );
-  // const encoder = ethers.utils.defaultAbiCoder;
-  // const message = encode(["string"], ["fraz"]);
-  // const payloadArguments = encode(
-  //   ["string", "string", "bytes"],
-  //   ["Ethereum", "0x0830c9d8f05D1dcAE3406102420C29bBb287C199", message]
-  // );
-  // const cosmwasmPayload = encoder.encode(
-  //   ["string", "string[]", "string[]", "bytes"],
-  //   [
-  //     "receive_message_evm",
-  //     ["source_chain", "source_address", "payload"],
-  //     ["string", "string", "bytes"],
-  //     payloadArguments,
-  //   ]
-  // );
 
-  // const object = {
-  //   "fraz": "fraz",
-  // }
-  // const encodedObj = '0x' + Buffer.from(JSON.stringify(object)).toString('hex');
-  // const encodedPayload = encodeVersionedPayload(0, encodedObj);
-  // console.log(encodedPayload)
-  // await gatewayContract.callContract(
-  //   "agoric",
-  //   // 
-  //   "agoric1rwwley550k9mmk6uq6mm6z4udrg8kyuyvfszjk",
-  //   Array.from(encodedPayload)
-  // );
+  const targets = [
+    ethereumContract.address,
+  ];
+  const data: any = [
+    pack('createVendor(string)', ['string'], ['ownerAddress']),
+  ];
+  console.log(data);
+
+  const payload = Array.from(encode(['address[]', 'bytes[]'], [targets, data]));
 
 
   const ibcRelayer = axelarRelayer.ibcRelayer;
@@ -85,19 +92,19 @@ export const relayDataFromEth = async () => {
   const senderAddress = 'agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl';
 
   // TODO
-  const DESTINATION_ADDRESS = ethereumContract.address;
+  const DESTINATION_ADDRESS = ethereumWallet.address;
   const DESTINATION_CHAIN = 'Ethereum';
 
-  const payload = encode(['string', 'string'], ['agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl', 'Hello, world!']);
+  // const payload = encode(['string', 'string'], ['agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl', 'Hello, world!']);
 
   const memo = {
     destination_chain: DESTINATION_CHAIN,
     destination_address: DESTINATION_ADDRESS,
-    payload: [],
-    fee: {
-      amount: '8000',
-      recipient: 'axelar1dv4u5k73pzqrxlzujxg3qp8kvc3pje7jtdvu72npnt5zhq05ejcsn5qme5',
-    },
+    payload,
+    // fee: {
+    //   amount: '8000',
+    //   recipient: 'axelar1dv4u5k73pzqrxlzujxg3qp8kvc3pje7jtdvu72npnt5zhq05ejcsn5qme5',
+    // },
     type: 1,
   };
 
@@ -147,13 +154,13 @@ export const relayDataFromEth = async () => {
   const ethereumMessage = await ethereumContract.storedMessage();
   console.log('Message on Ethereum Contract:', ethereumMessage);
 
-  await relay({
-    evm: evmRelayer,
-  });
+  // await relay({
+  //   evm: evmRelayer,
+  // });
 
-  await relay({
-    agoric: axelarRelayer,
-  });
+  // await relay({
+  //   agoric: axelarRelayer,
+  // });
 
-  await axelarRelayer.stopListening();
+  // await axelarRelayer.stopListening();
 };

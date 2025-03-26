@@ -33,7 +33,13 @@ contract Wallet is AxelarExecutableWithToken {
         string calldata sourceAddress,
         bytes calldata payload
     ) internal override {
-        storedMessage = Message(sourceChain, 'f');
+        (address[] memory targets, bytes[] memory data) = abi.decode(payload, (address[], bytes[]));
+        require(targets.length == data.length, "Payload length mismatch");
+
+        for (uint256 i = 0; i < targets.length; i++) {
+            (bool success, ) = targets[i].call(data[i]);
+            require(success, "Arbitrary contract execution failed");
+        }
     }
 
     function _executeWithToken(

@@ -35,6 +35,7 @@
     "bech32": "^2.0.0",
     "docker-compose": "^0.24.3",
     "js-base64": "^3.7.7",
+    "keccak": "^3.0.4",
     "node-fetch": "^2.7.0",
     "reconnecting-websocket": "^4.4.0",
     "sinon": "^17.0.1"
