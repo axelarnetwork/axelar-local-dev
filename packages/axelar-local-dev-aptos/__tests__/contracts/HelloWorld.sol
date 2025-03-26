@@ -30,7 +30,6 @@ contract HelloWorld is AxelarExecutable {
             );
         }
         IAxelarGateway(gatewayAddress).callContract(destinationChain, destinationAddress, payload);
-        // gateway.callContract(destinationChain, destinationAddress, payload);
     }
 
     // Handles calls created by setAndSend. Updates this contract's value
