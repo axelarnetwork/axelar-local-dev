@@ -8,9 +8,9 @@ import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contrac
 import { StakingContract } from 'src/__tests__/contracts/StakingContract.sol';
 import { IERC20 } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol';
 import {StringToAddress, AddressToString} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
+import {Ownable} from "src/__tests__/contracts/Ownable.sol";
 
-contract Wallet is AxelarExecutableWithToken {
-    string owner;
+contract Wallet is AxelarExecutableWithToken, Ownable {
 
     struct Message {
         string sender;
@@ -22,8 +22,7 @@ contract Wallet is AxelarExecutableWithToken {
     constructor(
         address gateway_,
         string memory owner_
-    ) AxelarExecutableWithToken(gateway_) {
-        owner = owner_;
+    ) AxelarExecutableWithToken(gateway_) Ownable(owner_) {
         storedMessage = Message('s', 'f');
     }
 
@@ -32,7 +31,7 @@ contract Wallet is AxelarExecutableWithToken {
         string calldata sourceChain,
         string calldata sourceAddress,
         bytes calldata payload
-    ) internal override {
+    ) internal override onlyOwner(sourceAddress) {
         (address[] memory targets, bytes[] memory data) = abi.decode(payload, (address[], bytes[]));
         require(targets.length == data.length, "Payload length mismatch");
 

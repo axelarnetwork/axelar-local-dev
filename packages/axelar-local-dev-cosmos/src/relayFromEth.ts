@@ -59,7 +59,7 @@ export const relayDataFromEth = async () => {
     WalletContract,
     [
       ethereumNetwork.gateway.address,
-      'Ethereum',
+      'agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl',
     ]
   );
 
@@ -154,13 +154,13 @@ export const relayDataFromEth = async () => {
   const ethereumMessage = await ethereumContract.storedMessage();
   console.log('Message on Ethereum Contract:', ethereumMessage);
 
-  // await relay({
-  //   evm: evmRelayer,
-  // });
+  await relay({
+    evm: evmRelayer,
+  });
 
-  // await relay({
-  //   agoric: axelarRelayer,
-  // });
+  await relay({
+    agoric: axelarRelayer,
+  });
 
-  // await axelarRelayer.stopListening();
+  await axelarRelayer.stopListening();
 };
