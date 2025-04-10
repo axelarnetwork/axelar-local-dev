@@ -9,8 +9,6 @@
   "scripts": {
     "publish": "lerna publish from-package --yes",
     "version": "lerna version --yes --exact --no-git-tag-version",
-    "bootstrap": "lerna bootstrap",
-    "postinstall": "bash scripts/bootstrap.sh",
     "link": "lerna link",
     "test": "lerna run test",
     "update": "lerna update",
@@ -32,7 +30,7 @@
     "build:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run build"
   },
   "devDependencies": {
-    "lerna": "^6.6.1",
+    "lerna": "^8.2.1",
     "lerna-update-wizard": "^1.1.2"
   }
 }
