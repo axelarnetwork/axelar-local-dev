@@ -142,3 +142,4 @@ packages/axelar-local-dev-near/**/*.wasm
 # Multiversx
 localnet
 localnet.toml
+.qodo
