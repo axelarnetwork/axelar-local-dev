@@ -1,11 +1,11 @@
-import { logger } from "@axelar-network/axelar-local-dev";
-import { AxelarRelayerService, IBCRelayerService } from "./services";
-import { retry } from ".";
-import { DockerService } from "./services/DockerService";
+import { logger } from '@axelar-network/axelar-local-dev';
+import { AxelarRelayerService, IBCRelayerService } from './services';
+import { retry } from '.';
+import { DockerService } from './services/DockerService';
 
 // Warning: this mnemonic is used for testing only. Do not use it in production.
 export const testMnemonic =
-  "illness step primary sibling donkey body sphere pigeon inject antique head educate";
+  'illness step primary sibling donkey body sphere pigeon inject antique head educate';
 
 export let cosmosRelayer: AxelarRelayerService;
 export let ibcRelayer: IBCRelayerService;
@@ -25,6 +25,10 @@ const getOrCreateIBCRelayer = async () => {
   return ibcRelayer;
 };
 
+const sleep = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
 /**
  * Sets up IBC channels using the IBCRelayerService between Axelar and Wasm chain.
  * It initializes the IBCRelayerService if not already done and attempts to set up IBC channels.
@@ -32,13 +36,14 @@ const getOrCreateIBCRelayer = async () => {
  * @throws {Error} Throws an error if setting up IBC channels fails.
  */
 export const setupIBCChannels = async () => {
+  await sleep(30000);
   ibcRelayer = await getOrCreateIBCRelayer();
 
-  logger.log("Setting up IBC Channels");
+  logger.log('Setting up IBC Channels');
   await retry(async () => {
     await ibcRelayer.createIBCChannelIfNeeded();
   });
-  logger.log("IBC Channels setup completed!");
+  logger.log('IBC Channels setup completed!');
 };
 
 /**
@@ -85,9 +90,9 @@ export const startIBCRelayer = async () => {
   try {
     const relayer = await getOrCreateIBCRelayer();
     await relayer.runInterval();
-    logger.log("IBC relayer started");
+    logger.log('IBC relayer started');
   } catch (error) {
-    logger.log("Error starting IBC Relayer: ", error);
+    logger.log('Error starting IBC Relayer: ', error);
     throw error;
   }
 };
@@ -102,9 +107,9 @@ export async function stopIBCRelayer() {
   try {
     const relayer = await getOrCreateIBCRelayer();
     await relayer.stopInterval();
-    logger.log("IBC relayer stopped");
+    logger.log('IBC relayer stopped');
   } catch (error) {
-    logger.log("Error stopping IBC Relayer: ", error);
+    logger.log('Error stopping IBC Relayer: ', error);
     throw error;
   }
 }
