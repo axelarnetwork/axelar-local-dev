@@ -426,8 +426,8 @@ export class EvmRelayer extends Relayer {
                 command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() === 'sui') {
                 command = this.otherRelayers?.sui?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
-            } else if (args.destinationChain.toLowerCase() === 'wasm') {
-                command = this.otherRelayers?.wasm?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() === 'agoric') {
+                command = this.otherRelayers?.agoric?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else {
                 command = this.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             }

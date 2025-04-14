@@ -3,7 +3,13 @@
 import { ethers } from "ethers";
 const { defaultAbiCoder } = ethers.utils;
 import { CallContractArgs, RelayData } from "@axelar-network/axelar-local-dev";
-import { decodeVersionedPayload } from "./utils";
+import {
+  decodeVersionedPayload,
+  getConfirmGatewayTxPayload,
+  getRouteMessagePayload,
+  getVoteRequestPayload,
+  incrementPollCounter,
+} from "./utils";
 import { CosmosClient } from "./clients";
 
 //An internal class for handling axelar commands.
@@ -49,26 +55,65 @@ export class Command {
       ],
       [],
       async (wasmClient: CosmosClient) => {
-        const { argNames, argValues, methodName } = decodeVersionedPayload(
-          args.payload
-        );
 
         const { client } = wasmClient;
         const senderAddress = wasmClient.getOwnerAccount();
 
-        const msg = {
-          [methodName]: {
-            [argNames[0]]: argValues[0],
-            [argNames[1]]: argValues[1],
-            [argNames[2]]: argValues[2],
-          },
-        };
+        // Confirm that event has fired on the EVM chain
+        console.log("[Ethereum Relayer]", "Confirming Gateway Tx", args.transactionHash);
+        const confirmGatewayTxPayload = getConfirmGatewayTxPayload(
+          senderAddress,
+          args.from,
+          args.transactionHash
+        );
+        const confirmGatewayTxResponse = await client.signAndBroadcast(
+          senderAddress,
+          confirmGatewayTxPayload,
+          "auto"
+        );
+        
+        // Vote on the poll created by the axelar (normally done by the validator)
+        const pollId = await incrementPollCounter();
+        console.log("[Ethereum Relayer]", "Voting on poll", pollId);
+        const voteRequestPayload = getVoteRequestPayload(
+          wasmClient.getOwnerAccount(),
+          args,
+          confirmGatewayTxResponse,
+          pollId
+        );
+        const VoteRequestResponse = await wasmClient.client.signAndBroadcast(
+          wasmClient.getOwnerAccount(),
+          voteRequestPayload,
+          "auto"
+        );
+        
+        // Route the message created by the poll to the destination chain
+        const eventId = VoteRequestResponse.events
+        .find((e: any) => e.type === "axelar.evm.v1beta1.EVMEventConfirmed")
+        ?.attributes.find((a: any) => a.key === "event_id")
+        ?.value.slice(1, -1);
+        
+        if (!eventId) {
+          throw new Error("Event ID not found in EVMEventConfirmed event");
+        }
+        
+        console.log("[Ethereum Relayer]", "Routing event", eventId);
+        const routeMessagePayload = getRouteMessagePayload(
+          wasmClient.getOwnerAccount(),
+          args,
+          eventId
+        );
+        const routeMessageResponse = await wasmClient.client.signAndBroadcast(
+          wasmClient.getOwnerAccount(),
+          routeMessagePayload,
+          "auto"
+        );
+        console.log("[Ethereum Relayer]", "Event routed to agoric", routeMessageResponse.transactionHash);
+        
+        relayData.callContract[commandId].execution =
+          routeMessageResponse.transactionHash;
 
-        const tx = "TODO"
-
-        // relayData.callContract[commandId].execution = tx.transactionHash;
-
-        return tx;
+        return routeMessageResponse;
       },
       "wasm"
     );

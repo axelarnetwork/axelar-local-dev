@@ -1,3 +1,3 @@
-import { relayDataToEth } from "../src/relayToEth";
+import { relayBasic } from "../src/relay";
 
-relayDataToEth();
+relayBasic();

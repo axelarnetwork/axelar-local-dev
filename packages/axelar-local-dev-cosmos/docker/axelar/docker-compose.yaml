@@ -3,6 +3,7 @@ services:
     build: .
     container_name: axelar
     entrypoint: sh -l -c /root/private/bin/init_axelar.sh
+    platform: linux/amd64
     volumes:
       - './bin:/root/private/bin'
       - './.axelar:/root/private/.axelar'

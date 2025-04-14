@@ -21,18 +21,18 @@ import { IBCRelayerService } from "./IBCRelayerService";
 
 export class AxelarRelayerService extends Relayer {
   private axelarListener: AxelarListener;
-  private wasmClient: CosmosClient;
+  public axelarClient: CosmosClient;
   private listened = false;
   public ibcRelayer: IBCRelayerService;
 
   private constructor(
     axelarListener: AxelarListener,
-    wasmClient: CosmosClient,
+    axelarClient: CosmosClient,
     ibcRelayer: IBCRelayerService
   ) {
     super();
     this.axelarListener = axelarListener;
-    this.wasmClient = wasmClient;
+    this.axelarClient = axelarClient;
     this.ibcRelayer = ibcRelayer;
   }
 
@@ -41,11 +41,11 @@ export class AxelarRelayerService extends Relayer {
     ibcRelayer?: IBCRelayerService
   ) {
     const axelarListener = new AxelarListener(axelarConfig);
-    const wasmClient = await CosmosClient.create("agoric");
+    const axelarClient = await CosmosClient.create("axelar", "smile unveil sketch gaze length bulb goddess street case exact table fetch robust chronic power choice endorse toward pledge dish access sad illegal dance");
     const _ibcRelayer = ibcRelayer || (await IBCRelayerService.create());
     await _ibcRelayer.createIBCChannelIfNeeded();
 
-    return new AxelarRelayerService(axelarListener, wasmClient, _ibcRelayer);
+    return new AxelarRelayerService(axelarListener, axelarClient, _ibcRelayer);
   }
 
   async updateEvents() {
@@ -104,7 +104,7 @@ export class AxelarRelayerService extends Relayer {
       if (command.post == null) continue;
 
       try {
-        await command.post(this.wasmClient);
+        await command.post(this.axelarClient);
       } catch (e) {
         logger.log(e);
       }
@@ -183,7 +183,11 @@ export class AxelarRelayerService extends Relayer {
   ) {
     const tokenMap: {[key:string]: string} = {
       'uausdc': 'aUSDC',
-    } 
+      'ubld': 'aUSDC',
+      } 
+    if (!tokenMap[event.args.symbol]) {
+      throw new Error('Token not supported yet');
+    }
 
     const { args } = event;
     const contractCallWithTokenArgs: CallContractWithTokenArgs = {
