@@ -11,11 +11,6 @@ import {StringToAddress, AddressToString} from "@axelar-network/axelar-gmp-sdk-s
 import {Ownable} from "src/__tests__/contracts/Ownable.sol";
 
 contract Wallet is AxelarExecutableWithToken, Ownable {
-    struct Message {
-        string sender;
-        string message;
-    }
-
     struct Call {
         address target;
         bytes data;
@@ -74,7 +69,7 @@ contract Factory is AxelarExecutable {
 
     address _gateway;
     IAxelarGasService public immutable gasService;
-    string public chainName; // name of the chain this contract is deployed to
+    string public chainName;
 
     constructor(
         address gateway_,
@@ -100,24 +95,17 @@ contract Factory is AxelarExecutable {
         _send(sourceChain, sourceAddress, vendorAddress);
     }
 
-    function char(bytes1 b) internal pure returns (bytes1 c) {
-        if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
-        else return bytes1(uint8(b) + 0x57);
-    }
-
     function _send(
         string calldata destinationChain,
         string calldata destinationAddress,
         address message
     ) internal {
-        // 1. Generate GMP payload
         bytes memory executeMsgPayload = abi.encode(message);
         bytes memory payload = abi.encodePacked(
             bytes4(0x00000000),
             executeMsgPayload
         );
 
-        // 2. Pay for gas
         gasService.payNativeGasForContractCall{value: msg.value}(
             address(this),
             destinationChain,
@@ -126,44 +114,6 @@ contract Factory is AxelarExecutable {
             msg.sender
         );
 
-        // 3. Make GMP call
         gateway.callContract(destinationChain, destinationAddress, payload);
-    }
-
-    function _encodePayload(
-        bytes memory executeMsgPayload
-    ) internal view returns (bytes memory) {
-        // Schema
-        //   bytes4  version number (0x00000001)
-        //   bytes   ABI-encoded payload, indicating function name and arguments:
-        //     string                   CosmWasm contract method name
-        //     dynamic array of string  CosmWasm contract argument name array
-        //     dynamic array of string  argument abi type array
-        //     bytes                    abi encoded argument values
-
-        // contract call arguments for ExecuteMsg::receive_message_evm{ source_chain, source_address, payload }
-        bytes memory argValues = abi.encode(
-            chainName,
-            address(this).toString(),
-            executeMsgPayload
-        );
-
-        string[] memory argumentNameArray = new string[](3);
-        argumentNameArray[0] = "source_chain";
-        argumentNameArray[1] = "source_address";
-        argumentNameArray[2] = "payload";
-
-        string[] memory abiTypeArray = new string[](3);
-        abiTypeArray[0] = "string";
-        abiTypeArray[1] = "string";
-        abiTypeArray[2] = "bytes";
-
-        bytes memory gmpPayload;
-        gmpPayload = abi.encode(
-            "receive_message_evm",
-            argumentNameArray,
-            abiTypeArray,
-            argValues
-        );
     }
 }
