@@ -16,10 +16,15 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
         bytes data;
     }
 
+    IAxelarGasService public gasService;
+
     constructor(
         address gateway_,
+        address gasReceiver_,
         string memory owner_
-    ) AxelarExecutableWithToken(gateway_) Ownable(owner_) {}
+    ) AxelarExecutableWithToken(gateway_) Ownable(owner_) {
+        gasService = IAxelarGasService(gasReceiver_);
+    }
 
     function _execute(
         bytes32 commandId,
@@ -33,10 +38,19 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
         );
         require(calls.length == totalCalls, "Payload length mismatch");
 
+        bytes[] memory results = new bytes[](calls.length);
+
         for (uint256 i = 0; i < calls.length; i++) {
-            (bool success, ) = calls[i].target.call(calls[i].data);
+            (bool success, bytes memory result) = calls[i].target.call(
+                calls[i].data
+            );
             require(success, "Contract call failed");
+            results[i] = result;
         }
+
+        bytes memory responsePayload = abi.encode(results);
+
+        _send(sourceChain, sourceAddress, responsePayload);
     }
 
     function _executeWithToken(
@@ -61,6 +75,26 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
 
         StakingContract(stakingAddress).stake(amount); // Deposit into Aave
     }
+
+    function _send(
+        string calldata destinationChain,
+        string calldata destinationAddress,
+        bytes memory payload
+    ) internal {
+        gasService.payNativeGasForContractCall{value: msg.value}(
+            address(this),
+            destinationChain,
+            destinationAddress,
+            payload,
+            msg.sender
+        );
+
+        gatewayWithToken().callContract(
+            destinationChain,
+            destinationAddress,
+            payload
+        );
+    }
 }
 
 contract Factory is AxelarExecutable {
@@ -82,7 +116,9 @@ contract Factory is AxelarExecutable {
     }
 
     function createVendor(string memory owner) public returns (address) {
-        address newVendorAddress = address(new Wallet(_gateway, owner));
+        address newVendorAddress = address(
+            new Wallet(_gateway, address(gasService), owner)
+        );
         return newVendorAddress;
     }
 
