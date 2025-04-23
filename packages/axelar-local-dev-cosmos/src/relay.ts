@@ -6,7 +6,6 @@ import {
   relay,
   RelayerType,
 } from '@axelar-network/axelar-local-dev';
-import { Contract } from 'ethers';
 
 export const relayBasic = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
@@ -32,14 +31,6 @@ export const relayBasic = async () => {
   );
   console.log('Factory Contract Address:', factoryContract.address);
 
-  const walletContractAbi =
-    require('../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json').abi;
-  const wallet = new Contract(
-    '0x959c9a26d962c38f40d270a3825298cd58a8039e',
-    walletContractAbi,
-    ethereumNetwork.userWallets[0]
-  );
-
   evmRelayer.setRelayer(RelayerType.Agoric, axelarRelayer);
 
   while (true) {
@@ -47,11 +38,5 @@ export const relayBasic = async () => {
       agoric: axelarRelayer,
       evm: evmRelayer,
     });
-    try {
-      const ethereumMessage = await wallet.storedMessage();
-      console.log('Ethereum Message:', ethereumMessage);
-    } catch (e) {
-      console.log('Error:', e);
-    }
   }
 };

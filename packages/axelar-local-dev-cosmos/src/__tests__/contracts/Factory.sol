@@ -92,20 +92,19 @@ contract Factory is AxelarExecutable {
         bytes calldata payload
     ) internal override {
         address vendorAddress = createVendor(sourceAddress);
-        _send(sourceChain, sourceAddress, vendorAddress);
+
+        bytes memory msgPayload = abi.encodePacked(
+            bytes4(0x00000000),
+            abi.encode(vendorAddress)
+        );
+        _send(sourceChain, sourceAddress, msgPayload);
     }
 
     function _send(
         string calldata destinationChain,
         string calldata destinationAddress,
-        address message
+        bytes memory payload
     ) internal {
-        bytes memory executeMsgPayload = abi.encode(message);
-        bytes memory payload = abi.encodePacked(
-            bytes4(0x00000000),
-            executeMsgPayload
-        );
-
         gasService.payNativeGasForContractCall{value: msg.value}(
             address(this),
             destinationChain,
