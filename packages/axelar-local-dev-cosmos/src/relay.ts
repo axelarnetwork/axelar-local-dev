@@ -1,39 +1,44 @@
-import { defaultAxelarChainInfo, AxelarRelayerService } from "./index";
+import { defaultAxelarChainInfo, AxelarRelayerService } from './index';
 import {
   evmRelayer,
   createNetwork,
   deployContract,
   relay,
   RelayerType,
-} from "@axelar-network/axelar-local-dev";
-import { Contract } from "ethers";
+} from '@axelar-network/axelar-local-dev';
+import { Contract } from 'ethers';
 
 export const relayBasic = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
     defaultAxelarChainInfo
   );
 
-  const Factory = require("../artifacts/src/__tests__/contracts/Factory.sol/Factory.json");
-  const WalletContract = require("../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json");
+  const ethereumNetwork = await createNetwork({ name: 'Ethereum' });
 
-  const ethereumNetwork = await createNetwork({ name: "Ethereum" });
-  const ethereumContract = await deployContract(
+  const multiCallContract = await deployContract(
     ethereumNetwork.userWallets[0],
-    Factory,
+    require('../artifacts/src/__tests__/contracts/Multicall.sol/Multicall.json')
+  );
+  console.log('MultiCall Contract Address:', multiCallContract.address);
+
+  const factoryContract = await deployContract(
+    ethereumNetwork.userWallets[0],
+    require('../artifacts/src/__tests__/contracts/Factory.sol/Factory.json'),
     [
       ethereumNetwork.gateway.address,
       ethereumNetwork.gasService.address,
-      "Ethereum",
+      'Ethereum',
     ]
   );
+  console.log('Factory Contract Address:', factoryContract.address);
 
+  const walletContractAbi =
+    require('../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json').abi;
   const wallet = new Contract(
-    "0x959c9a26d962c38f40d270a3825298cd58a8039e",
-    WalletContract.abi,
+    '0x959c9a26d962c38f40d270a3825298cd58a8039e',
+    walletContractAbi,
     ethereumNetwork.userWallets[0]
   );
-
-  console.log("Ethereum Contract Address:", ethereumContract.address);
 
   evmRelayer.setRelayer(RelayerType.Agoric, axelarRelayer);
 
@@ -44,9 +49,9 @@ export const relayBasic = async () => {
     });
     try {
       const ethereumMessage = await wallet.storedMessage();
-      console.log("Ethereum Message:", ethereumMessage);
+      console.log('Ethereum Message:', ethereumMessage);
     } catch (e) {
-      console.log("Error:", e);
+      console.log('Error:', e);
     }
   }
 };
