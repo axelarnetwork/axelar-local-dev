@@ -1,3 +1,3 @@
-import { relayBasic } from "../src/relay";
+import { relayBasic } from '../src/relay';
 
 relayBasic();

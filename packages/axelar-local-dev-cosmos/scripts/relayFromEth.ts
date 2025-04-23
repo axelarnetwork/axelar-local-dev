@@ -1,3 +1,3 @@
-import { relayDataFromEth } from "../src/relayFromEth";
+import { relayDataFromEth } from '../src/relayFromEth';
 
 relayDataFromEth();

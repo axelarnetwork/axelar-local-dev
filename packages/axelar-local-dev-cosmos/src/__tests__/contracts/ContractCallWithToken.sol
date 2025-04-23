@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { AxelarExecutableWithToken } from '@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutableWithToken.sol';
-import { IERC20 } from '@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol';
-import { IAxelarGasService } from '@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol';
+import {AxelarExecutableWithToken} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutableWithToken.sol";
+import {IERC20} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol";
+import {IAxelarGasService} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
 
 /**
  * @title Call Contract With Token
@@ -12,8 +12,20 @@ import { IAxelarGasService } from '@updated-axelar-network/axelar-gmp-sdk-solidi
 contract CallContractWithToken is AxelarExecutableWithToken {
     IAxelarGasService public immutable gasService;
 
-    event Executed(bytes32 commandId, string sourceChain, string sourceAddress, bytes payload);
-    event ExecutedWithToken(bytes32 commandId, string sourceChain, string sourceAddress, bytes payload, string tokenSymbol, uint256 amount);
+    event Executed(
+        bytes32 commandId,
+        string sourceChain,
+        string sourceAddress,
+        bytes payload
+    );
+    event ExecutedWithToken(
+        bytes32 commandId,
+        string sourceChain,
+        string sourceAddress,
+        bytes payload,
+        string tokenSymbol,
+        uint256 amount
+    );
 
     struct Message {
         string sender;
@@ -26,10 +38,13 @@ contract CallContractWithToken is AxelarExecutableWithToken {
      * @param _gateway address of axl gateway on deployed chain
      * @param _gasReceiver address of axl gas service on deployed chain
      */
-    constructor(address _gateway, address _gasReceiver) AxelarExecutableWithToken(_gateway) {
+    constructor(
+        address _gateway,
+        address _gasReceiver
+    ) AxelarExecutableWithToken(_gateway) {
         gasService = IAxelarGasService(_gasReceiver);
 
-        storedMessage = Message('fraz', 'init');
+        storedMessage = Message("fraz", "init");
     }
 
     /**
@@ -48,13 +63,13 @@ contract CallContractWithToken is AxelarExecutableWithToken {
         string memory symbol,
         uint256 amount
     ) external payable {
-        require(msg.value > 0, 'Gas payment is required');
+        require(msg.value > 0, "Gas payment is required");
 
         address tokenAddress = gatewayWithToken().tokenAddresses(symbol);
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
         IERC20(tokenAddress).approve(address(gatewayWithToken()), amount);
         bytes memory payload = abi.encode(destinationAddresses);
-        gasService.payNativeGasForContractCallWithToken{ value: msg.value }(
+        gasService.payNativeGasForContractCallWithToken{value: msg.value}(
             address(this),
             destinationChain,
             destinationAddress,
@@ -63,7 +78,13 @@ contract CallContractWithToken is AxelarExecutableWithToken {
             amount,
             msg.sender
         );
-        gatewayWithToken().callContractWithToken(destinationChain, destinationAddress, payload, symbol, amount);
+        gatewayWithToken().callContractWithToken(
+            destinationChain,
+            destinationAddress,
+            payload,
+            symbol,
+            amount
+        );
     }
 
     function _execute(
@@ -90,18 +111,24 @@ contract CallContractWithToken is AxelarExecutableWithToken {
         string calldata tokenSymbol,
         uint256 amount
     ) internal override {
-        storedMessage = Message('fraz', tokenSymbol);
+        storedMessage = Message("fraz", tokenSymbol);
 
         address[] memory recipients = abi.decode(payload, (address[]));
         address tokenAddress = gatewayWithToken().tokenAddresses(tokenSymbol);
-
 
         uint256 sentAmount = amount / recipients.length;
         for (uint256 i = 0; i < recipients.length; i++) {
             IERC20(tokenAddress).transfer(recipients[i], sentAmount);
         }
 
-        emit ExecutedWithToken(commandId, sourceChain, sourceAddress, payload, tokenSymbol, amount);
+        emit ExecutedWithToken(
+            commandId,
+            sourceChain,
+            sourceAddress,
+            payload,
+            tokenSymbol,
+            amount
+        );
     }
 
     function _execute(

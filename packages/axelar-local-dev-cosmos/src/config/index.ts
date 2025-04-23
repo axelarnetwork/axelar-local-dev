@@ -1,2 +1,2 @@
-export * from './axelar'
-export * from './wasm'
+export * from "./axelar";
+export * from "./wasm";

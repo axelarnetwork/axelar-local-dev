@@ -26,7 +26,10 @@ contract StakingContract is ERC20 {
 
     function unstake(uint256 _amount) external {
         require(_amount > 0, "Cannot unstake 0 tokens");
-        require(stakedBalances[msg.sender] >= _amount, "Insufficient staked balance");
+        require(
+            stakedBalances[msg.sender] >= _amount,
+            "Insufficient staked balance"
+        );
 
         stakedBalances[msg.sender] -= _amount;
         totalStaked -= _amount;

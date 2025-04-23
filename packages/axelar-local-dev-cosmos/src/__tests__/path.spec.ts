@@ -1,19 +1,18 @@
-import { Path } from "../path";
-import path from "path";
+import { Path } from '../path';
 
-describe("path", () => {
-  it("should define path correctly", () => {
+describe('path', () => {
+  it('should define path correctly', () => {
     expect(Path.base).toContain(
-      "axelar-local-dev/packages/axelar-local-dev-cosmos"
+      'axelar-local-dev/packages/axelar-local-dev-cosmos'
     );
     expect(Path.info).toContain(
-      "axelar-local-dev/packages/axelar-local-dev-cosmos/info"
+      'axelar-local-dev/packages/axelar-local-dev-cosmos/info'
     );
-    expect(Path.docker("axelar")).toContain(
-      "axelar-local-dev/packages/axelar-local-dev-cosmos/docker/axelar"
+    expect(Path.docker('axelar')).toContain(
+      'axelar-local-dev/packages/axelar-local-dev-cosmos/docker/axelar'
     );
-    expect(Path.docker("wasm")).toContain(
-      "axelar-local-dev/packages/axelar-local-dev-cosmos/docker/wasm"
+    expect(Path.docker('wasm')).toContain(
+      'axelar-local-dev/packages/axelar-local-dev-cosmos/docker/wasm'
     );
   });
 });

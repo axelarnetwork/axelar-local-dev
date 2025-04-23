@@ -1,4 +1,8 @@
-import { ContractCallSubmitted, ContractCallWithTokenSubmitted, IBCEvent } from "../types";
+import {
+  ContractCallSubmitted,
+  ContractCallWithTokenSubmitted,
+  IBCEvent,
+} from "../types";
 
 const decodeBase64 = (str: string) => {
   return Buffer.from(str, "base64").toString("hex");
@@ -31,7 +35,6 @@ export function parseContractCallSubmittedEvent(
     args: data,
   });
 }
-
 
 export function parseContractCallWithTokenSubmittedEvent(
   event: any

@@ -1,3 +1,3 @@
-import { startChains } from "../src/setup";
+import { startChains } from '../src/setup';
 
 startChains();

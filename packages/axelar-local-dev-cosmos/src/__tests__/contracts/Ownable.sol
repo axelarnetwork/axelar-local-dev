@@ -28,7 +28,10 @@ abstract contract Ownable {
      */
     error OwnableInvalidOwner(string owner);
 
-    event OwnershipTransferred(string indexed previousOwner, string indexed newOwner);
+    event OwnershipTransferred(
+        string indexed previousOwner,
+        string indexed newOwner
+    );
 
     /**
      * @dev Initializes the contract setting the address provided by the deployer as the initial owner.
@@ -58,7 +61,9 @@ abstract contract Ownable {
     /**
      * @dev Throws if the sender is not the owner.
      */
-    function _checkOwner(string calldata incomingAddress) internal view virtual {
+    function _checkOwner(
+        string calldata incomingAddress
+    ) internal view virtual {
         if (keccak256(bytes(owner())) != keccak256(bytes(incomingAddress))) {
             revert OwnableUnauthorizedAccount(incomingAddress);
         }
@@ -71,15 +76,24 @@ abstract contract Ownable {
      * NOTE: Renouncing ownership will leave the contract without an owner,
      * thereby disabling any functionality that is only available to the owner.
      */
-    function renounceOwnership(string calldata currentOwner) public virtual onlyOwner(currentOwner) {
-        _transferOwnership(string(abi.encodePacked("0x0000000000000000000000000000000000000000")));
+    function renounceOwnership(
+        string calldata currentOwner
+    ) public virtual onlyOwner(currentOwner) {
+        _transferOwnership(
+            string(
+                abi.encodePacked("0x0000000000000000000000000000000000000000")
+            )
+        );
     }
 
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function transferOwnership(string calldata oldOwner, string calldata newOwner) public virtual onlyOwner(oldOwner) {
+    function transferOwnership(
+        string calldata oldOwner,
+        string calldata newOwner
+    ) public virtual onlyOwner(oldOwner) {
         // if (newOwner == address(0)) {
         //     revert OwnableInvalidOwner(address(0));
         // }

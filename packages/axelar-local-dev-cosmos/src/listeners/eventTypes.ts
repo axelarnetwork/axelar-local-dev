@@ -3,7 +3,10 @@ import {
   ContractCallWithTokenSubmitted,
   IBCEvent,
 } from "../types";
-import { parseContractCallSubmittedEvent, parseContractCallWithTokenSubmittedEvent } from "./parser";
+import {
+  parseContractCallSubmittedEvent,
+  parseContractCallWithTokenSubmittedEvent,
+} from "./parser";
 
 export interface AxelarListenerEvent<T> {
   type: string;
@@ -19,7 +22,6 @@ export const AxelarCosmosContractCallEvent: AxelarListenerEvent<
   parseEvent: parseContractCallSubmittedEvent,
 };
 
-
 export const AxelarCosmosContractCallWithTokenEvent: AxelarListenerEvent<
   IBCEvent<ContractCallSubmitted>
 > = {
@@ -27,7 +29,6 @@ export const AxelarCosmosContractCallWithTokenEvent: AxelarListenerEvent<
   topicId: `tm.event='Tx' AND axelar.axelarnet.v1beta1.ContractCallWithTokenSubmitted.message_id EXISTS`,
   parseEvent: parseContractCallWithTokenSubmittedEvent,
 };
-
 
 export const AxelarTokenSentEvent: AxelarListenerEvent<
   IBCEvent<ContractCallWithTokenSubmitted>

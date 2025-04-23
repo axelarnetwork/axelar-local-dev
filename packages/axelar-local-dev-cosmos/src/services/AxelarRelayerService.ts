@@ -1,5 +1,14 @@
-import { ContractCallSubmitted, ContractCallWithTokenSubmitted, CosmosChainInfo, IBCEvent } from "../types";
-import { AxelarCosmosContractCallEvent, AxelarCosmosContractCallWithTokenEvent, AxelarListener, AxelarTokenSentEvent } from "../listeners";
+import {
+  ContractCallSubmitted,
+  ContractCallWithTokenSubmitted,
+  CosmosChainInfo,
+  IBCEvent,
+} from '../types';
+import {
+  AxelarCosmosContractCallEvent,
+  AxelarCosmosContractCallWithTokenEvent,
+  AxelarListener,
+} from '../listeners';
 import {
   CallContractArgs,
   CallContractWithTokenArgs,
@@ -12,12 +21,12 @@ import {
   RelayData,
   Relayer,
   RelayerType,
-} from "@axelar-network/axelar-local-dev";
-import { Command as WasmCommand } from "../Command";
-import { ethers } from "ethers";
-import { arrayify, defaultAbiCoder } from "ethers/lib/utils";
-import { CosmosClient } from "../clients";
-import { IBCRelayerService } from "./IBCRelayerService";
+} from '@axelar-network/axelar-local-dev';
+import { Command as WasmCommand } from '../Command';
+import { ethers } from 'ethers';
+import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
+import { CosmosClient } from '../clients';
+import { IBCRelayerService } from './IBCRelayerService';
 
 export class AxelarRelayerService extends Relayer {
   private axelarListener: AxelarListener;
@@ -37,11 +46,14 @@ export class AxelarRelayerService extends Relayer {
   }
 
   static async create(
-    axelarConfig: Omit<CosmosChainInfo, "owner">,
+    axelarConfig: Omit<CosmosChainInfo, 'owner'>,
     ibcRelayer?: IBCRelayerService
   ) {
     const axelarListener = new AxelarListener(axelarConfig);
-    const axelarClient = await CosmosClient.create("axelar", "smile unveil sketch gaze length bulb goddess street case exact table fetch robust chronic power choice endorse toward pledge dish access sad illegal dance");
+    const axelarClient = await CosmosClient.create(
+      'axelar',
+      'smile unveil sketch gaze length bulb goddess street case exact table fetch robust chronic power choice endorse toward pledge dish access sad illegal dance'
+    );
     const _ibcRelayer = ibcRelayer || (await IBCRelayerService.create());
     await _ibcRelayer.createIBCChannelIfNeeded();
 
@@ -66,7 +78,6 @@ export class AxelarRelayerService extends Relayer {
       this.handleContractCallWithTokenEvent.bind(this)
     );
 
-
     this.listened = true;
   }
 
@@ -80,7 +91,6 @@ export class AxelarRelayerService extends Relayer {
     await this.execute(this.commands);
   }
 
-
   async stopListening() {
     await this.axelarListener.stop();
 
@@ -93,7 +103,7 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private async executeEvmToWasm(command: RelayCommand) {
-    const toExecute = command["agoric"];
+    const toExecute = command['agoric'];
     if (!toExecute || toExecute?.length === 0) return;
 
     await this.executeWasmExecutable(toExecute);
@@ -139,12 +149,12 @@ export class AxelarRelayerService extends Relayer {
     callContractWithTokenArgs: CallContractWithTokenArgs
   ): Command {
     throw new Error(
-      "Currently, this method is not supported. Please use createCallContractCommand instead."
+      'Currently, this method is not supported. Please use createCallContractCommand instead.'
     );
   }
 
   setRelayer(type: RelayerType, relayer: Relayer): void {
-    if (type !== "evm") {
+    if (type !== 'evm') {
       return console.log(`${type} not supported yet`);
     }
   }
@@ -154,7 +164,7 @@ export class AxelarRelayerService extends Relayer {
   ) {
     const { args } = event;
     const contractCallArgs: CallContractArgs = {
-      from: "agoric",
+      from: 'agoric',
       to: args.destinationChain,
       sourceAddress: args.sender,
       destinationContractAddress: args.contractAddress,
@@ -181,23 +191,23 @@ export class AxelarRelayerService extends Relayer {
   private async updateCallContractWithTokenEvents(
     event: IBCEvent<ContractCallWithTokenSubmitted>
   ) {
-    const tokenMap: {[key:string]: string} = {
-      'uausdc': 'aUSDC',
-      'ubld': 'aUSDC',
-      } 
+    const tokenMap: { [key: string]: string } = {
+      uausdc: 'aUSDC',
+      ubld: 'aUSDC',
+    };
     if (!tokenMap[event.args.symbol]) {
       throw new Error('Token not supported yet');
     }
 
     const { args } = event;
     const contractCallWithTokenArgs: CallContractWithTokenArgs = {
-      from: "agoric",
+      from: 'agoric',
       to: args.destinationChain,
       sourceAddress: args.sender,
       destinationContractAddress: args.contractAddress,
       payload: args.payload,
       payloadHash: args.payloadHash,
-      alias: "??",
+      alias: '??',
       destinationTokenSymbol: tokenMap[args.symbol],
       amountIn: args.amount,
       amountOut: args.amount,
@@ -217,7 +227,7 @@ export class AxelarRelayerService extends Relayer {
 
     this.commands[contractCallWithTokenArgs.to].push(command);
   }
-  
+
   private getWasmLogID(event: IBCEvent<ContractCallSubmitted>) {
     return ethers.utils.id(
       `${event.args.messageId}-${event.args.sourceChain}-${event.args.destinationChain}`
@@ -234,7 +244,7 @@ export class AxelarRelayerService extends Relayer {
   private encodeGatewayData(to: Network, commands: Command[]) {
     return arrayify(
       defaultAbiCoder.encode(
-        ["uint256", "bytes32[]", "string[]", "bytes[]"],
+        ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
         [
           to.chainId,
           commands.map((com) => com.commandId),
@@ -259,22 +269,22 @@ export class AxelarRelayerService extends Relayer {
   ): Promise<void> {
     for (const command of commands) {
       if (command.post == null) continue;
-      
+
       const isExecuted = !execution.events.find((event: any) => {
-        return event.event === "Executed" && event.args[0] == command.commandId;
+        return event.event === 'Executed' && event.args[0] == command.commandId;
       });
-        
-        if (isExecuted) {
-          continue;
-        }
-        
-        try {
-          const blockLimit = Number(
-            (await to.provider.getBlock("latest")).gasLimit
-          );
-          return command.post({
-            gasLimit: blockLimit,
-          });
+
+      if (isExecuted) {
+        continue;
+      }
+
+      try {
+        const blockLimit = Number(
+          (await to.provider.getBlock('latest')).gasLimit
+        );
+        return command.post({
+          gasLimit: blockLimit,
+        });
       } catch (e) {
         logger.log(e);
       }

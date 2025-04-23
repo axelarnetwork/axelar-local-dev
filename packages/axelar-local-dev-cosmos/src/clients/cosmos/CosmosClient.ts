@@ -1,20 +1,14 @@
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { GasPrice } from '@cosmjs/stargate';
-import { SigningStargateClient } from '@cosmjs/stargate';
-import { CosmosChain, CosmosChainInfo } from '../../types';
-import { exportOwnerAccountFromContainer, readFileSync } from '../../utils';
-import { stringToPath } from '@cosmjs/crypto';
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { GasPrice } from "@cosmjs/stargate";
+import { SigningStargateClient } from "@cosmjs/stargate";
+import { CosmosChain, CosmosChainInfo } from "../../types";
+import { exportOwnerAccountFromContainer, readFileSync } from "../../utils";
+import { stringToPath } from "@cosmjs/crypto";
 import { Registry } from "@cosmjs/proto-signing";
 import { defaultRegistryTypes } from "@cosmjs/stargate";
-import {
-  ConfirmGatewayTxRequest as EvmConfirmGatewayTxRequest,
-} from '@axelar-network/axelarjs-types/axelar/evm/v1beta1/tx';
-import {
-  VoteRequest,
-} from '@axelar-network/axelarjs-types/axelar/vote/v1beta1/tx';
-import {
-  RouteMessageRequest,
-} from '@axelar-network/axelarjs-types/axelar/axelarnet/v1beta1/tx';
+import { ConfirmGatewayTxRequest as EvmConfirmGatewayTxRequest } from "@axelar-network/axelarjs-types/axelar/evm/v1beta1/tx";
+import { VoteRequest } from "@axelar-network/axelarjs-types/axelar/vote/v1beta1/tx";
+import { RouteMessageRequest } from "@axelar-network/axelarjs-types/axelar/axelarnet/v1beta1/tx";
 
 export class CosmosClient {
   public chainInfo: Required<CosmosChainInfo>;
@@ -50,12 +44,12 @@ export class CosmosClient {
    * @returns A promise that resolves to an instance of CosmosClient.
    */
   static async create(
-    chain: CosmosChain = 'agoric',
+    chain: CosmosChain = "agoric",
     mnemonic?: string,
-    config: Omit<CosmosChainInfo, 'owner'> = { prefix: chain },
+    config: Omit<CosmosChainInfo, "owner"> = { prefix: chain },
     gasPrice?: GasPrice
   ) {
-    const defaultDenom = chain === 'agoric' ? 'ubld' : 'uaxl';
+    const defaultDenom = chain === "agoric" ? "ubld" : "uaxl";
     const chainInfo = {
       denom: config.denom || defaultDenom,
       lcdUrl: config.lcdUrl || `http://localhost/${chain}-lcd`,
@@ -72,20 +66,20 @@ export class CosmosClient {
 
     const getAgoricSigner = async () => {
       const Agoric = {
-        Bech32MainPrefix: 'agoric',
+        Bech32MainPrefix: "agoric",
         CoinType: 564,
       };
       const hdPath = (coinType = 118, account = 0) =>
         stringToPath(`m/44'/${coinType}'/${account}'/0/0`);
 
-      return DirectSecp256k1HdWallet.fromMnemonic(_mnemonic || '', {
+      return DirectSecp256k1HdWallet.fromMnemonic(_mnemonic || "", {
         prefix: Agoric.Bech32MainPrefix,
         hdPaths: [hdPath(Agoric.CoinType, 0), hdPath(Agoric.CoinType, 1)],
       });
     };
 
     let owner;
-    if (chain === 'agoric') {
+    if (chain === "agoric") {
       owner = await getAgoricSigner();
     } else {
       owner = await CosmosClient.createOrImportAccount(chain, _mnemonic);
@@ -95,7 +89,10 @@ export class CosmosClient {
       .then((accounts) => accounts[0].address);
     const registry = new Registry([
       ...defaultRegistryTypes,
-      ["/axelar.evm.v1beta1.ConfirmGatewayTxRequest", EvmConfirmGatewayTxRequest],
+      [
+        "/axelar.evm.v1beta1.ConfirmGatewayTxRequest",
+        EvmConfirmGatewayTxRequest,
+      ],
       ["/axelar.vote.v1beta1.VoteRequest", VoteRequest],
       ["/axelar.axelarnet.v1beta1.RouteMessageRequest", RouteMessageRequest],
     ]);
@@ -158,7 +155,7 @@ export class CosmosClient {
    * Retrieves the chain information of the CosmosClient instance.
    * @returns An object containing the chain's information, excluding the owner's details.
    */
-  getChainInfo(): Omit<CosmosChainInfo, 'owner'> {
+  getChainInfo(): Omit<CosmosChainInfo, "owner"> {
     return {
       prefix: this.chainInfo.prefix,
       denom: this.chainInfo.denom,
@@ -193,7 +190,7 @@ export class CosmosClient {
       )
       .then((res) => {
         if (res.code !== 0) {
-          throw new Error(res.rawLog || 'Failed to fund wallet');
+          throw new Error(res.rawLog || "Failed to fund wallet");
         }
         return res;
       });
@@ -226,8 +223,8 @@ export class CosmosClient {
    * @returns A promise that resolves to an object containing the new client and its address.
    */
   async createFundedSigningClient(
-    chain: CosmosChain = 'wasm',
-    amount: string = '10000000'
+    chain: CosmosChain = "wasm",
+    amount: string = "10000000"
   ) {
     const wallet = await DirectSecp256k1HdWallet.generate(12, {
       prefix: chain,

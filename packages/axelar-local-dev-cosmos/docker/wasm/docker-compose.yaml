@@ -1,30 +1,30 @@
-version: "3.8"
+version: '3.8'
 services:
   wasm:
     image: cosmwasm/wasmd:v0.42.0
     container_name: wasm
-    command: "/root/private/bin/init_wasm.sh"
+    command: '/root/private/bin/init_wasm.sh'
     volumes:
-      - "./bin:/root/private/bin"
-      - "./.wasm:/root/private/.wasm"
+      - './bin:/root/private/bin'
+      - './.wasm:/root/private/.wasm'
     labels:
-      - "traefik.enable=true"
+      - 'traefik.enable=true'
 
       # RPC
-      - "traefik.http.routers.wasm-rpc.rule=Host(`localhost`) && PathPrefix(`/wasm-rpc`)"
-      - "traefik.http.routers.wasm-rpc.entrypoints=web"
-      - "traefik.http.routers.wasm-rpc.service=wasm-rpc"
-      - "traefik.http.services.wasm-rpc.loadbalancer.server.port=26657"
-      - "traefik.http.middlewares.wasm-rpc.stripprefix.prefixes=/wasm-rpc"
-      - "traefik.http.routers.wasm-rpc.middlewares=wasm-rpc"
+      - 'traefik.http.routers.wasm-rpc.rule=Host(`localhost`) && PathPrefix(`/wasm-rpc`)'
+      - 'traefik.http.routers.wasm-rpc.entrypoints=web'
+      - 'traefik.http.routers.wasm-rpc.service=wasm-rpc'
+      - 'traefik.http.services.wasm-rpc.loadbalancer.server.port=26657'
+      - 'traefik.http.middlewares.wasm-rpc.stripprefix.prefixes=/wasm-rpc'
+      - 'traefik.http.routers.wasm-rpc.middlewares=wasm-rpc'
 
       # LCD
-      - "traefik.http.routers.wasm-lcd.rule=Host(`localhost`) && PathPrefix(`/wasm-lcd`)"
-      - "traefik.http.routers.wasm-lcd.entrypoints=web"
-      - "traefik.http.routers.wasm-lcd.service=wasm-lcd"
-      - "traefik.http.services.wasm-lcd.loadbalancer.server.port=1317"
-      - "traefik.http.middlewares.wasm-lcd.stripprefix.prefixes=/wasm-lcd"
-      - "traefik.http.routers.wasm-lcd.middlewares=wasm-lcd"
+      - 'traefik.http.routers.wasm-lcd.rule=Host(`localhost`) && PathPrefix(`/wasm-lcd`)'
+      - 'traefik.http.routers.wasm-lcd.entrypoints=web'
+      - 'traefik.http.routers.wasm-lcd.service=wasm-lcd'
+      - 'traefik.http.services.wasm-lcd.loadbalancer.server.port=1317'
+      - 'traefik.http.middlewares.wasm-lcd.stripprefix.prefixes=/wasm-lcd'
+      - 'traefik.http.routers.wasm-lcd.middlewares=wasm-lcd'
 networks:
   default:
     name: traefik_default

@@ -26,8 +26,8 @@ export class IBCRelayerClient {
     this.axelarClient = axelarClient;
     this.wasmClient = wasmClient;
     this.logger = {
-      info: console.log, 
-      error: console.log, 
+      info: console.log,
+      error: console.log,
       warn: console.log,
       verbose: console.log,
       debug: console.log,
@@ -120,9 +120,9 @@ export class IBCRelayerClient {
           wasmIBCClient,
           connection.axelar.connectionId,
           connection.wasm.connectionId,
-          this.logger,
+          this.logger
         );
-      } catch (e) { }
+      } catch (e) {}
     }
 
     if (!this.link) {
