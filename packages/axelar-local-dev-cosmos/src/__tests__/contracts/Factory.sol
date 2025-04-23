@@ -21,14 +21,10 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
         bytes data;
     }
 
-    Message public storedMessage; // message received from _execute
-
     constructor(
         address gateway_,
         string memory owner_
-    ) AxelarExecutableWithToken(gateway_) Ownable(owner_) {
-        storedMessage = Message("s", "f");
-    }
+    ) AxelarExecutableWithToken(gateway_) Ownable(owner_) {}
 
     function _execute(
         bytes32 commandId,
@@ -64,7 +60,6 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
 
         require(amount > 0, "Deposit amount must be greater than zero");
         address tokenAddress = gatewayWithToken().tokenAddresses(tokenSymbol);
-        storedMessage = Message(tokenSymbol, "f");
 
         IERC20(tokenAddress).transfer(address(this), amount); // Transfer tokens from user
         IERC20(tokenAddress).approve(stakingAddress, amount); // Approve Aave Pool
@@ -80,12 +75,6 @@ contract Factory is AxelarExecutable {
     address _gateway;
     IAxelarGasService public immutable gasService;
     string public chainName; // name of the chain this contract is deployed to
-
-    struct Message {
-        address sender;
-    }
-
-    Message public storedMessage; // message received from _execute
 
     constructor(
         address gateway_,
@@ -107,7 +96,6 @@ contract Factory is AxelarExecutable {
         string calldata sourceAddress,
         bytes calldata payload
     ) internal override {
-        // storedMessage = Message(sender, message);
         address vendorAddress = createVendor(sourceAddress);
         _send(sourceChain, sourceAddress, vendorAddress);
     }
