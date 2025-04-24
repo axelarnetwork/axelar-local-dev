@@ -10,12 +10,23 @@ import {IERC20} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfac
 import {StringToAddress, AddressToString} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
 import {Ownable} from "src/__tests__/contracts/Ownable.sol";
 
-contract Wallet is AxelarExecutableWithToken, Ownable {
-    struct Call {
-        address target;
-        bytes data;
-    }
+struct CallResult {
+    bool success;
+    bytes result;
+}
 
+struct AgoricResponse {
+    // false if this is a smart wallet creation, true if it's a contract call
+    bool isContractCallResult;
+    CallResult[] data;
+}
+
+struct CallParams {
+    address target;
+    bytes data;
+}
+
+contract Wallet is AxelarExecutableWithToken, Ownable {
     IAxelarGasService public gasService;
 
     constructor(
@@ -32,25 +43,22 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
         string calldata sourceAddress,
         bytes calldata payload
     ) internal override onlyOwner(sourceAddress) {
-        (Call[] memory calls, uint256 totalCalls) = abi.decode(
-            payload,
-            (Call[], uint256)
-        );
-        require(calls.length == totalCalls, "Payload length mismatch");
+        CallParams[] memory calls = abi.decode(payload, (CallParams[]));
+        require(calls.length == 0, "Payload is empty");
 
-        bytes[] memory results = new bytes[](calls.length);
+        CallResult[] memory results = new CallResult[](calls.length);
 
         for (uint256 i = 0; i < calls.length; i++) {
             (bool success, bytes memory result) = calls[i].target.call(
                 calls[i].data
             );
             require(success, "Contract call failed");
-            results[i] = result;
+            results[i] = CallResult(success, result);
         }
 
         bytes memory responsePayload = abi.encodePacked(
             bytes4(0x00000000),
-            abi.encode(results)
+            abi.encode(AgoricResponse(true, results))
         );
 
         _send(sourceChain, sourceAddress, responsePayload);
@@ -64,10 +72,6 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
         string calldata tokenSymbol,
         uint256 amount
     ) internal override {
-        // Decode the payload: expect two arrays of equal length.
-        // (address[] memory targets, bytes[] memory callDatas) = abi.decode(payload, (address[], bytes[]));
-        // require(targets.length == callDatas.length, "Payload length mismatch");
-
         address stakingAddress = abi.decode(payload, (address));
 
         require(amount > 0, "Deposit amount must be greater than zero");
@@ -131,10 +135,13 @@ contract Factory is AxelarExecutable {
         bytes calldata payload
     ) internal override {
         address vendorAddress = createVendor(sourceAddress);
+        CallResult[] memory results = new CallResult[](1);
+
+        results[0] = CallResult(true, abi.encode(vendorAddress));
 
         bytes memory msgPayload = abi.encodePacked(
             bytes4(0x00000000),
-            abi.encode(vendorAddress)
+            abi.encode(AgoricResponse(false, results))
         );
         _send(sourceChain, sourceAddress, msgPayload);
     }
