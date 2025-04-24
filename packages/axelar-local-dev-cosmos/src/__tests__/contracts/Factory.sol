@@ -48,7 +48,10 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
             results[i] = result;
         }
 
-        bytes memory responsePayload = abi.encode(results);
+        bytes memory responsePayload = abi.encodePacked(
+            bytes4(0x00000000),
+            abi.encode(results)
+        );
 
         _send(sourceChain, sourceAddress, responsePayload);
     }
