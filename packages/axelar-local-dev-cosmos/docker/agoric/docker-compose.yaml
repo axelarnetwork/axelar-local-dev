@@ -1,6 +1,6 @@
 services:
   agoric:
-    image: ghcr.io/agoric/agoric-3-proposals:latest
+    image: ghcr.io/agoric/agoric-3-proposals:use-upgrade-19
     container_name: agoric
     entrypoint: /bin/bash -c "/root/private/bin/init_agoric.sh && exec ./start_agd.sh"
     volumes:
