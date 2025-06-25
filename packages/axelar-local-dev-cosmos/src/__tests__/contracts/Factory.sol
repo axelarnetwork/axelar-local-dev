@@ -53,6 +53,7 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
     }
 
     function _execute(
+        bytes32 /*commandId*/,
         string calldata /*sourceChain*/,
         string calldata sourceAddress,
         bytes calldata payload
@@ -61,15 +62,16 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
     }
 
     function _executeWithToken(
+        bytes32 /*commandId*/,
         string calldata sourceChain,
         string calldata sourceAddress,
         bytes calldata payload,
         string calldata symbol,
         uint256 amount
     ) internal override {
-        address tokenAddress = gateway.tokenAddresses(symbol);
+        address tokenAddress = gatewayWithToken().tokenAddresses(symbol);
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
-        IERC20(tokenAddress).approve(address(gateway), amount);
+        IERC20(tokenAddress).approve(address(gatewayWithToken()), amount);
         IERC20(tokenAddress).approve(address(gasService), amount);
 
         bytes memory responsePayload = abi.encodePacked(
@@ -87,7 +89,11 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
             address(this)
         );
 
-        gateway.callContract(sourceChain, sourceAddress, responsePayload);
+        gatewayWithToken().callContract(
+            sourceChain,
+            sourceAddress,
+            responsePayload
+        );
     }
 }
 
@@ -120,6 +126,7 @@ contract Factory is AxelarExecutableWithToken {
     }
 
     function _execute(
+        bytes32 /*commandId*/,
         string calldata /*sourceChain*/,
         string calldata /*sourceAddress*/,
         bytes calldata /*payload*/
@@ -128,13 +135,14 @@ contract Factory is AxelarExecutableWithToken {
     }
 
     function _executeWithToken(
+        bytes32 /*commandId*/,
         string calldata sourceChain,
         string calldata sourceAddress,
         bytes calldata /*payload*/,
         string calldata symbol,
         uint256 amount
     ) internal override {
-        address tokenAddress = gateway.tokenAddresses(symbol);
+        address tokenAddress = gatewayWithToken().tokenAddresses(symbol);
         address smartWalletAddress = createSmartWallet(sourceAddress);
         CallResult[] memory results = new CallResult[](1);
         results[0] = CallResult(true, abi.encode(smartWalletAddress));
@@ -155,6 +163,6 @@ contract Factory is AxelarExecutableWithToken {
             address(this)
         );
 
-        gateway.callContract(sourceChain, sourceAddress, msgPayload);
+        gatewayWithToken().callContract(sourceChain, sourceAddress, msgPayload);
     }
 }
