@@ -70,15 +70,12 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
         uint256 amount
     ) internal override {
         address tokenAddress = gatewayWithToken().tokenAddresses(symbol);
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
-        IERC20(tokenAddress).approve(address(gatewayWithToken()), amount);
-        IERC20(tokenAddress).approve(address(gasService), amount);
-
         bytes memory responsePayload = abi.encodePacked(
             bytes4(0x00000000),
             abi.encode(AgoricResponse(true, _multicall(payload)))
         );
 
+        IERC20(tokenAddress).approve(address(gasService), amount);
         gasService.payGasForContractCall(
             address(this),
             sourceChain,
