@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AxelarExecutableWithToken} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutableWithToken.sol";
+import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
 import {IERC20} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol";
 import {StringToAddress, AddressToString} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
@@ -23,14 +23,14 @@ struct CallParams {
     bytes data;
 }
 
-contract Wallet is AxelarExecutableWithToken, Ownable {
+contract Wallet is AxelarExecutable, Ownable {
     IAxelarGasService public gasService;
 
     constructor(
         address gateway_,
         address gasReceiver_,
         string memory owner_
-    ) AxelarExecutableWithToken(gateway_) Ownable(owner_) {
+    ) AxelarExecutable(gateway_) Ownable(owner_) {
         gasService = IAxelarGasService(gasReceiver_);
     }
 
@@ -53,7 +53,6 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
     }
 
     function _execute(
-        bytes32 /*commandId*/,
         string calldata /*sourceChain*/,
         string calldata sourceAddress,
         bytes calldata payload
@@ -62,39 +61,21 @@ contract Wallet is AxelarExecutableWithToken, Ownable {
     }
 
     function _executeWithToken(
-        bytes32 /*commandId*/,
-        string calldata sourceChain,
-        string calldata sourceAddress,
+        string calldata /*sourceChain*/,
+        string calldata /*sourceAddress*/,
         bytes calldata payload,
-        string calldata symbol,
-        uint256 amount
+        string calldata /*tokenSymbol*/,
+        uint256 /*amount*/
     ) internal override {
-        address tokenAddress = gatewayWithToken().tokenAddresses(symbol);
-        bytes memory responsePayload = abi.encodePacked(
-            bytes4(0x00000000),
-            abi.encode(AgoricResponse(true, _multicall(payload)))
-        );
-
-        IERC20(tokenAddress).approve(address(gasService), amount);
-        gasService.payGasForContractCall(
-            address(this),
-            sourceChain,
-            sourceAddress,
-            responsePayload,
-            tokenAddress,
-            amount,
-            address(this)
-        );
-
-        gatewayWithToken().callContract(
-            sourceChain,
-            sourceAddress,
-            responsePayload
-        );
+        _multicall(payload);
     }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }
 
-contract Factory is AxelarExecutableWithToken {
+contract Factory is AxelarExecutable {
     using StringToAddress for string;
     using AddressToString for address;
 
@@ -102,64 +83,64 @@ contract Factory is AxelarExecutableWithToken {
     IAxelarGasService public immutable gasService;
     string public chainName;
 
-    event WalletCreated(address indexed target, string ownerAddress);
+    event WalletCreated(
+        string label,
+        address indexed target,
+        string ownerAddress
+    );
 
     constructor(
         address gateway_,
         address gasReceiver_,
         string memory chainName_
-    ) AxelarExecutableWithToken(gateway_) {
+    ) AxelarExecutable(gateway_) {
         gasService = IAxelarGasService(gasReceiver_);
         _gateway = gateway_;
         chainName = chainName_;
     }
 
     function createSmartWallet(string memory owner) public returns (address) {
-        address newVendorAddress = address(
+        address newWallet = address(
             new Wallet(_gateway, address(gasService), owner)
         );
-        emit WalletCreated(newVendorAddress, owner);
-        return newVendorAddress;
+        emit WalletCreated("WalletCreatedSuccess", newWallet, owner);
+        return newWallet;
     }
 
     function _execute(
-        bytes32 /*commandId*/,
-        string calldata /*sourceChain*/,
-        string calldata /*sourceAddress*/,
-        bytes calldata /*payload*/
-    ) internal pure override {
-        revert("type 1 contract calls not supported");
-    }
-
-    function _executeWithToken(
-        bytes32 /*commandId*/,
         string calldata sourceChain,
         string calldata sourceAddress,
-        bytes calldata /*payload*/,
-        string calldata symbol,
-        uint256 amount
+        bytes calldata /*payload*/
     ) internal override {
-        address tokenAddress = gatewayWithToken().tokenAddresses(symbol);
-        address smartWalletAddress = createSmartWallet(sourceAddress);
+        address vendorAddress = createSmartWallet(sourceAddress);
         CallResult[] memory results = new CallResult[](1);
-        results[0] = CallResult(true, abi.encode(smartWalletAddress));
+
+        results[0] = CallResult(true, abi.encode(vendorAddress));
 
         bytes memory msgPayload = abi.encodePacked(
             bytes4(0x00000000),
             abi.encode(AgoricResponse(false, results))
         );
+        _send(sourceChain, sourceAddress, msgPayload);
+    }
 
-        IERC20(tokenAddress).approve(address(gasService), amount);
-        gasService.payGasForContractCall(
+    function _send(
+        string calldata destinationChain,
+        string calldata destinationAddress,
+        bytes memory payload
+    ) internal {
+        gasService.payNativeGasForContractCall{value: 1000000000000000}(
             address(this),
-            sourceChain,
-            sourceAddress,
-            msgPayload,
-            tokenAddress,
-            amount,
+            destinationChain,
+            destinationAddress,
+            payload,
             address(this)
         );
 
-        gatewayWithToken().callContract(sourceChain, sourceAddress, msgPayload);
+        gateway.callContract(destinationChain, destinationAddress, payload);
     }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }
