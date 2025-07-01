@@ -1,0 +1,17 @@
+# Node.js dependencies
+node_modules
+
+# Docker configuration, volumes, or related files
+docker
+
+# Build artifacts from smart contract compilers
+artifacts
+build
+dist
+cache
+
+# Agoric-specific hidden configuration
+.agoric/
+
+# Axelar-related configuration or artifacts
+.axelar/
