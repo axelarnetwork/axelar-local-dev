@@ -1,16 +1,15 @@
 "use strict";
 
-import { ethers } from "ethers";
-const { defaultAbiCoder } = ethers.utils;
 import { CallContractArgs, RelayData } from "@axelar-network/axelar-local-dev";
+import { AbiCoder } from "ethers";
+import { CosmosClient } from "./clients";
 import {
-  decodeVersionedPayload,
   getConfirmGatewayTxPayload,
   getRouteMessagePayload,
   getVoteRequestPayload,
-  incrementPollCounter,
+  incrementPollCounter
 } from "./utils";
-import { CosmosClient } from "./clients";
+const abiCoder = new AbiCoder();
 
 //An internal class for handling axelar commands.
 export class Command {
@@ -34,7 +33,7 @@ export class Command {
     this.encodedData =
       chain === "wasm" && name === "approve_contract_call"
         ? ""
-        : defaultAbiCoder.encode(dataSignature, data);
+        : abiCoder.encode(dataSignature, data);
     this.post = post;
   }
 

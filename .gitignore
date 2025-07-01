@@ -117,7 +117,7 @@ dist
 
 # Build
 artifacts
-
+typechain-types
 build
 
 .aptos
