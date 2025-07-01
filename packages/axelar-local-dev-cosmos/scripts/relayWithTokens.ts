@@ -1,3 +1,3 @@
-import { relayDataToEth } from '../src/relayTokensToEth';
+import { relayDataToEth } from "../src/relayTokensToEth";
 
 relayDataToEth();

@@ -59,10 +59,10 @@ For more details on setting up the `createAndExport` function, check our [Standa
 
 `MultiversXNetwork` is a generalization of `ProxyNetworkProvider` (avaliable in the `@multiversx/sdk-network-providers` package) that includes (among others that are mainly used for intrnal purposes):
 
-- `deployAxelarFrameworkModules()`: Deploy Axelar related smart contracts found in `contracts`.
-- `deployContract(contractCode: string, initArguments: TypedValue[]): Promise<string>`: A wrapper for deploying a contract from code with init arguments, deployed by `alice.pem` wallet. Returns the SC address.
-- `signAndSendTransaction(transaction: Transaction, privateKey: UserSecretKey = this.ownerPrivateKey)`: A wrapper to easily sign, send and wait for a transaction to be completed.
-- `callContract(address: string, func: string, args: TypedValue[] = []): Promise<ContractQueryResponse>)`: A wrapper to easily query a smart contract.
+-   `deployAxelarFrameworkModules()`: Deploy Axelar related smart contracts found in `contracts`.
+-   `deployContract(contractCode: string, initArguments: TypedValue[]): Promise<string>`: A wrapper for deploying a contract from code with init arguments, deployed by `alice.pem` wallet. Returns the SC address.
+-   `signAndSendTransaction(transaction: Transaction, privateKey: UserSecretKey = this.ownerPrivateKey)`: A wrapper to easily sign, send and wait for a transaction to be completed.
+-   `callContract(address: string, func: string, args: TypedValue[] = []): Promise<ContractQueryResponse>)`: A wrapper to easily query a smart contract.
 
 Additionaly we export two utility functions
 

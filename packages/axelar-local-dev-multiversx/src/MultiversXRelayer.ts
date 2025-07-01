@@ -12,7 +12,7 @@ import {
     RelayCommand,
     RelayData,
     Relayer,
-    RelayerType
+    RelayerType,
 } from '@axelar-network/axelar-local-dev';
 import { Command as MultiversXCommand } from './Command';
 import { multiversXNetwork } from './multiversXNetworkUtils';
@@ -28,7 +28,7 @@ import {
     H256Type,
     H256Value,
     StringType,
-    TupleType
+    TupleType,
 } from '@multiversx/sdk-core/out';
 import { getMultiversXLogID } from './utils';
 
@@ -54,7 +54,7 @@ export class MultiversXRelayer extends Relayer {
         super();
 
         this.elasticsearch = new Client({
-            node: 'http://127.0.0.1:9200'
+            node: 'http://127.0.0.1:9200',
         });
     }
 
@@ -66,7 +66,7 @@ export class MultiversXRelayer extends Relayer {
 
     async updateEvents(): Promise<void> {
         const logsCount = await this.elasticsearch.count({
-            index: 'logs'
+            index: 'logs',
         });
         const count = logsCount.count;
 
@@ -81,31 +81,21 @@ export class MultiversXRelayer extends Relayer {
         // Process only new events
         const logs = await this.elasticsearch.search({
             index: 'logs',
-            sort: [
-                { timestamp: 'desc' }
-            ],
-            size: count - this.initialHitsLength
+            sort: [{ timestamp: 'desc' }],
+            size: count - this.initialHitsLength,
         });
         const hits = logs.hits.hits;
 
-        const newHits: MultiversXEvent[] = hits
-            .reduce((acc: any, hit: any) => {
-                const newEvents = hit._source.events
-                    .map((newEvent: MultiversXEvent) => ({ ...newEvent, txHash: hit._id }));
+        const newHits: MultiversXEvent[] = hits.reduce((acc: any, hit: any) => {
+            const newEvents = hit._source.events.map((newEvent: MultiversXEvent) => ({ ...newEvent, txHash: hit._id }));
 
-                acc.push(...newEvents);
+            acc.push(...newEvents);
 
-                return acc;
-            }, []);
+            return acc;
+        }, []);
 
-        await this.updateGasEvents(
-            newHits
-                .filter((newHit: any) => newHit.address === multiversXNetwork.gasReceiverAddress?.bech32())
-        );
-        await this.updateCallContractEvents(
-            newHits
-                .filter((newHit: any) => newHit.address === multiversXNetwork.gatewayAddress?.bech32())
-        );
+        await this.updateGasEvents(newHits.filter((newHit: any) => newHit.address === multiversXNetwork.gasReceiverAddress?.bech32()));
+        await this.updateCallContractEvents(newHits.filter((newHit: any) => newHit.address === multiversXNetwork.gatewayAddress?.bech32()));
 
         this.initialHitsLength = count;
     }
@@ -185,12 +175,12 @@ export class MultiversXRelayer extends Relayer {
             const payed =
                 command.name == 'approveContractCall'
                     ? this.contractCallGasEvents.find((log: any) => {
-                        if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
-                        if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
-                        if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
-                        if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
-                        return true;
-                    })
+                          if (log.sourceAddress.toLowerCase() != command.data[1].toLowerCase()) return false;
+                          if (log.destinationChain.toLowerCase() != to.name.toLowerCase()) return false;
+                          if (log.destinationAddress.toLowerCase() != command.data[2].toLowerCase()) return false;
+                          if (log.payloadHash.toLowerCase() != command.data[3].toLowerCase()) return false;
+                          return true;
+                      })
                     : false;
 
             if (!payed) continue;
@@ -204,7 +194,7 @@ export class MultiversXRelayer extends Relayer {
                 const blockLimit = Number((await to.provider.getBlock('latest')).gasLimit);
 
                 await command.post({
-                    gasLimit: BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost))
+                    gasLimit: BigInt(Math.min(blockLimit, payed.gasFeeAmount / cost)),
                 });
             } catch (e) {
                 logger.log(e);
@@ -223,22 +213,25 @@ export class MultiversXRelayer extends Relayer {
             const destinationChain = Buffer.from(event.topics[2], 'base64').toString();
             const destinationAddress = Buffer.from(event.topics[3], 'base64').toString();
 
-            let payloadHash = '0x', gasFeeAmount = '', refundAddress = '';
+            let payloadHash = '0x',
+                gasFeeAmount = '',
+                refundAddress = '';
             if (eventName === 'native_gas_paid_for_contract_call_event') {
-                const decoded = new BinaryCodec().decodeTopLevel(
-                    Buffer.from(event.data, 'base64'),
-                    new TupleType(new H256Type(), new BigUIntType(), new AddressType())
-                ).valueOf();
+                const decoded = new BinaryCodec()
+                    .decodeTopLevel(Buffer.from(event.data, 'base64'), new TupleType(new H256Type(), new BigUIntType(), new AddressType()))
+                    .valueOf();
 
                 // Need to add '0x' in front of hex encoded strings for EVM
                 payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
                 gasFeeAmount = (decoded.field1 as BigUIntValue).toString();
                 refundAddress = (decoded.field2 as AddressValue).valueOf().bech32();
             } else if (eventName === 'gas_paid_for_contract_call_event') {
-                const decoded = new BinaryCodec().decodeTopLevel(
-                    Buffer.from(event.data, 'base64'),
-                    new TupleType(new H256Type(), new StringType(), new BigUIntType(), new AddressType())
-                ).valueOf();
+                const decoded = new BinaryCodec()
+                    .decodeTopLevel(
+                        Buffer.from(event.data, 'base64'),
+                        new TupleType(new H256Type(), new StringType(), new BigUIntType(), new AddressType())
+                    )
+                    .valueOf();
 
                 // Need to add '0x' in front of hex encoded strings for EVM
                 payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
@@ -255,7 +248,7 @@ export class MultiversXRelayer extends Relayer {
                 destinationChain,
                 payloadHash,
                 refundAddress,
-                gasToken: AddressZero
+                gasToken: AddressZero,
             };
 
             this.contractCallGasEvents.push(args);
@@ -270,10 +263,9 @@ export class MultiversXRelayer extends Relayer {
             const destinationChain = Buffer.from(event.topics[2], 'base64').toString();
             const destinationAddress = Buffer.from(event.topics[3], 'base64').toString();
 
-            const decoded = new BinaryCodec().decodeTopLevel(
-                Buffer.from(event.data, 'base64'),
-                new TupleType(new H256Type(), new BytesType())
-            ).valueOf();
+            const decoded = new BinaryCodec()
+                .decodeTopLevel(Buffer.from(event.data, 'base64'), new TupleType(new H256Type(), new BytesType()))
+                .valueOf();
             // Need to add '0x' in front of hex encoded strings for EVM
             const payloadHash = '0x' + (decoded.field0 as H256Value).valueOf().toString('hex');
             const payload = '0x' + (decoded.field1 as BytesValue).valueOf().toString('hex');
@@ -288,7 +280,7 @@ export class MultiversXRelayer extends Relayer {
                 payload,
                 payloadHash,
                 transactionHash: event.txHash as string,
-                sourceEventIndex: event.order
+                sourceEventIndex: event.order,
             };
 
             this.relayData.callContract[commandId] = contractCallArgs;

@@ -58,7 +58,7 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
         configFile?.axelarGasReceiverAddress,
         configFile?.interchainTokenServiceAddress,
         configFile?.interchainTokenFactoryAddress,
-        configFile?.contractAddress,
+        configFile?.contractAddress
     );
 
     // Check if whether the gateway is deployed
@@ -84,9 +84,7 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
     return multiversXNetwork;
 }
 
-export async function loadMultiversXNetwork(
-    gatewayUrl = 'http://127.0.0.1:7950',
-) {
+export async function loadMultiversXNetwork(gatewayUrl = 'http://127.0.0.1:7950') {
     const configFile = getMultiversXConfig();
 
     multiversXNetwork = new MultiversXNetwork(
@@ -96,7 +94,7 @@ export async function loadMultiversXNetwork(
         configFile?.axelarGasReceiverAddress,
         configFile?.interchainTokenServiceAddress,
         configFile?.interchainTokenFactoryAddress,
-        configFile?.contractAddress,
+        configFile?.contractAddress
     );
 
     const isGatewayDeployed = await multiversXNetwork.isGatewayDeployed();
