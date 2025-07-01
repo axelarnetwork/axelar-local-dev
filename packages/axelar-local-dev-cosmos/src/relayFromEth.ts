@@ -1,12 +1,12 @@
-import { defaultAxelarChainInfo, AxelarRelayerService } from "./index";
-import { encode } from "@metamask/abi-utils";
 import { SigningStargateClient } from "@cosmjs/stargate";
+import { encode } from "@metamask/abi-utils";
 import createKeccakHash from "keccak";
+import { AxelarRelayerService, defaultAxelarChainInfo } from "./index";
 
 import {
-  evmRelayer,
   createNetwork,
   deployContract,
+  evmRelayer,
   relay,
   RelayerType,
 } from "@axelar-network/axelar-local-dev";
@@ -39,9 +39,8 @@ export const relayDataFromEth = async () => {
     defaultAxelarChainInfo
   );
 
-  const Factory = require("../artifacts/src/__tests__/contracts/Factory.sol/Factory.json");
-  const WalletContract = require("../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json");
-  const StakeContract = require("../artifacts/src/__tests__/contracts/StakingContract.sol/StakingContract.json");
+  const Factory = require("../artifacts/src/__tests__/contracts/AgoricProxy.sol/AgoricProxy.json");
+  const WalletContract = require("../artifacts/src/__tests__/contracts/AgoricProxy.sol/Wallet.json");
 
   const ethereumNetwork = await createNetwork({ name: "Ethereum" });
   const ethereumContract = await deployContract(

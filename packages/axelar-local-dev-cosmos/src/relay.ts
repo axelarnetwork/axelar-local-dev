@@ -1,11 +1,11 @@
-import { defaultAxelarChainInfo, AxelarRelayerService } from "./index";
 import {
-  evmRelayer,
   createNetwork,
   deployContract,
+  evmRelayer,
   relay,
   RelayerType,
 } from "@axelar-network/axelar-local-dev";
+import { AxelarRelayerService, defaultAxelarChainInfo } from "./index";
 
 export const relayBasic = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
@@ -23,7 +23,7 @@ export const relayBasic = async () => {
 
   const factoryContract = await deployContract(
     ethereumNetwork.userWallets[0],
-    require("../artifacts/src/__tests__/contracts/Factory.sol/Factory.json"),
+    require("../artifacts/src/__tests__/contracts/AgoricProxy.sol/AgoricProxy.json"),
     [
       ethereumNetwork.gateway.address,
       ethereumNetwork.gasService.address,

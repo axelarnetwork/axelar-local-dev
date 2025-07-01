@@ -11,8 +11,7 @@ import {
   Relayer,
   RelayerType,
 } from "@axelar-network/axelar-local-dev";
-import { id } from "ethers";
-import { arrayify, defaultAbiCoder } from "ethers/lib/utils";
+import { AbiCoder, getBytes, id } from "ethers";
 import { CosmosClient } from "../clients";
 import { Command as WasmCommand } from "../Command";
 import {
@@ -242,8 +241,9 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private encodeGatewayData(to: Network, commands: Command[]) {
-    return arrayify(
-      defaultAbiCoder.encode(
+    const abiCoder = new AbiCoder();
+    return getBytes(
+      abiCoder.encode(
         ["uint256", "bytes32[]", "string[]", "bytes[]"],
         [
           to.chainId,
