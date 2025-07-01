@@ -75,7 +75,7 @@ contract Wallet is AxelarExecutable, Ownable {
     fallback() external payable {}
 }
 
-contract Factory is AxelarExecutable {
+contract AgoricProxy is AxelarExecutable {
     using StringToAddress for string;
     using AddressToString for address;
 
