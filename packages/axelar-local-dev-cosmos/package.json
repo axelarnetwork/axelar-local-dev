@@ -22,7 +22,8 @@
     "relay": "ts-node scripts/relay.ts",
     "relayToEth": "ts-node scripts/relayToEth.ts",
     "relayWithTokens": "ts-node scripts/relayWithTokens.ts",
-    "relayFromEth": "ts-node scripts/relayFromEth.ts"
+    "relayFromEth": "ts-node scripts/relayFromEth.ts",
+    "test:proxy": "hardhat test src/__tests__/AgoricProxy.spec.ts"
   },
   "dependencies": {
     "@axelar-network/axelar-local-dev": "^2.3.2",
@@ -45,12 +46,32 @@
   "description": "",
   "devDependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^5.6.2",
-    "@openzeppelin/contracts": "^5.2.0",
     "@types/node-fetch": "^2.6.5",
     "@updated-axelar-network/axelar-gmp-sdk-solidity": "npm:@axelar-network/axelar-gmp-sdk-solidity@^6.0.4",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
-    "ts-node": "^10.9.1"
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-ignition": "^0.15.11",
+    "@nomicfoundation/hardhat-ignition-ethers": "^0.15.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@nomicfoundation/ignition-core": "^0.15.11",
+    "@openzeppelin/contracts": "^5.3.0",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "@types/chai": "^4.2.0",
+    "@types/mocha": "^10.0.10",
+    "dotenv": "^16.5.0",
+    "ethers": "^6.1.0",
+    "hardhat": "^2.23.0",
+    "hardhat-gas-reporter": "^1.0.8",
+    "solidity-coverage": "^0.8.1",
+    "solmate": "^6.8.0",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.0",
+    "typescript": "~5.8.2"
   },
   "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70"
 }

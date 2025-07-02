@@ -1,9 +1,10 @@
-require("hardhat-gas-reporter");
-require("solidity-coverage");
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
-module.exports = {
+import "@nomicfoundation/hardhat-toolbox";
+import { config as envConfig } from "dotenv";
+import { HardhatUserConfig } from "hardhat/config";
+
+envConfig();
+
+const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.20",
     settings: {
@@ -34,3 +35,5 @@ module.exports = {
     timeout: 200000,
   },
 };
+
+export default config;

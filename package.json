@@ -29,7 +29,8 @@
     "build:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run build",
     "build:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run build",
     "lint": "prettier --check .",
-    "lint:fix": "prettier --write ."
+    "lint:fix": "prettier --write .",
+    "test:proxy": "yarn --cwd packages/axelar-local-dev-cosmos test:proxy"
   },
   "devDependencies": {
     "lerna": "^8.2.1",

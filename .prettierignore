@@ -4,11 +4,12 @@ node_modules
 # Docker configuration, volumes, or related files
 docker
 
-# Build artifacts from smart contract compilers
+# Build
 artifacts
 build
 dist
 cache
+typechain-types
 
 # Agoric-specific hidden configuration
 .agoric/

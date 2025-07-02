@@ -1,8 +1,8 @@
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { ethers } from "ethers";
+import { toBigInt } from "ethers";
+import { convertCosmosAddress } from "../..";
 import { CosmosChain } from "../../types";
 import { CosmosClient } from "../cosmos/CosmosClient";
-import { convertCosmosAddress } from "../..";
 
 /**
  * RelayerAccountManager manages the relayer account on wasm and axelar.
@@ -69,8 +69,8 @@ export class RelayerAccountManager {
     const fund = await this.getRelayerFund();
 
     if (
-      ethers.BigNumber.from(fund.wasm.balance).lt(minAmount) ||
-      ethers.BigNumber.from(fund.axelar.balance).lt(minAmount)
+      toBigInt(fund.wasm.balance) < toBigInt(minAmount) ||
+      toBigInt(fund.axelar.balance) < toBigInt(minAmount)
     ) {
       await this.fundRelayer(minAmount);
     }

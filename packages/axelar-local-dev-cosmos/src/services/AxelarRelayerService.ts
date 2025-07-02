@@ -1,15 +1,4 @@
 import {
-  ContractCallSubmitted,
-  ContractCallWithTokenSubmitted,
-  CosmosChainInfo,
-  IBCEvent,
-} from "../types";
-import {
-  AxelarCosmosContractCallEvent,
-  AxelarCosmosContractCallWithTokenEvent,
-  AxelarListener,
-} from "../listeners";
-import {
   CallContractArgs,
   CallContractWithTokenArgs,
   Command,
@@ -22,10 +11,20 @@ import {
   Relayer,
   RelayerType,
 } from "@axelar-network/axelar-local-dev";
-import { Command as WasmCommand } from "../Command";
-import { ethers } from "ethers";
-import { arrayify, defaultAbiCoder } from "ethers/lib/utils";
+import { AbiCoder, getBytes, id } from "ethers";
 import { CosmosClient } from "../clients";
+import { Command as WasmCommand } from "../Command";
+import {
+  AxelarCosmosContractCallEvent,
+  AxelarCosmosContractCallWithTokenEvent,
+  AxelarListener,
+} from "../listeners";
+import {
+  ContractCallSubmitted,
+  ContractCallWithTokenSubmitted,
+  CosmosChainInfo,
+  IBCEvent,
+} from "../types";
 import { IBCRelayerService } from "./IBCRelayerService";
 
 export class AxelarRelayerService extends Relayer {
@@ -229,7 +228,7 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private getWasmLogID(event: IBCEvent<ContractCallSubmitted>) {
-    return ethers.utils.id(
+    return id(
       `${event.args.messageId}-${event.args.sourceChain}-${event.args.destinationChain}`
     );
   }
@@ -242,8 +241,9 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private encodeGatewayData(to: Network, commands: Command[]) {
-    return arrayify(
-      defaultAbiCoder.encode(
+    const abiCoder = new AbiCoder();
+    return getBytes(
+      abiCoder.encode(
         ["uint256", "bytes32[]", "string[]", "bytes[]"],
         [
           to.chainId,

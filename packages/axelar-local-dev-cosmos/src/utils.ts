@@ -1,26 +1,23 @@
-import {
-  hexZeroPad,
-  hexlify,
-  defaultAbiCoder,
-  arrayify,
-} from "ethers/lib/utils";
-import crypto from "crypto";
-import fs, { promises as fsp } from "fs";
-import { bech32 } from "bech32";
-import { CosmosChain } from "./types";
-import { toAccAddress } from "@cosmjs/stargate/build/queryclient/utils";
-import { ConfirmGatewayTxRequest as EvmConfirmGatewayTxRequest } from "@axelar-network/axelarjs-types/axelar/evm/v1beta1/tx";
-import { VoteRequest } from "@axelar-network/axelarjs-types/axelar/vote/v1beta1/tx";
+import { CallContractArgs } from "@axelar-network/axelar-local-dev";
 import { RouteMessageRequest } from "@axelar-network/axelarjs-types/axelar/axelarnet/v1beta1/tx";
+import { ConfirmGatewayTxRequest as EvmConfirmGatewayTxRequest } from "@axelar-network/axelarjs-types/axelar/evm/v1beta1/tx";
 import {
   Event_Status,
   VoteEvents,
 } from "@axelar-network/axelarjs-types/axelar/evm/v1beta1/types";
-import { DeliverTxResponse } from "@cosmjs/stargate";
-import { CallContractArgs } from "@axelar-network/axelar-local-dev";
-import path from "path";
+import { VoteRequest } from "@axelar-network/axelarjs-types/axelar/vote/v1beta1/tx";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { DeliverTxResponse } from "@cosmjs/stargate";
+import { toAccAddress } from "@cosmjs/stargate/build/queryclient/utils";
+import { bech32 } from "bech32";
+import crypto from "crypto";
+import { AbiCoder, getBytes, toBeHex, zeroPadValue } from "ethers";
+import fs, { promises as fsp } from "fs";
+import path from "path";
 import { Path } from "./path";
+import { CosmosChain } from "./types";
+
+const abiCoder = new AbiCoder();
 
 export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
   let attempts = 0;
@@ -53,8 +50,8 @@ export function encodeVersionedPayload(
   version: number,
   payload: string
 ): Uint8Array {
-  const versionHex = hexZeroPad(hexlify(version), 4);
-  return arrayify(versionHex.concat(payload.substring(2)));
+  const versionHex = zeroPadValue(toBeHex(version), 4);
+  return getBytes(versionHex.concat(payload.substring(2)));
 }
 
 export async function exportOwnerAccountFromContainer(
@@ -83,13 +80,15 @@ export function decodeVersionedPayload(versionedPayload: string) {
     "bytes",
   ];
   // Decode the payload
-  const decoded = defaultAbiCoder.decode(types, encodedData);
+  const decoded = abiCoder.decode(types, encodedData);
 
   // Extract the method name and argument values
   const [methodName, argNames, argTypes, argValues] = decoded;
 
-  const [sourceChain, sourceAddress, executeMsgPayload] =
-    defaultAbiCoder.decode(["string", "string", "bytes"], argValues);
+  const [sourceChain, sourceAddress, executeMsgPayload] = abiCoder.decode(
+    ["string", "string", "bytes"],
+    argValues
+  );
 
   return {
     methodName,
@@ -136,7 +135,7 @@ export const getConfirmGatewayTxPayload = (
       value: EvmConfirmGatewayTxRequest.fromPartial({
         sender: toAccAddress(sender),
         chain,
-        txId: arrayify(txHash),
+        txId: getBytes(txHash),
       }),
     },
   ];
@@ -169,14 +168,14 @@ export const getVoteRequestPayload = (
 ) => {
   const event = {
     chain: callContractArgs.from,
-    txId: arrayify(`0x${confirmGatewayTx.transactionHash}`),
+    txId: getBytes(`0x${confirmGatewayTx.transactionHash}`),
     index: confirmGatewayTx.txIndex,
     status: Event_Status.STATUS_UNSPECIFIED,
     contractCall: {
-      sender: arrayify(callContractArgs.sourceAddress),
+      sender: getBytes(callContractArgs.sourceAddress),
       destinationChain: callContractArgs.to,
       contractAddress: callContractArgs.destinationContractAddress,
-      payloadHash: arrayify(callContractArgs.payloadHash),
+      payloadHash: getBytes(callContractArgs.payloadHash),
     },
   };
 
@@ -213,7 +212,7 @@ export const getRouteMessagePayload = (
       value: RouteMessageRequest.fromPartial({
         sender: toAccAddress(sender),
         id: eventId,
-        payload: arrayify(callContractArgs.payload),
+        payload: getBytes(callContractArgs.payload),
         feegranter: toAccAddress(
           // Address of gov1 wallet in the axelar chain
           "axelar1sufx2ryp5ndxdhl3zftdnsjwrgqqgd3q6sxfjs"
