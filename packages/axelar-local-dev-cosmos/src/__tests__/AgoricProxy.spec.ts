@@ -107,7 +107,7 @@ describe("AgoricProxy", () => {
 
     const receipt = await provider.getTransactionReceipt(tx.hash);
     const iface = (await ethers.getContractFactory("AgoricProxy")).interface;
-    const receivedEvent = receipt.logs
+    const receivedEvent = receipt?.logs
       .map((log) => {
         try {
           return iface.parseLog(log);
@@ -118,8 +118,8 @@ describe("AgoricProxy", () => {
       .find((parsed) => parsed && parsed.name === "Received");
 
     expect(receivedEvent).to.not.be.undefined;
-    expect(receivedEvent.args.sender).to.equal(owner.address);
-    expect(receivedEvent.args.amount).to.equal(ethers.parseEther("5.0"));
+    expect(receivedEvent?.args.sender).to.equal(owner.address);
+    expect(receivedEvent?.args.amount).to.equal(ethers.parseEther("5.0"));
 
     const balanceAfter = await provider.getBalance(agoricProxyAddress);
     expect(balanceAfter).to.equal(ethers.parseEther("5.0"));

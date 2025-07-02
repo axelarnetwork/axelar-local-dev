@@ -34,7 +34,7 @@
     /* Completeness */
     "skipDefaultLibCheck": true /* Skip type checking .d.ts files that are included with TypeScript. */,
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-    "types": ["@nomicfoundation/hardhat-chai-matchers", "mocha"]
+    "types": ["@nomicfoundation/hardhat-chai-matchers"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "src/__tests__/"]
