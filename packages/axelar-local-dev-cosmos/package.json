@@ -23,7 +23,8 @@
     "relayToEth": "ts-node scripts/relayToEth.ts",
     "relayWithTokens": "ts-node scripts/relayWithTokens.ts",
     "relayFromEth": "ts-node scripts/relayFromEth.ts",
-    "test:proxy": "hardhat test src/__tests__/AgoricProxy.spec.ts"
+    "test:proxy": "hardhat test src/__tests__/AgoricProxy.spec.ts",
+    "coverage:proxy": "npx hardhat coverage --testfiles src/__tests__/AgoricProxy.spec.ts"
   },
   "dependencies": {
     "@axelar-network/axelar-local-dev": "^2.3.2",
