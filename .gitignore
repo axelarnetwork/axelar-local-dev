@@ -4,6 +4,7 @@
 **/examples/metamask/abi/**.json
 **/.DS_Store
 local.json
+offer.json
 
 src/types
 
