@@ -105,6 +105,22 @@ describe("AgoricProxy", () => {
     });
     await tx.wait();
 
+    const receipt = await provider.getTransactionReceipt(tx.hash);
+    const iface = (await ethers.getContractFactory("AgoricProxy")).interface;
+    const receivedEvent = receipt.logs
+      .map((log) => {
+        try {
+          return iface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .find((parsed) => parsed && parsed.name === "Received");
+
+    expect(receivedEvent).to.not.be.undefined;
+    expect(receivedEvent.args.sender).to.equal(owner.address);
+    expect(receivedEvent.args.amount).to.equal(ethers.parseEther("5.0"));
+
     const balanceAfter = await provider.getBalance(agoricProxyAddress);
     expect(balanceAfter).to.equal(ethers.parseEther("5.0"));
   });
@@ -134,46 +150,10 @@ describe("AgoricProxy", () => {
       payload
     );
 
-    const encodedAddress = abiCoder.encode(
-      ["address"],
-      [expectedWalletAddress]
-    );
-
-    const agoricResponseEncoded = abiCoder.encode(
-      ["tuple(bool processed, tuple(bool success, bytes data)[] results)"],
-      [
-        {
-          processed: false,
-          results: [
-            {
-              success: true,
-              data: encodedAddress,
-            },
-          ],
-        },
-      ]
-    );
-
-    const expectedPayload = ethers.solidityPacked(
-      ["bytes4", "bytes"],
-      ["0x00000000", agoricResponseEncoded]
-    );
-
-    const expectedPayloadHash = keccak256(toBytes(expectedPayload));
-
     await expect(tx)
-      .to.emit(agoricProxy, "WalletCreated")
-      .withArgs("WalletCreatedSuccess", expectedWalletAddress, sourceAddress);
-
-    await expect(tx)
-      .to.emit(axelarGatewayMock, "ContractCall")
-      .withArgs(
-        agoricProxy.target,
-        sourceContract,
-        sourceAddress,
-        expectedPayloadHash,
-        expectedPayload
-      );
+      .to.emit(agoricProxy, "SmartWalletCreated")
+      .withArgs(expectedWalletAddress, sourceAddress, "agoric", sourceAddress);
+    await expect(tx).to.emit(agoricProxy, "CrossChainCallSent");
   });
 
   it("should use the remote wallet to call other contracts", async () => {
@@ -217,13 +197,14 @@ describe("AgoricProxy", () => {
       abiCoder,
     });
 
-    await wallet.execute(
+    const execTx = await wallet.execute(
       commandId1,
       sourceContract,
       sourceAddress,
       multicallPayload
     );
 
+    expect(execTx).to.emit(wallet, "MulticallExecuted");
     const value = await multicall.getValue();
     expect(value).to.equal(27);
 
@@ -252,7 +233,7 @@ describe("AgoricProxy", () => {
       amount: 5000,
     });
 
-    await wallet.executeWithToken(
+    const execWithTokenTx = await wallet.executeWithToken(
       commandId2,
       sourceContract,
       sourceAddress,
@@ -261,6 +242,7 @@ describe("AgoricProxy", () => {
       5000
     );
 
+    expect(execWithTokenTx).to.emit(wallet, "MulticallExecuted");
     const value2 = await multicall.getValue();
     expect(value2).to.equal(44);
   });

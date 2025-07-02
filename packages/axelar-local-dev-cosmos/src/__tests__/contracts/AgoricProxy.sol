@@ -26,6 +26,9 @@ struct CallParams {
 contract Wallet is AxelarExecutable, Ownable {
     IAxelarGasService public gasService;
 
+    event MulticallExecuted(address indexed executor, CallResult[] results);
+    event Received(address indexed sender, uint256 amount);
+
     constructor(
         address gateway_,
         address gasReceiver_,
@@ -49,6 +52,7 @@ contract Wallet is AxelarExecutable, Ownable {
             results[i] = CallResult(success, result);
         }
 
+        emit MulticallExecuted(msg.sender, results);
         return results;
     }
 
@@ -70,9 +74,13 @@ contract Wallet is AxelarExecutable, Ownable {
         _multicall(payload);
     }
 
-    receive() external payable {}
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
+    }
 
-    fallback() external payable {}
+    fallback() external payable {
+        emit Received(msg.sender, msg.value);
+    }
 }
 
 contract AgoricProxy is AxelarExecutable {
@@ -83,11 +91,18 @@ contract AgoricProxy is AxelarExecutable {
     IAxelarGasService public immutable gasService;
     string public chainName;
 
-    event WalletCreated(
-        string label,
-        address indexed target,
-        string ownerAddress
+    event SmartWalletCreated(
+        address indexed wallet,
+        string owner,
+        string sourceChain,
+        string sourceAddress
     );
+    event CrossChainCallSent(
+        string destinationChain,
+        string destinationAddress,
+        bytes payload
+    );
+    event Received(address indexed sender, uint256 amount);
 
     constructor(
         address gateway_,
@@ -103,7 +118,6 @@ contract AgoricProxy is AxelarExecutable {
         address newWallet = address(
             new Wallet(_gateway, address(gasService), owner)
         );
-        emit WalletCreated("WalletCreatedSuccess", newWallet, owner);
         return newWallet;
     }
 
@@ -112,10 +126,16 @@ contract AgoricProxy is AxelarExecutable {
         string calldata sourceAddress,
         bytes calldata /*payload*/
     ) internal override {
-        address vendorAddress = createSmartWallet(sourceAddress);
+        address smartWalletAddress = createSmartWallet(sourceAddress);
+        emit SmartWalletCreated(
+            smartWalletAddress,
+            sourceAddress,
+            sourceChain,
+            sourceAddress
+        );
         CallResult[] memory results = new CallResult[](1);
 
-        results[0] = CallResult(true, abi.encode(vendorAddress));
+        results[0] = CallResult(true, abi.encode(smartWalletAddress));
 
         bytes memory msgPayload = abi.encodePacked(
             bytes4(0x00000000),
@@ -138,9 +158,14 @@ contract AgoricProxy is AxelarExecutable {
         );
 
         gateway.callContract(destinationChain, destinationAddress, payload);
+        emit CrossChainCallSent(destinationChain, destinationAddress, payload);
     }
 
-    receive() external payable {}
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
+    }
 
-    fallback() external payable {}
+    fallback() external payable {
+        emit Received(msg.sender, msg.value);
+    }
 }
