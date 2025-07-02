@@ -31,4 +31,4 @@ jobs:
       - name: Test
         timeout-minutes: 15
         run: |
-          npm run test:cosmos
+          npm run test:proxy

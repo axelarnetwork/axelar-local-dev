@@ -34,9 +34,10 @@
     "coverage:proxy": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run coverage:proxy"
   },
   "devDependencies": {
+    "chai-as-promised": "^8.0.1",
+    "eslint": "^8.57.0",
     "lerna": "^8.2.1",
-    "lerna-update-wizard": "^1.1.2",
-    "eslint": "^8.57.0"
+    "lerna-update-wizard": "^1.1.2"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

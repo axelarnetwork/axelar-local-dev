@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import {AxelarExecutableWithToken} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutableWithToken.sol";
 import {IERC20} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol";
@@ -33,6 +33,7 @@ contract CallContractWithToken is AxelarExecutableWithToken {
     }
 
     Message public storedMessage; // message received from _execute
+
     /**
      *
      * @param _gateway address of axl gateway on deployed chain

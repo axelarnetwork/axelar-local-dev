@@ -1,7 +1,7 @@
 module.exports = {
   skipFiles: [
     "ContractCallWithToken.sol",
-    "importer/axelar-contracts.sol",
+    "AxelarImportsForTest.sol",
     "Multicall.sol",
     "Ownable.sol",
     "SendReceive.sol",

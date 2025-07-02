@@ -1,3 +1,4 @@
+import AxelarGasService from "@axelar-network/axelar-cgp-solidity/artifacts/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { keccak256, stringToHex, toBytes } from "viem";
@@ -13,13 +14,13 @@ import {
 const createRemoteEVMAccount = async (
   axelarGatewayMock,
   ownerAddress,
-  sourceAddress
+  sourceAddress,
 ) => {
   const WalletFactory = await ethers.getContractFactory("Wallet");
   const wallet = await WalletFactory.deploy(
     axelarGatewayMock.target,
     ownerAddress,
-    sourceAddress
+    sourceAddress,
   );
   await wallet.waitForDeployment();
   return wallet;
@@ -45,36 +46,36 @@ describe("AgoricProxy", () => {
     [owner, addr1] = await ethers.getSigners();
 
     const GasServiceFactory = await ethers.getContractFactory(
-      "AxelarGasService"
+      AxelarGasService.abi,
+      AxelarGasService.bytecode,
     );
+
     const axelarGasServiceMock = await GasServiceFactory.deploy(owner.address);
 
-    const TokenDeployerFactory = await ethers.getContractFactory(
-      "TokenDeployer"
-    );
+    const TokenDeployerFactory =
+      await ethers.getContractFactory("TokenDeployer");
     const tokenDeployer = await TokenDeployerFactory.deploy();
 
     const AuthFactory = await ethers.getContractFactory("AxelarAuthWeighted");
     const authContract = await AuthFactory.deploy([
       abiCoder.encode(
         ["address[]", "uint256[]", "uint256"],
-        [[owner.address], [1], 1]
+        [[owner.address], [1], 1],
       ),
     ]);
 
-    const AxelarGatewayFactory = await ethers.getContractFactory(
-      "AxelarGateway"
-    );
+    const AxelarGatewayFactory =
+      await ethers.getContractFactory("AxelarGateway");
     axelarGatewayMock = await AxelarGatewayFactory.deploy(
       authContract.target,
-      tokenDeployer.target
+      tokenDeployer.target,
     );
 
     const Contract = await ethers.getContractFactory("AgoricProxy");
     agoricProxy = await Contract.deploy(
       axelarGatewayMock.target,
       axelarGasServiceMock.target,
-      "Ethereum"
+      "Ethereum",
     );
     await agoricProxy.waitForDeployment();
 
@@ -147,7 +148,7 @@ describe("AgoricProxy", () => {
       commandId,
       sourceContract,
       sourceAddress,
-      payload
+      payload,
     );
 
     await expect(tx)
@@ -165,7 +166,7 @@ describe("AgoricProxy", () => {
     const wallet = await createRemoteEVMAccount(
       axelarGatewayMock,
       owner.address,
-      sourceAddress
+      sourceAddress,
     );
 
     // Test ContractCall
@@ -201,7 +202,7 @@ describe("AgoricProxy", () => {
       commandId1,
       sourceContract,
       sourceAddress,
-      multicallPayload
+      multicallPayload,
     );
 
     expect(execTx).to.emit(wallet, "MulticallExecuted");
@@ -239,7 +240,7 @@ describe("AgoricProxy", () => {
       sourceAddress,
       multicallPayload2,
       "USDC",
-      5000
+      5000,
     );
 
     expect(execWithTokenTx).to.emit(wallet, "MulticallExecuted");
