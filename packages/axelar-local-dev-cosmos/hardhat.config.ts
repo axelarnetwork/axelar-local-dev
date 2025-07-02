@@ -6,27 +6,26 @@ envConfig();
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.20",
-    settings: {
-      evmVersion: process.env.EVM_VERSION || "london",
-      optimizer: {
-        enabled: true,
-        runs: 1000,
-        details: {
-          peephole: true,
-          inliner: true,
-          jumpdestRemover: true,
-          orderLiterals: true,
-          deduplicate: true,
-          cse: true,
-          constantOptimizer: true,
-          yul: true,
-          yulDetails: {
-            stackAllocation: true,
+    compilers: [
+      {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
           },
         },
       },
-    },
+      {
+        version: "0.8.9",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
   },
   paths: {
     sources: "./src/__tests__/contracts",
