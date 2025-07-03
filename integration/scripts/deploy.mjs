@@ -1,4 +1,5 @@
 // @ts-check
+import "./lockdown.mjs";
 import { runCommand } from "./utils.mjs";
 
 const CHAINID = "agoriclocal";

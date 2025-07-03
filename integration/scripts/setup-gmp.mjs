@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // @ts-check
 import { deployContract } from "./deploy.mjs";
+import "./lockdown.mjs";
 import { checkVStorage, runCommand } from "./utils.mjs";
 const { log } = console;
 

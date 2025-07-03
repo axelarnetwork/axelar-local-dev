@@ -49,3 +49,16 @@ jobs:
 
       - name: Deploy contracts on Agoric chain
         run: ./integration/scripts/setup-gmp.mjs
+
+      - name: Make offer for creating EVM Smart Wallet
+        run: ./integration/scripts/make-account.mjs
+        env:
+          makeAccount: true
+
+      - name: Relay data from EVM chain
+        run: |
+          npm run relay:cosmos &
+          sleep 150
+
+      - name: Get EVM Smart wallet address
+        run: ./integration/scripts/make-account.mjs

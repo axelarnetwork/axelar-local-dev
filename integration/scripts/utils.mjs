@@ -1,6 +1,11 @@
 // @ts-check
+import {
+  boardSlottingMarshaller,
+  makeBoardRemote,
+} from "@agoric/internal/src/marshal.js";
 import { execa } from "execa";
 import fs from "fs/promises";
+import { makeVStorage } from "./vstorage.mjs";
 
 export const fetchFromVStorage = async (vStorageUrl) => {
   const response = await fetch(vStorageUrl);
@@ -109,4 +114,182 @@ export const runCommand = async (command, { captureOutput = false } = {}) => {
     console.error("❌ ERROR:", err);
     process.exit(1);
   }
+};
+
+export const executeWalletAction = async ({ OFFER_FILE, FROM_ADDRESS }) => {
+  const cmd = `agd tx swingset wallet-action "$(cat ${OFFER_FILE})" \
+    --allow-spend \
+    --from=${FROM_ADDRESS} \
+    --keyring-backend=test \
+    --chain-id=agoriclocal -y`;
+
+  return runCommand(cmd);
+};
+
+export const validateEvmAddress = (address) => {
+  if (typeof address !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    throw new Error(`Invalid EVM wallet address: ${address}`);
+  }
+};
+
+export const processWalletOffer = async ({
+  offer,
+  OFFER_FILE,
+  CONTAINER_PATH,
+  FROM_ADDRESS,
+}) => {
+  console.log("Writing offer to file...");
+  await writeOfferToFile({ offer, OFFER_FILE });
+
+  console.log("Copy offer file in container");
+  await execa(`docker cp ${OFFER_FILE} agoric:${CONTAINER_PATH}`, {
+    shell: true,
+    stdio: "inherit",
+  });
+
+  console.log("Executing wallet action...");
+  await executeWalletAction({ OFFER_FILE, FROM_ADDRESS });
+};
+
+const storageHelper = {
+  parseCapData: (txt) => {
+    /** @type {{ value: string }} */
+    const { value } = txt;
+    assert(typeof value === "string", typeof value);
+    const specimen = JSON.parse(value);
+    const { blockHeight, values } = specimen;
+    assert(values, `empty values in specimen ${value}`);
+    const capDatas = storageHelper.parseMany(values);
+    return { blockHeight, capDatas };
+  },
+  unserializeTxt: (txt, ctx) => {
+    const { capDatas } = storageHelper.parseCapData(txt);
+    return capDatas.map((capData) =>
+      boardSlottingMarshaller(ctx.convertSlotToVal).fromCapData(capData),
+    );
+  },
+  /** @param {string[]} capDataStrings array of stringified capData */
+  parseMany: (capDataStrings) => {
+    assert(capDataStrings && capDataStrings.length);
+    /** @type {{ body: string, slots: string[] }[]} */
+    const capDatas = capDataStrings.map((s) => JSON.parse(s));
+    for (const capData of capDatas) {
+      assert(typeof capData === "object" && capData !== null);
+      assert("body" in capData && "slots" in capData);
+      assert(typeof capData.body === "string");
+      assert(Array.isArray(capData.slots));
+    }
+    return capDatas;
+  },
+};
+harden(storageHelper);
+export const makeAgoricNames = async (ctx, vstorage) => {
+  /** @type {Record<string, string>} */
+  const reverse = {};
+  const entries = await Promise.all(
+    ["brand", "instance", "vbankAsset"].map(async (kind) => {
+      const content = await vstorage.readLatest(
+        `published.agoricNames.${kind}`,
+      );
+      const parts = storageHelper.unserializeTxt(content, ctx).at(-1);
+      for (const [name, remote] of parts) {
+        if ("getBoardId" in remote) {
+          reverse[/** @type {string} */ (remote.getBoardId())] = name;
+        }
+      }
+      return [kind, Object.fromEntries(parts)];
+    }),
+  );
+  return { ...Object.fromEntries(entries), reverse };
+};
+
+export const makeFromBoard = () => {
+  const cache = new Map();
+  const convertSlotToVal = (boardId, iface) => {
+    if (cache.has(boardId)) {
+      return cache.get(boardId);
+    }
+    const val = makeBoardRemote({ boardId, iface });
+    cache.set(boardId, val);
+    return val;
+  };
+  return harden({ convertSlotToVal });
+};
+
+/**
+ * @typedef {Object} PrepareOfferParams
+ * @property {string} instanceName - The instance name to get from AgoricNames.
+ * @property {string} source - Source of the invitation: 'contract' | 'continuing'.
+ * @property {string} [publicInvitationMaker] - Used for public invitations.
+ * @property {string} [invitationMakerName] - Used for contract invitations.
+ * @property {string} [brandName] - Required if giving an amount.
+ * @property {bigint} [amount] - Required if giving something.
+ * @property {any[]} [invitationArgs] - Arguments for the invitation (e.g. method, params).
+ * @property {string} [previousOffer] - For continuing invitations.
+ * @property {boolean} [emptyProposal] - If true, skips constructing the give section.
+ * @property {(x: any) => any} [hardenFn] - Optionally override the harden function.
+ */
+
+/**
+ * Prepares a hardened offer object with all required CapData format.
+ * @param {PrepareOfferParams} params
+ * @returns {Promise<any>} CapData object ready to be written or sent to wallet.
+ */
+export const prepareOffer = async ({
+  instanceName,
+  source,
+  publicInvitationMaker,
+  invitationMakerName,
+  brandName,
+  amount,
+  invitationArgs,
+  previousOffer,
+  emptyProposal = false,
+}) => {
+  if (!instanceName) throw new Error("instanceName is required");
+  if (!source) throw new Error("source is required");
+
+  const LOCAL_CONFIG = {
+    rpcAddrs: ["http://localhost/agoric-rpc"],
+    chainName: "agoriclocal",
+  };
+
+  const vstorage = makeVStorage({ fetch }, LOCAL_CONFIG);
+  const fromBoard = makeFromBoard();
+  const { brand, instance } = await makeAgoricNames(fromBoard, vstorage);
+
+  const offerId = `offer-${Date.now()}`;
+
+  const invitationSpec = {
+    ...(invitationMakerName && { invitationMakerName }),
+    ...(publicInvitationMaker && { publicInvitationMaker }),
+    source,
+    instance: instance[instanceName],
+    ...(invitationArgs && { invitationArgs }),
+    ...(previousOffer && { previousOffer }),
+  };
+
+  const proposal =
+    emptyProposal || !amount || !brandName
+      ? {}
+      : {
+          give: {
+            [brandName]: {
+              brand: brand[brandName],
+              value: amount,
+            },
+          },
+        };
+
+  const body = {
+    method: "executeOffer",
+    offer: {
+      id: offerId,
+      invitationSpec,
+      proposal,
+    },
+  };
+
+  const marshaller = boardSlottingMarshaller(fromBoard.convertSlotToVal);
+  return marshaller.toCapData(harden(body));
 };
