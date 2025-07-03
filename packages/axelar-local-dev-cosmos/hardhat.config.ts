@@ -6,6 +6,21 @@ envConfig();
 
 const { PRIVATE_KEY } = process.env;
 
+const testnets = {
+  fuji: {
+    url: "https://api.avax-test.network/ext/bc/C/rpc",
+    gasPrice: 225000000000,
+    chainId: 43113,
+    accounts: [`0x${PRIVATE_KEY}`],
+  },
+  base: {
+    url: "https://sepolia.base.org/",
+    gasPrice: 225000000000,
+    chainId: 84532,
+    accounts: [`0x${PRIVATE_KEY}`],
+  },
+};
+
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
@@ -43,18 +58,7 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     },
-    fuji: {
-      url: "https://api.avax-test.network/ext/bc/C/rpc",
-      gasPrice: 225000000000,
-      chainId: 43113,
-      accounts: [`0x${PRIVATE_KEY}`],
-    },
-    base: {
-      url: "https://sepolia.base.org/",
-      gasPrice: 225000000000,
-      chainId: 84532,
-      accounts: [`0x${PRIVATE_KEY}`],
-    },
+    ...(PRIVATE_KEY ? testnets : {}),
   },
   paths: {
     sources: "./src/__tests__/contracts",
