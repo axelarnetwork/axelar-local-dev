@@ -9,7 +9,7 @@ import { AxelarRelayerService, defaultAxelarChainInfo } from "./index";
 
 export const relayBasic = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
-    defaultAxelarChainInfo
+    defaultAxelarChainInfo,
   );
 
   const ethereumNetwork = await createNetwork({ name: "Ethereum" });
@@ -17,18 +17,18 @@ export const relayBasic = async () => {
 
   const multiCallContract = await deployContract(
     ethereumNetwork.userWallets[0],
-    require("../artifacts/src/__tests__/contracts/Multicall.sol/Multicall.json")
+    require("../artifacts/src/__tests__/contracts/Multicall.sol/Multicall.json"),
   );
   console.log("MultiCall Contract Address:", multiCallContract.address);
 
   const factoryContract = await deployContract(
     ethereumNetwork.userWallets[0],
-    require("../artifacts/src/__tests__/contracts/AgoricProxy.sol/AgoricProxy.json"),
+    require("../artifacts/src/__tests__/contracts/Factory.sol/Factory.json"),
     [
       ethereumNetwork.gateway.address,
       ethereumNetwork.gasService.address,
       "Ethereum",
-    ]
+    ],
   );
   console.log("Factory Contract Address:", factoryContract.address);
 

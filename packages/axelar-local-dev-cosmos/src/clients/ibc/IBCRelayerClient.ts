@@ -21,7 +21,7 @@ export class IBCRelayerClient {
   private constructor(
     axelarClient: CosmosClient,
     wasmClient: CosmosClient,
-    relayer: DirectSecp256k1HdWallet
+    relayer: DirectSecp256k1HdWallet,
   ) {
     this.axelarClient = axelarClient;
     this.wasmClient = wasmClient;
@@ -35,7 +35,7 @@ export class IBCRelayerClient {
     this.relayerAccountManager = new RelayerAccountManager(
       this.axelarClient,
       this.wasmClient,
-      relayer
+      relayer,
     );
   }
 
@@ -44,7 +44,7 @@ export class IBCRelayerClient {
     const wasmClient = await CosmosClient.create("agoric");
     const relayer = await RelayerAccountManager.createRelayerAccount(
       "agoric",
-      mnemonic
+      mnemonic,
     );
 
     return new IBCRelayerClient(axelarClient, wasmClient, relayer);
@@ -57,7 +57,7 @@ export class IBCRelayerClient {
       this.relayerAccountManager.relayerAccount.mnemonic,
       {
         prefix,
-      }
+      },
     );
     return IbcClient.connectWithSigner(
       client.chainInfo.rpcUrl,
@@ -68,7 +68,7 @@ export class IBCRelayerClient {
         estimatedBlockTime: 400,
         estimatedIndexerTime: 60,
         logger: this.logger,
-      }
+      },
     );
   }
 
@@ -80,7 +80,7 @@ export class IBCRelayerClient {
     try {
       const json = readFileSync(
         path.join(Path.info, "connection.json"),
-        "utf8"
+        "utf8",
       );
       return JSON.parse(json);
     } catch (e) {
@@ -120,7 +120,7 @@ export class IBCRelayerClient {
           wasmIBCClient,
           connection.axelar.connectionId,
           connection.wasm.connectionId,
-          this.logger
+          this.logger,
         );
       } catch (e) {}
     }
@@ -128,7 +128,7 @@ export class IBCRelayerClient {
     if (!this.link) {
       this.link = await Link.createWithNewConnections(
         axelarIBCClient,
-        wasmIBCClient
+        wasmIBCClient,
       );
 
       if (saveToFile) {
@@ -145,7 +145,7 @@ export class IBCRelayerClient {
             wasm: {
               connectionId: this.link.endB.connectionID,
             },
-          })
+          }),
         );
       }
     }
@@ -177,7 +177,7 @@ export class IBCRelayerClient {
       "transfer",
       "transfer",
       Order.ORDER_UNORDERED,
-      "ics20-1"
+      "ics20-1",
     );
 
     if (saveToFile) {
@@ -203,7 +203,7 @@ export class IBCRelayerClient {
     this.lastRelayedHeight = await this.link!.checkAndRelayPacketsAndAcks(
       this.lastRelayedHeight,
       2,
-      6
+      6,
     );
 
     return this.lastRelayedHeight;

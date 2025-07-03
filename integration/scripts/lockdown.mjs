@@ -1,10 +1,10 @@
-import 'ses';
-import '@endo/eventual-send/shim.js';
+import "ses";
+import "@endo/eventual-send/shim.js";
 
 const options = {
-  overrideTaming: 'severe',
-  stackFiltering: 'verbose',
-  errorTaming: 'unsafe',
+  overrideTaming: "severe",
+  stackFiltering: "verbose",
+  errorTaming: "unsafe",
 };
 
 lockdown(options);

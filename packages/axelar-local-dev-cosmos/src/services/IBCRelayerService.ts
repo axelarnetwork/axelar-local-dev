@@ -11,7 +11,7 @@ export class IBCRelayerService {
   private constructor(
     wasmClient: CosmosClient,
     axelarClient: CosmosClient,
-    relayerClient: IBCRelayerClient
+    relayerClient: IBCRelayerClient,
   ) {
     this.wasmClient = wasmClient;
     this.axelarClient = axelarClient;

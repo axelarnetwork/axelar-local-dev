@@ -13,7 +13,7 @@ import {
 export const relayDataToEth = async () => {
   // Initialize the Axelar Relayer Service with default configuration
   const axelarRelayer = await AxelarRelayerService.create(
-    defaultAxelarChainInfo
+    defaultAxelarChainInfo,
   );
 
   const SendReceive = require("../artifacts/src/__tests__/contracts/SendReceive.sol/SendReceive.json");
@@ -26,7 +26,7 @@ export const relayDataToEth = async () => {
       ethereumNetwork.gateway.address,
       ethereumNetwork.gasService.address,
       "Ethereum",
-    ]
+    ],
   );
 
   const ibcRelayer = axelarRelayer.ibcRelayer;
@@ -49,7 +49,7 @@ export const relayDataToEth = async () => {
 
   const payload = encode(
     ["string", "string"],
-    ["agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl", "Hello, world!"]
+    ["agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl", "Hello, world!"],
   );
 
   const memo = {
@@ -86,7 +86,7 @@ export const relayDataToEth = async () => {
   console.log("Preparing to send tokens...");
   const signingClient = await SigningStargateClient.connectWithSigner(
     "http://localhost/agoric-rpc",
-    signer.owner
+    signer.owner,
   );
   // Set up the Relayer for Wasm Chain
   evmRelayer.setRelayer(RelayerType.Agoric, axelarRelayer);
@@ -95,7 +95,7 @@ export const relayDataToEth = async () => {
   const response = await signingClient.signAndBroadcast(
     senderAddress,
     message,
-    fee
+    fee,
   );
   console.log("transaction response", response);
 

@@ -44,4 +44,4 @@ base)
 esac
 
 delete_deployments_folder "ignition/deployments"
-deploy_contract "./ignition/modules/deployAgoricProxy.ts" "$GATEWAY" "$GAS_SERVICE"
+deploy_contract "./ignition/modules/deployFactory.ts" "$GATEWAY" "$GAS_SERVICE"

@@ -38,7 +38,7 @@ describe("Relayer", () => {
     const evmSendReceive = await deployContract(
       evmNetwork.userWallets[0],
       SendReceive,
-      [evmNetwork.gateway.address, evmNetwork.gasService.address, "ethereum"]
+      [evmNetwork.gateway.address, evmNetwork.gasService.address, "ethereum"],
     );
 
     console.log("Deploy EVM Contract", evmSendReceive.address);
@@ -59,7 +59,7 @@ describe("Relayer", () => {
         channel: srcChannelId,
       },
       "amazing random contract",
-      "auto"
+      "auto",
     );
 
     console.log("Deployed Wasm contract:", contractAddress);
@@ -90,11 +90,11 @@ describe("Relayer", () => {
       wasmContractAddress,
       {
         get_stored_message: {},
-      }
+      },
     );
 
     expect(response.sender.toLowerCase()).toBe(
-      evmNetwork.userWallets[0].address.toLowerCase()
+      evmNetwork.userWallets[0].address.toLowerCase(),
     );
     expect(response.message).toBe(message);
   });
@@ -117,7 +117,7 @@ describe("Relayer", () => {
       },
       "auto",
       "test",
-      [{ amount: "100000", denom: "uwasm" }]
+      [{ amount: "100000", denom: "uwasm" }],
     );
 
     // await ibcRelayer.relay();

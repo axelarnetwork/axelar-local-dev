@@ -107,8 +107,8 @@ export class NearRelayer extends Relayer {
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-                [to.chainId, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)]
-            )
+                [to.chainId, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)],
+            ),
         );
         const signedData = await getSignedExecuteInput(data, to.operatorWallet);
 
@@ -137,7 +137,7 @@ export class NearRelayer extends Relayer {
     createCallContractWithTokenCommand(
         commandId: string,
         relayData: RelayData,
-        callContractWithTokenArgs: CallContractWithTokenArgs
+        callContractWithTokenArgs: CallContractWithTokenArgs,
     ): Command {
         throw new Error('Method not implemented.');
     }

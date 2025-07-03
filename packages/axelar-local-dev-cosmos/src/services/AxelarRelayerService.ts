@@ -36,7 +36,7 @@ export class AxelarRelayerService extends Relayer {
   private constructor(
     axelarListener: AxelarListener,
     axelarClient: CosmosClient,
-    ibcRelayer: IBCRelayerService
+    ibcRelayer: IBCRelayerService,
   ) {
     super();
     this.axelarListener = axelarListener;
@@ -46,12 +46,12 @@ export class AxelarRelayerService extends Relayer {
 
   static async create(
     axelarConfig: Omit<CosmosChainInfo, "owner">,
-    ibcRelayer?: IBCRelayerService
+    ibcRelayer?: IBCRelayerService,
   ) {
     const axelarListener = new AxelarListener(axelarConfig);
     const axelarClient = await CosmosClient.create(
       "axelar",
-      "smile unveil sketch gaze length bulb goddess street case exact table fetch robust chronic power choice endorse toward pledge dish access sad illegal dance"
+      "smile unveil sketch gaze length bulb goddess street case exact table fetch robust chronic power choice endorse toward pledge dish access sad illegal dance",
     );
     const _ibcRelayer = ibcRelayer || (await IBCRelayerService.create());
     await _ibcRelayer.createIBCChannelIfNeeded();
@@ -69,12 +69,12 @@ export class AxelarRelayerService extends Relayer {
 
     this.axelarListener.listen(
       AxelarCosmosContractCallEvent,
-      this.handleContractCallEvent.bind(this)
+      this.handleContractCallEvent.bind(this),
     );
 
     this.axelarListener.listen(
       AxelarCosmosContractCallWithTokenEvent,
-      this.handleContractCallWithTokenEvent.bind(this)
+      this.handleContractCallWithTokenEvent.bind(this),
     );
 
     this.listened = true;
@@ -133,22 +133,22 @@ export class AxelarRelayerService extends Relayer {
   createCallContractCommand(
     commandId: string,
     relayData: RelayData,
-    contractCallArgs: CallContractArgs
+    contractCallArgs: CallContractArgs,
   ): Command {
     return WasmCommand.createWasmContractCallCommand(
       commandId,
       relayData,
-      contractCallArgs
+      contractCallArgs,
     );
   }
 
   createCallContractWithTokenCommand(
     commandId: string,
     relayData: RelayData,
-    callContractWithTokenArgs: CallContractWithTokenArgs
+    callContractWithTokenArgs: CallContractWithTokenArgs,
   ): Command {
     throw new Error(
-      "Currently, this method is not supported. Please use createCallContractCommand instead."
+      "Currently, this method is not supported. Please use createCallContractCommand instead.",
     );
   }
 
@@ -159,7 +159,7 @@ export class AxelarRelayerService extends Relayer {
   }
 
   private async updateCallContractEvents(
-    event: IBCEvent<ContractCallSubmitted>
+    event: IBCEvent<ContractCallSubmitted>,
   ) {
     const { args } = event;
     const contractCallArgs: CallContractArgs = {
@@ -178,7 +178,7 @@ export class AxelarRelayerService extends Relayer {
     const command = Command.createEVMContractCallCommand(
       commandId,
       this.relayData,
-      contractCallArgs
+      contractCallArgs,
     );
 
     if (!this.commands[contractCallArgs.to]) {
@@ -188,7 +188,7 @@ export class AxelarRelayerService extends Relayer {
     this.commands[contractCallArgs.to].push(command);
   }
   private async updateCallContractWithTokenEvents(
-    event: IBCEvent<ContractCallWithTokenSubmitted>
+    event: IBCEvent<ContractCallWithTokenSubmitted>,
   ) {
     const tokenMap: { [key: string]: string } = {
       uausdc: "aUSDC",
@@ -217,7 +217,7 @@ export class AxelarRelayerService extends Relayer {
     const command = Command.createEVMContractCallWithTokenCommand(
       commandId,
       this.relayData,
-      contractCallWithTokenArgs
+      contractCallWithTokenArgs,
     );
 
     if (!this.commands[contractCallWithTokenArgs.to]) {
@@ -229,7 +229,7 @@ export class AxelarRelayerService extends Relayer {
 
   private getWasmLogID(event: IBCEvent<ContractCallSubmitted>) {
     return id(
-      `${event.args.messageId}-${event.args.sourceChain}-${event.args.destinationChain}`
+      `${event.args.messageId}-${event.args.sourceChain}-${event.args.destinationChain}`,
     );
   }
 
@@ -250,8 +250,8 @@ export class AxelarRelayerService extends Relayer {
           commands.map((com) => com.commandId),
           commands.map((com) => com.name),
           commands.map((com) => com.encodedData),
-        ]
-      )
+        ],
+      ),
     );
   }
 
@@ -265,7 +265,7 @@ export class AxelarRelayerService extends Relayer {
   private async executeEvmExecutable(
     to: Network,
     commands: Command[],
-    execution: any
+    execution: any,
   ): Promise<void> {
     for (const command of commands) {
       if (command.post == null) continue;
@@ -280,7 +280,7 @@ export class AxelarRelayerService extends Relayer {
 
       try {
         const blockLimit = Number(
-          (await to.provider.getBlock("latest")).gasLimit
+          (await to.provider.getBlock("latest")).gasLimit,
         );
         return command.post({
           gasLimit: blockLimit,

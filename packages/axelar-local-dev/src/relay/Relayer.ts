@@ -33,7 +33,7 @@ export abstract class Relayer {
     abstract createCallContractWithTokenCommand(
         commandId: string,
         relayData: RelayData,
-        callContractWithTokenArgs: CallContractWithTokenArgs
+        callContractWithTokenArgs: CallContractWithTokenArgs,
     ): Command;
 
     abstract setRelayer(type: RelayerType, relayer: Relayer): void;

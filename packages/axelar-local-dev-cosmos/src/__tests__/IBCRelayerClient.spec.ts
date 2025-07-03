@@ -19,12 +19,12 @@ describe("IBCRelayerClient", () => {
 
   it("should create a wallet from a mnemonic if provided", async () => {
     const mockMnemonic = await DirectSecp256k1HdWallet.generate(12).then(
-      (w) => w.mnemonic
+      (w) => w.mnemonic,
     );
     const result = await IBCRelayerClient.create(mockMnemonic);
 
     expect(result.relayerAccountManager.relayerAccount.mnemonic).toEqual(
-      mockMnemonic
+      mockMnemonic,
     );
   });
 

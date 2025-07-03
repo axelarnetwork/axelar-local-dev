@@ -20,7 +20,7 @@ const uint8ArrayToHex = (uint8Array: Uint8Array): string => {
 const pack = (
   functionSignature: string,
   paramTypes: Array<string>,
-  params: Array<string>
+  params: Array<string>,
 ) => {
   const functionHash = createKeccakHash("keccak256")
     .update(functionSignature)
@@ -30,17 +30,17 @@ const pack = (
     Uint8Array.from([
       ...Uint8Array.from(functionHash.subarray(0, 4)),
       ...encode(paramTypes, params),
-    ])
+    ]),
   );
 };
 
 export const relayDataFromEth = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
-    defaultAxelarChainInfo
+    defaultAxelarChainInfo,
   );
 
-  const Factory = require("../artifacts/src/__tests__/contracts/AgoricProxy.sol/AgoricProxy.json");
-  const WalletContract = require("../artifacts/src/__tests__/contracts/AgoricProxy.sol/Wallet.json");
+  const Factory = require("../artifacts/src/__tests__/contracts/Factory.sol/Factory.json");
+  const WalletContract = require("../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json");
 
   const ethereumNetwork = await createNetwork({ name: "Ethereum" });
   const ethereumContract = await deployContract(
@@ -50,7 +50,7 @@ export const relayDataFromEth = async () => {
       ethereumNetwork.gateway.address,
       ethereumNetwork.gasService.address,
       "Ethereum",
-    ]
+    ],
   );
   const ethereumWallet = await deployContract(
     ethereumNetwork.userWallets[0],
@@ -58,7 +58,7 @@ export const relayDataFromEth = async () => {
     [
       ethereumNetwork.gateway.address,
       "agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl",
-    ]
+    ],
   );
 
   console.log("Ethereum Contract Address:", ethereumWallet.address);
@@ -127,13 +127,13 @@ export const relayDataFromEth = async () => {
   console.log("Preparing to send tokens...");
   const signingClient = await SigningStargateClient.connectWithSigner(
     "http://localhost/agoric-rpc",
-    signer.owner
+    signer.owner,
   );
 
   const response = await signingClient.signAndBroadcast(
     senderAddress,
     message,
-    fee
+    fee,
   );
   evmRelayer.setRelayer(RelayerType.Agoric, axelarRelayer);
 

@@ -21,7 +21,7 @@ export class RelayerAccountManager {
   constructor(
     axelarClient: CosmosClient,
     wasmClient: CosmosClient,
-    relayerAccount: DirectSecp256k1HdWallet
+    relayerAccount: DirectSecp256k1HdWallet,
   ) {
     this.axelarClient = axelarClient;
     this.wasmClient = wasmClient;
@@ -36,7 +36,7 @@ export class RelayerAccountManager {
    */
   static async createRelayerAccount(
     prefix: CosmosChain,
-    mnemonic?: string
+    mnemonic?: string,
   ): Promise<DirectSecp256k1HdWallet> {
     if (mnemonic) {
       return DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix });
@@ -64,7 +64,7 @@ export class RelayerAccountManager {
    * @param minAmount minimum amount to fund the relayer accounts. Default is 10,000,000
    */
   async fundRelayerAccountsIfNeeded(
-    minAmount = RelayerAccountManager.DEFAULT_MIN_FUND_AMOUNT
+    minAmount = RelayerAccountManager.DEFAULT_MIN_FUND_AMOUNT,
   ): Promise<void> {
     const fund = await this.getRelayerFund();
 
@@ -81,7 +81,7 @@ export class RelayerAccountManager {
    * @param amount amount to fund the relayer accounts. Default is 1,000,000,000
    */
   async fundRelayer(
-    amount = RelayerAccountManager.DEFAULT_FUND_AMOUNT
+    amount = RelayerAccountManager.DEFAULT_FUND_AMOUNT,
   ): Promise<void> {
     const relayerAddress = await this.getRelayerAddress("agoric");
     const relayerAxelarAddress = await this.getRelayerAddress("axelar");
@@ -103,9 +103,8 @@ export class RelayerAccountManager {
     const balance = await this.wasmClient.getBalance(relayerAddress);
     // console.log("Relayer wasm balance", balance);
 
-    const axelarBalance = await this.axelarClient.getBalance(
-      relayerAxelarAddress
-    );
+    const axelarBalance =
+      await this.axelarClient.getBalance(relayerAxelarAddress);
     // console.log("Relayer axelar balance", axelarBalance);
 
     return {

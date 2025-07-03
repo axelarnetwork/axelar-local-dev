@@ -39,7 +39,7 @@ import {
 } from "@axelar-network/axelar-local-dev-cosmos";
 
 const axelarRelayerService = await AxelarRelayerService.create(
-  defaultAxelarChainInfo
+  defaultAxelarChainInfo,
 );
 ```
 

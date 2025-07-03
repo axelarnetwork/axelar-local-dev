@@ -139,7 +139,7 @@ export class MultiversXITS {
         destinationAddress: string,
         tokenIdentifier: string,
         amount: string,
-        gasValue: string
+        gasValue: string,
     ) {
         // Remove 0x added by Ethereum for hex strings
         tokenId = tokenId.startsWith('0x') ? tokenId.substring(2) : tokenId;
@@ -182,9 +182,9 @@ export async function registerMultiversXRemoteITS(multiversxNetwork: MultiversXN
             (
                 await network.interchainTokenService.populateTransaction.setTrustedAddress(
                     'multiversx',
-                    (multiversxNetwork.interchainTokenServiceAddress as Address).bech32()
+                    (multiversxNetwork.interchainTokenServiceAddress as Address).bech32(),
                 )
-            ).data as string
+            ).data as string,
         );
 
         await (await network.interchainTokenService.multicall(data)).wait();

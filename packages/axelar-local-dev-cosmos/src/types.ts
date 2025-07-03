@@ -25,8 +25,8 @@ export type CosmosChain = "axelar" | "wasm" | "agoric";
 export type ChainDenom<T extends CosmosChain> = T extends "axelar"
   ? "uaxl"
   : CosmosChain extends "wasm"
-  ? "uwasm"
-  : never;
+    ? "uwasm"
+    : never;
 
 export interface AxelarListenerEvent<T> {
   type: string;

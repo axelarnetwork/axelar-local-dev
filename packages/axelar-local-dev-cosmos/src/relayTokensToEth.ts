@@ -13,7 +13,7 @@ import {
 export const relayDataToEth = async () => {
   // Initialize the Axelar Relayer Service with default configuration
   const axelarRelayer = await AxelarRelayerService.create(
-    defaultAxelarChainInfo
+    defaultAxelarChainInfo,
   );
 
   const CallContractWithToken = require("../artifacts/src/__tests__/contracts/ContractCallWithToken.sol/CallContractWithToken.json");
@@ -22,7 +22,7 @@ export const relayDataToEth = async () => {
   const ethereumContract = await deployContract(
     ethereumNetwork.userWallets[0],
     CallContractWithToken,
-    [ethereumNetwork.gateway.address, ethereumNetwork.gasService.address]
+    [ethereumNetwork.gateway.address, ethereumNetwork.gasService.address],
   );
 
   // Deploy tokens
@@ -30,7 +30,7 @@ export const relayDataToEth = async () => {
     "USDC",
     "aUSDC",
     6,
-    BigInt(100_000e6)
+    BigInt(100_000e6),
   );
 
   const ibcRelayer = axelarRelayer.ibcRelayer;
@@ -58,7 +58,7 @@ export const relayDataToEth = async () => {
   const payload = encode(["address[]"], [[ADDRESS_TO_DEPOSIT]]);
   console.log(
     "Balance of account before relaying",
-    await tokenContract.balanceOf(ADDRESS_TO_DEPOSIT)
+    await tokenContract.balanceOf(ADDRESS_TO_DEPOSIT),
   );
 
   const memo = {
@@ -98,7 +98,7 @@ export const relayDataToEth = async () => {
   console.log("Preparing to send tokens...");
   const signingClient = await SigningStargateClient.connectWithSigner(
     "http://localhost/agoric-rpc",
-    signer.owner
+    signer.owner,
   );
   // Set up the Relayer for Wasm Chain
   evmRelayer.setRelayer(RelayerType.Agoric, axelarRelayer);
@@ -107,7 +107,7 @@ export const relayDataToEth = async () => {
   const response = await signingClient.signAndBroadcast(
     senderAddress,
     message,
-    fee
+    fee,
   );
   console.log("transaction response", response);
 
@@ -119,7 +119,7 @@ export const relayDataToEth = async () => {
 
   console.log(
     "Balance of account after relaying",
-    await tokenContract.balanceOf(ADDRESS_TO_DEPOSIT)
+    await tokenContract.balanceOf(ADDRESS_TO_DEPOSIT),
   );
   const ethereumMessage = await ethereumContract.storedMessage();
   console.log("Message on Ethereum Contract:", ethereumMessage);
