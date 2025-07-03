@@ -7,6 +7,8 @@
     "access": "public"
   },
   "scripts": {
+    "deploy-fuji": "cd packages/axelar-local-dev-cosmos && ./scripts/deploy.sh fuji",
+    "deploy-base": "cd packages/axelar-local-dev-cosmos && ./scripts/deploy.sh base",
     "publish": "lerna publish from-package --yes",
     "version": "lerna version --yes --exact --no-git-tag-version",
     "link": "lerna link",

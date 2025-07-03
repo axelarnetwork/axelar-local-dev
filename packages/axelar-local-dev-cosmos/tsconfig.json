@@ -36,6 +36,6 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "types": ["@nomicfoundation/hardhat-chai-matchers"]
   },
-  "include": ["src"],
+  "include": ["src", "ignition/deployAgoricProxy.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/"]
 }
