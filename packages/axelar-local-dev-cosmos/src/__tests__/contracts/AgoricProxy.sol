@@ -149,7 +149,8 @@ contract AgoricProxy is AxelarExecutable {
         string calldata destinationAddress,
         bytes memory payload
     ) internal {
-        gasService.payNativeGasForContractCall{value: 1000000000000000}(
+        // TODO: come up with a better strategy to pay for gas
+        gasService.payNativeGasForContractCall{value: msg.value}(
             address(this),
             destinationChain,
             destinationAddress,

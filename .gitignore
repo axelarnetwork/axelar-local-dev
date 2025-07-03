@@ -9,6 +9,8 @@ src/types
 
 #Hardhat files
 cache
+# Hardhat Ignition default folder for deployments against a local node
+deployments
 
 # Logs
 logs

@@ -6,10 +6,6 @@ envConfig();
 
 const { PRIVATE_KEY } = process.env;
 
-if (!PRIVATE_KEY) {
-  throw new Error("PRIVATE_KEY is not defined in the environment variables");
-}
-
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
