@@ -13,7 +13,7 @@ const removeQuote = (str: string) => {
 };
 
 export function parseContractCallSubmittedEvent(
-  event: any
+  event: any,
 ): Promise<IBCEvent<ContractCallSubmitted>> {
   const key = "axelar.axelarnet.v1beta1.ContractCallSubmitted";
   const data = {
@@ -24,7 +24,7 @@ export function parseContractCallSubmittedEvent(
     contractAddress: removeQuote(event[`${key}.contract_address`][0]),
     payload: `0x${decodeBase64(removeQuote(event[`${key}.payload`][0]))}`,
     payloadHash: `0x${decodeBase64(
-      removeQuote(event[`${key}.payload_hash`][0])
+      removeQuote(event[`${key}.payload_hash`][0]),
     )}`,
   };
 
@@ -37,7 +37,7 @@ export function parseContractCallSubmittedEvent(
 }
 
 export function parseContractCallWithTokenSubmittedEvent(
-  event: any
+  event: any,
 ): Promise<IBCEvent<ContractCallWithTokenSubmitted>> {
   const key = "axelar.axelarnet.v1beta1.ContractCallWithTokenSubmitted";
   const asset = JSON.parse(event[`${key}.asset`][0]);
@@ -50,7 +50,7 @@ export function parseContractCallWithTokenSubmittedEvent(
     contractAddress: removeQuote(event[`${key}.contract_address`][0]),
     payload: `0x${decodeBase64(removeQuote(event[`${key}.payload`][0]))}`,
     payloadHash: `0x${decodeBase64(
-      removeQuote(event[`${key}.payload_hash`][0])
+      removeQuote(event[`${key}.payload_hash`][0]),
     )}`,
     symbol: asset.denom,
     amount: asset.amount,

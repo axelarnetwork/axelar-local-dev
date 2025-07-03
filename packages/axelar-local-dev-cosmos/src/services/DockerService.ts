@@ -28,7 +28,7 @@ export class DockerService {
 
   async start(
     chain: CosmosChain,
-    options: ChainConfig = this.getChainConfig(chain)
+    options: ChainConfig = this.getChainConfig(chain),
   ): Promise<CosmosChainInfo> {
     const { dockerPath } = options;
 
@@ -182,7 +182,7 @@ export class DockerService {
   private async throwIfDockerNotRunning(dockerPath: string): Promise<void> {
     if (!(await this.isDockerRunning(dockerPath))) {
       throw new Error(
-        "Docker is not running. Please start Docker and try again."
+        "Docker is not running. Please start Docker and try again.",
       );
     }
   }

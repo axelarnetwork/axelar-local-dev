@@ -26,8 +26,8 @@ const createRemoteEVMAccount = async (
   return wallet;
 };
 
-describe("AgoricProxy", () => {
-  let owner, addr1, agoricProxy, axelarGatewayMock;
+describe("Factory", () => {
+  let owner, addr1, factory, axelarGatewayMock;
 
   const abiCoder = new ethers.AbiCoder();
   const expectedWalletAddress = "0x856e4424f806D16E8CBC702B3c0F2ede5468eae5";
@@ -71,13 +71,13 @@ describe("AgoricProxy", () => {
       tokenDeployer.target,
     );
 
-    const Contract = await ethers.getContractFactory("AgoricProxy");
-    agoricProxy = await Contract.deploy(
+    const Contract = await ethers.getContractFactory("Factory");
+    factory = await Contract.deploy(
       axelarGatewayMock.target,
       axelarGasServiceMock.target,
       "Ethereum",
     );
-    await agoricProxy.waitForDeployment();
+    await factory.waitForDeployment();
 
     await deployToken({
       commandId: getCommandId(),
@@ -93,21 +93,21 @@ describe("AgoricProxy", () => {
     });
   });
 
-  it("fund AgoricProxy with ETH to pay for gas", async () => {
+  it("fund Factory with ETH to pay for gas", async () => {
     const provider = ethers.provider;
 
-    const agoricProxyAddress = await agoricProxy.getAddress();
-    const balanceBefore = await provider.getBalance(agoricProxyAddress);
+    const factoryAddress = await factory.getAddress();
+    const balanceBefore = await provider.getBalance(factoryAddress);
     expect(balanceBefore).to.equal(ethers.parseEther("0"));
 
     const tx = await owner.sendTransaction({
-      to: agoricProxyAddress,
+      to: factoryAddress,
       value: ethers.parseEther("5.0"),
     });
     await tx.wait();
 
     const receipt = await provider.getTransactionReceipt(tx.hash);
-    const iface = (await ethers.getContractFactory("AgoricProxy")).interface;
+    const iface = (await ethers.getContractFactory("Factory")).interface;
     const receivedEvent = receipt?.logs
       .map((log) => {
         try {
@@ -122,11 +122,11 @@ describe("AgoricProxy", () => {
     expect(receivedEvent?.args.sender).to.equal(owner.address);
     expect(receivedEvent?.args.amount).to.equal(ethers.parseEther("5.0"));
 
-    const balanceAfter = await provider.getBalance(agoricProxyAddress);
+    const balanceAfter = await provider.getBalance(factoryAddress);
     expect(balanceAfter).to.equal(ethers.parseEther("5.0"));
   });
 
-  it("should create a new remote wallet using AgoricProxy", async () => {
+  it("should create a new remote wallet using Factory", async () => {
     const commandId = getCommandId();
 
     const abiCoder = ethers.AbiCoder.defaultAbiCoder();
@@ -137,14 +137,14 @@ describe("AgoricProxy", () => {
       commandId,
       from: sourceContract,
       sourceAddress,
-      targetAddress: agoricProxy.target,
+      targetAddress: factory.target,
       payload: payloadHash,
       owner,
       AxelarGateway: axelarGatewayMock,
       abiCoder,
     });
 
-    const tx = await agoricProxy.execute(
+    const tx = await factory.execute(
       commandId,
       sourceContract,
       sourceAddress,
@@ -152,9 +152,9 @@ describe("AgoricProxy", () => {
     );
 
     await expect(tx)
-      .to.emit(agoricProxy, "SmartWalletCreated")
+      .to.emit(factory, "SmartWalletCreated")
       .withArgs(expectedWalletAddress, sourceAddress, "agoric", sourceAddress);
-    await expect(tx).to.emit(agoricProxy, "CrossChainCallSent");
+    await expect(tx).to.emit(factory, "CrossChainCallSent");
   });
 
   it("should use the remote wallet to call other contracts", async () => {

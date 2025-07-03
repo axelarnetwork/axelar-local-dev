@@ -27,7 +27,7 @@ export class CosmosClient {
     chainInfo: Required<CosmosChainInfo>,
     owner: DirectSecp256k1HdWallet,
     client: SigningStargateClient,
-    gasPrice: GasPrice = GasPrice.fromString(`1${chainInfo.denom}`)
+    gasPrice: GasPrice = GasPrice.fromString(`1${chainInfo.denom}`),
   ) {
     this.chainInfo = chainInfo;
     this.owner = owner;
@@ -47,7 +47,7 @@ export class CosmosClient {
     chain: CosmosChain = "agoric",
     mnemonic?: string,
     config: Omit<CosmosChainInfo, "owner"> = { prefix: chain },
-    gasPrice?: GasPrice
+    gasPrice?: GasPrice,
   ) {
     const defaultDenom = chain === "agoric" ? "ubld" : "uaxl";
     const chainInfo = {
@@ -99,7 +99,7 @@ export class CosmosClient {
     const client = await SigningStargateClient.connectWithSigner(
       chainInfo.rpcUrl,
       owner,
-      { gasPrice: gasPrice, registry }
+      { gasPrice: gasPrice, registry },
     );
 
     return new CosmosClient(
@@ -113,7 +113,7 @@ export class CosmosClient {
       },
       owner,
       client,
-      gasPrice
+      gasPrice,
     );
   }
 
@@ -125,7 +125,7 @@ export class CosmosClient {
    */
   static async createOrImportAccount(
     prefix: CosmosChain,
-    mnemonic?: string
+    mnemonic?: string,
   ): Promise<DirectSecp256k1HdWallet> {
     if (mnemonic) {
       return DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix });
@@ -186,7 +186,7 @@ export class CosmosClient {
             denom: this.chainInfo.denom,
           },
         ],
-        1.8
+        1.8,
       )
       .then((res) => {
         if (res.code !== 0) {
@@ -224,7 +224,7 @@ export class CosmosClient {
    */
   async createFundedSigningClient(
     chain: CosmosChain = "wasm",
-    amount: string = "10000000"
+    amount: string = "10000000",
   ) {
     const wallet = await DirectSecp256k1HdWallet.generate(12, {
       prefix: chain,
@@ -238,7 +238,7 @@ export class CosmosClient {
       wallet,
       {
         gasPrice: this.gasPrice,
-      }
+      },
     );
 
     return {

@@ -62,7 +62,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         gasReceiverAddress: string | undefined,
         interchainTokenServiceAddress: string | undefined,
         interchainTokenFactoryAddress: string | undefined,
-        contractAddress: string | undefined = undefined
+        contractAddress: string | undefined = undefined,
     ) {
         super(url);
         this.owner = Address.fromBech32('erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th'); // alice.pem
@@ -186,7 +186,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
             contractFolder,
             axelarGatewayAddress,
             axelarGasReceiverAddress,
-            baseTokenManager
+            baseTokenManager,
         );
         const interchainTokenFactoryAddress = await this.deployInterchainTokenFactory(contractFolder, interchainTokenServiceAddress);
 
@@ -313,7 +313,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
 
         const axelarGasReceiverAddress = SmartContract.computeAddress(
             gasReceiverTransaction.getSender(),
-            gasReceiverTransaction.getNonce()
+            gasReceiverTransaction.getNonce(),
         );
         console.log(`Gas Receiver contract deployed at ${axelarGasReceiverAddress} with transaction ${gasReceiverTransaction.getHash()}`);
 
@@ -362,7 +362,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         contractFolder: string,
         gateway: string,
         gasService: string,
-        baseTokenManager: string
+        baseTokenManager: string,
     ): Promise<string> {
         const buffer = await promises.readFile(contractFolder + '/interchain-token-service.wasm');
 
@@ -504,7 +504,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceChain: string,
         sourceAddress: string,
         destinationAddress: string,
-        payloadHash: string
+        payloadHash: string,
     ) {
         // Remove 0x added by Ethereum for hex strings
         commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;
@@ -558,7 +558,7 @@ export class MultiversXNetwork extends ProxyNetworkProvider {
         sourceChain: string,
         sourceAddress: string,
         payloadHex: string,
-        value: string = '0'
+        value: string = '0',
     ): Promise<Transaction> {
         // Remove 0x added by Ethereum for hex strings
         commandId = commandId.startsWith('0x') ? commandId.substring(2) : commandId;

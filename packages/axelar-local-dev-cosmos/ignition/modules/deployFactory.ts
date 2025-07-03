@@ -12,16 +12,12 @@ if (!GATEWAY_CONTRACT || !GAS_SERVICE_CONTRACT) {
   throw new Error("Missing env vars");
 }
 
-export default buildModule("AgoricProxyModule", (m) => {
+export default buildModule("FactoryModule", (m) => {
   const gateway = m.getParameter("gateway_", GATEWAY_CONTRACT);
   const gasService = m.getParameter("gasReceiver_", GAS_SERVICE_CONTRACT);
   const chainName = m.getParameter("chainName_", "Avalanche");
 
-  const AgoricProxy = m.contract("AgoricProxy", [
-    gateway,
-    gasService,
-    chainName,
-  ]);
+  const Factory = m.contract("Factory", [gateway, gasService, chainName]);
 
-  return { AgoricProxy };
+  return { Factory };
 });

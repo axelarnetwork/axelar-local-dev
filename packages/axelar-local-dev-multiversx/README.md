@@ -59,14 +59,14 @@ For more details on setting up the `createAndExport` function, check our [Standa
 
 `MultiversXNetwork` is a generalization of `ProxyNetworkProvider` (avaliable in the `@multiversx/sdk-network-providers` package) that includes (among others that are mainly used for intrnal purposes):
 
--   `deployAxelarFrameworkModules()`: Deploy Axelar related smart contracts found in `contracts`.
--   `deployContract(contractCode: string, initArguments: TypedValue[]): Promise<string>`: A wrapper for deploying a contract from code with init arguments, deployed by `alice.pem` wallet. Returns the SC address.
--   `signAndSendTransaction(transaction: Transaction, privateKey: UserSecretKey = this.ownerPrivateKey)`: A wrapper to easily sign, send and wait for a transaction to be completed.
--   `callContract(address: string, func: string, args: TypedValue[] = []): Promise<ContractQueryResponse>)`: A wrapper to easily query a smart contract.
+- `deployAxelarFrameworkModules()`: Deploy Axelar related smart contracts found in `contracts`.
+- `deployContract(contractCode: string, initArguments: TypedValue[]): Promise<string>`: A wrapper for deploying a contract from code with init arguments, deployed by `alice.pem` wallet. Returns the SC address.
+- `signAndSendTransaction(transaction: Transaction, privateKey: UserSecretKey = this.ownerPrivateKey)`: A wrapper to easily sign, send and wait for a transaction to be completed.
+- `callContract(address: string, func: string, args: TypedValue[] = []): Promise<ContractQueryResponse>)`: A wrapper to easily query a smart contract.
 
 Additionaly we export two utility functions
 
--   `createMultiversXNetwork(config?: {gatewayUrl: string})`: This deploys all the Axelar related smart contracts (`gas-service`, `auth`, `gateway`) if they are not deployed and saves their addresses to a config file. `gatewayUrl` defaults to `http://localhost:7950`
--   `loadMultiversXNetwork(gatewayUrl = 'http://localhost:7950')`: This loads the preconfigured `MultiversXNetwork` by reading the contract addresses from the config file. Needs to be used after `createMultiversXNetwork` was called at least once by a process.
+- `createMultiversXNetwork(config?: {gatewayUrl: string})`: This deploys all the Axelar related smart contracts (`gas-service`, `auth`, `gateway`) if they are not deployed and saves their addresses to a config file. `gatewayUrl` defaults to `http://localhost:7950`
+- `loadMultiversXNetwork(gatewayUrl = 'http://localhost:7950')`: This loads the preconfigured `MultiversXNetwork` by reading the contract addresses from the config file. Needs to be used after `createMultiversXNetwork` was called at least once by a process.
 
 `createAndExport` (see above) will try to also call `createMultiversXNetwork` so that relaying works to MultiversX as well.

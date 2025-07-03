@@ -71,11 +71,11 @@ describe('export', () => {
 
         it('should be able to relay tokens from chain A to chain B', async () => {
             const contract1 = await deployContract(srcOwner, ExecuteWithToken, [chain1.gateway.address, chain1.gasService.address]).then(
-                (contract) => ExecuteWithTokenFactory.connect(contract.address, srcOwner)
+                (contract) => ExecuteWithTokenFactory.connect(contract.address, srcOwner),
             );
 
             const contract2 = await deployContract(destOwner, ExecuteWithToken, [chain2.gateway.address, chain2.gasService.address]).then(
-                (contract) => ExecuteWithTokenFactory.connect(contract.address, destOwner)
+                (contract) => ExecuteWithTokenFactory.connect(contract.address, destOwner),
             );
 
             await contract1.addSibling(chain2.name, contract2.address);
@@ -99,10 +99,10 @@ describe('export', () => {
 
         it('should be able to call express tokens from chain A to chain B', async () => {
             const contract1 = await deployContract(srcOwner, ExpressWithToken, [chain1.gateway.address, chain1.gasService.address]).then(
-                (contract) => ExpressWithTokenFactory.connect(contract.address, srcOwner)
+                (contract) => ExpressWithTokenFactory.connect(contract.address, srcOwner),
             );
             const contract2 = await deployContract(destOwner, ExpressWithToken, [chain2.gateway.address, chain2.gasService.address]).then(
-                (contract) => AxelarExpressExecutableFactory.connect(contract.address, destOwner)
+                (contract) => AxelarExpressExecutableFactory.connect(contract.address, destOwner),
             );
 
             const amount = BigInt(1e18);
@@ -157,11 +157,11 @@ describe('export', () => {
         // Note: This test is expecting the host to run a local blockchain on port 8545 and 8546.
         it.only('should be able to relay tokens from chain A to chain B', async () => {
             const contract1 = await deployContract(srcOwner, ExecuteWithToken, [chain1.gateway.address, chain1.gasService.address]).then(
-                (contract) => ExecuteWithTokenFactory.connect(contract.address, srcOwner)
+                (contract) => ExecuteWithTokenFactory.connect(contract.address, srcOwner),
             );
 
             const contract2 = await deployContract(destOwner, ExecuteWithToken, [chain2.gateway.address, chain2.gasService.address]).then(
-                (contract) => ExecuteWithTokenFactory.connect(contract.address, destOwner)
+                (contract) => ExecuteWithTokenFactory.connect(contract.address, destOwner),
             );
 
             await contract1.addSibling(chain2.name, contract2.address);

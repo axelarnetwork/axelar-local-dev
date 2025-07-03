@@ -48,14 +48,14 @@ export function getIBCDenom(channel: string, denom: string, port = "transfer") {
 
 export function encodeVersionedPayload(
   version: number,
-  payload: string
+  payload: string,
 ): Uint8Array {
   const versionHex = zeroPadValue(toBeHex(version), 4);
   return getBytes(versionHex.concat(payload.substring(2)));
 }
 
 export async function exportOwnerAccountFromContainer(
-  chain: CosmosChain
+  chain: CosmosChain,
 ): Promise<{ mnemonic: string; address: string }> {
   const homePath = path.join(Path.docker(chain), `.${chain}`);
   const mnemonic = readFileSync(`${homePath}/mnemonic.txt`, "utf8");
@@ -87,7 +87,7 @@ export function decodeVersionedPayload(versionedPayload: string) {
 
   const [sourceChain, sourceAddress, executeMsgPayload] = abiCoder.decode(
     ["string", "string", "bytes"],
-    argValues
+    argValues,
   );
 
   return {
@@ -127,7 +127,7 @@ export function convertCosmosAddress(address: string, prefix: string) {
 export const getConfirmGatewayTxPayload = (
   sender: string,
   chain: string,
-  txHash: string
+  txHash: string,
 ) => {
   return [
     {
@@ -144,7 +144,7 @@ export const getConfirmGatewayTxPayload = (
 export const incrementPollCounter = async () => {
   const filePath = path.join(
     __dirname,
-    "../docker/axelar/.axelar/poll-counter.txt"
+    "../docker/axelar/.axelar/poll-counter.txt",
   );
   let number = null;
   try {
@@ -164,7 +164,7 @@ export const getVoteRequestPayload = (
   sender: string,
   callContractArgs: CallContractArgs,
   confirmGatewayTx: DeliverTxResponse,
-  pollId: number
+  pollId: number,
 ) => {
   const event = {
     chain: callContractArgs.from,
@@ -183,7 +183,7 @@ export const getVoteRequestPayload = (
     VoteEvents.fromPartial({
       chain: callContractArgs.from,
       events: [event],
-    })
+    }),
   ).finish();
 
   return [
@@ -204,7 +204,7 @@ export const getVoteRequestPayload = (
 export const getRouteMessagePayload = (
   sender: string,
   callContractArgs: CallContractArgs,
-  eventId: string
+  eventId: string,
 ) => {
   return [
     {
@@ -215,7 +215,7 @@ export const getRouteMessagePayload = (
         payload: getBytes(callContractArgs.payload),
         feegranter: toAccAddress(
           // Address of gov1 wallet in the axelar chain
-          "axelar1sufx2ryp5ndxdhl3zftdnsjwrgqqgd3q6sxfjs"
+          "axelar1sufx2ryp5ndxdhl3zftdnsjwrgqqgd3q6sxfjs",
         ),
       }),
     },

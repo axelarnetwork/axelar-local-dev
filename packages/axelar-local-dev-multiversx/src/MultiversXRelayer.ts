@@ -132,7 +132,7 @@ export class MultiversXRelayer extends Relayer {
                 command.data[0],
                 command.data[1],
                 command.data[2],
-                command.data[3]
+                command.data[3],
             );
         }
     }
@@ -150,8 +150,8 @@ export class MultiversXRelayer extends Relayer {
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-                [to.chainId, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)]
-            )
+                [to.chainId, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)],
+            ),
         );
         const signedData = await getSignedExecuteInput(data, to.operatorWallet);
 
@@ -204,7 +204,7 @@ export class MultiversXRelayer extends Relayer {
 
     private async updateGasEvents(events: MultiversXEvent[]) {
         const newEvents = events.filter(
-            (event) => event.identifier === 'payNativeGasForContractCall' || event.identifier === 'payGasForContractCall'
+            (event) => event.identifier === 'payNativeGasForContractCall' || event.identifier === 'payGasForContractCall',
         );
 
         for (const event of newEvents) {
@@ -229,7 +229,7 @@ export class MultiversXRelayer extends Relayer {
                 const decoded = new BinaryCodec()
                     .decodeTopLevel(
                         Buffer.from(event.data, 'base64'),
-                        new TupleType(new H256Type(), new StringType(), new BigUIntType(), new AddressType())
+                        new TupleType(new H256Type(), new StringType(), new BigUIntType(), new AddressType()),
                     )
                     .valueOf();
 

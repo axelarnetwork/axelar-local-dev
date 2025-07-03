@@ -126,7 +126,7 @@ describe('multiversx', () => {
             args[0],
             args[1],
             args[2],
-            Buffer.from(payloadHash).toString('hex')
+            Buffer.from(payloadHash).toString('hex'),
         );
         expect(tx).toBeTruthy();
     });
@@ -166,12 +166,12 @@ describe('multiversx', () => {
         const evmIts = new Contract(
             evmNetwork.interchainTokenService.address,
             contracts.IInterchainTokenService.abi,
-            wallet.connect(evmNetwork.provider)
+            wallet.connect(evmNetwork.provider),
         );
         const evmItsFactory = new Contract(
             evmNetwork.interchainTokenFactory.address,
             contracts.IInterchainTokenFactory.abi,
-            wallet.connect(evmNetwork.provider)
+            wallet.connect(evmNetwork.provider),
         );
 
         await registerMultiversXRemoteITS(client, [evmNetwork]);

@@ -83,7 +83,7 @@ contract Wallet is AxelarExecutable, Ownable {
     }
 }
 
-contract AgoricProxy is AxelarExecutable {
+contract Factory is AxelarExecutable {
     using StringToAddress for string;
     using AddressToString for address;
 
