@@ -16,6 +16,7 @@
     "update": "lerna update",
     "clean": "lerna clean",
     "start:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run start",
+    "relay:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run relay",
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
     "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
     "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
