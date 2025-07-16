@@ -124,8 +124,9 @@ contract Factory is AxelarExecutable {
     function _execute(
         string calldata sourceChain,
         string calldata sourceAddress,
-        bytes calldata /*payload*/
+        bytes calldata payload
     ) internal override {
+        (uint256 gasAmount) = abi.decode(payload, (uint256));
         address smartWalletAddress = createSmartWallet(sourceAddress);
         emit SmartWalletCreated(
             smartWalletAddress,
@@ -141,16 +142,16 @@ contract Factory is AxelarExecutable {
             bytes4(0x00000000),
             abi.encode(AgoricResponse(false, results))
         );
-        _send(sourceChain, sourceAddress, msgPayload);
+        _send(sourceChain, sourceAddress, msgPayload, gasAmount);
     }
 
     function _send(
         string calldata destinationChain,
         string calldata destinationAddress,
-        bytes memory payload
+        bytes memory payload,
+        uint256 gasAmount
     ) internal {
-        // TODO: come up with a better strategy to pay for gas
-        gasService.payNativeGasForContractCall{value: msg.value}(
+        gasService.payNativeGasForContractCall{value: gasAmount}(
             address(this),
             destinationChain,
             destinationAddress,
