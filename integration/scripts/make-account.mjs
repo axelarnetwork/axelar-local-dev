@@ -27,6 +27,9 @@ try {
       brandName: "BLD",
       amount: 1n,
       source: "contract",
+      offerArgs: {
+        gasAmount: 0n,
+      },
     });
 
     await processWalletOffer({

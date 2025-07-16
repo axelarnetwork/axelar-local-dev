@@ -225,6 +225,7 @@ export const makeFromBoard = () => {
  * @property {string} [brandName] - Required if giving an amount.
  * @property {bigint} [amount] - Required if giving something.
  * @property {any[]} [invitationArgs] - Arguments for the invitation (e.g. method, params).
+ * @property {Object} [offerArgs] - OfferArgs
  * @property {string} [previousOffer] - For continuing invitations.
  * @property {boolean} [emptyProposal] - If true, skips constructing the give section.
  * @property {(x: any) => any} [hardenFn] - Optionally override the harden function.
@@ -244,6 +245,7 @@ export const prepareOffer = async ({
   amount,
   invitationArgs,
   previousOffer,
+  offerArgs = {},
   emptyProposal = false,
 }) => {
   if (!instanceName) throw new Error("instanceName is required");
@@ -286,6 +288,7 @@ export const prepareOffer = async ({
     offer: {
       id: offerId,
       invitationSpec,
+      offerArgs: { ...offerArgs },
       proposal,
     },
   };

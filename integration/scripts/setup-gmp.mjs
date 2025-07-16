@@ -7,6 +7,7 @@ const { log } = console;
 
 const SDK_REPO = "https://github.com/Agoric/agoric-sdk.git";
 const SDK_DIR = "/usr/src/agoric-sdk-cp";
+const BRANCH_NAME = "rs-send-gas-from-axelar-gmp-contract";
 const PLAN_FILE_DIR = "/usr/src/upgrade-test-scripts";
 const vbankAssetUrl =
   "http://localhost/agoric-lcd/agoric/vstorage/data/published.agoricNames.vbankAsset";
@@ -33,7 +34,9 @@ log("sdkExists:", sdkExists);
 
 if (!sdkExists) {
   log("Clone agoric-sdk with --depth=1...");
-  await runCommand(`bash -c "git clone --depth=1 ${SDK_REPO} ${SDK_DIR}"`);
+  await runCommand(
+    `bash -c "git clone --depth=1 --branch ${BRANCH_NAME} ${SDK_REPO} ${SDK_DIR}"`,
+  );
 
   log("Install dependencies...");
   await runCommand(`bash -c "cd ${SDK_DIR} && yarn install"`);

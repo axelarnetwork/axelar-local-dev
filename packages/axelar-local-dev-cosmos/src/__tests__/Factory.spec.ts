@@ -129,8 +129,7 @@ describe("Factory", () => {
   it("should create a new remote wallet using Factory", async () => {
     const commandId = getCommandId();
 
-    const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-    const payload = abiCoder.encode(["bytes"], ["0x"]);
+    const payload = abiCoder.encode(["uint256"], [50000]);
     const payloadHash = keccak256(toBytes(payload));
 
     await approveMessage({
