@@ -7,7 +7,7 @@ const { log } = console;
 
 const SDK_REPO = "https://github.com/Agoric/agoric-sdk.git";
 const SDK_DIR = "/usr/src/agoric-sdk-cp";
-const BRANCH_NAME = "rs-send-gas-from-axelar-gmp-contract";
+const BRANCH_NAME = "master";
 const PLAN_FILE_DIR = "/usr/src/upgrade-test-scripts";
 const vbankAssetUrl =
   "http://localhost/agoric-lcd/agoric/vstorage/data/published.agoricNames.vbankAsset";
