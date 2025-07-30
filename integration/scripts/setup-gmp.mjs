@@ -34,7 +34,7 @@ log("sdkExists:", sdkExists);
 
 if (!sdkExists) {
   log("Cloning agoric-sdk at specific commit...");
-  // ⚠️ TEMPORARY: Using pre-execution-engine version of yMax contract.
+  // TODO: Using pre-execution-engine version of yMax contract.
   // This commit includes the yMax implementation before recent execution engine changes.
   // Once yMax starts using the new engine, update or remove this workaround.
   await runCommand(

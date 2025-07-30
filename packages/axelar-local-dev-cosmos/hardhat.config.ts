@@ -34,6 +34,18 @@ const mainnets = {
     chainId: 1,
     accounts: [PRIVATE_KEY as string],
   },
+  // Source: https://docs.optimism.io/superchain/networks
+  opt: {
+    url: `https://mainnet.optimism.io`,
+    chainId: 10,
+    accounts: [PRIVATE_KEY as string],
+  },
+  // Source: https://docs.polygon.technology/pos/reference/rpc-endpoints/#amoy
+  pol: {
+    url: `https://polygon-rpc.com/`,
+    chainId: 137,
+    accounts: [PRIVATE_KEY as string],
+  },
 };
 
 const config: HardhatUserConfig = {

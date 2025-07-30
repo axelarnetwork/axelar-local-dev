@@ -2,7 +2,7 @@
 
 if [[ $# -eq 0 ]]; then
     echo "Usage: $0 <network>"
-    echo "Supported networks: avax, arb, eth, fuji"
+    echo "Supported networks: avax, arb, eth, fuji, opt, pol"
     exit 1
 fi
 
@@ -48,6 +48,14 @@ eth)
 fuji)
     GATEWAY='0xC249632c2D40b9001FE907806902f63038B737Ab'
     GAS_SERVICE='0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6'
+    ;;
+opt)
+    GATEWAY='0xe432150cce91c13a887f7D836923d5597adD8E31'
+    GAS_SERVICE='0x2d5d7d31F671F86C782533cc367F14109a082712'
+    ;;
+pol)
+    GATEWAY='0x6f015F16De9fC8791b234eF68D486d2bF203FBA8'
+    GAS_SERVICE='0x2d5d7d31F671F86C782533cc367F14109a082712'
     ;;
 *)
     echo "Invalid network specified"
