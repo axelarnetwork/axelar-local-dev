@@ -33,9 +33,16 @@ const sdkExists = output?.stdout?.trim() === "EXISTS";
 log("sdkExists:", sdkExists);
 
 if (!sdkExists) {
-  log("Clone agoric-sdk with --depth=1...");
+  log("Cloning agoric-sdk at specific commit...");
+  // ⚠️ TEMPORARY: Using pre-execution-engine version of yMax contract.
+  // This commit includes the yMax implementation before recent execution engine changes.
+  // Once yMax starts using the new engine, update or remove this workaround.
   await runCommand(
-    `bash -c "git clone --depth=1 --branch ${BRANCH_NAME} ${SDK_REPO} ${SDK_DIR}"`,
+    `bash -c "
+    git clone ${SDK_REPO} ${SDK_DIR} &&
+    cd ${SDK_DIR} &&
+    git checkout 3c8aafe025c1edfbec581958dd7111d71eb46a41
+  "`,
   );
 
   log("Install dependencies...");
