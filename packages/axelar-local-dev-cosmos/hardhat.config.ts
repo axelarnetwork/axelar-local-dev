@@ -4,7 +4,7 @@ import { HardhatUserConfig } from "hardhat/config";
 
 envConfig();
 
-const { PRIVATE_KEY } = process.env;
+const { INFURA_KEY, PRIVATE_KEY } = process.env;
 
 const testnets = {
   fuji: {
@@ -20,20 +20,19 @@ const mainnets = {
     // Source: https://docs.arbitrum.io/build-decentralized-apps/reference/node-providers
     url: "https://arb1.arbitrum.io/rpc",
     chainId: 42161,
-    accounts: [`${PRIVATE_KEY}`],
+    accounts: [PRIVATE_KEY as string],
   },
   avax: {
     // Source: https://build.avax.network/docs/tooling/rpc-providers#http
     url: "https://api.avax.network/ext/bc/C/rpc",
     chainId: 43114,
-    accounts: [`${PRIVATE_KEY}`],
+    accounts: [PRIVATE_KEY as string],
     gasPrice: 225_000_000_000, // 225 gwei in wei
   },
   eth: {
-    // TODO: find a reliable public RPC for ETH that works
-    url: "https://mainnet.infura.io",
+    url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
     chainId: 1,
-    accounts: [`${PRIVATE_KEY}`],
+    accounts: [PRIVATE_KEY as string],
   },
 };
 
