@@ -13,11 +13,27 @@ const testnets = {
     chainId: 43113,
     accounts: [`0x${PRIVATE_KEY}`],
   },
-  base: {
-    url: "https://sepolia.base.org/",
-    gasPrice: 225000000000,
-    chainId: 84532,
-    accounts: [`0x${PRIVATE_KEY}`],
+};
+
+const mainnets = {
+  arb: {
+    // Source: https://docs.arbitrum.io/build-decentralized-apps/reference/node-providers
+    url: "https://arb1.arbitrum.io/rpc",
+    chainId: 42161,
+    accounts: [`${PRIVATE_KEY}`],
+  },
+  avax: {
+    // Source: https://build.avax.network/docs/tooling/rpc-providers#http
+    url: "https://api.avax.network/ext/bc/C/rpc",
+    chainId: 43114,
+    accounts: [`${PRIVATE_KEY}`],
+    gasPrice: 225_000_000_000, // 225 gwei in wei
+  },
+  eth: {
+    // TODO: find a reliable public RPC for ETH that works
+    url: "https://mainnet.infura.io",
+    chainId: 1,
+    accounts: [`${PRIVATE_KEY}`],
   },
 };
 
@@ -59,6 +75,7 @@ const config: HardhatUserConfig = {
       chainId: 31337,
     },
     ...(PRIVATE_KEY ? testnets : {}),
+    ...(PRIVATE_KEY ? mainnets : {}),
   },
   paths: {
     sources: "./src/__tests__/contracts",
