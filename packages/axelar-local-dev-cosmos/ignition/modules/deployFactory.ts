@@ -15,9 +15,8 @@ if (!GATEWAY_CONTRACT || !GAS_SERVICE_CONTRACT) {
 export default buildModule("FactoryModule", (m) => {
   const gateway = m.getParameter("gateway_", GATEWAY_CONTRACT);
   const gasService = m.getParameter("gasReceiver_", GAS_SERVICE_CONTRACT);
-  const chainName = m.getParameter("chainName_", "Avalanche");
 
-  const Factory = m.contract("Factory", [gateway, gasService, chainName]);
+  const Factory = m.contract("Factory", [gateway, gasService]);
 
   return { Factory };
 });
