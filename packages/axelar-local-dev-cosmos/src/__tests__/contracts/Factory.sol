@@ -89,7 +89,6 @@ contract Factory is AxelarExecutable {
 
     address _gateway;
     IAxelarGasService public immutable gasService;
-    string public chainName;
 
     event SmartWalletCreated(
         address indexed wallet,
@@ -106,12 +105,10 @@ contract Factory is AxelarExecutable {
 
     constructor(
         address gateway_,
-        address gasReceiver_,
-        string memory chainName_
+        address gasReceiver_
     ) AxelarExecutable(gateway_) {
         gasService = IAxelarGasService(gasReceiver_);
         _gateway = gateway_;
-        chainName = chainName_;
     }
 
     function createSmartWallet(string memory owner) public returns (address) {
@@ -126,7 +123,7 @@ contract Factory is AxelarExecutable {
         string calldata sourceAddress,
         bytes calldata payload
     ) internal override {
-        (uint256 gasAmount) = abi.decode(payload, (uint256));
+        uint256 gasAmount = abi.decode(payload, (uint256));
         address smartWalletAddress = createSmartWallet(sourceAddress);
         emit SmartWalletCreated(
             smartWalletAddress,

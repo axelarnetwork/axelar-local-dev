@@ -4,7 +4,7 @@ import { HardhatUserConfig } from "hardhat/config";
 
 envConfig();
 
-const { PRIVATE_KEY } = process.env;
+const { INFURA_KEY, PRIVATE_KEY } = process.env;
 
 const testnets = {
   fuji: {
@@ -13,11 +13,38 @@ const testnets = {
     chainId: 43113,
     accounts: [`0x${PRIVATE_KEY}`],
   },
-  base: {
-    url: "https://sepolia.base.org/",
-    gasPrice: 225000000000,
-    chainId: 84532,
-    accounts: [`0x${PRIVATE_KEY}`],
+};
+
+const mainnets = {
+  arb: {
+    // Source: https://docs.arbitrum.io/build-decentralized-apps/reference/node-providers
+    url: "https://arb1.arbitrum.io/rpc",
+    chainId: 42161,
+    accounts: [PRIVATE_KEY as string],
+  },
+  avax: {
+    // Source: https://build.avax.network/docs/tooling/rpc-providers#http
+    url: "https://api.avax.network/ext/bc/C/rpc",
+    chainId: 43114,
+    accounts: [PRIVATE_KEY as string],
+    gasPrice: 225_000_000_000, // 225 gwei in wei
+  },
+  eth: {
+    url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
+    chainId: 1,
+    accounts: [PRIVATE_KEY as string],
+  },
+  // Source: https://docs.optimism.io/superchain/networks
+  opt: {
+    url: `https://mainnet.optimism.io`,
+    chainId: 10,
+    accounts: [PRIVATE_KEY as string],
+  },
+  // Source: https://docs.polygon.technology/pos/reference/rpc-endpoints/#amoy
+  pol: {
+    url: `https://polygon-rpc.com/`,
+    chainId: 137,
+    accounts: [PRIVATE_KEY as string],
   },
 };
 
@@ -59,6 +86,7 @@ const config: HardhatUserConfig = {
       chainId: 31337,
     },
     ...(PRIVATE_KEY ? testnets : {}),
+    ...(PRIVATE_KEY ? mainnets : {}),
   },
   paths: {
     sources: "./src/__tests__/contracts",

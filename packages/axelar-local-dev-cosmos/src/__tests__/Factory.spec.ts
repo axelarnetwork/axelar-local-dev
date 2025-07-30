@@ -75,7 +75,6 @@ describe("Factory", () => {
     factory = await Contract.deploy(
       axelarGatewayMock.target,
       axelarGasServiceMock.target,
-      "Ethereum",
     );
     await factory.waitForDeployment();
 

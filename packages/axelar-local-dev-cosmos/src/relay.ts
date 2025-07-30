@@ -24,11 +24,7 @@ export const relayBasic = async () => {
   const factoryContract = await deployContract(
     ethereumNetwork.userWallets[0],
     require("../artifacts/src/__tests__/contracts/Factory.sol/Factory.json"),
-    [
-      ethereumNetwork.gateway.address,
-      ethereumNetwork.gasService.address,
-      "Ethereum",
-    ],
+    [ethereumNetwork.gateway.address, ethereumNetwork.gasService.address],
   );
   console.log("Factory Contract Address:", factoryContract.address);
 
