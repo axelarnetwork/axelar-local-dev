@@ -13,6 +13,12 @@ const testnets = {
     chainId: 43113,
     accounts: [`0x${PRIVATE_KEY}`],
   },
+  sepolia: {
+    url: "https://ethereum-sepolia-rpc.publicnode.com",
+    gasPrice: 20000000000, // 20 Gwei
+    chainId: 11155111,
+    accounts: [`0x${PRIVATE_KEY}`],
+  },
 };
 
 const mainnets = {
