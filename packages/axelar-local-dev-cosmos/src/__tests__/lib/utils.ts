@@ -148,19 +148,26 @@ export const deployToken = async ({
   return response;
 };
 
-export const encodeMulticallPayload = (calls) => {
+export const encodeMulticallPayload = (calls, txId) => {
   return encodeAbiParameters(
     [
       {
-        type: "tuple[]",
-        name: "calls",
+        type: "tuple",
+        name: "callMessage",
         components: [
-          { name: "target", type: "address" },
-          { name: "data", type: "bytes" },
+          { name: "id", type: "string" },
+          {
+            name: "calls",
+            type: "tuple[]",
+            components: [
+              { name: "target", type: "address" },
+              { name: "data", type: "bytes" },
+            ],
+          },
         ],
       },
     ],
-    [calls],
+    [{ id: txId, calls }],
   );
 };
 
