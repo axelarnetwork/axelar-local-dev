@@ -18,15 +18,20 @@ struct AgoricResponse {
     CallResult[] data;
 }
 
-struct CallParams {
+struct ContractCalls {
     address target;
     bytes data;
+}
+
+struct CallMessage {
+    string id;
+    ContractCalls[] calls;
 }
 
 contract Wallet is AxelarExecutable, Ownable {
     IAxelarGasService public gasService;
 
-    event MulticallExecuted(address indexed executor, CallResult[] results);
+    event MulticallExecuted(string indexed id, CallResult[] results);
     event Received(address indexed sender, uint256 amount);
 
     constructor(
@@ -37,10 +42,9 @@ contract Wallet is AxelarExecutable, Ownable {
         gasService = IAxelarGasService(gasReceiver_);
     }
 
-    function _multicall(
-        bytes calldata payload
-    ) internal returns (CallResult[] memory) {
-        CallParams[] memory calls = abi.decode(payload, (CallParams[]));
+    function _multicall(bytes calldata payload) internal {
+        CallMessage memory callMessage = abi.decode(payload, (CallMessage));
+        ContractCalls[] memory calls = callMessage.calls;
 
         CallResult[] memory results = new CallResult[](calls.length);
 
@@ -52,8 +56,7 @@ contract Wallet is AxelarExecutable, Ownable {
             results[i] = CallResult(success, result);
         }
 
-        emit MulticallExecuted(msg.sender, results);
-        return results;
+        emit MulticallExecuted(callMessage.id, results);
     }
 
     function _execute(
