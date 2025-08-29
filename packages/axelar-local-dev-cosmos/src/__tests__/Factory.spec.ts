@@ -181,7 +181,7 @@ describe("Factory", () => {
         args: [17],
       }),
     ];
-    const multicallPayload = encodeMulticallPayload(abiEncodedContractCalls);
+    const multicallPayload = encodeMulticallPayload(abiEncodedContractCalls, "tx1");
     const payloadHash = getPayloadHash(multicallPayload);
 
     const commandId1 = getCommandId();
@@ -215,7 +215,7 @@ describe("Factory", () => {
         args: [17],
       }),
     ];
-    const multicallPayload2 = encodeMulticallPayload(abiEncodedCallsWithTokens);
+    const multicallPayload2 = encodeMulticallPayload(abiEncodedCallsWithTokens, "tx2");
     const payloadHash2 = getPayloadHash(multicallPayload2);
 
     const commandId2 = getCommandId();
