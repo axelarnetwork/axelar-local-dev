@@ -16,7 +16,10 @@ import fs, { promises as fsp } from "fs";
 import path from "path";
 import { Path } from "./path";
 import { CosmosChain } from "./types";
+import { encodeAbiParameters } from "viem";
+import { fromHex } from "@cosmjs/encoding";
 
+const hexToBytes = (hex: string) => fromHex(hex.slice(2));
 const abiCoder = new AbiCoder();
 
 export async function retry(fn: () => void, maxAttempts = 5, interval = 3000) {
@@ -220,4 +223,35 @@ export const getRouteMessagePayload = (
       }),
     },
   ];
+};
+
+export const encodeContractCalls = (
+  abiEncodedContractCalls: {
+    target: `0x${string}`;
+    data: `0x${string}`;
+  }[],
+  id = "",
+) => {
+  const abiEncodedData = encodeAbiParameters(
+    [
+      {
+        type: "tuple",
+        name: "callMessage",
+        components: [
+          { name: "id", type: "string" },
+          {
+            name: "calls",
+            type: "tuple[]",
+            components: [
+              { name: "target", type: "address" },
+              { name: "data", type: "bytes" },
+            ],
+          },
+        ],
+      },
+    ],
+    [{ id, calls: abiEncodedContractCalls }],
+  );
+
+  return Array.from(hexToBytes(abiEncodedData));
 };

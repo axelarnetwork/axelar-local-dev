@@ -30,6 +30,7 @@ This repository does not demonstrate a token trasnfer to eth but rather a messag
 ```bash
     npm run relay
 ```
+> Note: you can also run `testFactory` or `testWallet` instead of `relay`
 
 - you should see this in the logs:
 

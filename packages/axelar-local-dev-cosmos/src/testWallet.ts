@@ -1,7 +1,11 @@
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { encode } from "@metamask/abi-utils";
 import createKeccakHash from "keccak";
-import { AxelarRelayerService, defaultAxelarChainInfo } from "./index";
+import {
+  AxelarRelayerService,
+  defaultAxelarChainInfo,
+  encodeContractCalls,
+} from "./index";
 
 import {
   createNetwork,
@@ -34,7 +38,7 @@ const pack = (
   );
 };
 
-export const relayDataFromEth = async () => {
+export const testWallet = async () => {
   const axelarRelayer = await AxelarRelayerService.create(
     defaultAxelarChainInfo,
   );
@@ -43,64 +47,57 @@ export const relayDataFromEth = async () => {
   const WalletContract = require("../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json");
 
   const ethereumNetwork = await createNetwork({ name: "Ethereum" });
-  const ethereumContract = await deployContract(
+  const factoryContract = await deployContract(
     ethereumNetwork.userWallets[0],
     Factory,
-    [
-      ethereumNetwork.gateway.address,
-      ethereumNetwork.gasService.address,
-      "Ethereum",
-    ],
+    [ethereumNetwork.gateway.address, ethereumNetwork.gasService.address],
   );
   const ethereumWallet = await deployContract(
     ethereumNetwork.userWallets[0],
     WalletContract,
     [
       ethereumNetwork.gateway.address,
+      ethereumNetwork.gasService.address,
       "agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl",
     ],
   );
 
-  console.log("Ethereum Contract Address:", ethereumWallet.address);
-
-  const targets = [ethereumContract.address];
-  const data: any = [
-    pack("createVendor(string)", ["string"], ["ownerAddress"]),
-  ];
-  console.log(data);
-
-  const payload = Array.from(encode(["address[]", "bytes[]"], [targets, data]));
+  console.log("Wallet Address:", ethereumWallet.address);
 
   const ibcRelayer = axelarRelayer.ibcRelayer;
 
-  const IBC_DENOM_AXL_USDC = "ubld";
-  // 'ibc/295548A78785A1007F232DE286149A6FF512F180AF5657780FC89C009E2C348F';
   const AMOUNT_IN_ATOMIC_UNITS = "1000000";
   const CHANNEL_ID = ibcRelayer.srcChannelId;
   const DENOM = "ubld";
   const AXELAR_GMP_ADDRESS =
     "axelar1dv4u5k73pzqrxlzujxg3qp8kvc3pje7jtdvu72npnt5zhq05ejcsn5qme5";
-
   const signer = ibcRelayer.wasmClient;
   const senderAddress = "agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl";
-
-  // TODO
-  const DESTINATION_ADDRESS = ethereumWallet.address;
   const DESTINATION_CHAIN = "Ethereum";
 
-  // const payload = encode(['string', 'string'], ['agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl', 'Hello, world!']);
+  const contractCalls = [
+    {
+      target: factoryContract.address as `0x${string}`,
+      data: pack(
+        "createSmartWallet(string)",
+        ["string"],
+        ["ownerAddress"],
+      ) as `0x${string}`,
+    },
+  ];
 
-  const memo = {
+  const payload = encodeContractCalls([]);
+
+  const memoForWallet = {
     destination_chain: DESTINATION_CHAIN,
-    destination_address: DESTINATION_ADDRESS,
-    payload,
+    destination_address: ethereumWallet.address,
+    payload: payload,
     // fee: {
     //   amount: '8000',
     //   recipient: 'axelar1dv4u5k73pzqrxlzujxg3qp8kvc3pje7jtdvu72npnt5zhq05ejcsn5qme5',
     // },
     type: 1,
   };
-
   const message = [
     {
       typeUrl: "/ibc.applications.transfer.v1.MsgTransfer",
@@ -108,13 +105,13 @@ export const relayDataFromEth = async () => {
         sender: senderAddress,
         receiver: AXELAR_GMP_ADDRESS,
         token: {
-          denom: IBC_DENOM_AXL_USDC,
+          denom: DENOM,
           amount: AMOUNT_IN_ATOMIC_UNITS,
         },
         timeoutTimestamp: (Math.floor(Date.now() / 1000) + 600) * 1e9,
         sourceChannel: CHANNEL_ID,
         sourcePort: "transfer",
-        memo: JSON.stringify(memo),
+        memo: JSON.stringify(memoForWallet),
       },
     },
   ];
@@ -140,18 +137,5 @@ export const relayDataFromEth = async () => {
   await relay({
     agoric: axelarRelayer,
   });
-  await axelarRelayer.stopListening();
-
-  const ethereumMessage = await ethereumContract.storedMessage();
-  console.log("Message on Ethereum Contract:", ethereumMessage);
-
-  await relay({
-    evm: evmRelayer,
-  });
-
-  await relay({
-    agoric: axelarRelayer,
-  });
-
   await axelarRelayer.stopListening();
 };
