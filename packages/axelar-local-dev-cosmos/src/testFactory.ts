@@ -34,6 +34,7 @@ export const testFactory = async () => {
   const AXELAR_GMP_ADDRESS =
     "axelar1dv4u5k73pzqrxlzujxg3qp8kvc3pje7jtdvu72npnt5zhq05ejcsn5qme5";
   const signer = ibcRelayer.wasmClient;
+  // address present on agoric with BLD
   const senderAddress = "agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl";
   const DESTINATION_CHAIN = "Ethereum";
 

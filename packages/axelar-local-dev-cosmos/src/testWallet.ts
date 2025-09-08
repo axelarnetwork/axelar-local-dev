@@ -43,6 +43,9 @@ export const testWallet = async () => {
     defaultAxelarChainInfo,
   );
 
+  // address present on agoric with BLD
+  const senderAddress = "agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl";
+
   const Factory = require("../artifacts/src/__tests__/contracts/Factory.sol/Factory.json");
   const WalletContract = require("../artifacts/src/__tests__/contracts/Factory.sol/Wallet.json");
 
@@ -58,7 +61,7 @@ export const testWallet = async () => {
     [
       ethereumNetwork.gateway.address,
       ethereumNetwork.gasService.address,
-      "agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl",
+      senderAddress,
     ],
   );
 
@@ -72,7 +75,6 @@ export const testWallet = async () => {
   const AXELAR_GMP_ADDRESS =
     "axelar1dv4u5k73pzqrxlzujxg3qp8kvc3pje7jtdvu72npnt5zhq05ejcsn5qme5";
   const signer = ibcRelayer.wasmClient;
-  const senderAddress = "agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl";
   const DESTINATION_CHAIN = "Ethereum";
 
   const contractCalls = [
