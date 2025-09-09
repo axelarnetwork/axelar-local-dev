@@ -2,20 +2,30 @@
 
 This CLI tool provides a command-line interface for executing cross-chain DeFi operations using Agoric's Orchestration API and Axelar's General Message Passing (GMP).
 
-## Overview
-
-The `main.ts` file serves as the entry point for various cross-chain operations including:
-
-- Creating remote EVM accounts
-- Supplying/withdrawing funds to/from Aave
-- Supplying/withdrawing funds to/from Compound
-
 ### Supported EVM Chains
 
 The following EVM chains are supported for cross-chain operations:
 
 - **Ethereum** - Ethereum testnet
 - **Avalanche** - Avalanche testnet (Fuji)
+
+#### Chain Selection Notes
+
+For most testing, we prefer Avalanche due to its fast finality, making development and testing more efficient.
+
+**However, there are important limitations to consider:**
+
+- **CCTP (Cross-Chain Transfer Protocol) doesn't work on Avalanche.** CCTP is the mechanism through which Agoric contracts send funds to remote EVM accounts (functionality not in this repo). When CCTP testing is essential, use **Ethereum testnet**.
+
+- **Aave Protocol on Ethereum uses different USDC** compared to Circle-issued [USDC](https://www.circle.com/usdc), which can affect testing scenarios.
+
+- Compound is not available on Avalanche testnet.
+
+**Note:** Testing is not perfect across all chains - some features work on certain testnets but not others. Choose your testnet based on the specific functionality you need to test.
+
+#### USDC Requirements for Testing
+
+For Aave/Compound testing, ensure USDC tokens are present in the remote EVM account created using the [`create-account`](#create-account) command. To get testnet USDC tokens, use the [Circle faucet](https://faucet.circle.com/).
 
 ## Configuration
 
