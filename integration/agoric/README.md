@@ -33,6 +33,13 @@ For Aave/Compound testing, ensure USDC tokens are present in the remote EVM acco
 
 Before using the CLI, you need to deploy the [`Factory.sol`](../../packages/axelar-local-dev-cosmos/src/__tests__/contracts/Factory.sol) contract on your target EVM chain (Avalanche or Ethereum testnet):
 
+**Important:** Use the correct contract version for your target chain:
+
+- **Avalanche**: Use the hardcoded gas version from [PR #23](https://github.com/agoric-labs/agoric-to-axelar-local/pull/23)
+- **Ethereum**: Use the hardcoded gas version from [PR #24](https://github.com/agoric-labs/agoric-to-axelar-local/pull/24)
+
+These versions use hardcoded gas values instead of expecting the gas amount from the Agoric contract call.
+
 1. Navigate to the contract directory:
 
    ```bash
@@ -57,6 +64,10 @@ Before using the CLI, you need to deploy the [`Factory.sol`](../../packages/axel
    ```
 
 4. Copy the deployed Factory contract address from the output and set it as `FACTORY_ADDRESS` in your integration folder `.env` file.
+
+5. **Fund the Factory contract with native tokens** - The deployed Factory contract needs native tokens (ETH for Ethereum, AVAX for Avalanche) to pay for gas when sending responses back to Agoric. This is required because the [`_send` function](../../packages/axelar-local-dev-cosmos/src/__tests__/contracts/Factory.sol#L148-L164) uses `gasService.payNativeGasForContractCall{value: gasAmount}` to pay for cross-chain gas fees.
+
+   Send native tokens to the deployed Factory contract address to ensure it can respond to Agoric requests.
 
 ## Configuration
 

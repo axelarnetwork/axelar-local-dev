@@ -22,7 +22,7 @@ const DEFAULT_TRANSFER_AMOUNT = 100_000n;
 const DEFAULT_FACTORY_ADDRESS = (process.env.FACTORY_ADDRESS ||
   "0xcD58949D815d25A06560AFa539972bB5B4B28902") as `0x${string}`;
 const DEFAULT_REMOTE_ADDRESS = (process.env.REMOTE_ADDRESS ||
-  "0x84f600b91AFFf07Be1c033dE21007Bc092CC096e") as `0x${string}`;
+  "0x37859b854cc97F7bD4B69524d37EcCCEb0dbF3eb") as `0x${string}`;
 const DEFAULT_DESTINATION_CHAIN = (process.env.DESTINATION_CHAIN ||
   "Avalanche") as AxelarChain;
 
