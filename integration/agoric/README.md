@@ -27,6 +27,37 @@ For most testing, we prefer Avalanche due to its fast finality, making developme
 
 For Aave/Compound testing, ensure USDC tokens are present in the remote EVM account created using the [`create-account`](#create-account) command. To get testnet USDC tokens, use the [Circle faucet](https://faucet.circle.com/).
 
+## Prerequisites
+
+### Deploy Factory.sol Contract
+
+Before using the CLI, you need to deploy the [`Factory.sol`](../../packages/axelar-local-dev-cosmos/src/__tests__/contracts/Factory.sol) contract on your target EVM chain (Avalanche or Ethereum testnet):
+
+1. Navigate to the contract directory:
+
+   ```bash
+   cd packages/axelar-local-dev-cosmos
+   ```
+
+2. Set up your `.env` file with the required environment variables:
+   - `PRIVATE_KEY` - Private key of the account that will deploy the contract (without 0x prefix)
+   - `INFURA_KEY` - (Optional) Infura API key for Ethereum networks
+
+3. Deploy the Factory contract:
+
+   ```bash
+   # Navigate to project root first
+   cd ../../
+
+   # Deploy to Avalanche Fuji testnet
+   npm run deploy -- fuji
+
+   # Deploy to Ethereum Sepolia testnet
+   npm run deploy -- sepolia
+   ```
+
+4. Copy the deployed Factory contract address from the output and set it as `FACTORY_ADDRESS` in your integration folder `.env` file.
+
 ## Configuration
 
 ### Environment Variables
