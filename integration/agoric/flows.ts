@@ -144,6 +144,7 @@ export const supplyToAave = async (
   remoteEVMAddress: `0x${string}`,
 ) => {
   const { destinationEVMChain, transferAmount, gasAmount } = gmpArgs;
+  const { contractAddresses } = axelarChainsMap[destinationEVMChain];
 
   await sendGmp({
     destinationAddress: remoteEVMAddress,
@@ -153,18 +154,13 @@ export const supplyToAave = async (
     contractInvocationData: [
       {
         functionSignature: "approve(address,uint256)",
-        args: ["0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951", transferAmount],
-        target: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
+        args: [contractAddresses.aavePool, transferAmount],
+        target: contractAddresses.usdc,
       },
       {
         functionSignature: "supply(address,uint256,address,uint16)",
-        args: [
-          "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
-          transferAmount,
-          remoteEVMAddress,
-          0,
-        ],
-        target: "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951",
+        args: [contractAddresses.usdc, transferAmount, remoteEVMAddress, 0],
+        target: contractAddresses.aavePool,
       },
     ],
   });

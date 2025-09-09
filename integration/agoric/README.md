@@ -158,6 +158,22 @@ yarn withdraw-aave -- --remote-address 0x123...abc --withdraw-amount 50000
 yarn supply-compound -- --destination-chain Ethereum --transfer-amount 150000
 ```
 
+## Monitoring Transactions
+
+After executing any command, you can monitor the status of your cross-chain transactions using Axelar's testnet explorer:
+
+### Option 1: Check GMP Account Transactions
+
+Visit the [GMP account on AxelarScan](https://testnet.axelarscan.io/account/axelar1dv4u5k73pzqrxlzujxg3qp8kvc3pje7jtdvu72npnt5zhq05ejcsn5qme5) to see all GMP-related transactions.
+
+### Option 2: Search by Your Agoric Wallet Address
+
+1. Go to [Axelar Testnet Explorer](https://testnet.axelarscan.io)
+2. Search for transactions using your Agoric wallet address
+3. This will show all cross-chain transactions initiated from your wallet
+
+These tools help you track the progress and status of your cross-chain operations between Agoric and the destination EVM chains.
+
 ## Architecture
 
 ### Flow Functions (imported from ./flows.js)
