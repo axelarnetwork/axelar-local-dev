@@ -5,19 +5,40 @@
   "scripts": {
     "make-acc": "makeAccount=true node scripts/make-account.mjs",
     "get-addr": "node scripts/make-account.mjs",
-    "setup": "node scripts/setup-gmp.mjs"
-  },
-  "devDependencies": {
-    "execa": "^9.5.2"
+    "setup": "node scripts/setup-gmp.mjs",
+    "create-account": "vite-node agoric/main.ts create-account",
+    "supply-aave": "vite-node agoric/main.ts supply-aave",
+    "withdraw-aave": "vite-node agoric/main.ts withdraw-aave",
+    "supply-compound": "vite-node agoric/main.ts supply-compound",
+    "withdraw-compound": "vite-node agoric/main.ts withdraw-compound"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@agoric/cosmic-proto": "^0.5.0-u21.0",
     "@agoric/internal": "^0.4.0-u21.0",
     "@endo/base64": "^1.0.11",
-    "@endo/errors": "^1.2.12"
+    "@agoric/client-utils": "0.2.0-u21.0.1",
+    "@agoric/cosmic-proto": "0.5.0-u21.0.1",
+    "@cosmjs/crypto": "^0.33.1",
+    "@cosmjs/proto-signing": "^0.33.1",
+    "@cosmjs/stargate": "0.33.1",
+    "@endo/errors": "^1.2.13",
+    "@skip-go/client": "^1.1.7",
+    "cosmjs-types": "^0.9.0",
+    "dotenv": "^16.5.0",
+    "ethers": "6.13.4",
+    "viem": "^2.31.2"
+  },
+  "resolutions": {
+    "@cosmjs/encoding": "0.33.1",
+    "@cosmjs/tendermint-rpc": "0.33.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3",
+    "vite-node": "^3.1.4",
+    "execa": "^9.5.2"
   }
 }
