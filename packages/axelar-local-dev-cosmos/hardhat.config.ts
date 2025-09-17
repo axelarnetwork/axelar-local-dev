@@ -13,10 +13,28 @@ const testnets = {
     chainId: 43113,
     accounts: [`0x${PRIVATE_KEY}`],
   },
-  sepolia: {
+  "eth-sepolia": {
     url: "https://ethereum-sepolia-rpc.publicnode.com",
     gasPrice: 20000000000, // 20 Gwei
     chainId: 11155111,
+    accounts: [`0x${PRIVATE_KEY}`],
+  },
+  "base-sepolia": {
+    // source: https://docs.base.org/base-chain/quickstart/connecting-to-base
+    url: "https://sepolia.base.org",
+    chainId: 84532,
+    accounts: [`0x${PRIVATE_KEY}`],
+  },
+  "opt-sepolia": {
+    // source: https://docs.optimism.io/superchain/networks#op-sepolia
+    url: "https://sepolia.optimism.io/",
+    chainId: 11155420,
+    accounts: [`0x${PRIVATE_KEY}`],
+  },
+  "arb-sepolia": {
+    // source: https://docs.arbitrum.io/build-decentralized-apps/reference/node-providers#arbitrum-public-rpc-endpoints
+    url: "https://sepolia-rollup.arbitrum.io/rpc",
+    chainId: 421614,
     accounts: [`0x${PRIVATE_KEY}`],
   },
 };
