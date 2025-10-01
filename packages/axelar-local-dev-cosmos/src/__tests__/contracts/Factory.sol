@@ -33,7 +33,14 @@ error ContractCallFailed(string messageId, uint256 step);
 contract Wallet is AxelarExecutable, Ownable {
     IAxelarGasService public gasService;
 
-    event MulticallExecuted(string indexed id, CallResult[] results);
+    event CallStatus(
+        string indexed id,
+        uint256 indexed callIndex,
+        address indexed target,
+        bytes4 methodSelector,
+        bool success
+    );
+    event MulticallStatus(string indexed id, bool success, uint256 totalCalls);
     event Received(address indexed sender, uint256 amount);
 
     constructor(
@@ -48,26 +55,31 @@ contract Wallet is AxelarExecutable, Ownable {
         CallMessage memory callMessage = abi.decode(payload, (CallMessage));
         ContractCalls[] memory calls = callMessage.calls;
 
-        CallResult[] memory results = new CallResult[](calls.length);
-
         uint256 len = calls.length;
         for (uint256 i = 0; i < len;) {
             (bool success, bytes memory result) = calls[i].target.call(
                 calls[i].data
             );
+
+            emit CallStatus(
+                callMessage.id,
+                i,
+                calls[i].target,
+                bytes4(calls[i].data),
+                success
+            );
             
             if (!success) {
+                emit MulticallStatus(callMessage.id, false, calls.length);
                 revert ContractCallFailed(callMessage.id, i);
             }
-
-            results[i] = CallResult(success, result);
 
             unchecked {
                 ++i;
             }
         }
 
-        emit MulticallExecuted(callMessage.id, results);
+        emit MulticallStatus(callMessage.id, true, calls.length);
     }
 
     function _execute(
