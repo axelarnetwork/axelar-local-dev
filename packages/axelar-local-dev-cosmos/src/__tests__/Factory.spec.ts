@@ -207,42 +207,5 @@ describe("Factory", () => {
     const value = await multicall.getValue();
     expect(value).to.equal(27);
 
-    // Test ContractCallWithToken
-    const abiEncodedCallsWithTokens = [
-      constructContractCall({
-        target: multicallAddress,
-        functionSignature: "addToValue(uint256)",
-        args: [17],
-      }),
-    ];
-    const multicallPayload2 = encodeMulticallPayload(abiEncodedCallsWithTokens, "tx2");
-    const payloadHash2 = getPayloadHash(multicallPayload2);
-
-    const commandId2 = getCommandId();
-    await approveMessageWithToken({
-      commandId: commandId2,
-      from: sourceContract,
-      sourceAddress,
-      targetAddress: wallet.target,
-      payload: payloadHash2,
-      owner,
-      AxelarGateway: axelarGatewayMock,
-      abiCoder,
-      destinationTokenSymbol: "USDC",
-      amount: 5000,
-    });
-
-    const execWithTokenTx = await wallet.executeWithToken(
-      commandId2,
-      sourceContract,
-      sourceAddress,
-      multicallPayload2,
-      "USDC",
-      5000,
-    );
-
-    expect(execWithTokenTx).to.emit(wallet, "MulticallExecuted");
-    const value2 = await multicall.getValue();
-    expect(value2).to.equal(44);
   });
 });

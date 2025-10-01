@@ -67,16 +67,6 @@ contract Wallet is AxelarExecutable, Ownable {
         _multicall(payload);
     }
 
-    function _executeWithToken(
-        string calldata /*sourceChain*/,
-        string calldata /*sourceAddress*/,
-        bytes calldata payload,
-        string calldata /*tokenSymbol*/,
-        uint256 /*amount*/
-    ) internal override {
-        _multicall(payload);
-    }
-
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }
