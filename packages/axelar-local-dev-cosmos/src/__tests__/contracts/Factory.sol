@@ -104,7 +104,7 @@ contract Factory is AxelarExecutable {
         _gateway = gateway_;
     }
 
-    function createSmartWallet(string memory owner) public returns (address) {
+    function _createSmartWallet(string memory owner) internal returns (address) {
         address newWallet = address(
             new Wallet(_gateway, address(gasService), owner)
         );
@@ -117,7 +117,7 @@ contract Factory is AxelarExecutable {
         bytes calldata payload
     ) internal override {
         uint256 gasAmount = abi.decode(payload, (uint256));
-        address smartWalletAddress = createSmartWallet(sourceAddress);
+        address smartWalletAddress = _createSmartWallet(sourceAddress);
         emit SmartWalletCreated(
             smartWalletAddress,
             sourceAddress,
