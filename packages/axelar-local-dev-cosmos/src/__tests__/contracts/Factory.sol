@@ -31,7 +31,14 @@ struct CallMessage {
 contract Wallet is AxelarExecutable, Ownable {
     IAxelarGasService public gasService;
 
-    event MulticallExecuted(string indexed id, CallResult[] results);
+    event CallStatus(
+        string indexed id,
+        uint256 indexed callIndex,
+        address indexed target,
+        bytes4 methodSelector,
+        bool success
+    );
+    event MulticallStatus(string indexed id, bool success, uint256 totalCalls);
     event Received(address indexed sender, uint256 amount);
 
     constructor(
@@ -46,17 +53,26 @@ contract Wallet is AxelarExecutable, Ownable {
         CallMessage memory callMessage = abi.decode(payload, (CallMessage));
         ContractCalls[] memory calls = callMessage.calls;
 
-        CallResult[] memory results = new CallResult[](calls.length);
-
         for (uint256 i = 0; i < calls.length; i++) {
             (bool success, bytes memory result) = calls[i].target.call(
                 calls[i].data
             );
-            require(success, "Contract call failed");
-            results[i] = CallResult(success, result);
+
+            emit CallStatus(
+                callMessage.id,
+                i,
+                calls[i].target,
+                bytes4(calls[i].data),
+                success
+            );
+
+            if (!success) {
+                emit MulticallStatus(callMessage.id, false, calls.length);
+                require(success, "Contract call failed");
+            }
         }
 
-        emit MulticallExecuted(callMessage.id, results);
+        emit MulticallStatus(callMessage.id, true, calls.length);
     }
 
     function _execute(
