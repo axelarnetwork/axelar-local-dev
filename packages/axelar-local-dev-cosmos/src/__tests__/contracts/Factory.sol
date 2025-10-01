@@ -28,6 +28,8 @@ struct CallMessage {
     ContractCalls[] calls;
 }
 
+error ContractCallFailed(string messageId, uint256 step);
+
 contract Wallet is AxelarExecutable, Ownable {
     IAxelarGasService public gasService;
 
@@ -38,7 +40,7 @@ contract Wallet is AxelarExecutable, Ownable {
         address gateway_,
         address gasReceiver_,
         string memory owner_
-    ) AxelarExecutable(gateway_) Ownable(owner_) {
+    ) AxelarExecutable(gateway_) Ownable(owner_) payable {
         gasService = IAxelarGasService(gasReceiver_);
     }
 
@@ -48,12 +50,21 @@ contract Wallet is AxelarExecutable, Ownable {
 
         CallResult[] memory results = new CallResult[](calls.length);
 
-        for (uint256 i = 0; i < calls.length; i++) {
+        uint256 len = calls.length;
+        for (uint256 i = 0; i < len;) {
             (bool success, bytes memory result) = calls[i].target.call(
                 calls[i].data
             );
-            require(success, "Contract call failed");
+            
+            if (!success) {
+                revert ContractCallFailed(callMessage.id, i);
+            }
+
             results[i] = CallResult(success, result);
+
+            unchecked {
+                ++i;
+            }
         }
 
         emit MulticallExecuted(callMessage.id, results);
@@ -99,7 +110,7 @@ contract Factory is AxelarExecutable {
     constructor(
         address gateway_,
         address gasReceiver_
-    ) AxelarExecutable(gateway_) {
+    ) AxelarExecutable(gateway_) payable {
         gasService = IAxelarGasService(gasReceiver_);
         _gateway = gateway_;
     }
