@@ -181,7 +181,10 @@ describe("Factory", () => {
         args: [17],
       }),
     ];
-    const multicallPayload = encodeMulticallPayload(abiEncodedContractCalls, "tx1");
+    const multicallPayload = encodeMulticallPayload(
+      abiEncodedContractCalls,
+      "tx1",
+    );
     const payloadHash = getPayloadHash(multicallPayload);
 
     const commandId1 = getCommandId();
@@ -203,7 +206,34 @@ describe("Factory", () => {
       multicallPayload,
     );
 
-    expect(execTx).to.emit(wallet, "MulticallExecuted");
+    const receipt = await execTx.wait();
+    const walletInterface = wallet.interface;
+
+    // Check CallStatus events for each call
+    const callStatusEvents = receipt?.logs
+      .map((log) => {
+        try {
+          return walletInterface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .filter((parsed) => parsed && parsed.name === "CallStatus");
+
+    expect(callStatusEvents).to.have.lengthOf(2);
+    expect(callStatusEvents[0]?.args.callIndex).to.equal(0);
+    expect(callStatusEvents[0]?.args.target).to.equal(multicallAddress);
+    expect(callStatusEvents[0]?.args.success).to.be.true;
+
+    expect(callStatusEvents[1]?.args.callIndex).to.equal(1);
+    expect(callStatusEvents[1]?.args.target).to.equal(multicallAddress);
+    expect(callStatusEvents[1]?.args.success).to.be.true;
+
+    // Check MulticallStatus event
+    await expect(execTx)
+      .to.emit(wallet, "MulticallStatus")
+      .withArgs("tx1", true, 2);
+
     const value = await multicall.getValue();
     expect(value).to.equal(27);
 
