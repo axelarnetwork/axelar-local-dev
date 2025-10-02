@@ -57,7 +57,7 @@ contract Wallet is AxelarExecutable, Ownable {
 
         uint256 len = calls.length;
         for (uint256 i = 0; i < len;) {
-            (bool success, bytes memory result) = calls[i].target.call(
+            (bool success, ) = calls[i].target.call(
                 calls[i].data
             );
 
