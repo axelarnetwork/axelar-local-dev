@@ -4,7 +4,7 @@ import { HardhatUserConfig } from "hardhat/config";
 
 envConfig();
 
-const { INFURA_KEY, PRIVATE_KEY } = process.env;
+const { INFURA_KEY, PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
 
 const testnets = {
   fuji: {
@@ -117,6 +117,22 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 200000,
+  },
+  etherscan: {
+    apiKey: {
+      // Testnets
+      avalancheFujiTestnet: ETHERSCAN_API_KEY || "",
+      sepolia: ETHERSCAN_API_KEY || "",
+      baseSepolia: ETHERSCAN_API_KEY || "",
+      optimismSepolia: ETHERSCAN_API_KEY || "",
+      arbitrumSepolia: ETHERSCAN_API_KEY || "",
+      // Mainnets
+      mainnet: ETHERSCAN_API_KEY || "",
+      arbitrumOne: ETHERSCAN_API_KEY || "",
+      avalanche: ETHERSCAN_API_KEY || "",
+      optimisticEthereum: ETHERSCAN_API_KEY || "",
+      polygon: ETHERSCAN_API_KEY || "",
+    },
   },
 };
 

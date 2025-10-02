@@ -17,7 +17,7 @@ deploy_contract() {
 
     GATEWAY_CONTRACT="$gateway_contract" \
         GAS_SERVICE_CONTRACT="$gas_service_contract" \
-        npx hardhat ignition deploy "$contract_path" --network "$network"
+        npx hardhat ignition deploy "$contract_path" --network "$network" --verify
 }
 
 delete_deployments_folder() {
