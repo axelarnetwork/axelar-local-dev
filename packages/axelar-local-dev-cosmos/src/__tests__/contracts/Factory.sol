@@ -28,6 +28,8 @@ struct CallMessage {
     ContractCalls[] calls;
 }
 
+error ContractCallFailed(string messageId, uint256 step);
+
 contract Wallet is AxelarExecutable, Ownable {
     IAxelarGasService public gasService;
 
@@ -38,7 +40,7 @@ contract Wallet is AxelarExecutable, Ownable {
         address gateway_,
         address gasReceiver_,
         string memory owner_
-    ) AxelarExecutable(gateway_) Ownable(owner_) {
+    ) AxelarExecutable(gateway_) Ownable(owner_) payable {
         gasService = IAxelarGasService(gasReceiver_);
     }
 
@@ -48,12 +50,21 @@ contract Wallet is AxelarExecutable, Ownable {
 
         CallResult[] memory results = new CallResult[](calls.length);
 
-        for (uint256 i = 0; i < calls.length; i++) {
+        uint256 len = calls.length;
+        for (uint256 i = 0; i < len;) {
             (bool success, bytes memory result) = calls[i].target.call(
                 calls[i].data
             );
-            require(success, "Contract call failed");
+            
+            if (!success) {
+                revert ContractCallFailed(callMessage.id, i);
+            }
+
             results[i] = CallResult(success, result);
+
+            unchecked {
+                ++i;
+            }
         }
 
         emit MulticallExecuted(callMessage.id, results);
@@ -64,16 +75,6 @@ contract Wallet is AxelarExecutable, Ownable {
         string calldata sourceAddress,
         bytes calldata payload
     ) internal override onlyOwner(sourceAddress) {
-        _multicall(payload);
-    }
-
-    function _executeWithToken(
-        string calldata /*sourceChain*/,
-        string calldata /*sourceAddress*/,
-        bytes calldata payload,
-        string calldata /*tokenSymbol*/,
-        uint256 /*amount*/
-    ) internal override {
         _multicall(payload);
     }
 
@@ -109,12 +110,12 @@ contract Factory is AxelarExecutable {
     constructor(
         address gateway_,
         address gasReceiver_
-    ) AxelarExecutable(gateway_) {
+    ) AxelarExecutable(gateway_) payable {
         gasService = IAxelarGasService(gasReceiver_);
         _gateway = gateway_;
     }
 
-    function createSmartWallet(string memory owner) public returns (address) {
+    function _createSmartWallet(string memory owner) internal returns (address) {
         address newWallet = address(
             new Wallet(_gateway, address(gasService), owner)
         );
@@ -127,7 +128,7 @@ contract Factory is AxelarExecutable {
         bytes calldata payload
     ) internal override {
         uint256 gasAmount = abi.decode(payload, (uint256));
-        address smartWalletAddress = createSmartWallet(sourceAddress);
+        address smartWalletAddress = _createSmartWallet(sourceAddress);
         emit SmartWalletCreated(
             smartWalletAddress,
             sourceAddress,
