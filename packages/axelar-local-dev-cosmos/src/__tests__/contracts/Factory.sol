@@ -59,6 +59,10 @@ contract Wallet is AxelarExecutable, Ownable {
         for (uint256 i = 0; i < len; ) {
             (bool success, ) = calls[i].target.call(calls[i].data);
 
+            if (!success) {
+                revert ContractCallFailed(callMessage.id, i);
+            }
+
             emit CallStatus(
                 callMessage.id,
                 i,
@@ -66,10 +70,6 @@ contract Wallet is AxelarExecutable, Ownable {
                 bytes4(calls[i].data),
                 success
             );
-
-            if (!success) {
-                revert ContractCallFailed(callMessage.id, i);
-            }
 
             unchecked {
                 ++i;
