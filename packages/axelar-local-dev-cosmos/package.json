@@ -25,7 +25,8 @@
     "testWallet": "ts-node scripts/runner.ts testWallet",
     "testFactory": "ts-node scripts/runner.ts testFactory",
     "test:proxy": "hardhat test src/__tests__/Factory.spec.ts",
-    "coverage:proxy": "npx hardhat coverage --testfiles src/__tests__/Factory.spec.ts"
+    "coverage:proxy": "npx hardhat coverage --testfiles src/__tests__/Factory.spec.ts",
+    "verify": "./scripts/verify.sh"
   },
   "dependencies": {
     "@axelar-network/axelar-local-dev": "^2.3.2",
