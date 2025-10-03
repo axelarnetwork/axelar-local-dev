@@ -47,7 +47,7 @@ contract Wallet is AxelarExecutable, Ownable {
         address gateway_,
         address gasReceiver_,
         string memory owner_
-    ) AxelarExecutable(gateway_) Ownable(owner_) payable {
+    ) payable AxelarExecutable(gateway_) Ownable(owner_) {
         gasService = IAxelarGasService(gasReceiver_);
     }
 
@@ -56,10 +56,8 @@ contract Wallet is AxelarExecutable, Ownable {
         ContractCalls[] memory calls = callMessage.calls;
 
         uint256 len = calls.length;
-        for (uint256 i = 0; i < len;) {
-            (bool success, ) = calls[i].target.call(
-                calls[i].data
-            );
+        for (uint256 i = 0; i < len; ) {
+            (bool success, ) = calls[i].target.call(calls[i].data);
 
             emit CallStatus(
                 callMessage.id,
@@ -68,9 +66,8 @@ contract Wallet is AxelarExecutable, Ownable {
                 bytes4(calls[i].data),
                 success
             );
-            
+
             if (!success) {
-                emit MulticallStatus(callMessage.id, false, calls.length);
                 revert ContractCallFailed(callMessage.id, i);
             }
 
@@ -122,12 +119,14 @@ contract Factory is AxelarExecutable {
     constructor(
         address gateway_,
         address gasReceiver_
-    ) AxelarExecutable(gateway_) payable {
+    ) payable AxelarExecutable(gateway_) {
         gasService = IAxelarGasService(gasReceiver_);
         _gateway = gateway_;
     }
 
-    function _createSmartWallet(string memory owner) internal returns (address) {
+    function _createSmartWallet(
+        string memory owner
+    ) internal returns (address) {
         address newWallet = address(
             new Wallet(_gateway, address(gasService), owner)
         );
