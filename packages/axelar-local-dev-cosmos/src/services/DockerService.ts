@@ -4,31 +4,31 @@ import { execSync } from "child_process";
 import { logger } from "@axelar-network/axelar-local-dev";
 import { IDockerComposeOptions, v2 as compose, ps } from "docker-compose";
 import { CosmosChain, ChainConfig, CosmosChainInfo } from "../types";
-import { defaultAxelarConfig, defaultWasmConfig } from "../config";
+import { defaultAxelarConfig, defaultAgoricConfig } from "../config";
 import { Path } from "../path";
 import { retry, exportOwnerAccountFromContainer } from "../utils";
 
 export class DockerService {
   private axelarConfig: ChainConfig;
-  private wasmConfig: ChainConfig;
+  private agoricConfig: ChainConfig;
 
   constructor(axelarConfig?: ChainConfig, wasmConfig?: ChainConfig) {
     this.axelarConfig = axelarConfig || defaultAxelarConfig;
-    this.wasmConfig = wasmConfig || defaultWasmConfig;
+    this.agoricConfig = wasmConfig || defaultAgoricConfig;
   }
 
   async startChains() {
     await this.startTraefik();
-    const [axelar, wasm] = await Promise.all([
+    const [axelar, agoric] = await Promise.all([
       this.start("axelar", this.axelarConfig),
-      this.start("wasm", this.wasmConfig),
+      this.start("agoric", this.agoricConfig),
     ]);
-    return [axelar, wasm];
+    return [axelar, agoric];
   }
 
   async start(
     chain: CosmosChain,
-    options: ChainConfig = this.getChainConfig(chain)
+    options: ChainConfig = this.getChainConfig(chain),
   ): Promise<CosmosChainInfo> {
     const { dockerPath } = options;
 
@@ -82,7 +82,7 @@ export class DockerService {
     await retry(async () => {
       logger.log("Stopping all containers...");
       await this.stop("axelar");
-      await this.stop("wasm");
+      await this.stop("agoric");
       await this.stopTraefik();
       logger.log("All containers stopped");
     });
@@ -112,11 +112,11 @@ export class DockerService {
   }
 
   private getChainDenom(chain: CosmosChain): string {
-    return chain === "axelar" ? "uaxl" : "uwasm";
+    return chain === "axelar" ? "uaxl" : "ubld";
   }
 
   private getChainConfig(chain: CosmosChain): ChainConfig {
-    return chain === "axelar" ? defaultAxelarConfig : defaultWasmConfig;
+    return chain === "axelar" ? defaultAxelarConfig : defaultAgoricConfig;
   }
 
   async waitForRpc(chain: CosmosChain, timeout = 120000): Promise<void> {
@@ -139,7 +139,6 @@ export class DockerService {
       throw new Error(`${chain} rpc server failed to start in ${timeout}ms`);
     }
   }
-
   async waitForLcd(chain: CosmosChain, timeout = 60000): Promise<void> {
     const testUrl = "cosmos/base/tendermint/v1beta1/node_info";
     const start = Date.now();
@@ -150,7 +149,7 @@ export class DockerService {
       try {
         result = await fetch(url).then((res: any) => res.json());
         network = result.default_node_info.network;
-        if (network === chain) {
+        if (network.startsWith(chain)) {
           break;
         }
       } catch (e) {
@@ -158,7 +157,7 @@ export class DockerService {
       }
       await new Promise((resolve) => setTimeout(resolve, interval));
     }
-    if (network !== chain) {
+    if (!network.startsWith(chain)) {
       throw new Error(`${chain} lcd server failed to start in ${timeout}ms`);
     }
   }
@@ -183,7 +182,7 @@ export class DockerService {
   private async throwIfDockerNotRunning(dockerPath: string): Promise<void> {
     if (!(await this.isDockerRunning(dockerPath))) {
       throw new Error(
-        "Docker is not running. Please start Docker and try again."
+        "Docker is not running. Please start Docker and try again.",
       );
     }
   }

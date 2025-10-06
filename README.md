@@ -1,52 +1,103 @@
-# Axelar Local Cross-Chain Dev Environment
+# Agoric <=> EVM
 
-Welcome to the Axelar Local Development Environment! This monorepo contains essential packages to facilitate local cross-chain development:
+This updates the `axelar-local-dev` repository to use agoric chain instead of wasm chain in `agoric-local-dev-cosmos` package.
 
-- **Core Package**: [@axelar-network/axelar-local-dev](./packages/axelar-local-dev/)
-- **Optional Packages**:
-  - [@axelar-network/axelar-local-dev-aptos](./packages/axelar-local-dev-aptos/)
-  - [@axelar-network/axelar-local-dev-near](./packages/axelar-local-dev-near/)
-  - [@axelar-network/axelar-local-dev-sui](./packages/axelar-local-dev-sui/)
-  - [@axelar-network/axelar-local-dev-cosmos](./packages/axelar-local-dev-cosmos/)
-  - [@axelar-network/axelar-local-dev-multiversx](./packages/axelar-local-dev-multiversx/)
+This repository does not demonstrate a token trasnfer to eth but rather a message transfer
 
-The `axelar-local-dev` package is all you need for cross-chain applications between EVM chains. However, if you wish to explore cross-chain applications between EVM chains and other chain stacks, check out our specific guides:
+## Steps to run contract call
 
-- [EVM <-> Aptos Integration Guide](./packages/axelar-local-dev-aptos/README.md#configuration)
-- [EVM <-> Near Integration Guide](./packages/axelar-local-dev-near/README.md#configuration)
-- [Evm <-> Sui Integration Guide](./packages/axelar-local-dev-sui/README.md)
-- [Evm <-> Cosmos Integration Guide](./packages/axelar-local-dev-cosmos/README.md)
-- [EVM <-> MultiversX Integration Guide](./packages/axelar-local-dev-multiversx/README.md#configuration)
-
-## Prerequisites
-
-- This project is developed with Ethers.js version 5. Please note that it may not function correctly if you are using Ethers.js version 6 or later. It is recommended to use version 5 to ensure compatibility and proper operation of the project.
-
-## Installation
-
-To install the core package, use the following command:
+- In root of the workspace run:
 
 ```bash
-npm install @axelar-network/axelar-local-dev
+    npm install
+    npm run build
 ```
 
-## Practical Examples
+- Change to `axelar-local-dev-cosmos` dir
 
-Visit our [axelar-examples repo](https://github.com/axelarnetwork/axelar-examples/) repository to see practical applications of this local development environment.
+```bash
+    cd packages/axelar-local-dev-cosmos
+```
 
-## Usage & Documentation
+- start the agoric and axelar chains using:
 
-- [Executing Cross-Chain Transactions Guide](./docs/guide_basic.md)
-- [Setting Up a Standalone Cross-Chain Environment](./docs/guide_create_and_exports.md)
-- [API Reference](./docs/api_reference.md)
+```bash
+    npm run start
+```
 
-## Supported Chain Stacks
+- start the relaying process using
 
-We currently support the following chain stacks:
+```bash
+    npm run relay
+```
+> Note: you can also run `testFactory` or `testWallet` instead of `relay`
 
-- [EVM](./packages/axelar-local-dev/)
-- [Aptos](./packages/axelar-local-dev-aptos/)
-- [Near](./packages/axelar-local-dev-near/)
-- [Sui](./packages/axelar-local-dev-sui/)
-- [Cosmos](./packages/axelar-local-dev-cosmos/)
-- [MultiversX](./packages/axelar-local-dev-multiversx/)
+- you should see this in the logs:
+
+```
+Message on Ethereum Contract: [
+  'agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl',
+  'Hello, world!',
+  sender: 'agoric1estsewt6jqsx77pwcxkn5ah0jqgu8rhgflwfdl',
+  message: 'Hello, world!'
+]
+```
+
+## Steps to run contract call with token transfer
+
+- In root of the workspace run:
+
+```bash
+    npm install
+    npm run build
+```
+
+- Change to `axelar-local-dev-cosmos` dir
+
+```bash
+    cd packages/axelar-local-dev-cosmos
+```
+
+- start the agoric and axelar chains using:
+
+```bash
+    npm run start
+```
+
+- run the script to start an ibc-transfer
+
+```bash
+    bash ./docker/axelar/bin/steps/ibc-transfer.sh
+```
+
+- run this script to relay the ibc trasnsaction.
+
+```bash
+    npm run relayWithTokens
+```
+
+- After that run again to relay the token transfer
+
+```bash
+    npm run relayWithTokens
+```
+
+- you should see this in the logs:
+
+```
+Balance of account after relaying ...
+```
+
+> **Note:** the `npm run relay` command will not exit by itself after receiving the message on ethereum and must be manually exited)
+
+## Main file
+
+The main file to look out for is the `packages/axelar-local-dev-cosmos/src/relayToEth.ts` in which the majority of the work is being done.
+
+This file is responsible for
+
+- starting up an ethereum chain instance
+- adding a solidity contract to that instance (which receives the message from cosmos)
+- setting up a relayer between axelar and ethereum + axelar and agoric
+- sending an IBC transaction from agoric to axelar
+- finally, relaying the packets from agoric <=> axelar <=> ethereum

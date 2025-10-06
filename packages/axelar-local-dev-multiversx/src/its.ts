@@ -1,12 +1,18 @@
 import { logger, Network } from '@axelar-network/axelar-local-dev';
 import { MultiversXNetwork } from './MultiversXNetwork';
 import {
-    Address, AddressValue, BigUIntValue, BytesValue,
+    Address,
+    AddressValue,
+    BigUIntValue,
+    BytesValue,
     ContractFunction,
-    H256Value, Interaction,
+    H256Value,
+    Interaction,
     ResultsParser,
     SmartContract,
-    StringValue, TokenTransfer, U8Value
+    StringValue,
+    TokenTransfer,
+    U8Value,
 } from '@multiversx/sdk-core/out';
 
 export class MultiversXITS {
@@ -25,7 +31,9 @@ export class MultiversXITS {
         tokenId = tokenId.startsWith('0x') ? tokenId.substring(2) : tokenId;
 
         try {
-            const result = await this.client.callContract(this.itsContract, "validTokenIdentifier", [new H256Value(Buffer.from(tokenId, 'hex'))]);
+            const result = await this.client.callContract(this.itsContract, 'validTokenIdentifier', [
+                new H256Value(Buffer.from(tokenId, 'hex')),
+            ]);
 
             const parsedResult = new ResultsParser().parseUntypedQueryResponse(result);
 
@@ -39,9 +47,9 @@ export class MultiversXITS {
         // Remove 0x added by Ethereum for hex strings
         salt = salt.startsWith('0x') ? salt.substring(2) : salt;
 
-        const result = await this.client.callContract(this.itsFactoryContract, "interchainTokenId", [
+        const result = await this.client.callContract(this.itsFactoryContract, 'interchainTokenId', [
             new AddressValue(address),
-            new H256Value(Buffer.from(salt, 'hex'))
+            new H256Value(Buffer.from(salt, 'hex')),
         ]);
 
         const parsedResult = new ResultsParser().parseUntypedQueryResponse(result);
@@ -49,14 +57,7 @@ export class MultiversXITS {
         return parsedResult.values[0].toString('hex');
     }
 
-    async deployInterchainToken(
-        salt: string,
-        name: string,
-        symbol: string,
-        decimals: number,
-        amount: number,
-        minter: Address,
-    ) {
+    async deployInterchainToken(salt: string, name: string, symbol: string, decimals: number, amount: number, minter: Address) {
         // Remove 0x added by Ethereum for hex strings
         salt = salt.startsWith('0x') ? salt.substring(2) : salt;
 
@@ -69,7 +70,7 @@ export class MultiversXITS {
             new BigUIntValue(amount),
             new AddressValue(minter),
         ];
-        const transaction = new Interaction(contract, new ContractFunction("deployInterchainToken"), args)
+        const transaction = new Interaction(contract, new ContractFunction('deployInterchainToken'), args)
             .withSender(this.client.owner)
             .withChainID('localnet')
             .withGasLimit(300_000_000)
@@ -104,13 +105,7 @@ export class MultiversXITS {
         return returnCode.isSuccess();
     }
 
-    async deployRemoteInterchainToken(
-        chainName: string,
-        salt: string,
-        minter: Address,
-        destinationChain: string,
-        fee: number
-    ) {
+    async deployRemoteInterchainToken(chainName: string, salt: string, minter: Address, destinationChain: string, fee: number) {
         // Remove 0x added by Ethereum for hex strings
         salt = salt.startsWith('0x') ? salt.substring(2) : salt;
 
@@ -121,7 +116,7 @@ export class MultiversXITS {
             new AddressValue(minter),
             new StringValue(destinationChain),
         ];
-        const transaction = new Interaction(contract, new ContractFunction("deployRemoteInterchainToken"), args)
+        const transaction = new Interaction(contract, new ContractFunction('deployRemoteInterchainToken'), args)
             .withSender(this.client.owner)
             .withChainID('localnet')
             .withGasLimit(300_000_000)
@@ -144,7 +139,7 @@ export class MultiversXITS {
         destinationAddress: string,
         tokenIdentifier: string,
         amount: string,
-        gasValue: string
+        gasValue: string,
     ) {
         // Remove 0x added by Ethereum for hex strings
         tokenId = tokenId.startsWith('0x') ? tokenId.substring(2) : tokenId;
@@ -157,7 +152,7 @@ export class MultiversXITS {
             new BytesValue(Buffer.from('')),
             new BigUIntValue(gasValue),
         ];
-        const transaction = new Interaction(contract, new ContractFunction("interchainTransfer"), args)
+        const transaction = new Interaction(contract, new ContractFunction('interchainTransfer'), args)
             .withSingleESDTTransfer(TokenTransfer.fungibleFromBigInteger(tokenIdentifier, amount))
             .withSender(this.client.owner)
             .withChainID('localnet')
@@ -189,7 +184,7 @@ export async function registerMultiversXRemoteITS(multiversxNetwork: MultiversXN
                     'multiversx',
                     (multiversxNetwork.interchainTokenServiceAddress as Address).bech32(),
                 )
-            ).data as string
+            ).data as string,
         );
 
         await (await network.interchainTokenService.multicall(data)).wait();

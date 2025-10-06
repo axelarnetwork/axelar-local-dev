@@ -20,7 +20,7 @@ export class Command {
         data: any[],
         dataSignature: string[],
         post: ((options: any) => Promise<any>) | undefined = undefined,
-        chain: string | null = null
+        chain: string | null = null,
     ) {
         this.commandId = commandId;
         this.name = name;
@@ -50,7 +50,7 @@ export class Command {
                 relayData.callContract[commandId].execution = receipt.transactionHash;
                 return receipt;
             },
-            'evm'
+            'evm',
         );
     };
 
@@ -73,13 +73,13 @@ export class Command {
                         args.payload,
                         args.destinationTokenSymbol,
                         args.amountOut,
-                        options
+                        options,
                     )
                     .then((tx: any) => tx.wait());
                 relayData.callContractWithToken[commandId].execution = receipt.transactionHash;
                 return receipt;
             },
-            'evm'
+            'evm',
         );
     };
 }

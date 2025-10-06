@@ -11,7 +11,7 @@ export class IBCRelayerService {
   private constructor(
     wasmClient: CosmosClient,
     axelarClient: CosmosClient,
-    relayerClient: IBCRelayerClient
+    relayerClient: IBCRelayerClient,
   ) {
     this.wasmClient = wasmClient;
     this.axelarClient = axelarClient;
@@ -19,11 +19,11 @@ export class IBCRelayerService {
   }
 
   static async create(testMnemonic?: string) {
-    const wasmClient = await CosmosClient.create("wasm");
+    const agoricClient = await CosmosClient.create("agoric");
     const axelarClient = await CosmosClient.create("axelar");
     const relayerClient = await IBCRelayerClient.create(testMnemonic);
 
-    return new IBCRelayerService(wasmClient, axelarClient, relayerClient);
+    return new IBCRelayerService(agoricClient, axelarClient, relayerClient);
   }
 
   public async relay() {

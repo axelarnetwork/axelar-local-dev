@@ -14,7 +14,7 @@ export interface ITS {
         tokenAddress: string,
         destinationChain: string | Network,
         gasValue?: BigNumberish,
-        wallet?: Wallet
+        wallet?: Wallet,
     ) => Promise<IInterchainToken>;
     deployInterchainToken: any;
     deployRemoteInterchainToken: any;
@@ -35,7 +35,7 @@ export async function setupITS(network: Network) {
         tokenAddress: string,
         destinationChain: string | Network,
         gasValue: BigNumberish = BigInt(1e6),
-        wallet: Wallet = network.ownerWallet
+        wallet: Wallet = network.ownerWallet,
     ) => {
         const service = network.interchainTokenService;
         const factory = network.interchainTokenFactory;
@@ -64,7 +64,7 @@ export async function setupITS(network: Network) {
         symbol: string,
         decimals: BigNumberish,
         mintAmount: BigNumberish,
-        distributor: string = wallet.address
+        distributor: string = wallet.address,
     ) => {
         const factory = network.interchainTokenFactory;
 
@@ -78,7 +78,7 @@ export async function setupITS(network: Network) {
         salt: string,
         distributor: string,
         destinationChain: string | Network,
-        gasValue: BigNumberish
+        gasValue: BigNumberish,
     ) => {
         const factory = network.interchainTokenFactory;
 
@@ -110,9 +110,9 @@ export async function registerRemoteITS(networks: Network[]) {
                 (
                     await network.interchainTokenService.populateTransaction.setTrustedAddress(
                         otherNetwork.name,
-                        otherNetwork.interchainTokenService.address
+                        otherNetwork.interchainTokenService.address,
                     )
-                ).data as string
+                ).data as string,
             );
         }
         await (await network.interchainTokenService.multicall(data)).wait();

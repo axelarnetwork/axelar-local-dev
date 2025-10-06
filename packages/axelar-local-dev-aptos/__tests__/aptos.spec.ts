@@ -97,7 +97,7 @@ describe('aptos', () => {
         const pubTxHash = await client.publishPackage(
             client.owner,
             packageMetadata,
-            moduleDatas.map((moduleData) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array()))
+            moduleDatas.map((moduleData) => new TxnBuilderTypes.Module(new HexString(moduleData.toString('hex')).toUint8Array())),
         );
         const pubTx: any = await client.waitForTransactionWithResult(pubTxHash);
         if (pubTx.vm_status !== 'Executed successfully') {

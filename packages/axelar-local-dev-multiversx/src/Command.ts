@@ -21,7 +21,7 @@ export class Command {
         data: any[],
         dataSignature: string[],
         post: ((options: any) => Promise<any>) | undefined = undefined,
-        chain: string | null = null
+        chain: string | null = null,
     ) {
         this.commandId = commandId;
         this.name = name;
@@ -46,14 +46,14 @@ export class Command {
                     args.destinationContractAddress,
                     args.from,
                     args.sourceAddress,
-                    payloadHex
+                    payloadHex,
                 );
 
                 relayData.callContract[commandId].execution = tx.getHash();
 
                 return tx;
             },
-            'multiversx'
+            'multiversx',
         );
     };
 
@@ -76,7 +76,7 @@ export class Command {
                     args.destinationContractAddress,
                     args.from,
                     args.sourceAddress,
-                    payloadHex
+                    payloadHex,
                 );
 
                 // In case of deploy interchain token, call 2nd time with EGLD value
@@ -87,7 +87,7 @@ export class Command {
                         args.from,
                         args.sourceAddress,
                         payloadHex,
-                        '5000000000000000000' // 5 EGLD for ESDT issue cost on localnet
+                        '5000000000000000000', // 5 EGLD for ESDT issue cost on localnet
                     );
                 }
 
@@ -95,7 +95,7 @@ export class Command {
 
                 return tx;
             },
-            'multiversx'
+            'multiversx',
         );
     };
 }

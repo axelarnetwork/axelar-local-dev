@@ -25,6 +25,10 @@ const getOrCreateIBCRelayer = async () => {
   return ibcRelayer;
 };
 
+const sleep = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
 /**
  * Sets up IBC channels using the IBCRelayerService between Axelar and Wasm chain.
  * It initializes the IBCRelayerService if not already done and attempts to set up IBC channels.
@@ -32,6 +36,7 @@ const getOrCreateIBCRelayer = async () => {
  * @throws {Error} Throws an error if setting up IBC channels fails.
  */
 export const setupIBCChannels = async () => {
+  await sleep(30000);
   ibcRelayer = await getOrCreateIBCRelayer();
 
   logger.log("Setting up IBC Channels");

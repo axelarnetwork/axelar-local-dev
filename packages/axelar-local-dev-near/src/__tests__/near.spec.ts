@@ -63,7 +63,7 @@ describe.skip('relay', () => {
                 {
                     gateway_account_id: nearClient.gatewayAccount.accountId,
                 },
-                { attachedDeposit: '0' }
+                { attachedDeposit: '0' },
             );
 
             evmContract = await deployContract(evmUser, Executable, [evmClient.gateway.address, evmClient.gasService.address]);
@@ -101,7 +101,7 @@ describe.skip('relay', () => {
                     destination_address: destinationAddress,
                     value,
                 },
-                0
+                0,
             );
 
             await relay({

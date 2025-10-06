@@ -1,9 +1,9 @@
-version: "3.8"
 services:
   axelar:
-    image: nptytn/local-axelard:v0.0.5
+    build: .
     container_name: axelar
-    command: "/root/private/bin/init_axelar.sh"
+    entrypoint: sh -l -c /root/private/bin/init_axelar.sh
+    platform: linux/amd64
     volumes:
       - "./bin:/root/private/bin"
       - "./.axelar:/root/private/.axelar"

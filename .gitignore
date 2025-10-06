@@ -4,11 +4,14 @@
 **/examples/metamask/abi/**.json
 **/.DS_Store
 local.json
+offer.json
 
 src/types
 
 #Hardhat files
 cache
+# Hardhat Ignition default folder for deployments against a local node
+deployments
 
 # Logs
 logs
@@ -117,7 +120,7 @@ dist
 
 # Build
 artifacts
-
+typechain-types
 build
 
 .aptos
@@ -142,3 +145,4 @@ packages/axelar-local-dev-near/**/*.wasm
 # Multiversx
 localnet
 localnet.toml
+.qodo

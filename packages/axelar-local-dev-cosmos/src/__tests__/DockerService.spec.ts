@@ -11,7 +11,7 @@ describe("DockerService", () => {
     const testLcd = "cosmos/base/tendermint/v1beta1/node_info";
     const healthAxelarRpc = await fetch("http://localhost/axelar-rpc");
     const healthAxelarLcd = await fetch(
-      `http://localhost/axelar-lcd/${testLcd}`
+      `http://localhost/axelar-lcd/${testLcd}`,
     );
     const healthWasmRpc = await fetch("http://localhost/wasm-rpc");
     const healthWasmLcd = await fetch(`http://localhost/wasm-lcd/${testLcd}`);
@@ -42,7 +42,7 @@ describe("DockerService", () => {
 
   it("should have registered wasm chain", async () => {
     const response = await fetchAxelarLcd(
-      "axelar/nexus/v1beta1/chain_state/wasm"
+      "axelar/nexus/v1beta1/chain_state/wasm",
     );
     const { activated, chain } = response.state;
     expect(chain).toEqual({
@@ -56,7 +56,7 @@ describe("DockerService", () => {
 
   it("should have chain maintainer for ethereum", async () => {
     const response = await fetchAxelarLcd(
-      "axelar/nexus/v1beta1/chain_maintainers/ethereum"
+      "axelar/nexus/v1beta1/chain_maintainers/ethereum",
     );
     expect(response.maintainers.length).toBeGreaterThan(0);
   });

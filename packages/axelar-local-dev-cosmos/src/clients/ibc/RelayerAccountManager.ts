@@ -1,8 +1,8 @@
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { ethers } from "ethers";
+import { toBigInt } from "ethers";
+import { convertCosmosAddress } from "../..";
 import { CosmosChain } from "../../types";
 import { CosmosClient } from "../cosmos/CosmosClient";
-import { convertCosmosAddress } from "../..";
 
 /**
  * RelayerAccountManager manages the relayer account on wasm and axelar.
@@ -21,7 +21,7 @@ export class RelayerAccountManager {
   constructor(
     axelarClient: CosmosClient,
     wasmClient: CosmosClient,
-    relayerAccount: DirectSecp256k1HdWallet
+    relayerAccount: DirectSecp256k1HdWallet,
   ) {
     this.axelarClient = axelarClient;
     this.wasmClient = wasmClient;
@@ -36,7 +36,7 @@ export class RelayerAccountManager {
    */
   static async createRelayerAccount(
     prefix: CosmosChain,
-    mnemonic?: string
+    mnemonic?: string,
   ): Promise<DirectSecp256k1HdWallet> {
     if (mnemonic) {
       return DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix });
@@ -49,11 +49,11 @@ export class RelayerAccountManager {
    * @param prefix chain prefix. Available options: wasm, axelar
    * @returns relayer address
    */
-  async getRelayerAddress(prefix: CosmosChain = "wasm"): Promise<string> {
+  async getRelayerAddress(prefix: CosmosChain = "agoric"): Promise<string> {
     const accounts = await this.relayerAccount.getAccounts();
     const relayerAddress = accounts[0].address;
 
-    if (prefix === "wasm") {
+    if (prefix === "agoric") {
       return relayerAddress;
     }
     return convertCosmosAddress(relayerAddress, prefix);
@@ -64,13 +64,13 @@ export class RelayerAccountManager {
    * @param minAmount minimum amount to fund the relayer accounts. Default is 10,000,000
    */
   async fundRelayerAccountsIfNeeded(
-    minAmount = RelayerAccountManager.DEFAULT_MIN_FUND_AMOUNT
+    minAmount = RelayerAccountManager.DEFAULT_MIN_FUND_AMOUNT,
   ): Promise<void> {
     const fund = await this.getRelayerFund();
 
     if (
-      ethers.BigNumber.from(fund.wasm.balance).lt(minAmount) ||
-      ethers.BigNumber.from(fund.axelar.balance).lt(minAmount)
+      toBigInt(fund.wasm.balance) < toBigInt(minAmount) ||
+      toBigInt(fund.axelar.balance) < toBigInt(minAmount)
     ) {
       await this.fundRelayer(minAmount);
     }
@@ -81,9 +81,9 @@ export class RelayerAccountManager {
    * @param amount amount to fund the relayer accounts. Default is 1,000,000,000
    */
   async fundRelayer(
-    amount = RelayerAccountManager.DEFAULT_FUND_AMOUNT
+    amount = RelayerAccountManager.DEFAULT_FUND_AMOUNT,
   ): Promise<void> {
-    const relayerAddress = await this.getRelayerAddress("wasm");
+    const relayerAddress = await this.getRelayerAddress("agoric");
     const relayerAxelarAddress = await this.getRelayerAddress("axelar");
 
     // Fund the relayer address on wasm
@@ -97,15 +97,14 @@ export class RelayerAccountManager {
    * @returns relayer fund on wasm and axelar
    */
   async getRelayerFund() {
-    const relayerAddress = await this.getRelayerAddress("wasm");
+    const relayerAddress = await this.getRelayerAddress("agoric");
     const relayerAxelarAddress = await this.getRelayerAddress("axelar");
 
     const balance = await this.wasmClient.getBalance(relayerAddress);
     // console.log("Relayer wasm balance", balance);
 
-    const axelarBalance = await this.axelarClient.getBalance(
-      relayerAxelarAddress
-    );
+    const axelarBalance =
+      await this.axelarClient.getBalance(relayerAxelarAddress);
     // console.log("Relayer axelar balance", axelarBalance);
 
     return {

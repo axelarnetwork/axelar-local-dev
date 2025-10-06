@@ -66,7 +66,7 @@ For more details on setting up the `createAndExport` function, check our [Standa
 
 Additionaly we export two utility functions
 
--   `createMultiversXNetwork(config?: {gatewayUrl: string})`: This deploys all the Axelar related smart contracts (`gas-service`, `auth`, `gateway`) if they are not deployed and saves their addresses to a config file. `gatewayUrl` defaults to `http://localhost:7950`
--   `loadMultiversXNetwork(gatewayUrl = 'http://localhost:7950')`: This loads the preconfigured `MultiversXNetwork` by reading the contract addresses from the config file. Needs to be used after `createMultiversXNetwork` was called at least once by a process.
+- `createMultiversXNetwork(config?: {gatewayUrl: string})`: This deploys all the Axelar related smart contracts (`gas-service`, `auth`, `gateway`) if they are not deployed and saves their addresses to a config file. `gatewayUrl` defaults to `http://localhost:7950`
+- `loadMultiversXNetwork(gatewayUrl = 'http://localhost:7950')`: This loads the preconfigured `MultiversXNetwork` by reading the contract addresses from the config file. Needs to be used after `createMultiversXNetwork` was called at least once by a process.
 
 `createAndExport` (see above) will try to also call `createMultiversXNetwork` so that relaying works to MultiversX as well.

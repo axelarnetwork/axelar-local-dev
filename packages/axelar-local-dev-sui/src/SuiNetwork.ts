@@ -39,7 +39,6 @@ export class SuiNetwork extends SuiClient {
      * @param faucetUrl - Optional faucet URL; defaults to localnet if not provided
      */
     constructor(nodeUrl?: string, faucetUrl?: string) {
-
         super({ url: nodeUrl || getFullnodeUrl('localnet') });
         this.nodeUrl = nodeUrl || getFullnodeUrl('localnet');
         this.faucetUrl = faucetUrl || getFaucetHost('localnet');
@@ -52,11 +51,11 @@ export class SuiNetwork extends SuiClient {
     async init() {
         // Fund executor account
         await this.fundWallet(this.getExecutorAddress());
-        
+
         updateMoveToml('axelar', '0x0');
-        const {packageId, publishTxn } = await publishPackage('../move/axelar', this, this.executor);
+        const { packageId, publishTxn } = await publishPackage('../move/axelar', this, this.executor);
         updateMoveToml('axelar', packageId);
-        
+
         const validators = publishTxn.objectChanges?.find((obj: any) => {
             return obj.objectType && obj.objectType.endsWith('validators::AxelarValidators');
         }) as any;

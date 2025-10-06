@@ -84,9 +84,7 @@ export async function createMultiversXNetwork(config?: MultiversXNetworkConfig):
     return multiversXNetwork;
 }
 
-export async function loadMultiversXNetwork(
-    gatewayUrl = 'http://127.0.0.1:7950',
-) {
+export async function loadMultiversXNetwork(gatewayUrl = 'http://127.0.0.1:7950') {
     const configFile = getMultiversXConfig();
 
     multiversXNetwork = new MultiversXNetwork(
