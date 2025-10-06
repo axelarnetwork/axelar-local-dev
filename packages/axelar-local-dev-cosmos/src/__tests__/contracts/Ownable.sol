@@ -70,37 +70,6 @@ abstract contract Ownable {
     }
 
     /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby disabling any functionality that is only available to the owner.
-     */
-    function renounceOwnership(
-        string calldata currentOwner
-    ) public virtual onlyOwner(currentOwner) {
-        _transferOwnership(
-            string(
-                abi.encodePacked("0x0000000000000000000000000000000000000000")
-            )
-        );
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(
-        string calldata oldOwner,
-        string calldata newOwner
-    ) public virtual onlyOwner(oldOwner) {
-        // if (newOwner == address(0)) {
-        //     revert OwnableInvalidOwner(address(0));
-        // }
-        _transferOwnership(newOwner);
-    }
-
-    /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Internal function without access restriction.
      */
