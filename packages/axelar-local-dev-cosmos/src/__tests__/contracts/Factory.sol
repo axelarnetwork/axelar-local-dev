@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
-import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
-import {IERC20} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol";
-import {StringToAddress, AddressToString} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
+import {AxelarExecutable} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
+import {IAxelarGasService} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
+import {IERC20} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IERC20.sol";
+import {StringToAddress, AddressToString} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
 import {Ownable} from "./Ownable.sol";
 
 struct CallResult {
@@ -80,6 +80,7 @@ contract Wallet is AxelarExecutable, Ownable {
     }
 
     function _execute(
+        bytes32 /*commandId*/,
         string calldata /*sourceChain*/,
         string calldata sourceAddress,
         bytes calldata payload
@@ -134,6 +135,7 @@ contract Factory is AxelarExecutable {
     }
 
     function _execute(
+        bytes32 /*commandId*/,
         string calldata sourceChain,
         string calldata sourceAddress,
         bytes calldata payload
@@ -171,7 +173,7 @@ contract Factory is AxelarExecutable {
             address(this)
         );
 
-        gateway.callContract(destinationChain, destinationAddress, payload);
+        gateway().callContract(destinationChain, destinationAddress, payload);
         emit CrossChainCallSent(destinationChain, destinationAddress, payload);
     }
 

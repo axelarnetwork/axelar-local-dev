@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
-import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
-import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
-import {StringToAddress, AddressToString} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
+import {AxelarExecutable} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
+import {IAxelarGateway} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
+import {IAxelarGasService} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
+import {StringToAddress, AddressToString} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
 
 contract SendReceive is AxelarExecutable {
     using StringToAddress for string;
@@ -51,7 +51,7 @@ contract SendReceive is AxelarExecutable {
         );
 
         // 3. Make GMP call
-        gateway.callContract(destinationChain, destinationAddress, payload);
+        gateway().callContract(destinationChain, destinationAddress, payload);
     }
 
     function _encodePayloadToCosmWasm(
@@ -94,6 +94,7 @@ contract SendReceive is AxelarExecutable {
     }
 
     function _execute(
+        bytes32 /*commandId*/,
         string calldata /*sourceChain*/,
         string calldata /*sourceAddress*/,
         bytes calldata payload
