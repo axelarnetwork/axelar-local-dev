@@ -96,15 +96,26 @@ contract Wallet is AxelarExecutable, Ownable {
     }
 }
 
+struct AccountCreationRequest {
+    uint256 gasAmount;
+    uint256 count;
+}
+
 contract Factory is AxelarExecutable {
     using StringToAddress for string;
     using AddressToString for address;
 
-    address _gateway;
     IAxelarGasService public immutable gasService;
+    address public immutable gateway;
 
     event SmartWalletCreated(
         address indexed wallet,
+        string owner,
+        string sourceChain,
+        string sourceAddress
+    );
+    event BatchSmartWalletsCreated(
+        uint256 count,
         string owner,
         string sourceChain,
         string sourceAddress
@@ -121,14 +132,14 @@ contract Factory is AxelarExecutable {
         address gasReceiver_
     ) payable AxelarExecutable(gateway_) {
         gasService = IAxelarGasService(gasReceiver_);
-        _gateway = gateway_;
+        gateway = gateway_;
     }
 
     function _createSmartWallet(
         string memory owner
     ) internal returns (address) {
         address newWallet = address(
-            new Wallet(_gateway, address(gasService), owner)
+            new Wallet(gateway, address(gasService), owner)
         );
         return newWallet;
     }
@@ -138,23 +149,64 @@ contract Factory is AxelarExecutable {
         string calldata sourceAddress,
         bytes calldata payload
     ) internal override {
-        uint256 gasAmount = abi.decode(payload, (uint256));
-        address smartWalletAddress = _createSmartWallet(sourceAddress);
-        emit SmartWalletCreated(
-            smartWalletAddress,
-            sourceAddress,
-            sourceChain,
-            sourceAddress
-        );
-        CallResult[] memory results = new CallResult[](1);
+        uint256 gasAmount;
+        uint256 count;
 
-        results[0] = CallResult(true, abi.encode(smartWalletAddress));
+        try this.decodeAccountCreationRequest(payload) returns (
+            uint256 _gasAmount,
+            uint256 _count
+        ) {
+            gasAmount = _gasAmount;
+            count = _count;
+        } catch {
+            gasAmount = abi.decode(payload, (uint256));
+            count = 1;
+        }
+
+        require(count > 0, "Invalid count");
+
+        CallResult[] memory results = new CallResult[](count);
+
+        for (uint256 i = 0; i < count; ) {
+            address smartWalletAddress = _createSmartWallet(sourceAddress);
+            emit SmartWalletCreated(
+                smartWalletAddress,
+                sourceAddress,
+                sourceChain,
+                sourceAddress
+            );
+            results[i] = CallResult(true, abi.encode(smartWalletAddress));
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        if (count > 1) {
+            emit BatchSmartWalletsCreated(
+                count,
+                sourceAddress,
+                sourceChain,
+                sourceAddress
+            );
+        }
 
         bytes memory msgPayload = abi.encodePacked(
             bytes4(0x00000000),
             abi.encode(AgoricResponse(false, results))
         );
+
         _send(sourceChain, sourceAddress, msgPayload, gasAmount);
+    }
+
+    function decodeAccountCreationRequest(
+        bytes calldata payload
+    ) external pure returns (uint256 gasAmount, uint256 count) {
+        AccountCreationRequest memory req = abi.decode(
+            payload,
+            (AccountCreationRequest)
+        );
+        return (req.gasAmount, req.count);
     }
 
     function _send(

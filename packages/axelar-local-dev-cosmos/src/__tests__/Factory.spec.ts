@@ -238,4 +238,179 @@ describe("Factory", () => {
     expect(value).to.equal(27);
 
   });
+
+  it("should create multiple wallets with batch request", async () => {
+    const commandId = getCommandId();
+
+    const batchRequest = {
+      count: 5,
+      gasAmount: 50000,
+    };
+    const payload = abiCoder.encode(
+      ["tuple(uint256,uint256)"],
+      [[batchRequest.count, batchRequest.gasAmount]],
+    );
+    const payloadHash = keccak256(toBytes(payload));
+
+    await approveMessage({
+      commandId,
+      from: sourceContract,
+      sourceAddress,
+      targetAddress: factory.target,
+      payload: payloadHash,
+      owner,
+      AxelarGateway: axelarGatewayMock,
+      abiCoder,
+    });
+
+    const tx = await factory.execute(
+      commandId,
+      sourceContract,
+      sourceAddress,
+      payload,
+    );
+
+    const receipt = await tx.wait();
+    const factoryInterface = factory.interface;
+
+    const smartWalletCreatedEvents = receipt?.logs
+      .map((log) => {
+        try {
+          return factoryInterface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .filter((parsed) => parsed && parsed.name === "SmartWalletCreated");
+
+    expect(smartWalletCreatedEvents).to.have.lengthOf(5);
+
+    await expect(tx)
+      .to.emit(factory, "BatchSmartWalletsCreated")
+      .withArgs(5, sourceAddress, sourceContract, sourceAddress);
+
+    await expect(tx).to.emit(factory, "CrossChainCallSent");
+
+    const allAddressesUnique = new Set(
+      smartWalletCreatedEvents.map((e) => e?.args.wallet),
+    );
+    expect(allAddressesUnique.size).to.equal(5);
+  });
+
+  it("should support legacy single wallet creation with uint256 payload", async () => {
+    const commandId = getCommandId();
+
+    const payload = abiCoder.encode(["uint256"], [50000]);
+    const payloadHash = keccak256(toBytes(payload));
+
+    await approveMessage({
+      commandId,
+      from: sourceContract,
+      sourceAddress,
+      targetAddress: factory.target,
+      payload: payloadHash,
+      owner,
+      AxelarGateway: axelarGatewayMock,
+      abiCoder,
+    });
+
+    const tx = await factory.execute(
+      commandId,
+      sourceContract,
+      sourceAddress,
+      payload,
+    );
+
+    const receipt = await tx.wait();
+    const factoryInterface = factory.interface;
+
+    const smartWalletCreatedEvents = receipt?.logs
+      .map((log) => {
+        try {
+          return factoryInterface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .filter((parsed) => parsed && parsed.name === "SmartWalletCreated");
+
+    expect(smartWalletCreatedEvents).to.have.lengthOf(1);
+
+    const batchEvents = receipt?.logs
+      .map((log) => {
+        try {
+          return factoryInterface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .filter((parsed) => parsed && parsed.name === "BatchSmartWalletsCreated");
+
+    expect(batchEvents).to.have.lengthOf(0);
+
+    await expect(tx).to.emit(factory, "SmartWalletCreated");
+    await expect(tx).to.emit(factory, "CrossChainCallSent");
+  });
+
+  it("should create single wallet when batch count is 1", async () => {
+    const commandId = getCommandId();
+
+    const batchRequest = {
+      count: 1,
+      gasAmount: 50000,
+    };
+    const payload = abiCoder.encode(
+      ["tuple(uint256,uint256)"],
+      [[batchRequest.count, batchRequest.gasAmount]],
+    );
+    const payloadHash = keccak256(toBytes(payload));
+
+    await approveMessage({
+      commandId,
+      from: sourceContract,
+      sourceAddress,
+      targetAddress: factory.target,
+      payload: payloadHash,
+      owner,
+      AxelarGateway: axelarGatewayMock,
+      abiCoder,
+    });
+
+    const tx = await factory.execute(
+      commandId,
+      sourceContract,
+      sourceAddress,
+      payload,
+    );
+
+    const receipt = await tx.wait();
+    const factoryInterface = factory.interface;
+
+    const smartWalletCreatedEvents = receipt?.logs
+      .map((log) => {
+        try {
+          return factoryInterface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .filter((parsed) => parsed && parsed.name === "SmartWalletCreated");
+
+    expect(smartWalletCreatedEvents).to.have.lengthOf(1);
+
+    const batchEvents = receipt?.logs
+      .map((log) => {
+        try {
+          return factoryInterface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .filter((parsed) => parsed && parsed.name === "BatchSmartWalletsCreated");
+
+    expect(batchEvents).to.have.lengthOf(0);
+
+    await expect(tx).to.emit(factory, "SmartWalletCreated");
+    await expect(tx).to.emit(factory, "CrossChainCallSent");
+  });
 });
