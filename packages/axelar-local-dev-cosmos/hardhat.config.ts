@@ -119,20 +119,89 @@ const config: HardhatUserConfig = {
     timeout: 200000,
   },
   etherscan: {
-    apiKey: {
-      // Testnets
-      avalancheFujiTestnet: ETHERSCAN_API_KEY || "",
-      sepolia: ETHERSCAN_API_KEY || "",
-      baseSepolia: ETHERSCAN_API_KEY || "",
-      optimismSepolia: ETHERSCAN_API_KEY || "",
-      arbitrumSepolia: ETHERSCAN_API_KEY || "",
-      // Mainnets
-      mainnet: ETHERSCAN_API_KEY || "",
-      arbitrumOne: ETHERSCAN_API_KEY || "",
-      avalanche: ETHERSCAN_API_KEY || "",
-      optimisticEthereum: ETHERSCAN_API_KEY || "",
-      polygon: ETHERSCAN_API_KEY || "",
-    },
+    apiKey: ETHERSCAN_API_KEY || "",
+    customChains: [
+      {
+        network: "arbitrumOne",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://arbiscan.io",
+        },
+      },
+      {
+        network: "avalancheFujiTestnet",
+        chainId: 43113,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://testnet.snowtrace.io",
+        },
+      },
+      {
+        network: "sepolia",
+        chainId: 11155111,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://sepolia.etherscan.io",
+        },
+      },
+      {
+        network: "baseSepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://sepolia.basescan.org",
+        },
+      },
+      {
+        network: "optimismSepolia",
+        chainId: 11155420,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://sepolia-optimism.etherscan.io",
+        },
+      },
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://sepolia.arbiscan.io",
+        },
+      },
+      {
+        network: "mainnet",
+        chainId: 1,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://etherscan.io",
+        },
+      },
+      {
+        network: "avalanche",
+        chainId: 43114,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://snowtrace.io",
+        },
+      },
+      {
+        network: "optimisticEthereum",
+        chainId: 10,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://optimistic.etherscan.io",
+        },
+      },
+      {
+        network: "polygon",
+        chainId: 137,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://polygonscan.com",
+        },
+      },
+    ],
   },
 };
 
