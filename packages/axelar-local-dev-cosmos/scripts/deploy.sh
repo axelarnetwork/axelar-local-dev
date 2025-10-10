@@ -7,7 +7,7 @@ source "$SCRIPT_DIR/network-config.sh"
 if [[ $# -eq 0 ]]; then
     echo "Usage: $0 <network>"
     echo "Supported networks:"
-    echo "  Mainnets: avax, arb, opt, pol"
+    echo "  Mainnets: avax, arb, base, eth, opt, pol"
     echo "  Testnets: eth-sepolia, fuji, base-sepolia, opt-sepolia, arb-sepolia"
     exit 0
 fi

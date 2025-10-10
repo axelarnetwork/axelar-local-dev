@@ -53,6 +53,12 @@ const mainnets = {
     accounts: [PRIVATE_KEY as string],
     gasPrice: 225_000_000_000, // 225 gwei in wei
   },
+  // Source: https://docs.base.org/docs/network-information
+  base: {
+    url: `https://mainnet.base.org`,
+    chainId: 8453,
+    accounts: [PRIVATE_KEY as string],
+  },
   eth: {
     url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
     chainId: 1,
@@ -199,6 +205,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.etherscan.io/v2/api",
           browserURL: "https://polygonscan.com",
+        },
+      },
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://basescan.org",
         },
       },
     ],
