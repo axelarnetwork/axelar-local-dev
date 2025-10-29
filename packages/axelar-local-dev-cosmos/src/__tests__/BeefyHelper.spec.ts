@@ -8,7 +8,7 @@ describe("WalletHelper", () => {
   let owner: ethers.SignerWithAddress;
   let user: ethers.SignerWithAddress;
 
-  before(async () => {
+  beforeEach(async () => {
     [owner, user] = await ethers.getSigners();
 
     // Deploy mock USDC token
@@ -31,18 +31,19 @@ describe("WalletHelper", () => {
   describe("beefyWithdrawUSDC", () => {
     it("should calculate correct mooTokens needed and withdraw USDC", async () => {
       const usdcAmount = ethers.parseUnits("1000", 6); // 1000 USDC
-      const pricePerShare = ethers.parseEther("2.0"); // 1 mooToken = 1.5 USDC
 
+      const balance = 2000_000_000n;
+      const totalSupply = 1000_000_000n;
+
+      mockVault.setTotalSupply(totalSupply);
+      
       // Setup: Mint USDC to vault
-      await mockUSDC.mint(mockVault.target, ethers.parseUnits("10000", 6));
+      await mockUSDC.mint(mockVault.target, balance);
 
       // Setup: Mint mooTokens to user
       const expectedShares =
-        (usdcAmount * ethers.parseEther("1")) / pricePerShare;
+        (usdcAmount * totalSupply) / balance;
       await mockVault.mint(user.address, expectedShares);
-
-      // Setup: Set price per share in vault
-      await mockVault.setPricePerFullShare(pricePerShare);
 
       // User approves WalletHelper to spend mooTokens
       await mockVault
@@ -59,7 +60,6 @@ describe("WalletHelper", () => {
 
       const userUSDCAfter = await mockUSDC.balanceOf(user.address);
       const userSharesAfter = await mockVault.balanceOf(user.address);
-      console.log(await mockUSDC.balanceOf(walletHelper.target));
       // Verify USDC was transferred to user
       expect(userUSDCAfter - userUSDCBefore).to.equal(usdcAmount);
 
@@ -67,17 +67,22 @@ describe("WalletHelper", () => {
       expect(userSharesBefore - userSharesAfter).to.equal(expectedShares);
     });
 
-    it("has a rounding error", async () => {
-      const usdcAmount = ethers.parseUnits("1000", 6); // 1000 USDC
-      const pricePerShare = ethers.parseEther("1.5"); // 1 mooToken = 1.5 USDC
+    it("should not have a rounding error", async () => {
+      const usdcAmount = 1000000n; // 1000 USDC
 
-      await mockUSDC.mint(mockVault.target, ethers.parseUnits("10000", 6));
+      // These should simulate a scenario that could cause rounding errors
+      // If the division is not handled properly
+      const balance = 2942721276721n;
+      const totalSupply = 2675589349023n;
 
+      await mockUSDC.mint(mockVault.target, balance);
+
+      // Using the same formula as in WalletHelper which rounds up
       const expectedShares =
-        (usdcAmount * ethers.parseEther("1")) / pricePerShare;
+        ((usdcAmount * totalSupply) + balance - 1n) / balance;
       await mockVault.mint(user.address, expectedShares);
 
-      await mockVault.setPricePerFullShare(pricePerShare);
+      await mockVault.setTotalSupply(totalSupply);
 
       await mockVault
         .connect(user)
@@ -94,16 +99,14 @@ describe("WalletHelper", () => {
       const userSharesAfter = await mockVault.balanceOf(user.address);
 
       // Rounding error occurs here
-      expect(userUSDCAfter - userUSDCBefore).to.equal(usdcAmount - 1n);
-
+      expect(userUSDCAfter - userUSDCBefore).to.equal(usdcAmount);
       expect(userSharesBefore - userSharesAfter).to.equal(expectedShares);
     });
 
     it("should revert if user has insufficient mooTokens", async () => {
       const usdcAmount = ethers.parseUnits("1000", 6);
-      const pricePerShare = ethers.parseEther("1.0");
 
-      await mockVault.setPricePerFullShare(pricePerShare);
+      mockVault.setTotalSupply( 10_000_000n);
 
       // User has 0 mooTokens but tries to withdraw
       await expect(
@@ -115,12 +118,12 @@ describe("WalletHelper", () => {
 
     it("should revert if user hasn't approved WalletHelper", async () => {
       const usdcAmount = ethers.parseUnits("100", 6);
-      const pricePerShare = ethers.parseEther("1.0");
       const shares = usdcAmount;
+
+      mockVault.setTotalSupply(shares * 10n);
 
       await mockUSDC.mint(mockVault.target, ethers.parseUnits("1000", 6));
       await mockVault.mint(user.address, shares);
-      await mockVault.setPricePerFullShare(pricePerShare);
 
       // Don't approve WalletHelper
       await expect(

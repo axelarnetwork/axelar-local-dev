@@ -6,6 +6,7 @@ import {IERC20} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/
 contract MockBeefyVault {
     address public want;
     uint256 public pricePerFullShare;
+    uint256 private _totalSupply;
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
@@ -19,14 +20,12 @@ contract MockBeefyVault {
         balanceOf[to] += amount;
     }
 
-    function setPricePerFullShare(uint256 _price) external {
-        pricePerFullShare = _price;
+
+    function setTotalSupply(uint256 totalSupply_) external {
+        _totalSupply = totalSupply_;
     }
 
-    function getPricePerFullShare() external view returns (uint256) {
-        return pricePerFullShare;
-    }
-
+    
     function approve(address spender, uint256 amount) external returns (bool) {
         allowance[msg.sender][spender] = amount;
         return true;
@@ -40,12 +39,21 @@ contract MockBeefyVault {
         return true;
     }
 
+    function balance() public view returns (uint256) {
+        return IERC20(want).balanceOf(address(this));
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
+    }
+
     function withdraw(uint256 shares) external {
         require(balanceOf[msg.sender] >= shares, "Insufficient balance");
-        balanceOf[msg.sender] -= shares;
 
-        // Calculate USDC to return based on pricePerFullShare
-        uint256 usdcAmount = (shares * pricePerFullShare) / 1e18;
+        // Calculate USDC to return based on share of total balance
+        uint256 usdcAmount = (balance() * shares) / totalSupply();
+
+        balanceOf[msg.sender] -= shares;
 
         // Transfer USDC to caller
         IERC20(want).transfer(msg.sender, usdcAmount);
