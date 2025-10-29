@@ -67,7 +67,7 @@ describe("WalletHelper", () => {
       expect(userSharesBefore - userSharesAfter).to.equal(expectedShares);
     });
 
-    it("should give a rounding error", async () => {
+    it("has a rounding error", async () => {
       const usdcAmount = ethers.parseUnits("1000", 6); // 1000 USDC
       const pricePerShare = ethers.parseEther("1.5"); // 1 mooToken = 1.5 USDC
 
@@ -92,7 +92,9 @@ describe("WalletHelper", () => {
 
       const userUSDCAfter = await mockUSDC.balanceOf(user.address);
       const userSharesAfter = await mockVault.balanceOf(user.address);
-      expect(userUSDCAfter - userUSDCBefore).to.not.equal(usdcAmount);
+
+      // Rounding error occurs here
+      expect(userUSDCAfter - userUSDCBefore).to.equal(usdcAmount - 1n);
 
       expect(userSharesBefore - userSharesAfter).to.equal(expectedShares);
     });
