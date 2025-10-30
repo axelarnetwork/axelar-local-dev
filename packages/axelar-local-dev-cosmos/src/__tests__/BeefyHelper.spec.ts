@@ -98,7 +98,6 @@ describe("WalletHelper", () => {
       const userUSDCAfter = await mockUSDC.balanceOf(user.address);
       const userSharesAfter = await mockVault.balanceOf(user.address);
 
-      // Rounding error occurs here
       expect(userUSDCAfter - userUSDCBefore).to.equal(usdcAmount);
       expect(userSharesBefore - userSharesAfter).to.equal(expectedShares);
     });
