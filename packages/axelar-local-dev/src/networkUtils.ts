@@ -7,8 +7,8 @@ import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers'
 import { merge } from 'lodash';
 import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
-import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
-import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
+import { AxelarGateway__factory as AxelarGatewayFactory } from './types/@axelar-network/axelar-cgp-solidity/contracts/factories/AxelarGateway__factory';
+import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/@axelar-network/axelar-cgp-solidity/contracts/factories/gas-service/AxelarGasService__factory';
 import { Server } from 'http';
 import { ConstAddressDeployer, Create3Deployer, IInterchainTokenService } from './contracts';
 import {

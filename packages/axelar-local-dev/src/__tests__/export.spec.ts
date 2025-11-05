@@ -6,7 +6,7 @@ import { Wallet } from 'ethers';
 import fs from 'fs';
 const { expect } = chai;
 import { deployContract, setLogger, createAndExport, destroyExported, Network, networks, setupAndExport } from '../';
-import { AxelarExpressExecutable__factory as AxelarExpressExecutableFactory } from '../types/factories/@axelar-network/axelar-gmp-sdk-solidity/contracts/express/AxelarExpressExecutable__factory';
+import { AxelarExpressExecutableWithToken__factory as AxelarExpressExecutableFactory } from '../types/factories/@axelar-network/axelar-gmp-sdk-solidity/contracts/express/AxelarExpressExecutableWithToken__factory';
 import { ExpressWithToken__factory as ExpressWithTokenFactory } from '../types/factories/src/contracts/test/ExpressWithToken__factory';
 import { ExecutableWithToken__factory as ExecuteWithTokenFactory } from '../types/factories/src/contracts/test/ExecutableWithToken__factory';
 import ExpressWithToken from '../artifacts/src/contracts/test/ExpressWithToken.sol/ExpressWithToken.json';

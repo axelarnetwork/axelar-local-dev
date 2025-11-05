@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.9;
+pragma solidity ^0.8.9;
 
 // Interchain Token Service
 import { TokenManagerDeployer } from '@axelar-network/interchain-token-service/contracts/utils/TokenManagerDeployer.sol';
+import { GatewayCaller } from '@axelar-network/interchain-token-service/contracts/utils/GatewayCaller.sol';
 import { InterchainToken } from '@axelar-network/interchain-token-service/contracts/interchain-token/InterchainToken.sol';
 import { InterchainTokenDeployer } from '@axelar-network/interchain-token-service/contracts/utils/InterchainTokenDeployer.sol';
 import { TokenManager } from '@axelar-network/interchain-token-service/contracts/token-manager/TokenManager.sol';

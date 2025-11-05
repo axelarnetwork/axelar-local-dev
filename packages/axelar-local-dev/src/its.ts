@@ -48,7 +48,7 @@ export async function setupITS(network: Network) {
         await (
             await factory
                 .connect(wallet)
-                .deployRemoteCanonicalInterchainToken('', tokenAddress, destinationChain.name, gasValue, { value: gasValue })
+                .registerCanonicalInterchainToken(tokenAddress)
         ).wait();
 
         await relay();
@@ -69,7 +69,8 @@ export async function setupITS(network: Network) {
         const factory = network.interchainTokenFactory;
 
         await (await factory.connect(wallet).deployInterchainToken(salt, name, symbol, decimals, mintAmount, distributor)).wait();
-        const tokenAddress = await factory.interchainTokenAddress(wallet.address, salt);
+        const tokenId = await factory.interchainTokenId(wallet.address, salt);
+        const tokenAddress = await network.interchainTokenService.interchainTokenAddress(tokenId);
         return IInterchainTokenFactory.connect(tokenAddress, wallet);
     };
 
@@ -91,12 +92,13 @@ export async function setupITS(network: Network) {
         await (
             await factory
                 .connect(wallet)
-                .deployRemoteInterchainToken('', salt, distributor, destinationChain.name, gasValue, { value: gasValue })
+                .deployRemoteInterchainTokenWithMinter(salt, distributor, destinationChain.name, distributor, gasValue, { value: gasValue })
         ).wait();
 
         await relay();
 
-        const tokenAddress = await factory.interchainTokenAddress(wallet.address, salt);
+        const tokenId = await factory.interchainTokenId(wallet.address, salt);
+        const tokenAddress = await network.interchainTokenService.interchainTokenAddress(tokenId);
         return IInterchainTokenFactory.connect(tokenAddress, destinationChain.provider);
     };
 }

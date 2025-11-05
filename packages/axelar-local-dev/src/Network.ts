@@ -20,11 +20,12 @@ import {
     InterchainTokenService as InterchainTokenServiceContract,
     InterchainTokenFactory as InterchainTokenFactoryContract,
     InterchainProxy,
+    GatewayCaller,
 } from './contracts';
-import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
+import { AxelarGateway__factory as AxelarGatewayFactory } from './types/@axelar-network/axelar-cgp-solidity/contracts/factories/AxelarGateway__factory';
 import { AxelarGateway } from './types/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway';
 import { InterchainTokenService, InterchainTokenFactory } from './types/@axelar-network/interchain-token-service/contracts';
-import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
+import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/@axelar-network/axelar-cgp-solidity/contracts/factories/gas-service/AxelarGasService__factory';
 import {
     InterchainTokenService__factory as InterchainTokenServiceFactory,
     InterchainTokenFactory__factory as InterchainTokenFactoryFactory,
@@ -237,6 +238,7 @@ export class Network {
         const tokenManager = await deployContract(wallet, TokenManager, [interchainTokenServiceAddress]);
         const tokenHandler = await deployContract(wallet, TokenHandler, []);
         const interchainTokenFactoryAddress = await this.create3Deployer.deployedAddress('0x', wallet.address, factorySalt);
+        const gatewayCaller = await deployContract(wallet, GatewayCaller, [this.gateway.address, this.gasService.address]);
 
         const tokenServiceImplementation = await deployContract(wallet, InterchainTokenServiceContract, [
             tokenManagerDeployer.address,
@@ -247,6 +249,7 @@ export class Network {
             this.name,
             tokenManager.address,
             tokenHandler.address,
+            gatewayCaller.address,
         ]);
         const factory = new ContractFactory(InterchainProxy.abi, InterchainProxy.bytecode);
         let bytecode = factory.getDeployTransaction(

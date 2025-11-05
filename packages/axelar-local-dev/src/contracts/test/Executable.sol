@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import { IAxelarGateway } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol';
 import { IAxelarGasService } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol';
 import { AxelarExecutable } from '@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol';
 
@@ -28,12 +29,17 @@ contract Executable is AxelarExecutable {
         if (msg.value > 0) {
             gasService.payNativeGasForContractCall{ value: msg.value }(address(this), chain, siblings[chain], payload, msg.sender);
         }
-        gateway.callContract(chain, siblings[chain], payload);
+        IAxelarGateway(gatewayAddress).callContract(chain, siblings[chain], payload);
     }
 
     /* Handles calls created by setAndSend. Updates this contract's value
     and gives the token received to the destination specified at the source chain. */
-    function _execute(string calldata sourceChain_, string calldata sourceAddress_, bytes calldata payload_) internal override {
+    function _execute(
+        bytes32, 
+        string calldata sourceChain_, 
+        string calldata sourceAddress_, 
+        bytes calldata payload_
+    ) internal override {
         (value) = abi.decode(payload_, (string));
         sourceChain = sourceChain_;
         sourceAddress = sourceAddress_;
