@@ -129,7 +129,7 @@ contract Factory is AxelarExecutable {
         string memory owner
     ) internal returns (address) {
         address newWallet = address(
-            new Wallet(_gateway, address(gasService), owner)
+           new Wallet{salt: keccak256(abi.encodePacked(owner))}(_gateway, address(gasService), owner)
         );
         return newWallet;
     }
@@ -148,15 +148,6 @@ contract Factory is AxelarExecutable {
             sourceChain,
             sourceAddress
         );
-        CallResult[] memory results = new CallResult[](1);
-
-        results[0] = CallResult(true, abi.encode(smartWalletAddress));
-
-        bytes memory msgPayload = abi.encodePacked(
-            bytes4(0x00000000),
-            abi.encode(AgoricResponse(false, results))
-        );
-        _send(sourceChain, sourceAddress, msgPayload, gasAmount);
     }
 
     function _send(
