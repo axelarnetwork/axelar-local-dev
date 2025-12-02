@@ -19,7 +19,7 @@ export class Command {
         data: any[],
         dataSignature: string[],
         post: ((options: any) => Promise<any>) | undefined = undefined,
-        chain: string | null = null
+        chain: string | null = null,
     ) {
         this.commandId = commandId;
         this.name = name;
@@ -40,14 +40,14 @@ export class Command {
                     args.destinationContractAddress,
                     args.from,
                     args.sourceAddress,
-                    args.payload
+                    args.payload,
                 );
 
                 relayData.callContract[commandId].execution = tx.transactionReceipt.hash;
 
                 return tx;
             },
-            'near'
+            'near',
         );
     };
 }

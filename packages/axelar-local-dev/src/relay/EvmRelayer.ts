@@ -84,7 +84,7 @@ export class EvmRelayer extends Relayer {
                         logger.log(e);
                     });
                     chain.lastExpressedBlock = blockNumber;
-                }
+                },
             );
 
             this.eventSubscribers.push(subscriber);
@@ -112,8 +112,8 @@ export class EvmRelayer extends Relayer {
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-                [to.chainId, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)]
-            )
+                [to.chainId, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)],
+            ),
         );
         const signedData = await getSignedExecuteInput(data, to.operatorWallet);
 
@@ -163,7 +163,7 @@ export class EvmRelayer extends Relayer {
                     'function approve(address,uint256)',
                     'function balanceOf(address) view returns (uint256)',
                 ],
-                to.relayerWallet
+                to.relayerWallet,
             );
 
             // fund relayer wallet with token
@@ -173,7 +173,7 @@ export class EvmRelayer extends Relayer {
                 await to.giveToken(
                     to.relayerWallet.address,
                     payed.symbol,
-                    fundAmount.gt(payed.amount) ? fundAmount.toBigInt() : payed.amount
+                    fundAmount.gt(payed.amount) ? fundAmount.toBigInt() : payed.amount,
                 );
             }
 
@@ -252,7 +252,7 @@ export class EvmRelayer extends Relayer {
                             const contractCallEvent: ContractCallEventObject = contractInterface.decodeEventLog(
                                 'ContractCall',
                                 _event.data,
-                                _event.topics
+                                _event.topics,
                             ) as any;
 
                             const _newGasPaidEvent = {
@@ -270,7 +270,7 @@ export class EvmRelayer extends Relayer {
                             const contractCallWithTokenEvent: ContractCallWithTokenEventObject = contractInterface.decodeEventLog(
                                 'ContractCallWithToken',
                                 _event.data,
-                                _event.topics
+                                _event.topics,
                             ) as any;
 
                             const _newGasWithTokenPaidEvent = {
@@ -426,8 +426,8 @@ export class EvmRelayer extends Relayer {
                 command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() === 'sui') {
                 command = this.otherRelayers?.sui?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
-            } else if (args.destinationChain.toLowerCase() === 'wasm') {
-                command = this.otherRelayers?.wasm?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
+            } else if (args.destinationChain.toLowerCase() === 'agoric') {
+                command = this.otherRelayers?.agoric?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else {
                 command = this.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             }
@@ -445,7 +445,7 @@ export class EvmRelayer extends Relayer {
     createCallContractWithTokenCommand(
         commandId: string,
         relayData: RelayData,
-        callContractWithTokenArgs: CallContractWithTokenArgs
+        callContractWithTokenArgs: CallContractWithTokenArgs,
     ): Command {
         return Command.createEVMContractCallWithTokenCommand(commandId, relayData, callContractWithTokenArgs);
     }
@@ -478,8 +478,8 @@ export class EvmRelayer extends Relayer {
                     'mintToken',
                     [destinationTokenSymbol, args.destinationAddress, amountOut],
                     ['string', 'address', 'uint256'],
-                    args.destinationChain
-                )
+                    args.destinationChain,
+                ),
             );
         }
     }
@@ -541,8 +541,8 @@ export class EvmRelayer extends Relayer {
                         commandId,
                         'mintToken',
                         [destinationTokenSymbol, data.destinationAddress, balance - fee],
-                        ['string', 'address', 'uint256']
-                    )
+                        ['string', 'address', 'uint256'],
+                    ),
                 );
                 const wallet = new Wallet(data.privateKey, from.provider);
                 if (Number(await from.provider.getBalance(address)) === 0) {

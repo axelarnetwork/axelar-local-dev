@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import { Order } from "cosmjs-types/ibc/core/channel/v1/channel";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { IbcClient, Link, RelayedHeights } from "@confio/relayer";
+import { IbcClient, Link, NoopLogger, RelayedHeights } from "@confio/relayer";
 import { ChannelPair } from "@confio/relayer/build/lib/link";
 import { CosmosClient } from "../cosmos/CosmosClient";
 import { RelayerAccountManager } from ".";
@@ -12,6 +12,7 @@ import { Path } from "../../path";
 export class IBCRelayerClient {
   axelarClient: CosmosClient;
   wasmClient: CosmosClient;
+  logger: NoopLogger;
   link?: Link;
   public channel?: ChannelPair;
   public lastRelayedHeight: RelayedHeights = {};
@@ -20,23 +21,30 @@ export class IBCRelayerClient {
   private constructor(
     axelarClient: CosmosClient,
     wasmClient: CosmosClient,
-    relayer: DirectSecp256k1HdWallet
+    relayer: DirectSecp256k1HdWallet,
   ) {
     this.axelarClient = axelarClient;
     this.wasmClient = wasmClient;
+    this.logger = {
+      info: console.log,
+      error: console.log,
+      warn: console.log,
+      verbose: console.log,
+      debug: console.log,
+    } as NoopLogger;
     this.relayerAccountManager = new RelayerAccountManager(
       this.axelarClient,
       this.wasmClient,
-      relayer
+      relayer,
     );
   }
 
   static async create(mnemonic?: string) {
     const axelarClient = await CosmosClient.create("axelar");
-    const wasmClient = await CosmosClient.create("wasm");
+    const wasmClient = await CosmosClient.create("agoric");
     const relayer = await RelayerAccountManager.createRelayerAccount(
-      "wasm",
-      mnemonic
+      "agoric",
+      mnemonic,
     );
 
     return new IBCRelayerClient(axelarClient, wasmClient, relayer);
@@ -49,9 +57,8 @@ export class IBCRelayerClient {
       this.relayerAccountManager.relayerAccount.mnemonic,
       {
         prefix,
-      }
+      },
     );
-
     return IbcClient.connectWithSigner(
       client.chainInfo.rpcUrl,
       relayer,
@@ -60,7 +67,8 @@ export class IBCRelayerClient {
         gasPrice: client.gasPrice,
         estimatedBlockTime: 400,
         estimatedIndexerTime: 60,
-      }
+        logger: this.logger,
+      },
     );
   }
 
@@ -72,7 +80,7 @@ export class IBCRelayerClient {
     try {
       const json = readFileSync(
         path.join(Path.info, "connection.json"),
-        "utf8"
+        "utf8",
       );
       return JSON.parse(json);
     } catch (e) {
@@ -111,7 +119,8 @@ export class IBCRelayerClient {
           axelarIBCClient,
           wasmIBCClient,
           connection.axelar.connectionId,
-          connection.wasm.connectionId
+          connection.wasm.connectionId,
+          this.logger,
         );
       } catch (e) {}
     }
@@ -119,7 +128,7 @@ export class IBCRelayerClient {
     if (!this.link) {
       this.link = await Link.createWithNewConnections(
         axelarIBCClient,
-        wasmIBCClient
+        wasmIBCClient,
       );
 
       if (saveToFile) {
@@ -136,7 +145,7 @@ export class IBCRelayerClient {
             wasm: {
               connectionId: this.link.endB.connectionID,
             },
-          })
+          }),
         );
       }
     }
@@ -168,7 +177,7 @@ export class IBCRelayerClient {
       "transfer",
       "transfer",
       Order.ORDER_UNORDERED,
-      "ics20-1"
+      "ics20-1",
     );
 
     if (saveToFile) {
@@ -194,7 +203,7 @@ export class IBCRelayerClient {
     this.lastRelayedHeight = await this.link!.checkAndRelayPacketsAndAcks(
       this.lastRelayedHeight,
       2,
-      6
+      6,
     );
 
     return this.lastRelayedHeight;

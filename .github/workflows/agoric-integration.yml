@@ -1,0 +1,64 @@
+name: Axelar GMP Integration Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      HOME: /home/runner/work
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install && cd integration && yarn install
+
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      - name: Setup Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+          rustup default stable
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Start Chains and set Relayer
+        run: npm run start:cosmos
+
+      - name: Deploy contracts on Agoric chain
+        run: ./integration/scripts/setup-gmp.mjs
+
+      - name: Make offer for creating EVM Smart Wallet
+        run: ./integration/scripts/make-account.mjs
+        env:
+          makeAccount: true
+
+      - name: Relay data from EVM chain
+        run: |
+          npm run relay:cosmos &
+          sleep 150
+
+      - name: Get EVM Smart wallet address
+        run: ./integration/scripts/make-account.mjs

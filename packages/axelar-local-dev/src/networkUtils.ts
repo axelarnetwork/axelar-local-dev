@@ -333,7 +333,7 @@ export function getDepositAddress(
     to: Network | string,
     destinationAddress: string,
     alias: string,
-    port: number | undefined = undefined
+    port: number | undefined = undefined,
 ) {
     if (typeof from != 'string') from = from.name;
     if (typeof to != 'string') to = to.name;

@@ -1,1 +1,1 @@
-export * from './CosmosClient'
+export * from "./CosmosClient";

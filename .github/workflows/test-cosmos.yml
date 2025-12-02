@@ -1,5 +1,9 @@
 name: Run Tests for Cosmos
-on: pull_request
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
@@ -31,4 +35,4 @@ jobs:
       - name: Test
         timeout-minutes: 15
         run: |
-          npm run test:cosmos
+          npm run test:proxy

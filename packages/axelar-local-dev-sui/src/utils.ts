@@ -3,7 +3,9 @@ import { EventId } from '@mysten/sui.js/client';
 import { BCS, getSuiMoveConfig } from '@mysten/bcs';
 import { TransactionBlock } from '@mysten/sui.js';
 
-const { utils: { hexlify, arrayify }} = ethers;
+const {
+    utils: { hexlify, arrayify },
+} = ethers;
 
 export const getCommandId = (event: EventId) => {
     return ethers.utils.id([event.txDigest, event.eventSeq].join(':'));
@@ -74,35 +76,36 @@ export const getMoveCallFromTx = (tx: TransactionBlock, txData: any, payload: st
     const bcs = new BCS(getSuiMoveConfig());
 
     // input argument for the tx
-    bcs.registerStructType("Description", {
-        packageId: "address",
-        module_name: "string",
-        name: "string",
+    bcs.registerStructType('Description', {
+        packageId: 'address',
+        module_name: 'string',
+        name: 'string',
     });
-    bcs.registerStructType("Transaction", {
-        function: "Description",
-        arguments: "vector<vector<u8>>",
-        type_arguments: "vector<Description>",
+    bcs.registerStructType('Transaction', {
+        function: 'Description',
+        arguments: 'vector<vector<u8>>',
+        type_arguments: 'vector<Description>',
     });
     let txInfo = bcs.de('Transaction', new Uint8Array(txData));
-    const decodeArgs = (args: Uint8Array[]) => args.map(arg => {
-        if(arg[0] === 0) {
-            return tx.object(hexlify(arg.slice(1)));
-        } else if (arg[0] === 1) {
-            return tx.pure(arg.slice(1));
-        } else if (arg[0] === 2) {
-            return callContractObj
-        } else if (arg[0] === 3) {
-            return tx.pure(String.fromCharCode(...arrayify(payload)));
-        } else {
-            throw new Error(`Invalid argument prefix: ${arg[0]}`);
-        }
-    });
+    const decodeArgs = (args: Uint8Array[]) =>
+        args.map((arg) => {
+            if (arg[0] === 0) {
+                return tx.object(hexlify(arg.slice(1)));
+            } else if (arg[0] === 1) {
+                return tx.pure(arg.slice(1));
+            } else if (arg[0] === 2) {
+                return callContractObj;
+            } else if (arg[0] === 3) {
+                return tx.pure(String.fromCharCode(...arrayify(payload)));
+            } else {
+                throw new Error(`Invalid argument prefix: ${arg[0]}`);
+            }
+        });
     const decodeDescription = (description: any) => `${description.packageId}::${description.module_name}::${description.name}`;
 
-    return{
+    return {
         target: decodeDescription(txInfo.function),
         arguments: decodeArgs(txInfo.arguments),
         typeArguments: txInfo.type_arguments.map(decodeDescription),
     } as any;
-}
+};

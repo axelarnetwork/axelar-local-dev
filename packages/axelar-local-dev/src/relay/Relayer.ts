@@ -8,6 +8,7 @@ export enum RelayerType {
     Aptos = 'aptos',
     Near = 'near',
     Wasm = 'wasm',
+    Agoric = 'agoric',
     MultiversX = 'multiversx',
 }
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
@@ -32,7 +33,7 @@ export abstract class Relayer {
     abstract createCallContractWithTokenCommand(
         commandId: string,
         relayData: RelayData,
-        callContractWithTokenArgs: CallContractWithTokenArgs
+        callContractWithTokenArgs: CallContractWithTokenArgs,
     ): Command;
 
     abstract setRelayer(type: RelayerType, relayer: Relayer): void;
@@ -46,6 +47,7 @@ export abstract class Relayer {
         this.commands['sui'] = [];
         this.commands['near'] = [];
         this.commands['wasm'] = [];
+        this.commands['agoric'] = [];
         this.commands['multiversx'] = [];
         // Update all events at the source chains
         await this.updateEvents();

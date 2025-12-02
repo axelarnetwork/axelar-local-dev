@@ -51,11 +51,11 @@ async function main() {
   // Log the token balances
   console.log(
     (await usdcEthContract.balanceOf(ethUserWallet.address)) / 1e6,
-    "aUSDC in Ethereum wallet"
+    "aUSDC in Ethereum wallet",
   );
   console.log(
     (await usdcAvalancheContract.balanceOf(avalancheUserWallet.address)) / 1e6,
-    "aUSDC in Avalanche wallet"
+    "aUSDC in Avalanche wallet",
   );
 }
 

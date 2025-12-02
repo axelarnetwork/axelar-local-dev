@@ -4,8 +4,8 @@ The Axelar Local Dev environment empowers you to simulate the Axelar Gateway's c
 
 ## Core Features
 
--   **Cross-Chain EVM Environment**: Easily set up a ready-to-use cross-chain development environment for EVM chains. For setting up cross-chain unit tests, refer to our [Executing Cross-Chain Transactions Guide](../../docs/guide_basic.md).
+- **Cross-Chain EVM Environment**: Easily set up a ready-to-use cross-chain development environment for EVM chains. For setting up cross-chain unit tests, refer to our [Executing Cross-Chain Transactions Guide](../../docs/guide_basic.md).
 
--   **Exporting Environments**: Effortlessly export your cross-chain development environment to designated ports separately. To learn more, check out our [Standalone Environment Setup Guide](../../docs/guide_create_and_exports.md).
+- **Exporting Environments**: Effortlessly export your cross-chain development environment to designated ports separately. To learn more, check out our [Standalone Environment Setup Guide](../../docs/guide_create_and_exports.md).
 
 Embrace the convenience of local development with Axelar Local Dev. Experience the power of cross-chain operations in the comfort of your development environment!

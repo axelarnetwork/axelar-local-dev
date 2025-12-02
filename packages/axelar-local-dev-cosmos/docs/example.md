@@ -53,7 +53,7 @@ const path = require("path");
       ethereumNetwork.gateway.address,
       ethereumNetwork.gasService.address,
       "Ethereum",
-    ]
+    ],
   );
 
   // Deploy Contract on the Wasm Chain
@@ -71,7 +71,7 @@ const path = require("path");
       channel: ibcRelayer.srcChannelId,
     },
     "send_receive",
-    "auto"
+    "auto",
   );
 
   const messageToEthereum = "Hello from Ethereum";
@@ -90,7 +90,7 @@ const path = require("path");
     },
     "auto",
     "test",
-    [{ amount: "100000", denom: "uwasm" }]
+    [{ amount: "100000", denom: "uwasm" }],
   );
   console.log("Wasm Chain Transaction Hash:", wasmTransaction.transactionHash);
 
@@ -101,7 +101,7 @@ const path = require("path");
     messageToEthereum,
     {
       value: ethers.utils.parseEther("0.001"),
-    }
+    },
   );
   console.log("Ethereum Chain Transaction Hash:", ethereumTransaction.hash);
 
@@ -123,7 +123,7 @@ const path = require("path");
     wasmContractInstantiation.contractAddress,
     {
       get_stored_message: {},
-    }
+    },
   );
 
   console.log("Message on Wasm Contract:", wasmResponse.message);

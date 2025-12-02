@@ -6,8 +6,8 @@ Welcome to the Axelar Local Development Suite featuring Sui Integration. This pa
 
 Before you delve into the development, ensure you have the following components installed on your local machine:
 
--   `sui`
--   `sui-test-validator`
+- `sui`
+- `sui-test-validator`
 
 To set these up, adhere to the step-by-step guide provided by Sui, which can be accessed [here](https://docs.sui.io/build/sui-local-network#install-sui-from-github).
 
@@ -25,6 +25,6 @@ RUST_LOG="consensus=off" cargo run --bin sui-test-validator
 
 Here, you'll find detailed guides that will assist you in various functionalities, including:
 
--   [Relaying Transactions from EVM to Sui](./docs/evm_to_sui.md)
--   [Relaying Transactions from Sui to EVM](./docs/sui_to_evm.md)
--   [Developing a Sui Module](./docs/develop_sui_module.md)
+- [Relaying Transactions from EVM to Sui](./docs/evm_to_sui.md)
+- [Relaying Transactions from Sui to EVM](./docs/sui_to_evm.md)
+- [Developing a Sui Module](./docs/develop_sui_module.md)

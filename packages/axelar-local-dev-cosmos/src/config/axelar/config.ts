@@ -15,7 +15,7 @@ const runChainSetup = () => {
           return reject(error);
         }
         resolve(true);
-      }
+      },
     );
   });
 };

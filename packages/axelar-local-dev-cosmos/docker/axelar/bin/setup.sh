@@ -1,7 +1,7 @@
 #!/bin/sh
 
 EVM_CHAIN=ethereum
-COSMOS_CHAIN=wasm
+COSMOS_CHAIN=agoric
 DIR="$(dirname "$0")"
 
 echo "#### 1. Adding EVM chain ####"

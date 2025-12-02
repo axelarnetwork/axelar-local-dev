@@ -14,7 +14,7 @@ import {
     SmartContract,
     StringType,
     StringValue,
-    TupleType
+    TupleType,
 } from '@multiversx/sdk-core/out';
 
 const { keccak256, toUtf8Bytes } = ethers.utils;
@@ -41,14 +41,11 @@ describe('multiversx', () => {
 
         const contractAddress = await client.deployContract(contractCode, [
             new AddressValue(client.gatewayAddress as Address),
-            new AddressValue(client.gasReceiverAddress as Address)
+            new AddressValue(client.gasReceiverAddress as Address),
         ]);
 
         // Deploy EVM contract
-        const helloWorld = await deployContract(wallet, HelloWorld, [
-            evmNetwork.gateway.address,
-            evmNetwork.gasService.address
-        ]);
+        const helloWorld = await deployContract(wallet, HelloWorld, [evmNetwork.gateway.address, evmNetwork.gasService.address]);
 
         // Send tx from EVM to Multiversx
         const msg = 'Hello Multiversx From EVM!';
@@ -59,17 +56,16 @@ describe('multiversx', () => {
         // Relay tx from EVM to MultiversX
         await relay({
             multiversx: multiversXRelayer,
-            evm: new EvmRelayer({ multiversXRelayer })
+            evm: new EvmRelayer({ multiversXRelayer }),
         });
 
         const result = await client.callContract(contractAddress, 'received_value');
         const parsedResult = new ResultsParser().parseUntypedQueryResponse(result);
         expect(parsedResult?.values?.[0]);
 
-        const decoded = new BinaryCodec().decodeTopLevel(
-            parsedResult.values[0],
-            new TupleType(new StringType(), new StringType(), new BytesType())
-        ).valueOf();
+        const decoded = new BinaryCodec()
+            .decodeTopLevel(parsedResult.values[0], new TupleType(new StringType(), new StringType(), new BytesType()))
+            .valueOf();
         const message = decoded.field2.toString();
 
         expect(message).toEqual(msg);
@@ -81,14 +77,11 @@ describe('multiversx', () => {
 
         const contractAddress = await client.deployContract(contractCode, [
             new AddressValue(client.gatewayAddress as Address),
-            new AddressValue(client.gasReceiverAddress as Address)
+            new AddressValue(client.gasReceiverAddress as Address),
         ]);
 
         // Deploy EVM contract
-        const helloWorld = await deployContract(wallet, HelloWorld, [
-            evmNetwork.gateway.address,
-            evmNetwork.gasService.address
-        ]);
+        const helloWorld = await deployContract(wallet, HelloWorld, [evmNetwork.gateway.address, evmNetwork.gasService.address]);
 
         const multiversXRelayer = new MultiversXRelayer();
         // Update events first so new Multiversx logs are processed afterwards
@@ -101,13 +94,9 @@ describe('multiversx', () => {
             caller: client.owner,
             func: new ContractFunction('setRemoteValue'),
             gasLimit: 20_000_000,
-            args: [
-                new StringValue(evmNetwork.name),
-                new StringValue(helloWorld.address),
-                new BytesValue(Buffer.from(messageEvm, 'hex'))
-            ],
+            args: [new StringValue(evmNetwork.name), new StringValue(helloWorld.address), new BytesValue(Buffer.from(messageEvm, 'hex'))],
             value: 20_000_000,
-            chainID: 'localnet'
+            chainID: 'localnet',
         });
         transaction.setNonce(client.ownerAccount.getNonceThenIncrement());
 
@@ -117,7 +106,7 @@ describe('multiversx', () => {
 
         await relay({
             multiversx: multiversXRelayer,
-            evm: new EvmRelayer({ multiversXRelayer })
+            evm: new EvmRelayer({ multiversXRelayer }),
         });
 
         const evmMessage = await helloWorld.value();
@@ -129,7 +118,7 @@ describe('multiversx', () => {
         const args = [
             'ethereum',
             '0xD62F0cF0801FAC878F66ebF316AB42DED01F25D8',
-            'erd1qqqqqqqqqqqqqpgqlz32muzjtu40pp9lapy35n0cvrdxll47d8ss9ne0ta'
+            'erd1qqqqqqqqqqqqqpgqlz32muzjtu40pp9lapy35n0cvrdxll47d8ss9ne0ta',
         ];
         const tx = await client.executeGateway(
             'approveContractCall',
@@ -137,7 +126,7 @@ describe('multiversx', () => {
             args[0],
             args[1],
             args[2],
-            Buffer.from(payloadHash).toString('hex')
+            Buffer.from(payloadHash).toString('hex'),
         );
         expect(tx).toBeTruthy();
     });
@@ -147,53 +136,43 @@ describe('multiversx', () => {
 
         const contractAddress = await client.deployContract(contractCode, [
             new AddressValue(client.gatewayAddress as Address),
-            new AddressValue(client.gasReceiverAddress as Address)
+            new AddressValue(client.gasReceiverAddress as Address),
         ]);
 
         const commandId = Buffer.from(ethers.utils.randomBytes(32)).toString('hex');
         const toSend = 'Hello Test World!';
         const payload = toUtf8Bytes(toSend);
         const payloadHash = keccak256(payload).substring(2);
-        const args = [
-            'ethereum',
-            '0xD62F0cF0801FAC878F66ebF316AB42DED01F25D8',
-            contractAddress
-        ];
-        const approveTx = await client.executeGateway(
-            'approveContractCall',
-            commandId,
-            args[0],
-            args[1],
-            args[2],
-            payloadHash
-        );
+        const args = ['ethereum', '0xD62F0cF0801FAC878F66ebF316AB42DED01F25D8', contractAddress];
+        const approveTx = await client.executeGateway('approveContractCall', commandId, args[0], args[1], args[2], payloadHash);
         expect(approveTx).toBeTruthy();
 
-        const tx = await client.executeContract(
-            commandId,
-            contractAddress,
-            args[0],
-            args[1],
-            Buffer.from(payload).toString('hex')
-        );
+        const tx = await client.executeContract(commandId, contractAddress, args[0], args[1], Buffer.from(payload).toString('hex'));
         expect(tx).toBeTruthy();
 
         const result = await client.callContract(contractAddress, 'received_value');
         const parsedResult = new ResultsParser().parseUntypedQueryResponse(result);
         expect(parsedResult?.values?.[0]);
 
-        const decoded = new BinaryCodec().decodeTopLevel(
-            parsedResult.values[0],
-            new TupleType(new StringType(), new StringType(), new BytesType())
-        ).valueOf();
+        const decoded = new BinaryCodec()
+            .decodeTopLevel(parsedResult.values[0], new TupleType(new StringType(), new StringType(), new BytesType()))
+            .valueOf();
         const message = decoded.field2.toString();
 
         expect(message).toEqual(toSend);
     });
 
     it.skip('should be able to send token from EVM to MultiversX', async () => {
-        const evmIts = new Contract(evmNetwork.interchainTokenService.address, contracts.IInterchainTokenService.abi, wallet.connect(evmNetwork.provider));
-        const evmItsFactory = new Contract(evmNetwork.interchainTokenFactory.address, contracts.IInterchainTokenFactory.abi, wallet.connect(evmNetwork.provider));
+        const evmIts = new Contract(
+            evmNetwork.interchainTokenService.address,
+            contracts.IInterchainTokenService.abi,
+            wallet.connect(evmNetwork.provider),
+        );
+        const evmItsFactory = new Contract(
+            evmNetwork.interchainTokenFactory.address,
+            contracts.IInterchainTokenFactory.abi,
+            wallet.connect(evmNetwork.provider),
+        );
 
         await registerMultiversXRemoteITS(client, [evmNetwork]);
 
@@ -206,30 +185,16 @@ describe('multiversx', () => {
 
         const tokenId = await evmItsFactory.interchainTokenId(wallet.address, salt);
 
-        await (await evmItsFactory.deployInterchainToken(
-            salt,
-            name,
-            symbol,
-            decimals,
-            amount,
-            wallet.address,
-        )).wait();
+        await (await evmItsFactory.deployInterchainToken(salt, name, symbol, decimals, amount, wallet.address)).wait();
 
-        await (await evmItsFactory.deployRemoteInterchainToken(
-            '',
-            salt,
-            wallet.address,
-            'multiversx',
-            fee,
-            { value: fee },
-        )).wait();
+        await (await evmItsFactory.deployRemoteInterchainToken('', salt, wallet.address, 'multiversx', fee, { value: fee })).wait();
 
         const multiversXRelayer = new MultiversXRelayer();
 
         // Relay tx from EVM to MultiversX
         await relay({
             multiversx: multiversXRelayer,
-            evm: new EvmRelayer({ multiversXRelayer })
+            evm: new EvmRelayer({ multiversXRelayer }),
         });
 
         let tokenIdentifier = await client.its.getValidTokenIdentifier(tokenId);
@@ -247,7 +212,7 @@ describe('multiversx', () => {
         // Relay tx from EVM to MultiversX
         await relay({
             multiversx: multiversXRelayer,
-            evm: new EvmRelayer({ multiversXRelayer })
+            evm: new EvmRelayer({ multiversXRelayer }),
         });
 
         balance = (await client.getFungibleTokenOfAccount(client.owner, tokenIdentifier)).balance?.toString();

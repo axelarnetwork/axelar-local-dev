@@ -135,8 +135,8 @@ export class Network {
         const params = arrayify(
             defaultAbiCoder.encode(
                 ['address[]', 'uint8', 'bytes'],
-                [this.adminWallets.map((wallet) => wallet.address), this.threshold, '0x']
-            )
+                [this.adminWallets.map((wallet) => wallet.address), this.threshold, '0x'],
+            ),
         );
         const auth = await deployContract(this.ownerWallet, Auth, [
             [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [[this.operatorWallet.address], [1], 1])],
@@ -161,8 +161,8 @@ export class Network {
         const params = arrayify(
             defaultAbiCoder.encode(
                 ['address[]', 'uint256', 'bytes'],
-                [this.adminWallets.map((wallet) => wallet.address), this.threshold, '0x']
-            )
+                [this.adminWallets.map((wallet) => wallet.address), this.threshold, '0x'],
+            ),
         );
         const auth = await deployContract(this.ownerWallet, Auth, [
             [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [[this.operatorWallet.address], [1], 1])],
@@ -252,7 +252,7 @@ export class Network {
         let bytecode = factory.getDeployTransaction(
             tokenServiceImplementation.address,
             wallet.address,
-            defaultAbiCoder.encode(['address', 'string', 'string[]', 'string[]'], [wallet.address, this.name, [], []])
+            defaultAbiCoder.encode(['address', 'string', 'string[]', 'string[]'], [wallet.address, this.name, [], []]),
         ).data;
         await this.create3Deployer.connect(wallet).deploy(bytecode, deploymentSalt);
         this.interchainTokenService = InterchainTokenServiceFactory.connect(interchainTokenServiceAddress, wallet);
@@ -281,11 +281,11 @@ export class Network {
                     [
                         defaultAbiCoder.encode(
                             ['string', 'string', 'uint8', 'uint256', 'address', 'uint256'],
-                            [name, symbol, decimals, cap, address, 0]
+                            [name, symbol, decimals, cap, address, 0],
                         ),
                     ],
-                ]
-            )
+                ],
+            ),
         );
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);
         await (await this.gateway.connect(this.ownerWallet).execute(signedData, { gasLimit: BigInt(8e6) })).wait();
@@ -313,8 +313,8 @@ export class Network {
                     [getRandomID()],
                     ['mintToken'],
                     [defaultAbiCoder.encode(['string', 'address', 'uint256'], [symbol, address, amount])],
-                ]
-            )
+                ],
+            ),
         );
 
         const signedData = await getSignedExecuteInput(data, this.operatorWallet);

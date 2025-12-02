@@ -46,7 +46,7 @@ export class AxelarListener {
         id: 1,
         method: "subscribe",
         params: [event.topicId],
-      })
+      }),
     );
     logger.log(`[AxelarListener] Listening to "${event.type}" event`);
   }
@@ -60,7 +60,7 @@ export class AxelarListener {
     ws: ReconnectingWebSocket,
     event: AxelarListenerEvent<T>,
     ev: MessageEvent<any>,
-    callback: (args: T) => void
+    callback: (args: T) => void,
   ) {
     // convert buffer to json
     const _event = JSON.parse(ev.data.toString());
@@ -78,7 +78,7 @@ export class AxelarListener {
       })
       .catch((e) => {
         logger.log(
-          `[AxelarListener] Failed to parse topic ${event.topicId} GMP event: ${e}`
+          `[AxelarListener] Failed to parse topic ${event.topicId} GMP event: ${e}`,
         );
       });
   }

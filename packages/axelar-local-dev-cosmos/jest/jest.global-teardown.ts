@@ -5,7 +5,7 @@ export default async () => {
     await stopAll();
   } catch (e) {
     console.error(
-      "\nPlease make sure you have started the docker containers by running `npm start` before running tests"
+      "\nPlease make sure you have started the docker containers by running `npm start` before running tests",
     );
     throw e;
   }

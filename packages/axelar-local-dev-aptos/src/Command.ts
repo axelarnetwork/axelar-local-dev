@@ -20,7 +20,7 @@ export class Command {
         data: any[],
         dataSignature: string[],
         post: ((options: any) => Promise<any>) | undefined = undefined,
-        chain: string | null = null
+        chain: string | null = null,
     ) {
         this.commandId = commandId;
         this.name = name;
@@ -39,13 +39,13 @@ export class Command {
                 const tx = await aptosNetwork.execute(
                     new HexString(commandId).toUint8Array(),
                     args.destinationContractAddress,
-                    new HexString(args.payload).toUint8Array()
+                    new HexString(args.payload).toUint8Array(),
                 );
 
                 relayData.callContract[commandId].execution = tx.hash;
                 return tx;
             },
-            'aptos'
+            'aptos',
         );
     };
 }

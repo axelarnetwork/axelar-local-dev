@@ -45,7 +45,7 @@ export class NearNetwork extends Worker {
 
         const operators = ethers.utils.defaultAbiCoder.encode(
             ['address[]', 'uint256[]', 'uint256'],
-            [[this.operatorWallet.address], [1], 1]
+            [[this.operatorWallet.address], [1], 1],
         );
 
         await this.gatewayAccount.call(this.gatewayAccount, 'new', {
@@ -107,15 +107,15 @@ export class NearNetwork extends Worker {
         const data = arrayify(
             defaultAbiCoder.encode(
                 ['uint256', 'bytes32[]', 'string[]', 'bytes[]'],
-                [0, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)]
-            )
+                [0, commands.map((com) => com.commandId), commands.map((com) => com.name), commands.map((com) => com.encodedData)],
+            ),
         );
 
         const signature = await this.operatorWallet.signMessage(arrayify(keccak256(data)));
 
         const signData = defaultAbiCoder.encode(
             ['address[]', 'uint256[]', 'uint256', 'bytes[]'],
-            [[this.operatorWallet.address], [1], 1, [signature]]
+            [[this.operatorWallet.address], [1], 1, [signature]],
         );
 
         const input = defaultAbiCoder.encode(['bytes', 'bytes'], [data, signData]);
@@ -126,7 +126,7 @@ export class NearNetwork extends Worker {
             {
                 input,
             },
-            { attachedDeposit: '0' }
+            { attachedDeposit: '0' },
         );
 
         return result;
@@ -146,7 +146,7 @@ export class NearNetwork extends Worker {
         destinationNearAccountId: string,
         sourceChain: string,
         sourceAddress: string,
-        payload: string
+        payload: string,
     ): Promise<TransactionResult> {
         const tx = await this.gatewayAccount.callRaw(
             destinationNearAccountId,
@@ -157,7 +157,7 @@ export class NearNetwork extends Worker {
                 source_address: sourceAddress,
                 payload,
             },
-            { attachedDeposit: '0' }
+            { attachedDeposit: '0' },
         );
 
         return tx;

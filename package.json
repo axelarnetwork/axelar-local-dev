@@ -7,15 +7,15 @@
     "access": "public"
   },
   "scripts": {
+    "deploy": "cd packages/axelar-local-dev-cosmos && ./scripts/deploy.sh",
     "publish": "lerna publish from-package --yes",
     "version": "lerna version --yes --exact --no-git-tag-version",
-    "bootstrap": "lerna bootstrap",
-    "postinstall": "lerna bootstrap",
     "link": "lerna link",
     "test": "lerna run test",
     "update": "lerna update",
     "clean": "lerna clean",
     "start:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run start",
+    "relay:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run relay",
     "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
     "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
     "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
@@ -29,10 +29,17 @@
     "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build",
     "build:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run build",
     "build:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run build",
-    "build:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run build"
+    "build:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run build",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write .",
+    "test:proxy": "yarn --cwd packages/axelar-local-dev-cosmos test:proxy",
+    "coverage:proxy": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run coverage:proxy"
   },
   "devDependencies": {
-    "lerna": "^6.6.1",
+    "chai-as-promised": "^8.0.1",
+    "eslint": "^8.57.0",
+    "lerna": "^8.2.1",
     "lerna-update-wizard": "^1.1.2"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

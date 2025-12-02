@@ -36,21 +36,19 @@ export class Command {
             [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.payload],
             [],
             async () => {
-
-
                 let tx = new TransactionBlock();
                 tx.moveCall({
                     target: `${suiNetwork.axelarPackageId}::discovery::get_transaction`,
-                    arguments: [tx.object(suiNetwork.axelarDiscoveryId), tx.pure(args.destinationContractAddress)]
+                    arguments: [tx.object(suiNetwork.axelarDiscoveryId), tx.pure(args.destinationContractAddress)],
                 });
-                let resp = await suiNetwork.devInspect(tx) as any;
+                let resp = (await suiNetwork.devInspect(tx)) as any;
 
                 tx = new TransactionBlock();
                 tx.moveCall(getMoveCallFromTx(tx, resp.results[0].returnValues[0][0], args.payload));
-                resp = await suiNetwork.devInspect(tx) as any;
+                resp = (await suiNetwork.devInspect(tx)) as any;
 
                 tx = new TransactionBlock();
-                
+
                 const approvedCall = tx.moveCall({
                     target: `${suiNetwork.axelarPackageId}::gateway::take_approved_call`,
                     arguments: [
