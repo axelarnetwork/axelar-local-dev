@@ -136,6 +136,7 @@ export const sendIbc = async ({ memo, amount }) => {
 
 export const sendGmp = async (gmpArgs: GmpArgsContractCall) => {
   const memo = makeAxelarMemo(gmpArgs);
+  console.log("memo:", memo);
   return sendIbc({ memo, amount: String(gmpArgs.gasAmount) });
 };
 
@@ -197,7 +198,7 @@ export const supplyToCompound = async (
 
   await sendGmp({
     destinationAddress: remoteEVMAddress,
-    destinationEVMChain,
+    destinationEVMChain: 'ethereum-sepolia',
     type: AxelarGMPMessageType.ContractCall,
     gasAmount,
     contractInvocationData: [

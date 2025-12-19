@@ -24,7 +24,7 @@
     "relayWithTokens": "ts-node scripts/runner.ts relayWithTokens",
     "testWallet": "ts-node scripts/runner.ts testWallet",
     "testFactory": "ts-node scripts/runner.ts testFactory",
-    "test:proxy": "hardhat test src/__tests__/Factory.spec.ts",
+    "test:proxy": "hardhat test src/__tests__/Factory.spec.ts src/__tests__/FactoryFactory.spec.ts",
     "coverage:proxy": "npx hardhat coverage --testfiles src/__tests__/Factory.spec.ts",
     "verify": "./scripts/verify.sh"
   },

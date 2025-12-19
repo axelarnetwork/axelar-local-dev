@@ -31,7 +31,7 @@ export const constructContractCall = ({
  * Builds a GMP payload from an array of contract calls.
  */
 
-export const buildGMPPayload = (contractCalls, id = "") => {
+export const buildGMPPayload = (contractCalls: Array<any>, id = "") => {
   const abiEncodedContractCalls: AbiEncodedContractCall[] = [];
   for (const call of contractCalls) {
     const { target, functionSignature, args } = call;
@@ -64,11 +64,7 @@ export const buildGMPPayload = (contractCalls, id = "") => {
   return Array.from(hexToBytes(abiEncodedData));
 };
 
-/**
- * @param {bigint} gasAmount - gas amount for the EVM to Agoric message
- * @returns {number[]} The payload array.
- */
-export const buildGasPayload = (gasAmount) => {
+export const buildGasPayload = (gasAmount: bigint) => {
   const abiEncodedData = encodeAbiParameters(
     [{ type: "uint256" }],
     [gasAmount],
@@ -97,7 +93,7 @@ export const getSigner = async () => {
   });
 };
 
-export const getSignerWallet = async ({ prefix }) => {
+export const getSignerWallet = async ({ prefix }: { prefix: string }) => {
   const mnemonic = process.env.MNEMONIC;
   if (!mnemonic) {
     console.error("Mnemonic not found in environment variables.");
