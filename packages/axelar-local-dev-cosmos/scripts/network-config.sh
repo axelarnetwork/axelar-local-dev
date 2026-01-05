@@ -36,6 +36,8 @@ get_network_config() {
     eth-sepolia)
         GATEWAY='0xe432150cce91c13a887f7D836923d5597adD8E31'
         GAS_SERVICE='0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6'
+        # source: https://docs.uniswap.org/contracts/v4/deployments#sepolia-11155111
+        PERMIT2='0x000000000022D473030F116dDEE9F6B43aC78BA3'
         ;;
     fuji)
         GATEWAY='0xC249632c2D40b9001FE907806902f63038B737Ab'
@@ -44,14 +46,19 @@ get_network_config() {
     base-sepolia)
         GATEWAY='0xe432150cce91c13a887f7D836923d5597adD8E31'
         GAS_SERVICE='0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6'
+        # source: https://docs.uniswap.org/contracts/v4/deployments#base-sepolia-84532
+        PERMIT2='0x000000000022D473030F116dDEE9F6B43aC78BA3'
         ;;
     opt-sepolia)
         GATEWAY='0xe432150cce91c13a887f7D836923d5597adD8E31'
         GAS_SERVICE='0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6'
+        PERMIT2='0x000000000022D473030F116dDEE9F6B43aC78BA3'
         ;;
     arb-sepolia)
         GATEWAY='0xe1cE95479C84e9809269227C7F8524aE051Ae77a'
         GAS_SERVICE='0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6'
+        # source: https://docs.uniswap.org/contracts/v4/deployments#arbitrum-sepolia-421614
+        PERMIT2='0x000000000022D473030F116dDEE9F6B43aC78BA3'
         ;;
     *)
         echo "Invalid network specified"

@@ -18,9 +18,11 @@ deploy_contract() {
     local contract_path=$1
     local gateway_contract=$2
     local gas_service_contract=$3
+    local permit2_contract=$4
 
     GATEWAY_CONTRACT="$gateway_contract" \
         GAS_SERVICE_CONTRACT="$gas_service_contract" \
+        PERMIT2_CONTRACT="$permit2_contract" \
         npx hardhat ignition deploy "$contract_path" --network "$network" --verify
 }
 
@@ -37,4 +39,4 @@ delete_deployments_folder() {
 get_network_config "$network"
 
 delete_deployments_folder "ignition/deployments"
-deploy_contract "./ignition/modules/deployFactory.ts" "$GATEWAY" "$GAS_SERVICE"
+deploy_contract "./ignition/modules/deployFactoryFactory.ts" "$GATEWAY" "$GAS_SERVICE" "$PERMIT2"

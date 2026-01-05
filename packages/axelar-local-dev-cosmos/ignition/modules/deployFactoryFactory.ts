@@ -3,9 +3,8 @@ import { config } from "dotenv";
 
 config();
 
-const { GATEWAY_CONTRACT, GAS_SERVICE_CONTRACT } = process.env;
-
-const PERMIT2_CONTRACT = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
+const { GATEWAY_CONTRACT, GAS_SERVICE_CONTRACT, PERMIT2_CONTRACT } =
+  process.env;
 
 console.log("Deploying FactoryFactory with Gateway:", GATEWAY_CONTRACT);
 console.log("Deploying FactoryFactory with Gas Service:", GAS_SERVICE_CONTRACT);
