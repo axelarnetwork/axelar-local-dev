@@ -178,13 +178,21 @@ describe("FactoryFactory", () => {
     const factory = FactoryContract.attach(expectedFactoryAddress);
 
     const commandId = getCommandId();
-    const usdcAddress = await axelarGatewayMock.tokenAddresses("USDC");
+
+    // Deploy a test token that we control
+    const MockERC20Factory = await ethers.getContractFactory("MockERC20");
+    const testToken = await MockERC20Factory.deploy("Test USDC", "USDC", 18);
+    await testToken.waitForDeployment();
+
+    // Mint tokens to owner and approve Permit2
+    await testToken.mint(owner.address, 10000);
+    await testToken.approve(permit2Mock.target, ethers.MaxUint256);
 
     const createAndDepositPayload = {
       lcaOwner: factoryOwner,
       tokenOwner: owner.address,
       permit: {
-        permitted: [{ token: usdcAddress, amount: 1000 }],
+        permitted: [{ token: testToken.target, amount: 1000 }],
         nonce: 0,
         deadline: Math.floor(Date.now() / 1000) + 3600,
       },

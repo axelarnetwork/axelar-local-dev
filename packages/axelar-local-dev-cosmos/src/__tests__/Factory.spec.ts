@@ -132,8 +132,14 @@ describe("Factory", () => {
   it("should create a new remote wallet using Factory", async () => {
     const commandId = getCommandId();
 
-    // Get the deployed USDC token address
-    const usdcAddress = await axelarGatewayMock.tokenAddresses("USDC");
+    // Deploy a test token that we control
+    const MockERC20Factory = await ethers.getContractFactory("MockERC20");
+    const testToken = await MockERC20Factory.deploy("Test USDC", "USDC", 18);
+    await testToken.waitForDeployment();
+
+    // Mint tokens to owner and approve Permit2
+    await testToken.mint(owner.address, 10000);
+    await testToken.approve(permit2Mock.target, ethers.MaxUint256);
 
     // Create a proper CreateAndDepositPayload
     const createAndDepositPayload = {
@@ -142,7 +148,7 @@ describe("Factory", () => {
       permit: {
         permitted: [
           {
-            token: usdcAddress,
+            token: testToken.target,
             amount: 1000,
           },
         ],
