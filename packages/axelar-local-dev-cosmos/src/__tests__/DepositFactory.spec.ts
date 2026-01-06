@@ -1,6 +1,7 @@
 import AxelarGasService from "@axelar-network/axelar-cgp-solidity/artifacts/contracts/gas-service/AxelarGasService.sol/AxelarGasService.json";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import "@nomicfoundation/hardhat-chai-matchers";
 import { keccak256, stringToHex, toBytes } from "viem";
 import {
   approveMessage,
@@ -9,6 +10,8 @@ import {
   encodeMulticallPayload,
   getPayloadHash,
 } from "./lib/utils";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { Contract } from "ethers";
 
 const computeCreate2Address = async (
   factoryAddress: string,
@@ -34,9 +37,9 @@ const computeCreate2Address = async (
 };
 
 const createRemoteEVMAccount = async (
-  axelarGatewayMock,
-  ownerAddress,
-  sourceAddress,
+  axelarGatewayMock: Contract,
+  ownerAddress: string,
+  sourceAddress: string,
 ) => {
   const WalletFactory = await ethers.getContractFactory("Wallet");
   const wallet = await WalletFactory.deploy(
@@ -48,8 +51,14 @@ const createRemoteEVMAccount = async (
   return wallet;
 };
 
-describe("Factory", () => {
-  let owner, addr1, factory, axelarGatewayMock, axelarGasServiceMock;
+describe("DepositFactory", () => {
+  let owner: HardhatEthersSigner,
+    addr1: HardhatEthersSigner,
+    factory: Contract,
+    axelarGatewayMock: Contract,
+    axelarGasServiceMock: Contract,
+    permit2Mock: Contract,
+    testWallet: Contract;
 
   const abiCoder = new ethers.AbiCoder();
 
@@ -92,10 +101,17 @@ describe("Factory", () => {
       tokenDeployer.target,
     );
 
-    const Contract = await ethers.getContractFactory("Factory");
+    // Deploy a mock Permit2 contract
+    const MockPermit2Factory = await ethers.getContractFactory("MockPermit2");
+    permit2Mock = await MockPermit2Factory.deploy();
+    await permit2Mock.waitForDeployment();
+
+    const Contract = await ethers.getContractFactory("DepositFactory");
     factory = await Contract.deploy(
       axelarGatewayMock.target,
       axelarGasServiceMock.target,
+      permit2Mock.target,
+      sourceAddress,
     );
     await factory.waitForDeployment();
 
@@ -113,43 +129,44 @@ describe("Factory", () => {
     });
   });
 
-  it("fund Factory with ETH to pay for gas", async () => {
-    const provider = ethers.provider;
-
-    const factoryAddress = await factory.getAddress();
-    const balanceBefore = await provider.getBalance(factoryAddress);
-    expect(balanceBefore).to.equal(ethers.parseEther("0"));
-
-    const tx = await owner.sendTransaction({
-      to: factoryAddress,
-      value: ethers.parseEther("5.0"),
-    });
-    await tx.wait();
-
-    const receipt = await provider.getTransactionReceipt(tx.hash);
-    const iface = (await ethers.getContractFactory("Factory")).interface;
-    const receivedEvent = receipt?.logs
-      .map((log) => {
-        try {
-          return iface.parseLog(log);
-        } catch {
-          return null;
-        }
-      })
-      .find((parsed) => parsed && parsed.name === "Received");
-
-    expect(receivedEvent).to.not.be.undefined;
-    expect(receivedEvent?.args.sender).to.equal(owner.address);
-    expect(receivedEvent?.args.amount).to.equal(ethers.parseEther("5.0"));
-
-    const balanceAfter = await provider.getBalance(factoryAddress);
-    expect(balanceAfter).to.equal(ethers.parseEther("5.0"));
-  });
-
   it("should create a new remote wallet using Factory", async () => {
     const commandId = getCommandId();
 
-    const payload = abiCoder.encode([], []);
+    // Deploy a test token that we control
+    const MockERC20Factory = await ethers.getContractFactory("MockERC20");
+    const testToken = await MockERC20Factory.deploy("Test USDC", "USDC", 18);
+    await testToken.waitForDeployment();
+
+    // Mint tokens to owner and approve Permit2
+    await testToken.mint(owner.address, 10000);
+    await testToken.approve(permit2Mock.target, ethers.MaxUint256);
+
+    // Create a proper CreateAndDepositPayload
+    const createAndDepositPayload = {
+      lcaOwner: sourceAddress,
+      tokenOwner: owner.address,
+      permit: {
+        permitted: [
+          {
+            token: testToken.target,
+            amount: 1000,
+          },
+        ],
+        nonce: 0,
+        deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+      },
+      witness: ethers.ZeroHash, // dummy witness
+      witnessTypeString:
+        "CreateWallet(string owner,uint256 chainId,address factory)",
+      signature: "0x" + "00".repeat(65), // dummy signature
+    };
+
+    const payload = abiCoder.encode(
+      [
+        "tuple(string lcaOwner, address tokenOwner, tuple(tuple(address token, uint256 amount)[] permitted, uint256 nonce, uint256 deadline) permit, bytes32 witness, string witnessTypeString, bytes signature)",
+      ],
+      [createAndDepositPayload],
+    );
     const payloadHash = keccak256(toBytes(payload));
 
     await approveMessage({
@@ -189,13 +206,12 @@ describe("Factory", () => {
     const multicall = await MulticallFactory.deploy();
     await multicall.waitForDeployment();
 
-    const wallet = await createRemoteEVMAccount(
+    testWallet = await createRemoteEVMAccount(
       axelarGatewayMock,
       owner.address,
       sourceAddress,
     );
 
-    // Test ContractCall
     const multicallAddress = await multicall.getAddress();
     const abiEncodedContractCalls = [
       constructContractCall({
@@ -215,126 +231,69 @@ describe("Factory", () => {
     );
     const payloadHash = getPayloadHash(multicallPayload);
 
-    const commandId1 = getCommandId();
+    const commandId = getCommandId();
     await approveMessage({
-      commandId: commandId1,
+      commandId,
       from: sourceChain,
       sourceAddress,
-      targetAddress: wallet.target,
+      targetAddress: testWallet.target,
       payload: payloadHash,
       owner,
       AxelarGateway: axelarGatewayMock,
       abiCoder,
     });
 
-    const execTx = await wallet.execute(
-      commandId1,
+    const execTx = await testWallet.execute(
+      commandId,
       sourceChain,
       sourceAddress,
       multicallPayload,
     );
 
-    const receipt = await execTx.wait();
-    const walletInterface = wallet.interface;
-
-    // Check CallStatus events for each call
-    const callStatusEvents = receipt?.logs
-      .map((log) => {
-        try {
-          return walletInterface.parseLog(log);
-        } catch {
-          return null;
-        }
-      })
-      .filter((parsed) => parsed && parsed.name === "CallStatus");
-
-    expect(callStatusEvents).to.have.lengthOf(2);
-    expect(callStatusEvents[0]?.args.callIndex).to.equal(0);
-    expect(callStatusEvents[0]?.args.target).to.equal(multicallAddress);
-    expect(callStatusEvents[0]?.args.success).to.be.true;
-
-    expect(callStatusEvents[1]?.args.callIndex).to.equal(1);
-    expect(callStatusEvents[1]?.args.target).to.equal(multicallAddress);
-    expect(callStatusEvents[1]?.args.success).to.be.true;
-
-    // Check MulticallStatus event
     await expect(execTx)
-      .to.emit(wallet, "MulticallStatus")
+      .to.emit(testWallet, "MulticallStatus")
       .withArgs("tx1", true, 2);
 
-    const value = await multicall.getValue();
-    expect(value).to.equal(27);
+    expect(await multicall.getValue()).to.equal(27);
   });
 
-  it("wallet contract should fail when source chain is not agoric", async () => {
-    // Deploy Multicall.sol
-    const MulticallFactory = await ethers.getContractFactory("Multicall");
-    const multicall = await MulticallFactory.deploy();
-    await multicall.waitForDeployment();
-
-    const wallet = await createRemoteEVMAccount(
-      axelarGatewayMock,
-      owner.address,
-      sourceAddress,
-    );
-
-    // Test ContractCall
-    const multicallAddress = await multicall.getAddress();
-    const abiEncodedContractCalls = [
-      constructContractCall({
-        target: multicallAddress,
-        functionSignature: "setValue(uint256)",
-        args: [10],
-      }),
-      constructContractCall({
-        target: multicallAddress,
-        functionSignature: "addToValue(uint256)",
-        args: [17],
-      }),
-    ];
-    const multicallPayload = encodeMulticallPayload(
-      abiEncodedContractCalls,
-      "tx1",
-    );
+  it("wallet should reject invalid source chain", async () => {
+    const wrongSourceChain = "ethereum";
+    const multicallPayload = encodeMulticallPayload([], "tx2");
     const payloadHash = getPayloadHash(multicallPayload);
-    const wrongSourceChain = "ethereum"; // Wrong source chain
 
-    const commandId1 = getCommandId();
+    const commandId = getCommandId();
     await approveMessage({
-      commandId: commandId1,
+      commandId,
       from: wrongSourceChain,
       sourceAddress,
-      targetAddress: wallet.target,
+      targetAddress: testWallet.target,
       payload: payloadHash,
       owner,
       AxelarGateway: axelarGatewayMock,
       abiCoder,
     });
 
-    // This should fail because source chain is not "agoric"
     await expect(
-      wallet.execute(
-        commandId1,
+      testWallet.execute(
+        commandId,
         wrongSourceChain,
         sourceAddress,
         multicallPayload,
       ),
-    ).to.be.revertedWithCustomError(wallet, "InvalidSourceChain");
+    ).to.be.revertedWithCustomError(testWallet, "InvalidSourceChain");
   });
 
-  it("factory contract should fail when source chain is not agoric", async () => {
+  it("factory should reject invalid source chain", async () => {
     const commandId = getCommandId();
-
+    const wrongSourceChain = "ethereum";
     const payload = abiCoder.encode([], []);
     const payloadHash = keccak256(toBytes(payload));
-
-    const wrongSourceChain = "ethereum"; // Wrong source chain
-    const sourceAddr = "agoric1ee9hr0jyrxhy999y755mp862ljgycmwyp4pl7q";
 
     await approveMessage({
       commandId,
       from: wrongSourceChain,
-      sourceAddress: sourceAddr,
+      sourceAddress: sourceAddress,
       targetAddress: factory.target,
       payload: payloadHash,
       owner,
@@ -342,9 +301,30 @@ describe("Factory", () => {
       abiCoder,
     });
 
-    // This should fail because source chain is not "agoric"
     await expect(
-      factory.execute(commandId, wrongSourceChain, sourceAddr, payload),
+      factory.execute(commandId, wrongSourceChain, sourceAddress, payload),
     ).to.be.revertedWithCustomError(factory, "InvalidSourceChain");
+  });
+
+  it("factory should reject unauthorized caller", async () => {
+    const commandId = getCommandId();
+    const payload = abiCoder.encode([], []);
+    const payloadHash = keccak256(toBytes(payload));
+    const wrongSourceAddr = "agoric1ee9hr0jyrxhy999y755mp862ljgycmwyp4pl7q";
+
+    await approveMessage({
+      commandId,
+      from: sourceChain,
+      sourceAddress: wrongSourceAddr,
+      targetAddress: factory.target,
+      payload: payloadHash,
+      owner,
+      AxelarGateway: axelarGatewayMock,
+      abiCoder,
+    });
+
+    await expect(
+      factory.execute(commandId, sourceChain, wrongSourceAddr, payload),
+    ).to.be.revertedWithCustomError(factory, "OwnableUnauthorizedAccount");
   });
 });

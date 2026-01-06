@@ -17,7 +17,7 @@ const computeFactoryCreate2Address = async (
   const salt = ethers.solidityPackedKeccak256(["string"], [owner]);
 
   // Get the Factory contract bytecode and constructor args
-  const FactoryFactory = await ethers.getContractFactory("Factory");
+  const FactoryFactory = await ethers.getContractFactory("DepositFactory");
   const constructorArgs = ethers.AbiCoder.defaultAbiCoder().encode(
     ["address", "address", "address", "string"],
     [gatewayAddress, gasServiceAddress, permit2Address, owner],
@@ -160,7 +160,7 @@ describe("FactoryFactory", () => {
       .to.emit(factoryFactory, "FactoryCreated")
       .withArgs(expectedFactoryAddress, factoryOwner, "agoric", factoryOwner);
 
-    const FactoryContract = await ethers.getContractFactory("Factory");
+    const FactoryContract = await ethers.getContractFactory("DepositFactory");
     const factory = FactoryContract.attach(expectedFactoryAddress);
     expect(await factory.owner()).to.equal(factoryOwner);
   });
@@ -174,7 +174,7 @@ describe("FactoryFactory", () => {
       factoryOwner,
     );
 
-    const FactoryContract = await ethers.getContractFactory("Factory");
+    const FactoryContract = await ethers.getContractFactory("DepositFactory");
     const factory = FactoryContract.attach(expectedFactoryAddress);
 
     const commandId = getCommandId();
