@@ -2,37 +2,30 @@
 pragma solidity ^0.8.20;
 
 import "./MockERC20.sol";
+import "./EIP712.sol";
+import "./PermitHash.sol";
+import "./SignatureVerification.sol";
 
 /**
- * @notice Mock Permit2 implementation for testing
+ * @notice Permit2 implementation with REAL EIP-712 signature verification
  * @dev Matches the actual Uniswap Permit2 SignatureTransfer implementation
- * but with simplified signature verification for testing purposes.
  *
  * Reference: https://github.com/Uniswap/permit2/blob/main/src/SignatureTransfer.sol
  *
- * Key differences from real Permit2:
- * 1. Signature Verification: Real Permit2 validates EIP-712 signatures using:
- *    signature.verify(_hashTypedData(dataHash), owner)
- *    This mock only checks that signature is non-empty for testing simplicity.
+ * Key difference from real Permit2:
+ * - Token Transfer: Real Permit2 uses SafeTransferLib.safeTransferFrom()
+ *   This uses standard transferFrom() which is sufficient with MockERC20.
  *
- * 2. Token Transfer: Real Permit2 uses SafeTransferLib.safeTransferFrom()
- *    This mock uses standard transferFrom() which is sufficient with MockERC20.
- *
- * All other logic (nonce bitmap, validation order, error handling) matches exactly.
+ * All other logic (EIP-712 signatures, ERC1271, nonce bitmap, validation) matches exactly.
  */
-contract MockPermit2 {
+contract MockPermit2 is EIP712 {
+    using PermitHash for PermitHash.PermitBatchTransferFrom;
+    using SignatureVerification for bytes;
     /**
      * @notice Thrown when the requested amount for a transfer is larger than the permissioned amount
      * @param maxAmount The maximum amount a spender can request to transfer
      */
     error InvalidAmount(uint256 maxAmount);
-
-    /**
-     * @notice Thrown when signature is empty (mock-only error for testing)
-     * @dev Real Permit2 doesn't have this error - it reverts from signature.verify()
-     *      when signature verification fails. This mock uses it for basic validation.
-     */
-    error InvalidSigner();
 
     /**
      * @notice Thrown when an allowance on a token has expired
@@ -97,18 +90,38 @@ contract MockPermit2 {
         _useUnorderedNonce(owner, permit.nonce);
 
         // SIGNATURE VERIFICATION:
-        // Real Permit2 performs full EIP-712 signature verification:
-        //   signature.verify(_hashTypedData(dataHash), owner)
-        // where dataHash = permit.hash() or permit.hashWithWitness(...)
-        //
-        // For testing, we skip cryptographic verification and only check
-        // that a signature was provided. This is sufficient since tests
-        // control all inputs and don't need to prove ownership via signatures.
-        if (signature.length == 0) revert InvalidSigner();
+        // Verify EIP-712 signature using SignatureVerification library
+        // Supports both EOA (ecrecover) and contract signatures (ERC1271)
+
+        // Hash the permit data for signature verification
+        PermitHash.TokenPermissions memory tokenPerms = PermitHash
+            .TokenPermissions({
+                token: permit.permitted.token,
+                amount: permit.permitted.amount
+            });
+        bytes32 tokenPermissionsHash = keccak256(
+            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, tokenPerms)
+        );
+
+        // Create the permit transfer from typehash
+        bytes32 PERMIT_TRANSFER_FROM_TYPEHASH = keccak256(
+            "PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)"
+        );
+        bytes32 dataHash = keccak256(
+            abi.encode(
+                PERMIT_TRANSFER_FROM_TYPEHASH,
+                tokenPermissionsHash,
+                msg.sender,
+                permit.nonce,
+                permit.deadline
+            )
+        );
+
+        signature.verify(_hashTypedData(dataHash), owner);
 
         // TOKEN TRANSFER:
         // Real Permit2 uses: ERC20(token).safeTransferFrom(owner, to, amount)
-        // This mock uses standard transferFrom() which works with MockERC20
+        // This uses standard transferFrom() which works with MockERC20
         MockERC20(permit.permitted.token).transferFrom(
             owner,
             transferDetails.to,
@@ -129,11 +142,31 @@ contract MockPermit2 {
         string calldata witnessTypeString,
         bytes calldata signature
     ) external {
-        // Real Permit2 does: permit.hashWithWitness(witness, witnessTypeString)
-        // For mock, we create a simple hash to match the structure
-        bytes32 dataHash = keccak256(
-            abi.encode(permit, witness, witnessTypeString)
+        // Convert to PermitHash.PermitBatchTransferFrom for hashing
+        PermitHash.TokenPermissions[]
+            memory permitted = new PermitHash.TokenPermissions[](
+                permit.permitted.length
+            );
+        for (uint256 i = 0; i < permit.permitted.length; ++i) {
+            permitted[i] = PermitHash.TokenPermissions({
+                token: permit.permitted[i].token,
+                amount: permit.permitted[i].amount
+            });
+        }
+
+        PermitHash.PermitBatchTransferFrom memory hashPermit = PermitHash
+            .PermitBatchTransferFrom({
+                permitted: permitted,
+                nonce: permit.nonce,
+                deadline: permit.deadline
+            });
+
+        // Hash the permit with witness data using PermitHash library
+        bytes32 dataHash = hashPermit.hashWithWitness(
+            witness,
+            witnessTypeString
         );
+
         _permitTransferFrom(
             permit,
             transferDetails,
@@ -168,13 +201,13 @@ contract MockPermit2 {
         _useUnorderedNonce(owner, permit.nonce);
 
         // SIGNATURE VERIFICATION:
-        // Real Permit2 does: signature.verify(_hashTypedData(dataHash), owner)
-        // For testing, we skip cryptographic verification and only check signature is non-empty
-        if (signature.length == 0) revert InvalidSigner();
-        // Note: dataHash is computed but not used for verification in mock
+        // Verify EIP-712 signature using SignatureVerification library
+        // Supports both EOA (ecrecover) and contract signatures (ERC1271)
+        signature.verify(_hashTypedData(dataHash), owner);
 
         // TOKEN TRANSFERS (batch):
         // Real Permit2 uses: ERC20(token).safeTransferFrom(owner, to, amount)
+        // This uses standard transferFrom() which is sufficient with MockERC20
         unchecked {
             for (uint256 i = 0; i < numPermitted; ++i) {
                 TokenPermissions memory permitted = permit.permitted[i];

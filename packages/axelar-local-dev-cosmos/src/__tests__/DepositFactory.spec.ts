@@ -10,6 +10,7 @@ import {
   encodeMulticallPayload,
   getPayloadHash,
 } from "./lib/utils";
+import { signPermit2BatchWitness } from "./lib/permit2Utils";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { Contract } from "ethers";
 
@@ -141,24 +142,40 @@ describe("DepositFactory", () => {
     await testToken.mint(owner.address, 10000);
     await testToken.approve(permit2Mock.target, ethers.MaxUint256);
 
+    // Prepare permit data
+    const permitData = {
+      permitted: [
+        {
+          token: await testToken.getAddress(),
+          amount: 1000n,
+        },
+      ],
+      nonce: 0,
+      deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+    };
+
+    const witness = ethers.ZeroHash;
+    const witnessTypeString =
+      "CreateWallet(string owner,uint256 chainId,address factory)";
+
+    // Sign the permit
+    const signature = await signPermit2BatchWitness(
+      permit2Mock,
+      permitData,
+      witness,
+      witnessTypeString,
+      await factory.getAddress(),
+      owner,
+    );
+
     // Create a proper CreateAndDepositPayload
     const createAndDepositPayload = {
       lcaOwner: sourceAddress,
       tokenOwner: owner.address,
-      permit: {
-        permitted: [
-          {
-            token: testToken.target,
-            amount: 1000,
-          },
-        ],
-        nonce: 0,
-        deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-      },
-      witness: ethers.ZeroHash, // dummy witness
-      witnessTypeString:
-        "CreateWallet(string owner,uint256 chainId,address factory)",
-      signature: "0x" + "00".repeat(65), // dummy signature
+      permit: permitData,
+      witness,
+      witnessTypeString,
+      signature,
     };
 
     const payload = abiCoder.encode(
@@ -342,23 +359,38 @@ describe("DepositFactory", () => {
 
     // Create payload with EXPIRED deadline (in the past)
     const expiredDeadline = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
+    const permitData = {
+      permitted: [
+        {
+          token: await testToken.getAddress(),
+          amount: 1000n,
+        },
+      ],
+      nonce: 100,
+      deadline: expiredDeadline,
+    };
+
+    const witness = ethers.ZeroHash;
+    const witnessTypeString =
+      "CreateWallet(string owner,uint256 chainId,address factory)";
+
+    // Sign the permit (even though deadline is expired)
+    const signature = await signPermit2BatchWitness(
+      permit2Mock,
+      permitData,
+      witness,
+      witnessTypeString,
+      await factory.getAddress(),
+      owner,
+    );
+
     const createAndDepositPayload = {
       lcaOwner: "agoric1testexpired",
       tokenOwner: owner.address,
-      permit: {
-        permitted: [
-          {
-            token: testToken.target,
-            amount: 1000,
-          },
-        ],
-        nonce: 100,
-        deadline: expiredDeadline,
-      },
-      witness: ethers.ZeroHash,
-      witnessTypeString:
-        "CreateWallet(string owner,uint256 chainId,address factory)",
-      signature: "0x" + "00".repeat(65),
+      permit: permitData,
+      witness,
+      witnessTypeString,
+      signature,
     };
 
     const payload = abiCoder.encode(
@@ -401,25 +433,38 @@ describe("DepositFactory", () => {
 
     const sharedNonce = 200;
     const validDeadline = Math.floor(Date.now() / 1000) + 3600;
+    const witness = ethers.ZeroHash;
+    const witnessTypeString =
+      "CreateWallet(string owner,uint256 chainId,address factory)";
 
     // First transaction with nonce 200
+    const permitData1 = {
+      permitted: [
+        {
+          token: await testToken.getAddress(),
+          amount: 1000n,
+        },
+      ],
+      nonce: sharedNonce,
+      deadline: validDeadline,
+    };
+
+    const signature1 = await signPermit2BatchWitness(
+      permit2Mock,
+      permitData1,
+      witness,
+      witnessTypeString,
+      await factory.getAddress(),
+      owner,
+    );
+
     const payload1 = {
       lcaOwner: "agoric1testnonce1",
       tokenOwner: owner.address,
-      permit: {
-        permitted: [
-          {
-            token: testToken.target,
-            amount: 1000,
-          },
-        ],
-        nonce: sharedNonce,
-        deadline: validDeadline,
-      },
-      witness: ethers.ZeroHash,
-      witnessTypeString:
-        "CreateWallet(string owner,uint256 chainId,address factory)",
-      signature: "0x" + "00".repeat(65),
+      permit: permitData1,
+      witness,
+      witnessTypeString,
+      signature: signature1,
     };
 
     const encodedPayload1 = abiCoder.encode(
@@ -450,23 +495,33 @@ describe("DepositFactory", () => {
     );
 
     // Second transaction with SAME nonce 200 (should fail)
+    const permitData2 = {
+      permitted: [
+        {
+          token: await testToken.getAddress(),
+          amount: 1000n,
+        },
+      ],
+      nonce: sharedNonce, // Same nonce!
+      deadline: validDeadline,
+    };
+
+    const signature2 = await signPermit2BatchWitness(
+      permit2Mock,
+      permitData2,
+      witness,
+      witnessTypeString,
+      await factory.getAddress(),
+      owner,
+    );
+
     const payload2 = {
       lcaOwner: "agoric1testnonce2",
       tokenOwner: owner.address,
-      permit: {
-        permitted: [
-          {
-            token: testToken.target,
-            amount: 1000,
-          },
-        ],
-        nonce: sharedNonce, // Same nonce!
-        deadline: validDeadline,
-      },
-      witness: ethers.ZeroHash,
-      witnessTypeString:
-        "CreateWallet(string owner,uint256 chainId,address factory)",
-      signature: "0x" + "00".repeat(65),
+      permit: permitData2,
+      witness,
+      witnessTypeString,
+      signature: signature2,
     };
 
     const encodedPayload2 = abiCoder.encode(

@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import { keccak256, stringToHex, toBytes } from "viem";
 import "@nomicfoundation/hardhat-chai-matchers";
 import { approveMessage, deployToken } from "./lib/utils";
+import { signPermit2BatchWitness } from "./lib/permit2Utils";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { Contract } from "ethers";
 
@@ -188,18 +189,39 @@ describe("FactoryFactory", () => {
     await testToken.mint(owner.address, 10000);
     await testToken.approve(permit2Mock.target, ethers.MaxUint256);
 
+    // Prepare permit data
+    const permitData = {
+      permitted: [
+        {
+          token: await testToken.getAddress(),
+          amount: 1000n,
+        },
+      ],
+      nonce: 0,
+      deadline: Math.floor(Date.now() / 1000) + 3600,
+    };
+
+    const witness = ethers.ZeroHash;
+    const witnessTypeString =
+      "CreateWallet(string owner,uint256 chainId,address factory)";
+
+    // Sign the permit
+    const signature = await signPermit2BatchWitness(
+      permit2Mock,
+      permitData,
+      witness,
+      witnessTypeString,
+      await factory.getAddress(),
+      owner,
+    );
+
     const createAndDepositPayload = {
       lcaOwner: factoryOwner,
       tokenOwner: owner.address,
-      permit: {
-        permitted: [{ token: testToken.target, amount: 1000 }],
-        nonce: 0,
-        deadline: Math.floor(Date.now() / 1000) + 3600,
-      },
-      witness: ethers.ZeroHash,
-      witnessTypeString:
-        "CreateWallet(string owner,uint256 chainId,address factory)",
-      signature: "0x" + "00".repeat(65),
+      permit: permitData,
+      witness,
+      witnessTypeString,
+      signature,
     };
 
     const payload = abiCoder.encode(
