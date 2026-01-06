@@ -129,7 +129,7 @@ describe("DepositFactory", () => {
     });
   });
 
-  it("should create a new remote wallet using Factory", async () => {
+  it("should create wallet and deposit tokens using Permit2", async () => {
     const commandId = getCommandId();
 
     // Deploy a test token that we control
@@ -284,7 +284,7 @@ describe("DepositFactory", () => {
     ).to.be.revertedWithCustomError(testWallet, "InvalidSourceChain");
   });
 
-  it("factory should reject invalid source chain", async () => {
+  it("DepsoitFactory should reject invalid source chain", async () => {
     const commandId = getCommandId();
     const wrongSourceChain = "ethereum";
     const payload = abiCoder.encode([], []);
@@ -306,7 +306,7 @@ describe("DepositFactory", () => {
     ).to.be.revertedWithCustomError(factory, "InvalidSourceChain");
   });
 
-  it("factory should reject unauthorized caller", async () => {
+  it("DepsoitFactory should reject unauthorized caller", async () => {
     const commandId = getCommandId();
     const payload = abiCoder.encode([], []);
     const payloadHash = keccak256(toBytes(payload));
@@ -326,5 +326,171 @@ describe("DepositFactory", () => {
     await expect(
       factory.execute(commandId, sourceChain, wrongSourceAddr, payload),
     ).to.be.revertedWithCustomError(factory, "OwnableUnauthorizedAccount");
+  });
+
+  it("should reject permit with expired deadline", async () => {
+    const commandId = getCommandId();
+
+    // Deploy a test token
+    const MockERC20Factory = await ethers.getContractFactory("MockERC20");
+    const testToken = await MockERC20Factory.deploy("Test USDC", "USDC", 18);
+    await testToken.waitForDeployment();
+
+    // Mint tokens to owner and approve Permit2
+    await testToken.mint(owner.address, 10000);
+    await testToken.approve(permit2Mock.target, ethers.MaxUint256);
+
+    // Create payload with EXPIRED deadline (in the past)
+    const expiredDeadline = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
+    const createAndDepositPayload = {
+      lcaOwner: "agoric1testexpired",
+      tokenOwner: owner.address,
+      permit: {
+        permitted: [
+          {
+            token: testToken.target,
+            amount: 1000,
+          },
+        ],
+        nonce: 100,
+        deadline: expiredDeadline,
+      },
+      witness: ethers.ZeroHash,
+      witnessTypeString:
+        "CreateWallet(string owner,uint256 chainId,address factory)",
+      signature: "0x" + "00".repeat(65),
+    };
+
+    const payload = abiCoder.encode(
+      [
+        "tuple(string lcaOwner, address tokenOwner, tuple(tuple(address token, uint256 amount)[] permitted, uint256 nonce, uint256 deadline) permit, bytes32 witness, string witnessTypeString, bytes signature)",
+      ],
+      [createAndDepositPayload],
+    );
+    const payloadHash = keccak256(toBytes(payload));
+
+    await approveMessage({
+      commandId,
+      from: sourceChain,
+      sourceAddress,
+      targetAddress: factory.target,
+      payload: payloadHash,
+      owner,
+      AxelarGateway: axelarGatewayMock,
+      abiCoder,
+    });
+
+    // Should revert with SignatureExpired error from Permit2
+    await expect(
+      factory.execute(commandId, sourceChain, sourceAddress, payload),
+    ).to.be.revertedWithCustomError(permit2Mock, "SignatureExpired");
+  });
+
+  it("should reject permit with reused nonce", async () => {
+    const commandId1 = getCommandId();
+    const commandId2 = getCommandId();
+
+    // Deploy a test token
+    const MockERC20Factory = await ethers.getContractFactory("MockERC20");
+    const testToken = await MockERC20Factory.deploy("Test USDC", "USDC", 18);
+    await testToken.waitForDeployment();
+
+    // Mint tokens to owner and approve Permit2
+    await testToken.mint(owner.address, 20000);
+    await testToken.approve(permit2Mock.target, ethers.MaxUint256);
+
+    const sharedNonce = 200;
+    const validDeadline = Math.floor(Date.now() / 1000) + 3600;
+
+    // First transaction with nonce 200
+    const payload1 = {
+      lcaOwner: "agoric1testnonce1",
+      tokenOwner: owner.address,
+      permit: {
+        permitted: [
+          {
+            token: testToken.target,
+            amount: 1000,
+          },
+        ],
+        nonce: sharedNonce,
+        deadline: validDeadline,
+      },
+      witness: ethers.ZeroHash,
+      witnessTypeString:
+        "CreateWallet(string owner,uint256 chainId,address factory)",
+      signature: "0x" + "00".repeat(65),
+    };
+
+    const encodedPayload1 = abiCoder.encode(
+      [
+        "tuple(string lcaOwner, address tokenOwner, tuple(tuple(address token, uint256 amount)[] permitted, uint256 nonce, uint256 deadline) permit, bytes32 witness, string witnessTypeString, bytes signature)",
+      ],
+      [payload1],
+    );
+    const payloadHash1 = keccak256(toBytes(encodedPayload1));
+
+    await approveMessage({
+      commandId: commandId1,
+      from: sourceChain,
+      sourceAddress,
+      targetAddress: factory.target,
+      payload: payloadHash1,
+      owner,
+      AxelarGateway: axelarGatewayMock,
+      abiCoder,
+    });
+
+    // First transaction should succeed
+    await factory.execute(
+      commandId1,
+      sourceChain,
+      sourceAddress,
+      encodedPayload1,
+    );
+
+    // Second transaction with SAME nonce 200 (should fail)
+    const payload2 = {
+      lcaOwner: "agoric1testnonce2",
+      tokenOwner: owner.address,
+      permit: {
+        permitted: [
+          {
+            token: testToken.target,
+            amount: 1000,
+          },
+        ],
+        nonce: sharedNonce, // Same nonce!
+        deadline: validDeadline,
+      },
+      witness: ethers.ZeroHash,
+      witnessTypeString:
+        "CreateWallet(string owner,uint256 chainId,address factory)",
+      signature: "0x" + "00".repeat(65),
+    };
+
+    const encodedPayload2 = abiCoder.encode(
+      [
+        "tuple(string lcaOwner, address tokenOwner, tuple(tuple(address token, uint256 amount)[] permitted, uint256 nonce, uint256 deadline) permit, bytes32 witness, string witnessTypeString, bytes signature)",
+      ],
+      [payload2],
+    );
+    const payloadHash2 = keccak256(toBytes(encodedPayload2));
+
+    await approveMessage({
+      commandId: commandId2,
+      from: sourceChain,
+      sourceAddress,
+      targetAddress: factory.target,
+      payload: payloadHash2,
+      owner,
+      AxelarGateway: axelarGatewayMock,
+      abiCoder,
+    });
+
+    // Should revert with InvalidNonce error from Permit2
+    await expect(
+      factory.execute(commandId2, sourceChain, sourceAddress, encodedPayload2),
+    ).to.be.revertedWithCustomError(permit2Mock, "InvalidNonce");
   });
 });
