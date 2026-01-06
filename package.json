@@ -8,6 +8,8 @@
   },
   "scripts": {
     "deploy": "cd packages/axelar-local-dev-cosmos && ./scripts/deploy.sh",
+    "deploy:factory": "cd packages/axelar-local-dev-cosmos && ./scripts/deploy.sh $NETWORK factory",
+    "deploy:factory-factory": "cd packages/axelar-local-dev-cosmos && ./scripts/deploy.sh $NETWORK factory-factory",
     "publish": "lerna publish from-package --yes",
     "version": "lerna version --yes --exact --no-git-tag-version",
     "link": "lerna link",
