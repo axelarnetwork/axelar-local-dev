@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {AxelarExecutable} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {IAxelarGasService} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
-import {Factory} from "./Factory.sol";
+import {DepositFactory} from "./DepositFactory.sol";
 
 error InvalidSourceChain(string expected, string actual);
 
@@ -35,7 +35,7 @@ contract FactoryFactory is AxelarExecutable {
 
     function _createFactory(string memory owner) internal returns (address) {
         address newFactory = address(
-            new Factory{salt: keccak256(abi.encodePacked(owner))}(
+            new DepositFactory{salt: keccak256(abi.encodePacked(owner))}(
                 _gateway,
                 address(gasService),
                 permit2,
