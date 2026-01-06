@@ -129,18 +129,14 @@ contract DepositFactory is AxelarExecutable, Ownable {
 
         newWallet = _createSmartWallet(lcaOwner);
 
-        // Create transfer details array (even if just one token)
+        // Create transfer details array for single token
         IPermit2.SignatureTransferDetails[]
-            memory detailsArray = new IPermit2.SignatureTransferDetails[](
-                permit.permitted.length
-            );
+            memory detailsArray = new IPermit2.SignatureTransferDetails[](1);
 
-        for (uint256 i = 0; i < permit.permitted.length; i++) {
-            detailsArray[i] = IPermit2.SignatureTransferDetails({
-                to: newWallet,
-                requestedAmount: permit.permitted[i].amount
-            });
-        }
+        detailsArray[0] = IPermit2.SignatureTransferDetails({
+            to: newWallet,
+            requestedAmount: permit.permitted[0].amount
+        });
 
         // NOTE: Witness validation is not enforced at the contract level.
         // The witness should contain: keccak256(abi.encode(
