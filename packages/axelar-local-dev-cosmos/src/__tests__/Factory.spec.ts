@@ -55,6 +55,7 @@ describe("Factory", () => {
 
   const sourceChain = "agoric";
   const sourceAddress = "agoric1wrfh296eu2z34p6pah7q04jjuyj3mxu9v98277";
+  const sourceAddress2 = "agoric1ee9hr0jyrxhy999y755mp862ljgycmwyp4pl7q";
 
   let commandIdCounter = 1;
   const getCommandId = () => {
@@ -182,6 +183,27 @@ describe("Factory", () => {
     await expect(tx)
       .to.emit(factory, "SmartWalletCreated")
       .withArgs(expectedWalletAddress, sourceAddress, "agoric");
+  });
+
+  it("should create a new remote wallet using public method", async () => {
+    const commandId = getCommandId();
+
+    // Compute the expected CREATE2 address
+    const expectedWalletAddress = await computeCreate2Address(
+      factory.target.toString(),
+      axelarGatewayMock.target.toString(),
+      axelarGasServiceMock.target.toString(),
+      sourceAddress2,
+    );
+
+    const tx = await factory.createWallet(
+      sourceAddress2,
+      expectedWalletAddress,
+    );
+
+    await expect(tx)
+      .to.emit(factory, "SmartWalletCreated")
+      .withArgs(expectedWalletAddress, sourceAddress2, "agoric");
   });
 
   it("should use the remote wallet to call other contracts", async () => {
