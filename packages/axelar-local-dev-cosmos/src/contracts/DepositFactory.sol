@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {AxelarExecutable} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {IAxelarGasService} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
-import {StringToAddress, AddressToString} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
 import {Ownable} from "./Ownable.sol";
 import {Wallet} from "./Wallet.sol";
 
@@ -61,9 +60,6 @@ struct CreateAndDepositPayload {
 }
 
 contract DepositFactory is AxelarExecutable, Ownable {
-    using StringToAddress for string;
-    using AddressToString for address;
-
     address internal immutable _gateway;
     IAxelarGasService public immutable gasService;
 

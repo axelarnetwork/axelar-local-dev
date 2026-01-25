@@ -3,16 +3,12 @@ pragma solidity ^0.8.20;
 
 import {AxelarExecutable} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {IAxelarGasService} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
-import {StringToAddress, AddressToString} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/libs/AddressString.sol";
 import {Wallet} from "./Wallet.sol";
 
 error InvalidSourceChain(string expected, string actual);
 error WalletAddressMismatch(address expected, address actual);
 
 contract Factory is AxelarExecutable {
-    using StringToAddress for string;
-    using AddressToString for address;
-
     address immutable _gateway;
     IAxelarGasService public immutable gasService;
     string private constant EXPECTED_SOURCE_CHAIN = "agoric";
