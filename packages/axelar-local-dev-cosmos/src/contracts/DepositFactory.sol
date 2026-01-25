@@ -3,11 +3,9 @@ pragma solidity ^0.8.20;
 
 import {AxelarExecutable} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {IAxelarGasService} from "@updated-axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
+import {IFactory} from "./interfaces/IFactory.sol";
 import {Ownable} from "./Ownable.sol";
-import {Wallet} from "./Wallet.sol";
 
-error InvalidSourceChain(string expected, string actual);
-error WalletAddressMismatch(address expected, address actual);
 error EmptyLcaOwner();
 error InvalidTokenOwner();
 error InvalidToken();
@@ -66,15 +64,12 @@ contract DepositFactory is AxelarExecutable, Ownable {
     // Permit2 SignatureTransfer entrypoint
     IPermit2 public immutable permit2;
 
+    // Factory contract
+    IFactory public immutable factory;
+
     string private constant EXPECTED_SOURCE_CHAIN = "agoric";
     bytes32 private constant EXPECTED_SOURCE_CHAIN_HASH =
         keccak256(bytes(EXPECTED_SOURCE_CHAIN));
-
-    event SmartWalletCreated(
-        address indexed wallet,
-        string owner,
-        string sourceChain
-    );
 
     event Received(address indexed sender, uint256 amount);
 
@@ -82,24 +77,13 @@ contract DepositFactory is AxelarExecutable, Ownable {
         address gateway_,
         address gasReceiver_,
         address permit2_,
+        address factory_,
         string memory owner_
     ) payable AxelarExecutable(gateway_) Ownable(owner_) {
         gasService = IAxelarGasService(gasReceiver_);
         _gateway = gateway_;
         permit2 = IPermit2(permit2_);
-    }
-
-    function _createSmartWallet(
-        string memory owner
-    ) internal returns (address) {
-        address newWallet = address(
-            new Wallet{salt: keccak256(abi.encodePacked(owner))}(
-                _gateway,
-                address(gasService),
-                owner
-            )
-        );
-        return newWallet;
+        factory = IFactory(factory_);
     }
 
     function _createAndDeposit(
@@ -110,25 +94,19 @@ contract DepositFactory is AxelarExecutable, Ownable {
         string memory witnessTypeString,
         bytes memory signature,
         address expectedWalletAddress
-    ) internal returns (address newWallet) {
+    ) internal {
         if (bytes(lcaOwner).length == 0) revert EmptyLcaOwner();
         if (tokenOwner == address(0)) revert InvalidTokenOwner();
         if (permit.permitted.token == address(0)) revert InvalidToken();
         if (permit.permitted.amount == 0) revert InvalidAmount();
 
-        newWallet = _createSmartWallet(lcaOwner);
-
-        // Validate that created wallet matches expected address
-        if (newWallet != expectedWalletAddress) {
-            revert WalletAddressMismatch(expectedWalletAddress, newWallet);
-        }
-
         IPermit2.SignatureTransferDetails memory details = IPermit2
             .SignatureTransferDetails({
-                to: newWallet,
+                to: expectedWalletAddress,
                 requestedAmount: permit.permitted.amount
             });
 
+        // transfer first which verifies the permit and asset availability
         permit2.permitWitnessTransferFrom(
             permit,
             details,
@@ -137,6 +115,9 @@ contract DepositFactory is AxelarExecutable, Ownable {
             witnessTypeString,
             signature
         );
+
+        // This call will revert the deposit if the created wallet doesn't have the expected address
+        factory.createWallet(lcaOwner, expectedWalletAddress);
     }
 
     function _execute(
@@ -146,7 +127,7 @@ contract DepositFactory is AxelarExecutable, Ownable {
         bytes calldata payload
     ) internal override onlyOwner(sourceAddress) {
         if (keccak256(bytes(sourceChain)) != EXPECTED_SOURCE_CHAIN_HASH) {
-            revert InvalidSourceChain(EXPECTED_SOURCE_CHAIN, sourceChain);
+            revert IFactory.InvalidSourceChain(EXPECTED_SOURCE_CHAIN, sourceChain);
         }
 
         CreateAndDepositPayload memory p = abi.decode(
@@ -154,11 +135,8 @@ contract DepositFactory is AxelarExecutable, Ownable {
             (CreateAndDepositPayload)
         );
 
-        address smartWalletAddress;
-        string memory walletOwner = p.lcaOwner;
-
         // Wallet creation + deposit
-        smartWalletAddress = _createAndDeposit(
+        _createAndDeposit(
             p.lcaOwner,
             p.tokenOwner,
             p.permit,
@@ -167,8 +145,6 @@ contract DepositFactory is AxelarExecutable, Ownable {
             p.signature,
             p.expectedWalletAddress
         );
-
-        emit SmartWalletCreated(smartWalletAddress, walletOwner, sourceChain);
     }
 
     receive() external payable {

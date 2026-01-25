@@ -55,6 +55,7 @@ describe("DepositFactory", () => {
   let owner: HardhatEthersSigner,
     addr1: HardhatEthersSigner,
     factory: Contract,
+    depositFactory: Contract,
     axelarGatewayMock: Contract,
     axelarGasServiceMock: Contract,
     permit2Mock: Contract,
@@ -106,14 +107,24 @@ describe("DepositFactory", () => {
     permit2Mock = await MockPermit2Factory.deploy();
     await permit2Mock.waitForDeployment();
 
-    const Contract = await ethers.getContractFactory("DepositFactory");
-    factory = await Contract.deploy(
+    // Deploy a the Factory contract
+    const FactoryContract = await ethers.getContractFactory("Factory");
+    factory = await FactoryContract.deploy(
+      axelarGatewayMock.target,
+      axelarGasServiceMock.target,
+    );
+    await factory.waitForDeployment();
+
+    const DepositFactoryContract =
+      await ethers.getContractFactory("DepositFactory");
+    depositFactory = await DepositFactoryContract.deploy(
       axelarGatewayMock.target,
       axelarGasServiceMock.target,
       permit2Mock.target,
+      factory.target,
       sourceAddress,
     );
-    await factory.waitForDeployment();
+    await depositFactory.waitForDeployment();
 
     await deployToken({
       commandId: getCommandId(),
@@ -180,14 +191,14 @@ describe("DepositFactory", () => {
       commandId,
       from: sourceChain,
       sourceAddress,
-      targetAddress: factory.target,
+      targetAddress: depositFactory.target,
       payload: payloadHash,
       owner,
       AxelarGateway: axelarGatewayMock,
       abiCoder,
     });
 
-    const tx = await factory.execute(
+    const tx = await depositFactory.execute(
       commandId,
       sourceChain,
       sourceAddress,
@@ -283,7 +294,7 @@ describe("DepositFactory", () => {
     ).to.be.revertedWithCustomError(testWallet, "InvalidSourceChain");
   });
 
-  it("DepsoitFactory should reject invalid source chain", async () => {
+  it("DepositFactory should reject invalid source chain", async () => {
     const commandId = getCommandId();
     const wrongSourceChain = "ethereum";
     const payload = abiCoder.encode([], []);
@@ -293,7 +304,7 @@ describe("DepositFactory", () => {
       commandId,
       from: wrongSourceChain,
       sourceAddress: sourceAddress,
-      targetAddress: factory.target,
+      targetAddress: depositFactory.target,
       payload: payloadHash,
       owner,
       AxelarGateway: axelarGatewayMock,
@@ -301,11 +312,16 @@ describe("DepositFactory", () => {
     });
 
     await expect(
-      factory.execute(commandId, wrongSourceChain, sourceAddress, payload),
-    ).to.be.revertedWithCustomError(factory, "InvalidSourceChain");
+      depositFactory.execute(
+        commandId,
+        wrongSourceChain,
+        sourceAddress,
+        payload,
+      ),
+    ).to.be.revertedWithCustomError(depositFactory, "InvalidSourceChain");
   });
 
-  it("DepsoitFactory should reject unauthorized caller", async () => {
+  it("DepositFactory should reject unauthorized caller", async () => {
     const commandId = getCommandId();
     const payload = abiCoder.encode([], []);
     const payloadHash = keccak256(toBytes(payload));
@@ -315,7 +331,7 @@ describe("DepositFactory", () => {
       commandId,
       from: sourceChain,
       sourceAddress: wrongSourceAddr,
-      targetAddress: factory.target,
+      targetAddress: depositFactory.target,
       payload: payloadHash,
       owner,
       AxelarGateway: axelarGatewayMock,
@@ -323,8 +339,11 @@ describe("DepositFactory", () => {
     });
 
     await expect(
-      factory.execute(commandId, sourceChain, wrongSourceAddr, payload),
-    ).to.be.revertedWithCustomError(factory, "OwnableUnauthorizedAccount");
+      depositFactory.execute(commandId, sourceChain, wrongSourceAddr, payload),
+    ).to.be.revertedWithCustomError(
+      depositFactory,
+      "OwnableUnauthorizedAccount",
+    );
   });
 
   it("should reject permit with expired deadline", async () => {
@@ -381,7 +400,7 @@ describe("DepositFactory", () => {
       commandId,
       from: sourceChain,
       sourceAddress,
-      targetAddress: factory.target,
+      targetAddress: depositFactory.target,
       payload: payloadHash,
       owner,
       AxelarGateway: axelarGatewayMock,
@@ -390,7 +409,7 @@ describe("DepositFactory", () => {
 
     // Should revert with SignatureExpired error from Permit2
     await expect(
-      factory.execute(commandId, sourceChain, sourceAddress, payload),
+      depositFactory.execute(commandId, sourceChain, sourceAddress, payload),
     ).to.be.revertedWithCustomError(permit2Mock, "SignatureExpired");
   });
 
@@ -459,7 +478,7 @@ describe("DepositFactory", () => {
       commandId: commandId1,
       from: sourceChain,
       sourceAddress,
-      targetAddress: factory.target,
+      targetAddress: depositFactory.target,
       payload: payloadHash1,
       owner,
       AxelarGateway: axelarGatewayMock,
@@ -467,7 +486,7 @@ describe("DepositFactory", () => {
     });
 
     // First transaction should succeed
-    await factory.execute(
+    await depositFactory.execute(
       commandId1,
       sourceChain,
       sourceAddress,
@@ -505,7 +524,7 @@ describe("DepositFactory", () => {
       commandId: commandId2,
       from: sourceChain,
       sourceAddress,
-      targetAddress: factory.target,
+      targetAddress: depositFactory.target,
       payload: payloadHash2,
       owner,
       AxelarGateway: axelarGatewayMock,
@@ -514,7 +533,12 @@ describe("DepositFactory", () => {
 
     // Should revert with InvalidNonce error from Permit2
     await expect(
-      factory.execute(commandId2, sourceChain, sourceAddress, encodedPayload2),
+      depositFactory.execute(
+        commandId2,
+        sourceChain,
+        sourceAddress,
+        encodedPayload2,
+      ),
     ).to.be.revertedWithCustomError(permit2Mock, "InvalidNonce");
   });
 });

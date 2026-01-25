@@ -99,6 +99,7 @@ case "$contract" in
         GATEWAY_CONTRACT="$GATEWAY" \
             GAS_SERVICE_CONTRACT="$GAS_SERVICE" \
             PERMIT2_CONTRACT="$PERMIT2" \
+            FACTORY_CONTRACT="$FACTORY" \
             OWNER_ADDRESS="$OWNER_ADDRESS" \
             npx hardhat ignition deploy "./ignition/modules/deployDepositFactory.ts" --network "$network" --verify
         ;;
