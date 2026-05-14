@@ -178,19 +178,39 @@ contract RemoteAccountAxelarRouter is AxelarExecutable, IRemoteAccountRouter {
             }
 
             if (bytes4(result) == IRemoteAccount.ContractCallFailed.selector) {
-                // Prepend 28 bytes of zeros to 'complete' the custom error selector into a 32-byte word.
-                // This allows abi.decode to treat the selector as the first argument.
-                bytes memory paddedData = abi.encodePacked(new bytes(28), result);
+                // Extract the reason bytes length from the encoded error data.
+                // The ContractCallFailed error is encoded as:
+                // - selector (4 bytes, already checked)
+                // - target (32 bytes)
+                // - callSelector (32 bytes)
+                // - callIndex (32 bytes)
+                // - reason offset (32 bytes, relative to start of params at byte 4)
+                // - reason length (32 bytes, at the offset position)
+                // - reason data (variable)
 
-                // Now we decode including the error selector as the first argument.
-                (, , , , bytes memory reason) = abi.decode(
-                    paddedData,
-                    (bytes4, address, bytes4, uint224, bytes)
-                );
+                // Read the offset at position 100-131 (after 4 + 96 bytes of fixed fields)
+                uint256 reasonOffset;
+                assembly {
+                    // result is a bytes memory, so the data starts at result + 0x20
+                    // Position of offset field: 0x20 (length) + 4 (selector) + 96 (4 fixed 32-byte fields) = 0x84
+                    reasonOffset := mload(add(result, 0x84))
+                }
 
-                if (reason.length == 0) {
-                    // The call made by RemoteAccount likely ran out of gas
-                    revert SubcallOutOfGas();
+                // reasonOffset is relative to byte 4 (start of ABI params), so add 4
+                uint256 reasonLengthPosition = 4 + reasonOffset;
+
+                // Check if we have enough data to read the length
+                if (reasonLengthPosition + 32 <= result.length) {
+                    uint256 reasonLength;
+                    assembly {
+                        // Read the length at the calculated position
+                        reasonLength := mload(add(result, add(0x20, reasonLengthPosition)))
+                    }
+
+                    if (reasonLength == 0) {
+                        // The call made by RemoteAccount likely ran out of gas
+                        revert SubcallOutOfGas();
+                    }
                 }
             }
         }

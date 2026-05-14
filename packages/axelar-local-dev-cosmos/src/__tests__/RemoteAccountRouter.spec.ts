@@ -228,7 +228,7 @@ describe('RemoteAccountAxelarRouter - RouterBehavior', () => {
         receipt.expectOperationFailure();
     });
 
-    it.skip('should revert with SubcallOutOfGas when nested subcall runs out of gas', async () => {
+    it('should revert with SubcallOutOfGas when nested subcall runs out of gas', async () => {
         const lca = 'agoric1nestedoog1234567890abcdefghijklmn';
 
         // Step 1: Pre-create the account so factory.provideRemoteAccount is cheap (verify-only)
