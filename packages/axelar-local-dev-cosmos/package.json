@@ -41,6 +41,7 @@
   "description": "",
   "devDependencies": {
     "@axelar-network/axelar-gmp-sdk-solidity": "^5.6.2",
+    "@types/jest": "^29.5.14",
     "@types/node-fetch": "^2.6.5",
     "hardhat": "~2.19.1",
     "hardhat-gas-reporter": "^1.0.8",

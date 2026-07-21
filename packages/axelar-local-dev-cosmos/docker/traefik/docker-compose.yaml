@@ -4,10 +4,14 @@ services:
     # The official v2 Traefik docker image
     image: traefik:v2.10
     container_name: traefik
-    # Enables the web UI and tells Traefik to listen to docker
+    # Route via the file provider (dynamic.yml) rather than the Docker provider:
+    # Traefik v2's Docker client speaks API 1.24, which Docker Engine 28+ rejects
+    # (minimum 1.40), breaking label discovery on modern hosts. The file provider
+    # needs no Docker socket and works on any Docker version.
     command:
       - --api.insecure=true
-      - --providers.docker=true
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --providers.file.watch=true
       - --entrypoints.web.address=:80
     ports:
       # The HTTP port
@@ -15,8 +19,7 @@ services:
       # The Web UI (enabled by --api.insecure=true)
       - "28080:8080"
     volumes:
-      # So that Traefik can listen to the Docker events
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
 networks:
   default:
     name: traefik_default

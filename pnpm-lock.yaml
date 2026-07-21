@@ -163,6 +163,9 @@ importers:
       '@axelar-network/axelar-gmp-sdk-solidity':
         specifier: 5.6.4
         version: 5.6.4
+      '@types/jest':
+        specifier: ^29.5.14
+        version: 29.5.14
       '@types/node-fetch':
         specifier: ^2.6.5
         version: 2.6.13

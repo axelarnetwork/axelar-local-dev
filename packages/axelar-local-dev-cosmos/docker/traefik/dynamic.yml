@@ -1,0 +1,64 @@
+# Static Traefik routing for the local cosmos chains.
+#
+# We use the file provider instead of the Docker provider because Traefik v2's
+# Docker client speaks API version 1.24, which Docker Engine 28+ rejects (its
+# minimum is 1.40) — label discovery then fails and nothing is routed. The file
+# provider needs no Docker socket and works on any Docker version. Backends are
+# reached by container name over the shared `traefik_default` network.
+#
+# Mirrors the routers/services/middlewares previously declared as container
+# labels in ../wasm/docker-compose.yaml and ../axelar/docker-compose.yaml.
+http:
+  routers:
+    wasm-rpc:
+      rule: "Host(`localhost`) && PathPrefix(`/wasm-rpc`)"
+      entryPoints: [web]
+      service: wasm-rpc
+      middlewares: [wasm-rpc]
+    wasm-lcd:
+      rule: "Host(`localhost`) && PathPrefix(`/wasm-lcd`)"
+      entryPoints: [web]
+      service: wasm-lcd
+      middlewares: [wasm-lcd]
+    axelar-rpc:
+      rule: "Host(`localhost`) && PathPrefix(`/axelar-rpc`)"
+      entryPoints: [web]
+      service: axelar-rpc
+      middlewares: [axelar-rpc]
+    axelar-lcd:
+      rule: "Host(`localhost`) && PathPrefix(`/axelar-lcd`)"
+      entryPoints: [web]
+      service: axelar-lcd
+      middlewares: [axelar-lcd]
+
+  services:
+    wasm-rpc:
+      loadBalancer:
+        servers:
+          - url: "http://wasm:26657"
+    wasm-lcd:
+      loadBalancer:
+        servers:
+          - url: "http://wasm:1317"
+    axelar-rpc:
+      loadBalancer:
+        servers:
+          - url: "http://axelar:26657"
+    axelar-lcd:
+      loadBalancer:
+        servers:
+          - url: "http://axelar:1317"
+
+  middlewares:
+    wasm-rpc:
+      stripPrefix:
+        prefixes: ["/wasm-rpc"]
+    wasm-lcd:
+      stripPrefix:
+        prefixes: ["/wasm-lcd"]
+    axelar-rpc:
+      stripPrefix:
+        prefixes: ["/axelar-rpc"]
+    axelar-lcd:
+      stripPrefix:
+        prefixes: ["/axelar-lcd"]
