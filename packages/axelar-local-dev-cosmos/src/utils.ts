@@ -99,9 +99,9 @@ export function decodeVersionedPayload(versionedPayload: string) {
 // Overload signatures
 export function readFileSync(path: string): Buffer;
 export function readFileSync(path: string, flag: BufferEncoding): string;
-export function readFileSync(path: string, flag?: BufferEncoding) {
+export function readFileSync(path: string, flag?: BufferEncoding): string | Buffer {
   try {
-    return fs.readFileSync(path, flag);
+    return flag === undefined ? fs.readFileSync(path) : fs.readFileSync(path, flag);
   } catch (error: any) {
     if (error.code === "ENOENT") {
       // Custom handling for file not found

@@ -88,6 +88,37 @@ export const httpGet = (url: string) => {
     });
 };
 
+// Minimal JSON POST over the http module (avoids depending on a global fetch,
+// which conflicts between the DOM lib and @types/node). Used to talk to anvil.
+export const httpPost = (url: string, body: string): Promise<{ status: number; body: string }> => {
+    return new Promise((resolve, reject) => {
+        const parsed = new URL(url);
+        const req = http.request(
+            {
+                hostname: parsed.hostname,
+                port: parsed.port,
+                path: parsed.pathname && parsed.pathname.length > 0 ? parsed.pathname : '/',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(body),
+                },
+            },
+            (res) => {
+                res.setEncoding('utf8');
+                let rawData = '';
+                res.on('data', (chunk) => {
+                    rawData += chunk;
+                });
+                res.on('end', () => resolve({ status: res.statusCode ?? 0, body: rawData }));
+            }
+        );
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
+};
+
 export function setLogger(log: (...args: any) => void) {
     logger.log = log;
 }

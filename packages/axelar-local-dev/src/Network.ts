@@ -31,13 +31,14 @@ import {
 } from './types/factories/@axelar-network/interchain-token-service/contracts';
 import { AxelarGasService } from './types/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService';
 import { ITS, setupITS } from './its';
+import { AnvilBackend, AnvilOptions } from './anvil';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const { defaultAbiCoder, arrayify, keccak256, toUtf8Bytes } = ethers.utils;
 
 export const networks: Network[] = [];
 export interface NetworkOptions {
-    ganacheOptions?: any;
+    anvilOptions?: AnvilOptions;
     dbPath?: string;
     port?: number;
     name?: string;
@@ -101,7 +102,8 @@ export class Network {
     interchainTokenFactory: InterchainTokenFactory;
     isRemote: boolean | undefined;
     url: string | undefined;
-    ganacheProvider: any;
+    anvil: AnvilBackend | undefined;
+    anvilUrl: string | undefined;
     server: http.Server | undefined;
     port: number | undefined;
     tokens: { [key: string]: string };
@@ -126,6 +128,8 @@ export class Network {
         this.interchainTokenFactory = networkish.interchainTokenFactory;
         this.isRemote = networkish.isRemote;
         this.url = networkish.url;
+        this.anvil = networkish.anvil;
+        this.anvilUrl = networkish.anvilUrl;
         this.tokens = networkish.tokens;
         this.its = networkish.its;
     }
@@ -151,9 +155,12 @@ export class Network {
     }
 
     async _upgradeGateway(oldAdminAddresses: string[] | undefined = undefined, oldThreshold: number = this.threshold): Promise<Contract> {
-        const adminWallets =
+        // When forking, the gateway admins are impersonated accounts on anvil
+        // (spawned with --auto-impersonate), so we drive them via JSON-RPC signers.
+        const adminAddresses = oldAdminAddresses ?? this.adminWallets.map((wallet) => wallet.address);
+        const adminSigners =
             oldAdminAddresses !== undefined
-                ? oldAdminAddresses.map((address: string) => (this.provider as any).getSigner(address))
+                ? oldAdminAddresses.map((address: string) => (this.provider as providers.JsonRpcProvider).getSigner(address))
                 : this.adminWallets;
 
         logger.log(`Upgrading the Axelar Gateway for ${this.name}... `);
@@ -172,8 +179,8 @@ export class Network {
         const implementationCode = await this.provider.getCode(gateway.address);
         const implementationCodeHash = keccak256(implementationCode);
         for (let i = 0; i < oldThreshold; i++) {
-            await (await this.ownerWallet.sendTransaction({ to: adminWallets[i]._address, value: BigInt(1e18) })).wait();
-            await (await this.gateway.connect(adminWallets[i]).upgrade(gateway.address, implementationCodeHash, params)).wait();
+            await (await this.ownerWallet.sendTransaction({ to: adminAddresses[i], value: BigInt(1e18) })).wait();
+            await (await this.gateway.connect(adminSigners[i]).upgrade(gateway.address, implementationCodeHash, params)).wait();
         }
         await (await auth.transferOwnership(this.gateway.address)).wait();
         logger.log(`Upgraded ${this.gateway.address}`);

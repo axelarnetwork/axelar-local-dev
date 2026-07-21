@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev",
-    "version": "2.3.3",
+    "version": "3.0.0",
     "description": "",
     "main": "dist/index.js",
     "files": [
@@ -11,17 +11,13 @@
     ],
     "scripts": {
         "contract-test": "npx hardhat test",
-        "test": "jest",
+        "test": "jest --runInBand",
         "build-ts": "rm -rf dist && tsc",
         "build-contract": "rm -rf src/artifacts artifacts && hardhat clean && hardhat compile && mv artifacts src/artifacts",
         "build": "run-s build-contract build-ts",
         "lint": "solhint 'src/contracts/**/*.sol' && eslint 'test/**/*.js'",
         "prettier": "prettier --write 'src/contracts/**/*.sol' 'test/**/*.js' 'src/**/*.ts'"
     },
-    "engines": {
-        "node": "^16.0.0 || ^18.0.0"
-    },
-    "engineStrict": true,
     "repository": {
         "type": "git",
         "url": "git+https://github.com/axelarnetwork/axelar-local-dev.git"
@@ -37,10 +33,10 @@
         "@axelar-network/axelar-chains-config": "^1.3.0",
         "@axelar-network/axelar-gmp-sdk-solidity": "^5.7.0",
         "@axelar-network/interchain-token-service": "^1.2.4",
+        "@ethersproject/abi": "^5.7.0",
+        "@ethersproject/providers": "^5.7.0",
         "ethers": "^5.6.5",
-        "fs-extra": "^10.1.0",
-        "ganache": "^7.1.0",
-        "lodash": "^4.17.21"
+        "fs-extra": "^10.1.0"
     },
     "devDependencies": {
         "@babel/eslint-parser": "^7.19.1",
@@ -50,7 +46,6 @@
         "@types/chai": "^4.3.4",
         "@types/fs-extra": "^9.0.13",
         "@types/jest": "^29.2.1",
-        "@types/lodash": "^4.14.186",
         "@types/mocha": "^10.0.0",
         "@types/node": "^18.7.13",
         "@typescript-eslint/eslint-plugin": "^5.41.0",
@@ -69,9 +64,6 @@
         "ts-jest": "^29.0.3",
         "typechain": "^8.1.1",
         "typescript": "^4.7.4"
-    },
-    "optionalDependencies": {
-        "near-workspaces": "^3.3.0"
     },
     "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70"
 }

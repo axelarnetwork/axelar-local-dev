@@ -1,10 +1,8 @@
 'use strict';
 
 import server from './server';
-import ganache from 'ganache';
 import fs from 'fs';
 import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
-import { merge } from 'lodash';
 import { defaultAccounts, setJSON, httpGet, logger } from './utils';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
@@ -16,10 +14,28 @@ import {
     InterchainTokenFactory__factory as InterchainTokenFactoryFactory,
 } from './types/factories/@axelar-network/interchain-token-service/contracts';
 import { setupITS } from './its';
+import { AnvilBackend } from './anvil';
 
-const { keccak256, id, solidityPack, toUtf8Bytes } = ethers.utils;
+const { keccak256, solidityPack, toUtf8Bytes } = ethers.utils;
+
+const DEFAULT_POLLING_INTERVAL_MS = 500;
 
 let serverInstance: Server | undefined;
+
+/**
+ * Fund the deterministic default accounts on the anvil node. The wallets sign
+ * locally (ethers Wallet), so anvil only needs the addresses to hold a balance.
+ */
+async function fundAccounts(provider: providers.JsonRpcProvider, accounts: { balance: bigint; secretKey: string }[]): Promise<void> {
+    await Promise.all(
+        accounts.map((account) =>
+            provider.send('anvil_setBalance', [
+                new Wallet(account.secretKey).address,
+                ethers.utils.hexValue(ethers.BigNumber.from(account.balance)),
+            ])
+        )
+    );
+}
 
 export interface ChainCloneData {
     name: string;
@@ -32,9 +48,6 @@ export interface ChainCloneData {
     tokenSymbol: string;
     gasService: string;
     AxelarGasService: {
-        address: string;
-    };
-    AxelarDepositService: {
         address: string;
     };
     tokens: { [key: string]: string };
@@ -59,20 +72,17 @@ export function listen(port: number, callback: (() => void) | undefined = undefi
 export async function createNetwork(options: NetworkOptions = {}) {
     if (options.dbPath && fs.existsSync(options.dbPath + '/networkInfo.json')) {
         const info = require(options.dbPath + '/networkInfo.json');
-        const ganacheOptions = {
-            database: { dbPath: options.dbPath },
-            ...options.ganacheOptions,
-            chain: {
-                vmErrorsOnRPCResponse: true,
-                chainId: info.chainId,
-                networkId: info.chainId,
-            },
-            logging: { quiet: true },
-        };
-        merge(ganacheOptions, options.ganacheOptions);
-        const ganacheProvider = ganache.provider(ganacheOptions) as any;
-        const chain = await getNetwork(new providers.Web3Provider(ganacheProvider), info);
-        chain.ganacheProvider = ganacheProvider;
+        const backend = new AnvilBackend({
+            ...options.anvilOptions,
+            chainId: info.chainId,
+            statePath: `${options.dbPath}/anvil-state.json`,
+        });
+        await backend.start();
+        const provider = new providers.JsonRpcProvider(backend.url);
+        provider.pollingInterval = DEFAULT_POLLING_INTERVAL_MS;
+        const chain = await getNetwork(provider, info);
+        chain.anvil = backend;
+        chain.anvilUrl = backend.url;
         if (options.port) {
             chain.port = options.port;
             chain.server = server(chain).listen(chain.port, () => {
@@ -87,21 +97,17 @@ export async function createNetwork(options: NetworkOptions = {}) {
     logger.log(`Creating ${chain.name} with a chainId of ${chain.chainId}...`);
     const accounts = defaultAccounts(20, options.seed!);
 
-    const ganacheOptions = {
-        database: { dbPath: options.dbPath },
-        wallet: {
-            accounts: accounts,
-        },
-        chain: {
-            chainId: chain.chainId,
-            networkId: chain.chainId,
-            vmErrorsOnRPCResponse: true,
-        },
-        logging: { quiet: true },
-    };
-    merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = ganache.provider(ganacheOptions);
-    chain.provider = new providers.Web3Provider(chain.ganacheProvider);
+    const backend = new AnvilBackend({
+        ...options.anvilOptions,
+        chainId: chain.chainId,
+        statePath: options.dbPath ? `${options.dbPath}/anvil-state.json` : options.anvilOptions?.statePath,
+    });
+    await backend.start();
+    chain.anvil = backend;
+    chain.anvilUrl = backend.url;
+    chain.provider = new providers.JsonRpcProvider(backend.url);
+    (chain.provider as providers.JsonRpcProvider).pollingInterval = DEFAULT_POLLING_INTERVAL_MS;
+    await fundAccounts(chain.provider as providers.JsonRpcProvider, accounts);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
     [chain.ownerWallet, chain.operatorWallet, chain.relayerWallet] = wallets;
@@ -257,25 +263,19 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
         oldAdminAddresses.push(address);
     }
 
-    const ganacheOptions = {
-        database: { dbPath: options.dbPath },
-        wallet: {
-            accounts: accounts,
-            unlockedAccounts: oldAdminAddresses,
-        },
-        chain: {
-            chainId: chain.chainId,
-            networkId: chain.chainId,
-            vmErrorsOnRPCResponse: true,
-        },
-        fork: {
-            url: chainInfo.rpc,
-        },
-        logging: { quiet: true },
-    };
-    const merged = merge(ganacheOptions, options.ganacheOptions);
-    chain.ganacheProvider = ganache.provider(merged);
-    chain.provider = new providers.Web3Provider(chain.ganacheProvider);
+    const backend = new AnvilBackend({
+        ...options.anvilOptions,
+        chainId: chain.chainId,
+        forkUrl: chainInfo.rpc,
+        unlockedAccounts: [...oldAdminAddresses, ...(options.anvilOptions?.unlockedAccounts ?? [])],
+        statePath: options.dbPath ? `${options.dbPath}/anvil-state.json` : options.anvilOptions?.statePath,
+    });
+    await backend.start();
+    chain.anvil = backend;
+    chain.anvilUrl = backend.url;
+    chain.provider = new providers.JsonRpcProvider(backend.url);
+    (chain.provider as providers.JsonRpcProvider).pollingInterval = DEFAULT_POLLING_INTERVAL_MS;
+    await fundAccounts(chain.provider as providers.JsonRpcProvider, accounts);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
     [chain.ownerWallet, chain.operatorWallet, chain.relayerWallet] = wallets;
@@ -313,6 +313,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
 export async function stop(network: string | Network) {
     if (typeof network === 'string') network = networks.find((chain) => chain.name === network)!;
     if (network.server) await network.server.close();
+    await network.anvil?.stop();
     networks.splice(networks.indexOf(network), 1);
 }
 
@@ -324,31 +325,4 @@ export async function stopAll() {
         await serverInstance.close();
         serverInstance = undefined;
     }
-}
-
-export const depositAddresses: any = {};
-
-export function getDepositAddress(
-    from: Network | string,
-    to: Network | string,
-    destinationAddress: string,
-    alias: string,
-    port: number | undefined = undefined
-) {
-    if (typeof from != 'string') from = from.name;
-    if (typeof to != 'string') to = to.name;
-    if (!port) {
-        const key = keccak256(id(from + ':' + to + ':' + destinationAddress + ':' + alias));
-        const address = new Wallet(key).address;
-        depositAddresses[from] = {
-            [address]: {
-                destinationChain: to,
-                destinationAddress: destinationAddress,
-                alias: alias,
-                privateKey: key,
-            },
-        };
-        return address;
-    }
-    return httpGet(`http:/127.0.0.1:${port}/getDepositAddress/${from}/${to}/${destinationAddress}/${alias}`);
 }

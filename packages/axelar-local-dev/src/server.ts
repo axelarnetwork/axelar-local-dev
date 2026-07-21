@@ -1,7 +1,7 @@
 import { OutgoingHttpHeaders, IncomingHttpHeaders, Server, ServerResponse, IncomingMessage, createServer } from 'http';
 import { Network } from './Network';
-import { getDepositAddress } from './networkUtils';
 import { relay } from './relay';
+import { httpPost } from './utils';
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 function createCORSResponseHeaders(method: string, requestHeaders: IncomingHttpHeaders) {
@@ -102,16 +102,6 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                         sendResponse(response, 200, headers, JSON.stringify(networkOrList.length));
                         return;
                     }
-                    if (first == 'getDepositAddress' && method == 'GET') {
-                        headers['Content-Type'] = 'application/json';
-                        const from = url[0].replace('%20', ' ');
-                        const to = url[1].replace('%20', ' ');
-                        const destinationAddress = url[2];
-                        const symbol = url[3];
-
-                        sendResponse(response, 200, headers, JSON.stringify(getDepositAddress(from, to, destinationAddress, symbol)));
-                        return;
-                    }
                     const n = parseInt(first!);
                     if (Number.isNaN(n) || n < 0 || n >= networkOrList.length) {
                         badRequest();
@@ -151,14 +141,20 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                             break;
                         }
 
-                        if (network == null) {
+                        if (network == null || !network.anvilUrl) {
                             badRequest();
                             return;
                         }
-                        network.ganacheProvider!.send(payload, function (_: any, result: any) {
+                        // Forward the raw JSON-RPC body (single or batch) straight to
+                        // this chain's anvil node and relay its response back.
+                        try {
+                            const anvilResponse = await httpPost(network.anvilUrl, body);
                             headers['Content-Type'] = 'application/json';
-                            sendResponse(response, 200, headers, JSON.stringify(result));
-                        });
+                            sendResponse(response, anvilResponse.status, headers, anvilResponse.body);
+                        } catch (e) {
+                            headers['Content-Type'] = 'application/json';
+                            sendResponse(response, 502, headers, rpcError(Array.isArray(payload) ? null : payload.id, -32000, 'anvil backend request failed'));
+                        }
 
                         break;
                     case 'OPTIONS':

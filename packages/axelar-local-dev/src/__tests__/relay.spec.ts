@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 'use strict';
 
-import { createNetwork, relay, stopAll, listen, getFee, getDepositAddress, deployContract, setLogger, evmRelayer } from '../';
+import { createNetwork, relay, stopAll, deployContract, setLogger, evmRelayer } from '../';
 import { defaultAbiCoder } from 'ethers/lib/utils';
-import { BigNumber, Contract, ContractTransaction, Wallet, ethers } from 'ethers';
+import { Contract, ContractTransaction, Wallet, ethers } from 'ethers';
 import { Network } from '../Network';
 import ExpressWithToken from '../artifacts/src/contracts/test/ExpressWithToken.sol/ExpressWithToken.json';
 import chai from 'chai';
@@ -31,63 +31,6 @@ describe('relay', () => {
 
     afterEach(async () => {
         await stopAll();
-    });
-
-    describe('deposit address', () => {
-        it('should generate a deposit address', async () => {
-            const depositAddress = await getDepositAddress(chain1, chain2, user2.address, 'aUSDC');
-            const amount = 12423532412;
-            const fee = getFee();
-            await chain1.giveToken(user1.address, 'aUSDC', BigInt(amount));
-            await chain1.usdc?.transfer(depositAddress, amount).then((tx: ContractTransaction) => tx.wait());
-            await relay();
-
-            const balance = await chain2.usdc?.balanceOf(user2.address).then((b: BigNumber) => b.toNumber());
-            expect(balance).to.equal(amount - fee);
-        });
-
-        it('should generate a deposit address to use twice', async () => {
-            const depositAddress = getDepositAddress(chain1, chain2, user2.address, 'aUSDC');
-            const amount1 = BigInt(12423532412);
-            const amount2 = BigInt(5489763092348);
-            const fee = BigInt(getFee());
-            await chain1.giveToken(user1.address, 'aUSDC', amount1);
-            await chain1.usdc?.transfer(depositAddress, amount1).then((tx: ContractTransaction) => tx.wait());
-            await relay();
-            expect(BigInt(await chain2.usdc?.balanceOf(user2.address))).to.equal(amount1 - fee);
-
-            await chain1.giveToken(user1.address, 'aUSDC', amount2);
-            await chain1.usdc?.transfer(depositAddress, amount2).then((tx: ContractTransaction) => tx.wait());
-            await relay();
-            expect(BigInt(await chain2.usdc?.balanceOf(user2.address))).to.equal(amount1 - fee + amount2 - fee);
-        });
-
-        it('should generate a deposit address remotely', async () => {
-            const port = 8501;
-            await listen(port);
-            const depositAddress = await getDepositAddress(chain1, chain2, user2.address, 'aUSDC', port);
-            const amount = BigInt(12423532412);
-            const fee = BigInt(getFee());
-            await chain1.giveToken(user1.address, 'aUSDC', amount);
-            await chain1.usdc?.transfer(depositAddress, amount).then((tx: ContractTransaction) => tx.wait());
-            await relay();
-            expect(BigInt(await chain2.usdc?.balanceOf(user2.address))).to.equal(amount - fee);
-        });
-    });
-
-    describe('send token', () => {
-        it('should send some usdc over', async () => {
-            const amount = BigInt(1e8);
-            const fee = BigInt(getFee());
-            await chain1.giveToken(user1.address, 'aUSDC', amount);
-            await chain1.usdc?.approve(chain1.gateway.address, amount).then((tx: ContractTransaction) => tx.wait());
-            await chain1.gateway
-                .connect(user1)
-                .sendToken(chain2.name, user2.address, 'aUSDC', amount)
-                .then((tx: ContractTransaction) => tx.wait());
-            await relay();
-            expect(BigInt(await chain2.usdc?.balanceOf(user2.address))).to.equal(amount - fee);
-        });
     });
 
     describe('call contract', () => {

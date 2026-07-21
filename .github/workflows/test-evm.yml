@@ -4,37 +4,35 @@ on: pull_request
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: ["18.x", "20.x"]
     steps:
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache node_modules
-        uses: actions/cache@v3
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          node-version-file: .nvmrc
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Build
-        run: npm run build:core
+        run: pnpm run build:core
 
       - name: Test
         timeout-minutes: 15
+        # createNetwork/forkNetwork spawn their own anvil per chain. The
+        # setupAndExport test additionally connects to two externally-run chains
+        # on :8545/:8546, so start those here.
         run: |
           nohup sh -c "anvil -p 8545 > /dev/null 2>&1" < /dev/null &
           nohup sh -c "anvil -p 8546 > /dev/null 2>&1" < /dev/null &
           sleep 5
-          npm run test:core
+          pnpm run test:core
