@@ -122,3 +122,14 @@ export const httpPost = (url: string, body: string): Promise<{ status: number; b
 export function setLogger(log: (...args: any) => void) {
     logger.log = log;
 }
+
+/**
+ * anvil rejects an eth_getLogs range whose fromBlock is past the current chain
+ * height (e.g. fromBlock > toBlock), which ethers' event-filter polling transiently
+ * requests when no new block has been mined. The old ganache backend returned []
+ * for such ranges. This matches anvil's error message so callers can emulate the
+ * lenient behavior instead of crashing on a benign empty range.
+ */
+export function isBlockOutOfRangeMessage(message: unknown): boolean {
+    return typeof message === 'string' && /BlockOutOfRange|block height is \d+ but requested was/i.test(message);
+}

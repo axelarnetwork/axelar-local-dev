@@ -1,8 +1,44 @@
 import { OutgoingHttpHeaders, IncomingHttpHeaders, Server, ServerResponse, IncomingMessage, createServer } from 'http';
 import { Network } from './Network';
 import { relay } from './relay';
-import { httpPost } from './utils';
+import { httpPost, isBlockOutOfRangeMessage } from './utils';
 const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+/**
+ * anvil rejects eth_getLogs ranges past the chain head (which ethers' event
+ * polling transiently requests when no new block has been mined); the old ganache
+ * backend returned [] for these. Rewrite those specific JSON-RPC errors to an empty
+ * result so consumers polling through this proxy keep working as they did on
+ * ganache. Handles single and batch requests; everything else passes through.
+ */
+function emulateGanacheGetLogs(requestBody: string, anvilResponse: { status: number; body: string }): { status: number; body: string } {
+    let request: any;
+    let resp: any;
+    try {
+        request = JSON.parse(requestBody);
+        resp = JSON.parse(anvilResponse.body);
+    } catch {
+        return anvilResponse;
+    }
+    const getLogsIds = new Set(
+        (Array.isArray(request) ? request : [request]).filter((item) => item && item.method === 'eth_getLogs').map((item) => item.id)
+    );
+    if (getLogsIds.size === 0) return anvilResponse;
+    let rewrote = false;
+    const fix = (entry: any) => {
+        if (entry && entry.error && getLogsIds.has(entry.id) && isBlockOutOfRangeMessage(entry.error.message)) {
+            rewrote = true;
+            return { jsonrpc: '2.0', id: entry.id, result: [] };
+        }
+        return entry;
+    };
+    const fixed = Array.isArray(resp) ? resp.map(fix) : fix(resp);
+    if (!rewrote) return anvilResponse;
+    // JSON-RPC errors are conventionally returned with HTTP 200; ensure the
+    // rewritten (now successful) response uses 200 so clients don't treat it as a
+    // transport error.
+    return { status: 200, body: JSON.stringify(fixed) };
+}
 
 function createCORSResponseHeaders(method: string, requestHeaders: IncomingHttpHeaders) {
     // https://fetch.spec.whatwg.org/#http-requests
@@ -148,7 +184,7 @@ export default function (networkOrList: Network | Network[], logger = { log: fun
                         // Forward the raw JSON-RPC body (single or batch) straight to
                         // this chain's anvil node and relay its response back.
                         try {
-                            const anvilResponse = await httpPost(network.anvilUrl, body);
+                            const anvilResponse = emulateGanacheGetLogs(body, await httpPost(network.anvilUrl, body));
                             headers['Content-Type'] = 'application/json';
                             sendResponse(response, anvilResponse.status, headers, anvilResponse.body);
                         } catch (e) {

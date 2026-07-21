@@ -3,7 +3,7 @@
 import server from './server';
 import fs from 'fs';
 import { ethers, Wallet, Contract, providers, getDefaultProvider } from 'ethers';
-import { defaultAccounts, setJSON, httpGet, logger } from './utils';
+import { defaultAccounts, setJSON, httpGet, logger, isBlockOutOfRangeMessage } from './utils';
 import { Network, networks, NetworkOptions, NetworkInfo, NetworkSetup } from './Network';
 import { AxelarGateway__factory as AxelarGatewayFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/AxelarGateway__factory';
 import { AxelarGasService__factory as AxelarGasServiceFactory } from './types/factories/@axelar-network/axelar-cgp-solidity/contracts/gas-service/AxelarGasService__factory';
@@ -35,6 +35,35 @@ async function fundAccounts(provider: providers.JsonRpcProvider, accounts: { bal
             ])
         )
     );
+}
+
+/**
+ * Create a JsonRpcProvider for an anvil node: sets the polling interval used by
+ * the relayer's event subscriptions, and installs a ganache-compatibility shim.
+ *
+ * anvil is stricter than the old ganache backend about eth_getLogs — it rejects a
+ * range whose fromBlock is past the current chain height (e.g. fromBlock > toBlock,
+ * which ethers' event-filter polling transiently requests when no new block has
+ * been mined). ganache returned [] for such ranges; we emulate that so the
+ * relayer's `.on(...)` log subscriptions don't crash on a benign empty range.
+ */
+function createAnvilProvider(url: string): providers.JsonRpcProvider {
+    const provider = new providers.JsonRpcProvider(url);
+    provider.pollingInterval = DEFAULT_POLLING_INTERVAL_MS;
+    const send = provider.send.bind(provider);
+    provider.send = async (method: string, params: Array<any>): Promise<any> => {
+        try {
+            return await send(method, params);
+        } catch (error) {
+            if (method === 'eth_getLogs' && isBlockOutOfRangeError(error)) return [];
+            throw error;
+        }
+    };
+    return provider;
+}
+
+function isBlockOutOfRangeError(error: any): boolean {
+    return isBlockOutOfRangeMessage(`${error?.error?.message ?? ''} ${error?.body ?? ''} ${error?.message ?? ''}`);
 }
 
 export interface ChainCloneData {
@@ -78,8 +107,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
             statePath: `${options.dbPath}/anvil-state.json`,
         });
         await backend.start();
-        const provider = new providers.JsonRpcProvider(backend.url);
-        provider.pollingInterval = DEFAULT_POLLING_INTERVAL_MS;
+        const provider = createAnvilProvider(backend.url);
         const chain = await getNetwork(provider, info);
         chain.anvil = backend;
         chain.anvilUrl = backend.url;
@@ -105,8 +133,7 @@ export async function createNetwork(options: NetworkOptions = {}) {
     await backend.start();
     chain.anvil = backend;
     chain.anvilUrl = backend.url;
-    chain.provider = new providers.JsonRpcProvider(backend.url);
-    (chain.provider as providers.JsonRpcProvider).pollingInterval = DEFAULT_POLLING_INTERVAL_MS;
+    chain.provider = createAnvilProvider(backend.url);
     await fundAccounts(chain.provider as providers.JsonRpcProvider, accounts);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
@@ -273,8 +300,7 @@ export async function forkNetwork(chainInfo: ChainCloneData, options: NetworkOpt
     await backend.start();
     chain.anvil = backend;
     chain.anvilUrl = backend.url;
-    chain.provider = new providers.JsonRpcProvider(backend.url);
-    (chain.provider as providers.JsonRpcProvider).pollingInterval = DEFAULT_POLLING_INTERVAL_MS;
+    chain.provider = createAnvilProvider(backend.url);
     await fundAccounts(chain.provider as providers.JsonRpcProvider, accounts);
     const wallets = accounts.map((x) => new Wallet(x.secretKey, chain.provider));
     chain.userWallets = wallets.splice(10, 20);
