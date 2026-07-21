@@ -35,8 +35,6 @@ export interface NativeGasPaidForContractCallArgs {
 }
 
 export interface RelayData {
-    depositAddress: any;
-    sendToken: any;
     callContract: any;
     callContractWithToken: any;
 }

@@ -29,7 +29,7 @@ This module exports the following types:
   - `getInfo()`: Returns an object with all the information about the `Network`.
   - `relay()`: This method is either equivalent to calling the local instance of this module's `relay()` (see below) or, for remote networks, the host's instance of `relay()`.
 - `NetworkOptions` This type is used as an input to create networks and can include the following. All are optional.
-  - `ganacheOptions`: Additional options to be passed into `require(ganache).provider`.
+  - `anvilOptions`: Additional options for the local `anvil` node backing this network (e.g. `chainId`, `forkUrl`, `forkBlockNumber`, `unlockedAccounts`, `statePath`, `blockTime`, `hardfork`, `extraArgs`).
   - `dbPath`: Where to save/find the db for a network already created. Will not save unless specified.
   - `port`: Which port to listen to for this network. Will not listen to any port unless specified.
   - `name`: The name of the network. Defaults to `Chain {n}` where `n` is the index of the network.
@@ -76,7 +76,6 @@ The following is exported by this module.
 - `listen(port, callback = null)`: This will serve all the created networks on port `port`. Each network is served at `/i` where `i` is the index of the network in `networks` (the first network created is at `/0` and so on).
 - `getAllNetworks(url)`: This will retreive all the networks served by `listen` called from a different instance.
 - `relay()`: A function that passes all the messages to all the gateways and calls the appropriate `IAxelarExecutable` contracts.
-- `getDepostiAddress(sourceNetwork, destinationNetwork, destinationAddress, symbol)`: This function generates a deposit address on `network1` that will route any funds of type `symbol` deposited there (minus some fee) to the `destinationAddress` in `network2`.
 - `getFee(sourceNetwork, destinationNetwork, symbol)`: returns the fee for transferring funds. Is set to a constant `1,000,000`.
 - `getGasPrice(sourceNetwork, destinationNetwork, tokenOnSource)`: returns the gas price to execute on `destinationChain`, to be payed in `sourceChain` in token specified by `tokenOnSource` (which is given as an address). `tokenOnSource=AddressZero` corresponds to the native token of the source chain. It always returns `1` but may change in the future.
 - `stop(network)`: Destroys the network and removes it from the list of tracked networks.
@@ -89,11 +88,10 @@ To use the Networks created you need to interact with the deployed `AxelarGatewa
 
 ### `AxelarGateway`
 
-This contract exposes three functions to use:
+This contract exposes two functions to use:
 
-- `sendToken(string destinationChain, string destinationAddress, string symbol, uint256 amount)`: The `destinationChain` has to match the network name for the token to reach its destination after relaying. The `destinationAddress` is the human-readable version of the address, prefixed with `0x`. This is a `string` instead of an `address` because in the real world you can send token to non-evm chains that have other address formats as well. `tokenSymbol` has to match one of the tokens that are deployed in the network, by default just UST but additional tokens can be added (see `deployToken` under `Network`).
-- `callContract(string destinationChain, string contractDestinationAddress, bytes payload)`: See above for `destinationChain` and `contractDestinationAddress`. `payload` is the information passed to the contract on the destination chain. Use `abi.encode` to produce `payload`s.
-- `callContractWithToken(string destinationChain, string contractDestinationAddress, bytes payload, string symbol, uint256 amount)`: This is a combination of the above two functions, but the token has to arrive at the contract that is executing.
+- `callContract(string destinationChain, string contractDestinationAddress, bytes payload)`: The `destinationChain` has to match the network name for the message to reach its destination after relaying. The `contractDestinationAddress` is the human-readable version of the address, prefixed with `0x`. `payload` is the information passed to the contract on the destination chain. Use `abi.encode` to produce `payload`s.
+- `callContractWithToken(string destinationChain, string contractDestinationAddress, bytes payload, string symbol, uint256 amount)`: Like `callContract`, but the token specified by `symbol`/`amount` also has to arrive at the contract that is executing.
 
 ### `IAxelarExecutable`
 

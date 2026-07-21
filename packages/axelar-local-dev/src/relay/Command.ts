@@ -27,7 +27,7 @@ export class Command {
         this.data = data;
 
         this.encodedData =
-            ['sui', 'aptos', 'wasm'].includes(chain || '') && name === 'approve_contract_call'
+            ['sui', 'wasm'].includes(chain || '') && name === 'approve_contract_call'
                 ? ''
                 : defaultAbiCoder.encode(dataSignature, data);
         this.post = post;

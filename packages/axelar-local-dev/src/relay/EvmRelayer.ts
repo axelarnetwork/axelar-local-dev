@@ -1,12 +1,11 @@
 import { Relayer, RelayerType } from './Relayer';
 import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } from './types';
-import { ContractReceipt, ethers, Wallet } from 'ethers';
-import { getEVMLogID, getRandomID, getSignedExecuteInput, logger } from '../utils';
+import { ContractReceipt, ethers } from 'ethers';
+import { getEVMLogID, getSignedExecuteInput, logger } from '../utils';
 import { Command } from './Command';
 import { arrayify, defaultAbiCoder } from 'ethers/lib/utils';
-import { depositAddresses } from '../networkUtils';
 import { Network, networks } from '../Network';
-import { getFee, getGasPrice } from '../networkUtils';
+import { getGasPrice } from '../networkUtils';
 import {
     ContractCallEventObject,
     ContractCallWithTokenEventObject,
@@ -16,11 +15,8 @@ import { AxelarExpressExecutable__factory as AxelarExpressExecutableFactory } fr
 const AddressZero = ethers.constants.AddressZero;
 
 interface EvmRelayerOptions {
-    nearRelayer?: Relayer;
-    aptosRelayer?: Relayer;
     suiRelayer?: Relayer;
     wasmRelayer?: Relayer;
-    multiversXRelayer?: Relayer;
 }
 
 export class EvmRelayer extends Relayer {
@@ -28,11 +24,8 @@ export class EvmRelayer extends Relayer {
 
     constructor(options: EvmRelayerOptions = {}) {
         super();
-        this.otherRelayers.near = options.nearRelayer;
-        this.otherRelayers.aptos = options.aptosRelayer;
         this.otherRelayers.sui = options.suiRelayer;
         this.otherRelayers.wasm = options.wasmRelayer;
-        this.otherRelayers.multiversx = options.multiversXRelayer;
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {
@@ -46,8 +39,6 @@ export class EvmRelayer extends Relayer {
 
             await this.updateGasEvents(from, blockNumber);
             await this.updateExpressGasEvents(from, blockNumber);
-            await this.updateDepositAddresses(from, blockNumber);
-            await this.updateTokenSentEvent(from, blockNumber);
             await this.updateCallContractEvents(from, blockNumber);
             await this.updateCallContractWithTokensEvents(from, blockNumber);
 
@@ -418,13 +409,7 @@ export class EvmRelayer extends Relayer {
             };
             this.relayData.callContract[commandId] = contractCallArgs;
             let command;
-            if (args.destinationChain.toLowerCase() === 'multiversx') {
-                command = this.otherRelayers?.multiversx?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
-            } else if (args.destinationChain.toLowerCase() === 'aptos') {
-                command = this.otherRelayers?.aptos?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
-            } else if (args.destinationChain.toLowerCase() === 'near') {
-                command = this.otherRelayers?.near?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
-            } else if (args.destinationChain.toLowerCase() === 'sui') {
+            if (args.destinationChain.toLowerCase() === 'sui') {
                 command = this.otherRelayers?.sui?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
             } else if (args.destinationChain.toLowerCase() === 'wasm') {
                 command = this.otherRelayers?.wasm?.createCallContractCommand(commandId, this.relayData, contractCallArgs);
@@ -448,40 +433,6 @@ export class EvmRelayer extends Relayer {
         callContractWithTokenArgs: CallContractWithTokenArgs
     ): Command {
         return Command.createEVMContractCallWithTokenCommand(commandId, relayData, callContractWithTokenArgs);
-    }
-
-    private async updateTokenSentEvent(from: Network, blockNumber: number) {
-        const filter = from.gateway.filters.TokenSent();
-        const logsFrom = await from.gateway.queryFilter(filter, from.lastRelayedBlock + 1, blockNumber);
-        for (const log of logsFrom) {
-            const args: any = log.args;
-            const alias = this.getAliasFromSymbol(from.tokens, args.symbol);
-            const fee = getFee();
-            if (args.amount <= fee) continue;
-            const amountOut = args.amount.sub(fee);
-            const commandId = getEVMLogID(from.name, log);
-            const to = networks.find((chain: Network) => chain.name === args.destinationChain);
-            if (!to) return;
-            const destinationTokenSymbol = to.tokens[alias];
-
-            this.relayData.sendToken[commandId] = {
-                from: from.name,
-                to: args.destinationChain,
-                amountIn: args.amount,
-                fee: fee,
-                alias: alias,
-                amountOut: amountOut,
-            };
-            this.commands[args.destinationChain].push(
-                new Command(
-                    commandId,
-                    'mintToken',
-                    [destinationTokenSymbol, args.destinationAddress, amountOut],
-                    ['string', 'address', 'uint256'],
-                    args.destinationChain
-                )
-            );
-        }
     }
 
     private async updateCallContractWithTokensEvents(from: Network, toBlock: number, fromBlock = from.lastRelayedBlock + 1) {
@@ -514,49 +465,6 @@ export class EvmRelayer extends Relayer {
             this.relayData.callContractWithToken[commandId] = callContractWithTokenArgs;
             const command = this.createCallContractWithTokenCommand(commandId, this.relayData, callContractWithTokenArgs);
             this.commands[args.destinationChain].push(command);
-        }
-    }
-
-    private async updateDepositAddresses(from: Network, blockNumber: number) {
-        for (const address in depositAddresses[from.name]) {
-            const data = depositAddresses[from.name][address];
-            const tokenSymbol = from.tokens[data.alias];
-            const token = await from.getTokenContract(tokenSymbol);
-            const fee = getFee();
-            const balance = await token.balanceOf(address);
-            const to = networks.find((chain: Network) => chain.name === data.destinationChain);
-            if (!to) continue;
-            const destinationTokenSymbol = to.tokens[data.alias];
-            if (balance > fee) {
-                const commandId = getRandomID();
-                this.relayData.depositAddress[commandId] = {
-                    from: from.name,
-                    to: data.destinationChain,
-                    amountIn: balance,
-                    fee: fee,
-                    amountOut: balance - fee,
-                };
-                this.commands[data.destinationChain].push(
-                    new Command(
-                        commandId,
-                        'mintToken',
-                        [destinationTokenSymbol, data.destinationAddress, balance - fee],
-                        ['string', 'address', 'uint256']
-                    )
-                );
-                const wallet = new Wallet(data.privateKey, from.provider);
-                if (Number(await from.provider.getBalance(address)) === 0) {
-                    // Create a transaction object
-                    const tx = {
-                        to: address,
-                        // Convert currency unit from ether to wei
-                        value: BigInt(1e16),
-                    };
-                    // Send a transaction
-                    await (await from.ownerWallet.sendTransaction(tx)).wait();
-                }
-                await (await token.connect(wallet).transfer(from.ownerWallet.address, balance)).wait();
-            }
         }
     }
 
