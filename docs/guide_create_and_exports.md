@@ -25,11 +25,11 @@ const chains = ["Avalanche", "Ethereum", "Fantom"];
 // Define the chain stacks that the networks will relay transactions between
 const relayers = { evm: new EvmRelayer() };
 
-// Here we are setting up for EVM chains only. If you want to add more networks like NEAR, you have to create a new instance of the relayer for that network,
+// Here we are setting up for EVM chains only. If you want to add more networks like Sui, you have to create a new instance of the relayer for that network,
 // and then include it in your relayers object. Each relayer should be aware of the others to facilitate transactions between them.
-// For example, if you want to relay transactions between EVM and Near network, you have to set it like this
-// const nearRelayer = new NearRelayer()
-const relayers = { evm: new EvmRelayer({ nearRelayer }), near: nearRelayer }
+// For example, if you want to relay transactions between EVM and Sui network, you have to set it like this
+// const suiRelayer = new SuiRelayer(...)
+const relayers = { evm: new EvmRelayer({ suiRelayer }), sui: suiRelayer }
 
 // Number of milliseconds to periodically trigger the relay function and send all pending crosschain transactions to the destination chain
 const relayInterval = 5000
