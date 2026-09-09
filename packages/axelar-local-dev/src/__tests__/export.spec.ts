@@ -15,6 +15,21 @@ import { EvmRelayer } from '../relay/EvmRelayer';
 
 setLogger(() => null);
 
+/**
+ * The relayer picks work up on an interval, so a fixed sleep is a race: a loaded
+ * CI runner regularly needs longer than a few seconds to carry a call across.
+ * Poll instead, and fall through on timeout so the assertion reports the real
+ * value rather than a timeout error.
+ */
+async function waitUntil(condition: () => Promise<boolean>, timeout = 60000, interval = 250) {
+    const deadline = Date.now() + timeout;
+
+    while (Date.now() < deadline) {
+        if (await condition()) return;
+        await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+}
+
 async function deployAndFundUsdc(chain: Network) {
     await chain.deployToken('Axelar Wrapped aUSDC', 'aUSDC', 6, BigInt(1e22));
 }
@@ -89,9 +104,9 @@ describe('export', () => {
             // print eth balance of owner
             await contract1.setAndSend(chain2.name, 'hello', wallet.address, 'aUSDC', amount, { value: BigInt(1e12) });
 
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-
             const token2 = await chain2.getTokenContract('aUSDC');
+            await waitUntil(async () => (await token2.balanceOf(wallet.address)).toBigInt() === amount);
+
             const balance = await token2.balanceOf(wallet.address);
             expect(balance.toBigInt()).to.equal(amount);
             expect(await contract2.value()).to.equal('hello');
@@ -112,9 +127,9 @@ describe('export', () => {
             await token1.approve(contract1.address, amount);
             await contract1.sendToMany(chain2.name, contract2.address, [wallet.address], 'aUSDC', amount, { value: BigInt(1e17) });
 
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-
             const token2 = await chain2.getTokenContract('aUSDC');
+            await waitUntil(async () => (await token2.balanceOf(wallet.address)).toBigInt() === amount);
+
             const balance = await token2.balanceOf(wallet.address);
             expect(balance.toBigInt()).to.equal(amount);
         });
@@ -140,6 +155,9 @@ describe('export', () => {
                         rpcUrl: process.env.EVM_NODE_2 || 'http://127.0.0.1:8546',
                     },
                 ],
+                // Match the createAndExport suite above. The 2000ms default
+                // leaves a multi-step relay barely one tick of slack.
+                relayInterval: 500,
             })) as Network[];
 
             if (!networks) throw Error('setupAndExport should return networks object');
@@ -175,9 +193,9 @@ describe('export', () => {
             // print eth balance of owner
             await contract1.setAndSend(chain2.name, 'hello', wallet.address, 'aUSDC', amount, { value: BigInt(1e12) });
 
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-
             const token2 = await chain2.getTokenContract('aUSDC');
+            await waitUntil(async () => (await token2.balanceOf(wallet.address)).toBigInt() === amount);
+
             const balance = await token2.balanceOf(wallet.address);
             expect(balance.toBigInt()).to.equal(amount);
             expect(await contract2.value()).to.equal('hello');
