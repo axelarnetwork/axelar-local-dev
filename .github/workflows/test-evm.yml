@@ -2,7 +2,7 @@ name: Run Tests for EVM
 on: pull_request
 
 jobs:
-  test:
+  evm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
