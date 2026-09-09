@@ -1,10 +1,19 @@
-import { CoinBalance, SuiEvent, SuiClient, getFullnodeUrl, SuiTransactionBlockResponseOptions } from '@mysten/sui.js/client';
+import {
+    CoinBalance,
+    DevInspectResults,
+    SuiEvent,
+    SuiClient,
+    getFullnodeUrl,
+    SuiObjectChangePublished,
+    SuiTransactionBlockResponse,
+    SuiTransactionBlockResponseOptions,
+} from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { Keypair } from '@mysten/sui.js/cryptography';
 import { requestSuiFromFaucetV0, getFaucetHost } from '@mysten/sui.js/faucet';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { execSync, exec } from 'child_process';
-import { PublishedPackage } from './types';
+import { DeployResult } from './types';
 const { publishPackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui/scripts/publish-package');
 
 /**
@@ -90,7 +99,7 @@ export class SuiNetwork extends SuiClient {
      * @param senderAddress - Optional sender address; defaults to executor address if not provided
      * @returns A Promise with transaction details and published packages
      */
-    public async deploy(modulePath: string, senderAddress: string = this.getExecutorAddress()) {
+    public async deploy(modulePath: string, senderAddress: string = this.getExecutorAddress()): Promise<DeployResult> {
         if (!(await this.suiCommandExist())) {
             throw new Error('Please install sui command');
         }
@@ -112,8 +121,8 @@ export class SuiNetwork extends SuiClient {
         const result = await this.execute(tx);
 
         const publishedPackages = result.objectChanges
-            ?.filter((change) => change.type === 'published')
-            ?.map((change: any) => {
+            ?.filter((change): change is SuiObjectChangePublished => change.type === 'published')
+            ?.map((change) => {
                 return {
                     packageId: change.packageId,
                     modules: change.modules,
@@ -140,7 +149,11 @@ export class SuiNetwork extends SuiClient {
      * @param options - Optional settings for the transaction execution response
      * @returns A Promise with details of the transaction execution
      */
-    public async execute(tx: TransactionBlock, keypair: Keypair = this.executor, options?: SuiTransactionBlockResponseOptions) {
+    public async execute(
+        tx: TransactionBlock,
+        keypair: Keypair = this.executor,
+        options?: SuiTransactionBlockResponseOptions,
+    ): Promise<SuiTransactionBlockResponse> {
         // todo: add check for sui command
         return this.signAndExecuteTransactionBlock({
             signer: keypair || this.executor,
@@ -164,7 +177,10 @@ export class SuiNetwork extends SuiClient {
      * @param sender - Optional sender address to execute as, defaults to the executor address
      * @returns A Promise with details of the transaction dev inspect
      */
-    public async devInspect(tx: TransactionBlock, sender: string = this.executor.getPublicKey().toSuiAddress()) {
+    public async devInspect(
+        tx: TransactionBlock,
+        sender: string = this.executor.getPublicKey().toSuiAddress(),
+    ): Promise<DevInspectResults> {
         // todo: add check for sui command
         return this.devInspectTransactionBlock({
             sender: sender || this.executor.getPublicKey().toSuiAddress(),
