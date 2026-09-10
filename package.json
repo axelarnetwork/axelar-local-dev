@@ -1,16 +1,20 @@
 {
-  "name": "axelar-local-dev",
-  "private": true,
-  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
-  "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "release": "pnpm -r publish --access public --no-git-checks",
-    "start:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos start",
-    "build:core": "pnpm --filter @axelar-network/axelar-local-dev build",
-    "build:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos build",
-    "test:core": "pnpm --filter @axelar-network/axelar-local-dev test",
-    "test:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test",
-    "test-e2e:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test:e2e"
-  }
+    "name": "axelar-local-dev",
+    "private": true,
+    "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
+    "scripts": {
+        "build": "pnpm -r build",
+        "test": "pnpm -r test",
+        "release": "pnpm -r publish --access public --no-git-checks",
+        "start:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos start",
+        "build:core": "pnpm --filter @axelar-network/axelar-local-dev build",
+        "build:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos build",
+        "build:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui build",
+        "test:core": "pnpm --filter @axelar-network/axelar-local-dev test",
+        "test:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test",
+        "test:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui test",
+        "test-e2e:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test:e2e",
+        "test-e2e:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui test:e2e",
+        "start:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui start"
+    }
 }
