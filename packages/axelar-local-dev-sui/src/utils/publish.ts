@@ -9,20 +9,19 @@ export interface PublishResult {
 
 /**
  * Ported from cgp-sui's unpublished test/testutils.js. Everything it calls is
- * public API; only this ~15-line wrapper is missing from the shipped package.
+ * public API; only this wrapper is missing from the shipped package.
  *
- * `fromDir = null` resolves to cgp-sui's own shipped move/ sources, which are
- * included in its published files list.
+ * Unlike the reference, this does NOT copy the package: stageMovePackages has
+ * already staged the whole dependency closure into `compileDir`. Copying again
+ * here would resolve every package against cgp-sui's own move/ and so fail for
+ * any package that does not live there, such as our sample.
  */
 export async function publishPackage(
     client: SuiClient,
     keypair: Keypair,
     packageName: string,
     compileDir: string,
-    fromDir: string | null = null,
 ): Promise<PublishResult> {
-    copyMovePackage(packageName, fromDir, compileDir);
-
     // A package must be published at 0x0; the placeholder address in the
     // manifest is rewritten to the real id afterwards so dependents link
     // against it.

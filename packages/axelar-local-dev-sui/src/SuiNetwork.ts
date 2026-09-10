@@ -13,8 +13,11 @@ import { requireObjectId } from './utils/objects';
 import { generateSigners } from './utils/signers';
 import type { DiscoveryInfo, GatewayApprovalInfo, SuiDeployment, SuiNetworkOptions } from './types';
 
-/** Roots whose dependency closures make up the local Axelar framework. */
-const FRAMEWORK_ROOTS = ['axelar_gateway', 'gas_service', 'relayer_discovery'];
+/**
+ * The sample app depends on the gateway, gas service and relayer discovery, so
+ * its dependency closure is the whole local framework and one root is enough.
+ */
+const ROOT_PACKAGE = 'sample';
 
 /**
  * A local Axelar deployment on a Sui network.
@@ -36,6 +39,7 @@ export class SuiNetwork {
     discoveryInfo!: DiscoveryInfo;
     gasServiceId!: string;
     domainSeparator!: string;
+    sample!: { packageId: string; singletonId: string; channelAddress: string };
 
     constructor(options: SuiNetworkOptions = {}) {
         this.nodeUrl = options.nodeUrl || defaultSuiConfig.nodeUrl || getFullnodeUrl('localnet');
@@ -120,20 +124,53 @@ export class SuiNetwork {
                 // by gateway::setup below.
                 await this.setupGateway(packageId, requireObjectId(publishTxn, `${packageId}::owner_cap::OwnerCap`));
             }
+
+            if (packageName === ROOT_PACKAGE) {
+                await this.registerSample(packageId, requireObjectId(publishTxn, `${packageId}::gmp::Singleton`));
+            }
         }
     }
 
-    /** Copy the framework and its local dependencies into a writable scratch tree. */
-    stageFramework(): string[] {
-        const order: string[] = [];
+    /**
+     * Tell relayer discovery how to deliver to the sample app, and record the
+     * Channel address other chains must address messages to.
+     *
+     * Skipping the registration makes inbound messages undeliverable: the
+     * relayer's discovery lookup returns nothing and the message is simply
+     * never executed, with no error anywhere.
+     */
+    private async registerSample(packageId: string, singletonId: string): Promise<void> {
+        const builder = new TxBuilder(this.client);
 
-        for (const root of FRAMEWORK_ROOTS) {
-            for (const packageName of stageMovePackages(root, this.compileDir, null)) {
-                if (!order.includes(packageName)) order.push(packageName);
-            }
+        await builder.moveCall({
+            target: `${packageId}::gmp::register_transaction`,
+            arguments: [this.discoveryId, singletonId],
+        });
+
+        await builder.signAndExecute(this.deployer, {});
+
+        const singleton = await this.client.getObject({ id: singletonId, options: { showContent: true } });
+        const content = singleton.data?.content;
+
+        if (!content || content.dataType !== 'moveObject') {
+            throw new Error(`sample Singleton ${singletonId} has no readable content`);
         }
 
-        return order;
+        const channelAddress = (content.fields as any)?.channel?.fields?.id?.id;
+
+        if (!channelAddress) {
+            throw new Error(`could not read the Channel address out of sample Singleton ${singletonId}`);
+        }
+
+        this.sample = { packageId, singletonId, channelAddress };
+    }
+
+    /**
+     * Copy the sample and every local dependency it pulls out of cgp-sui into a
+     * writable scratch tree, and return the order they must be published in.
+     */
+    stageFramework(): string[] {
+        return stageMovePackages(ROOT_PACKAGE, this.compileDir, Path.move);
     }
 
     private async setupGateway(packageId: string, ownerCapId: string): Promise<void> {
@@ -216,6 +253,7 @@ export class SuiNetwork {
             gasServiceId: this.gasServiceId,
             domainSeparator: this.domainSeparator,
             signerKeys: this.gatewayInfo.signerKeys,
+            sample: this.sample,
         };
     }
 

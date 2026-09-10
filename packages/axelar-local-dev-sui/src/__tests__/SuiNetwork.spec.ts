@@ -40,6 +40,14 @@ describe('SuiNetwork', () => {
         expect(sui.domainSeparator).toMatch(/^0x[0-9a-f]{64}$/);
     });
 
+    it('publishes the sample app and registers its discovery transaction', () => {
+        expect(sui.sample.packageId).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(sui.sample.singletonId).toMatch(/^0x[0-9a-f]{64}$/);
+        // Other chains address the Channel, never the package id.
+        expect(sui.sample.channelAddress).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(sui.sample.channelAddress).not.toBe(sui.sample.packageId);
+    });
+
     it('exports a deployment blob another process can reconnect from', () => {
         const deployment = sui.getDeployment();
 
