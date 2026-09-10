@@ -1,4 +1,5 @@
 export * from './SuiNetwork';
+export * from './SuiRelayer';
 export * from './config';
 export * from './path';
 export * from './types';
