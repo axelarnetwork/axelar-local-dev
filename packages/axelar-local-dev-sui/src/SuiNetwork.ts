@@ -1,10 +1,11 @@
-import { CLOCK_PACKAGE_ID, TxBuilder, bcsStructs, getDefinedSuiVersion, getInstalledSuiVersion } from '@axelar-network/axelar-cgp-sui';
+import { CLOCK_PACKAGE_ID, TxBuilder, bcsStructs, getDefinedSuiVersion, getInstalledSuiVersion, updateMoveToml } from '@axelar-network/axelar-cgp-sui';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui/faucet';
 import { arrayify, hexlify } from 'ethers/lib/utils';
 import { randomBytes } from 'crypto';
-import { rmSync } from 'fs';
+import { existsSync, rmSync } from 'fs';
+import { join } from 'path';
 
 import { Path } from './path';
 import { defaultSuiConfig } from './config';
@@ -266,7 +267,27 @@ export class SuiNetwork {
      * dependencies link against real addresses.
      */
     async publishPackage(packageName: string, fromDir: string) {
+        // A process that reconnected via fromDeployment never staged anything,
+        // and stop() deletes the tree, so the framework this package's
+        // `local = "../axelar_gateway"` dependencies point at may be absent.
+        // Re-staging is cheap and idempotent, and without it the Move build
+        // fails on unresolvable dependencies.
+        if (!existsSync(join(this.compileDir, 'axelar_gateway'))) {
+            this.stageFramework();
+            this.restoreFrameworkAddresses();
+        }
+
         return publishExternalPackage(this.client, this.deployer, packageName, fromDir, this.compileDir);
+    }
+
+    /**
+     * Re-staged manifests carry cgp-sui's placeholder addresses. Point them at
+     * what is actually published, or dependents link against 0xa1 and friends.
+     */
+    private restoreFrameworkAddresses(): void {
+        for (const [packageName, packageId] of Object.entries(this.packageIds)) {
+            updateMoveToml(packageName, packageId, this.compileDir);
+        }
     }
 
     async fundWallet(address: string): Promise<void> {
@@ -287,15 +308,28 @@ export class SuiNetwork {
         throw new Error(`could not fund ${address} from the faucet at ${this.faucetUrl} after ${defaultSuiConfig.faucetRetries} attempts: ${lastError}`);
     }
 
+    /**
+     * Waits rather than failing fast: in CI the network is started in the
+     * background and comes up alongside the build, so a single probe is a race.
+     */
     async assertNodeReachable(): Promise<void> {
-        try {
-            await this.client.getChainIdentifier();
-        } catch (error) {
-            throw new Error(
-                `no Sui network is reachable at ${this.nodeUrl}. Start one with ` +
-                    `\`sui start --with-faucet --force-regenesis\` (note: that resets local Sui state). Cause: ${error}`,
-            );
+        let lastError: unknown;
+
+        for (let attempt = 0; attempt < defaultSuiConfig.nodeRetries; attempt++) {
+            try {
+                await this.client.getChainIdentifier();
+
+                return;
+            } catch (error) {
+                lastError = error;
+                await new Promise((resolve) => setTimeout(resolve, defaultSuiConfig.nodeRetryDelayMs));
+            }
         }
+
+        throw new Error(
+            `no Sui network became reachable at ${this.nodeUrl}. Start one with ` +
+                `\`sui start --with-faucet --force-regenesis\` (note: that resets local Sui state). Cause: ${lastError}`,
+        );
     }
 
     getExecutorAddress(): string {
