@@ -1,38 +1,18 @@
 {
   "name": "axelar-local-dev",
-  "workspaces": [
-    "packages/*"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
+  "private": true,
+  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
   "scripts": {
-    "publish": "lerna publish from-package --yes",
-    "version": "lerna version --yes --exact --no-git-tag-version",
-    "bootstrap": "lerna bootstrap",
-    "postinstall": "lerna bootstrap",
-    "link": "lerna link",
-    "test": "lerna run test",
-    "update": "lerna update",
-    "clean": "lerna clean",
-    "start:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run start",
-    "test:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run test",
-    "test:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run test",
-    "test:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run test",
-    "test:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run test",
-    "test:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run test",
-    "test-e2e:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run test:e2e",
-    "test:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run test",
-    "build": "lerna run build",
-    "build:core": "lerna exec --scope=@axelar-network/axelar-local-dev npm run build",
-    "build:near": "lerna exec --scope=@axelar-network/axelar-local-dev-near npm run build",
-    "build:aptos": "lerna exec --scope=@axelar-network/axelar-local-dev-aptos npm run build",
-    "build:sui": "lerna exec --scope=@axelar-network/axelar-local-dev-sui npm run build",
-    "build:cosmos": "lerna exec --scope=@axelar-network/axelar-local-dev-cosmos npm run build",
-    "build:multiversx": "lerna exec --scope=@axelar-network/axelar-local-dev-multiversx npm run build"
-  },
-  "devDependencies": {
-    "lerna": "^6.6.1",
-    "lerna-update-wizard": "^1.1.2"
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "release": "pnpm -r publish --access public --no-git-checks",
+    "start:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos start",
+    "build:core": "pnpm --filter @axelar-network/axelar-local-dev build",
+    "build:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui build",
+    "build:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos build",
+    "test:core": "pnpm --filter @axelar-network/axelar-local-dev test",
+    "test:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui test",
+    "test:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test",
+    "test-e2e:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test:e2e"
   }
 }

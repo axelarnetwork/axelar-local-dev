@@ -42,7 +42,7 @@ export async function setupITS(network: Network) {
         const tokenId = await factory.canonicalInterchainTokenId(tokenAddress);
         if (typeof destinationChain === 'string') {
             const destinationNetwork = networks.find((network) => network.name.toLowerCase() == (destinationChain as string).toLowerCase());
-            if (destinationNetwork === null) throw new Error(`${destinationChain} is not a registered network.`);
+            if (!destinationNetwork) throw new Error(`${destinationChain} is not a registered network.`);
             destinationChain = destinationNetwork as Network;
         }
         await (
@@ -84,7 +84,7 @@ export async function setupITS(network: Network) {
 
         if (typeof destinationChain === 'string') {
             const destinationNetwork = networks.find((network) => network.name.toLowerCase() == (destinationChain as string).toLowerCase());
-            if (destinationNetwork === null) throw new Error(`${destinationChain} is not a registered network.`);
+            if (!destinationNetwork) throw new Error(`${destinationChain} is not a registered network.`);
             destinationChain = destinationNetwork as Network;
         }
 
@@ -96,7 +96,13 @@ export async function setupITS(network: Network) {
 
         await relay();
 
-        const tokenAddress = await factory.interchainTokenAddress(wallet.address, salt);
+        // The token is deployed by the destination chain's ITS at that service's
+        // interchainTokenAddress(tokenId). We cannot reuse the source factory's
+        // interchainTokenAddress here: in local-dev each chain deploys its own ITS
+        // at a different address, so the token address differs per chain. (tokenId
+        // is chain-independent.) Mirrors deployRemoteCanonicalToken above.
+        const tokenId = await factory.interchainTokenId(wallet.address, salt);
+        const tokenAddress = await destinationChain.interchainTokenService.interchainTokenAddress(tokenId);
         return IInterchainTokenFactory.connect(tokenAddress, destinationChain.provider);
     };
 }

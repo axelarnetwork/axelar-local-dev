@@ -6,7 +6,6 @@ import {
     createNetwork,
     forkNetwork,
     getAllNetworks,
-    getDepositAddress,
     getFee,
     getGasPrice,
     getNetwork,
@@ -21,6 +20,7 @@ export * from './exportUtils';
 export * from './relay';
 export * from './utils';
 export * from './Network';
+export { registerRemoteITS, setupITS } from './its';
 
 export const contracts = compiledContracts;
 
@@ -36,7 +36,6 @@ export {
     setupNetwork,
     stop,
     stopAll,
-    getDepositAddress,
     networks,
     testnetInfo,
     mainnetInfo,

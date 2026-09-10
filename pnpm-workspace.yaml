@@ -1,0 +1,35 @@
+packages:
+  - "packages/*"
+
+# Build-script allowlist. Only these dependencies may run install/postinstall
+# scripts; pnpm blocks the rest.
+# Reconcile against the "ignored build scripts" warning printed by the first
+# `pnpm install` (run `pnpm approve-builds` to inspect) and add any the packages
+# genuinely need.
+allowBuilds:
+  keccak: true
+  secp256k1: true
+  bufferutil: true
+  utf-8-validate: true
+  protobufjs: true
+  # Native LevelDB binding pulled in via hardhat (ethereumjs); needed for the
+  # contract build/test tooling.
+  classic-level: true
+  # Legacy postinstall scripts that only print funding/usage messages (pulled in
+  # transitively via solidity-coverage → truffle → web3). Not native builds.
+  es5-ext: false
+  web3: false
+  web3-bzz: false
+  web3-shh: false
+
+auditConfig:
+  ignoreGhsas: []
+
+overrides:
+  # Pin the Solidity deps to a single coherent set so hardhat (which, under pnpm,
+  # resolves one version rather than npm's per-package nested copies) can compile
+  # everything together. This is the set interchain-token-service@1.2.4 was
+  # published against — newer gmp-sdk (>=5.10) makes Upgradable._setup abstract
+  # (breaks ITS's InterchainTokenFactory) and mismatches cgp's GasInfo import.
+  "@axelar-network/axelar-gmp-sdk-solidity": "5.6.4"
+  "@axelar-network/axelar-cgp-solidity": "6.2.1"

@@ -30,10 +30,6 @@ export class SuiRelayer extends Relayer {
     }
 
     setRelayer(type: RelayerType, relayer: Relayer) {
-        if (type === 'near' || type === 'aptos') {
-            return console.log(`${type} not supported yet`);
-        }
-
         this.otherRelayers[type] = relayer;
     }
 

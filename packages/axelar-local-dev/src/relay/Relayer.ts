@@ -5,18 +5,13 @@ import { CallContractArgs, CallContractWithTokenArgs, RelayCommand, RelayData } 
 export enum RelayerType {
     Sui = 'sui',
     Evm = 'evm',
-    Aptos = 'aptos',
-    Near = 'near',
     Wasm = 'wasm',
-    MultiversX = 'multiversx',
 }
 export type RelayerMap = Partial<Record<RelayerType, Relayer>> & { [key: string]: Relayer | undefined };
 
 export abstract class Relayer {
     public otherRelayers: RelayerMap = {};
     public relayData: RelayData = {
-        depositAddress: {},
-        sendToken: {},
         callContract: {},
         callContractWithToken: {},
     };
@@ -42,11 +37,8 @@ export abstract class Relayer {
         for (const to of actualNetworks) {
             this.commands[to.name] = [];
         }
-        this.commands['aptos'] = [];
         this.commands['sui'] = [];
-        this.commands['near'] = [];
         this.commands['wasm'] = [];
-        this.commands['multiversx'] = [];
         // Update all events at the source chains
         await this.updateEvents();
 

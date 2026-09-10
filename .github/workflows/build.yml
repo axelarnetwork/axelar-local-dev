@@ -1,8 +1,8 @@
-name: Run Tests for Cosmos
+name: Build All Packages
 on: pull_request
 
 jobs:
-  cosmos:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,12 +20,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
+      # Same command publish-to-npm.yml runs before publishing, so a package
+      # that only breaks in the full topological build fails here, not mid-release.
       - name: Build
-        run: pnpm run build:core && pnpm run build:cosmos
-
-      - name: Test
-        timeout-minutes: 15
-        run: pnpm run test:cosmos
+        run: pnpm run build

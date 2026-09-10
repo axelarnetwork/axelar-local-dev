@@ -5,7 +5,8 @@ import { getNetwork, setupNetwork, stopAll } from '..';
 import { Network } from '../Network';
 import { createNetwork } from '../networkUtils';
 import { defaultAccounts, setLogger } from '../utils';
-import { Wallet } from 'ethers';
+import { AnvilBackend } from '../anvil';
+import { ethers, Wallet } from 'ethers';
 import chai from 'chai';
 
 const { expect } = chai;
@@ -65,19 +66,22 @@ describe('Network', () => {
     it('should deploy a network on a preexisting chain', async () => {
         const port = 8600;
         const accounts = defaultAccounts(20);
-        const server = require('ganache').server({
-            wallet: { accounts },
-            chain: {
-                chainId: 3000,
-                networkId: 3000,
-            },
-            logging: { quiet: true },
-        });
-        await server.listen(port);
+        // Stand up a bare anvil node (no Axelar contracts) to represent an
+        // externally-run chain, then let setupNetwork deploy onto it.
+        const anvil = await new AnvilBackend({ chainId: 3000, port }).start();
+        const provider = new ethers.providers.JsonRpcProvider(anvil.url);
+        await Promise.all(
+            accounts.map((account) =>
+                provider.send('anvil_setBalance', [
+                    new Wallet(account.secretKey).address,
+                    ethers.utils.hexValue(ethers.BigNumber.from(account.balance)),
+                ])
+            )
+        );
         network = await setupNetwork(`http://127.0.0.1:${port}`, {
             ownerKey: new Wallet(accounts[0].secretKey),
         });
         validateNetwork(network);
-        await server.close();
+        await anvil.stop();
     });
 });

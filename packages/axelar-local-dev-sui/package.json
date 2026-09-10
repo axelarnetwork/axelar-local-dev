@@ -1,6 +1,6 @@
 {
     "name": "@axelar-network/axelar-local-dev-sui",
-    "version": "2.3.2",
+    "version": "3.0.0",
     "main": "dist/index.js",
     "files": [
         "dist/",
@@ -17,12 +17,18 @@
         "build-sui": "cd move && sui move build"
     },
     "dependencies": {
-        "@axelar-network/axelar-cgp-sui": "https://github.com/axelarnetwork/axelar-cgp-sui.git#a27769db651ab1c40c707ad95ea92bffc89fb75e",
-        "@axelar-network/axelar-local-dev": "^2.3.2",
-        "@mysten/sui.js": "^0.41.0"
+        "@axelar-network/axelar-cgp-sui": "^1.2.0",
+        "@axelar-network/axelar-local-dev": "workspace:^",
+        "@mysten/bcs": "^0.8.1",
+        "@mysten/sui.js": "^0.41.0",
+        "ethers": "^5.7.0"
     },
     "author": "euro@axelar.network",
     "license": "ISC",
     "description": "",
-    "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70"
+    "gitHead": "39d77bf2128077a615e6d3a5a4caf55e79f53b70",
+    "devDependencies": {
+        "@axelar-network/axelar-gmp-sdk-solidity": "^5.7.0",
+        "hardhat": "~2.19.1"
+    }
 }
