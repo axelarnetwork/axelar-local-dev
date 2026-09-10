@@ -1,0 +1,9 @@
+dist
+artifacts
+cache
+
+# Move build staging. getContractBuild mkdtemps .move-build-* in the PARENT of
+# the compile dir, so both live here.
+.move-compile/
+.move-build-*
+move/**/build
