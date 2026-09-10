@@ -148,7 +148,25 @@ export class SuiNetwork {
             domainSeparator: deployment.domainSeparator,
         } as GatewayApprovalInfo;
 
+        await sui.assertDeploymentLive();
+
         return sui;
+    }
+
+    /**
+     * A side-file survives `sui start --force-regenesis`, which discards every
+     * published object, so a stale one resolves happily here and then fails
+     * somewhere unrelated with a Move abort or a read of a null object.
+     */
+    async assertDeploymentLive(): Promise<void> {
+        const gateway = await this.client.getObject({ id: this.gatewayId, options: {} });
+
+        if (!gateway.data) {
+            throw new Error(
+                `the recorded Sui deployment is not on this network: gateway ${this.gatewayId} does not exist. ` +
+                    'A chain-config side-file survives `sui start --force-regenesis`; delete it and run start again.',
+            );
+        }
     }
 
     async init(): Promise<void> {
