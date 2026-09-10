@@ -20,6 +20,8 @@ export interface SuiDeployment {
     domainSeparator: string;
     /** Private keys of the local gateway's weighted signers. Local only. */
     signerKeys: string[];
+    /** The bundled sample GMP app, and the Channel other chains address. */
+    sample: { packageId: string; singletonId: string; channelAddress: string };
 }
 
 export type { GatewayApprovalInfo, DiscoveryInfo };

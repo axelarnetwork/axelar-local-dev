@@ -1,0 +1,16 @@
+[package]
+name = "Sample"
+version = "0.1.0"
+edition = "2024"
+
+# Resolved inside the staging tree that SuiNetwork.init builds, where these
+# have already been published and had their addresses rewritten.
+[dependencies]
+AxelarGateway = { local = "../axelar_gateway" }
+GasService = { local = "../gas_service" }
+RelayerDiscovery = { local = "../relayer_discovery" }
+Utils = { local = "../utils" }
+VersionControl = { local = "../version_control" }
+
+[addresses]
+sample = "0x0"
