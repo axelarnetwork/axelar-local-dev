@@ -16,7 +16,12 @@ describe('message id bridge', () => {
     });
 
     it('derives the canonical EVM message id', () => {
-        expect(evmMessageId({ transactionHash: '0xabc', sourceEventIndex: 3 })).toBe('0xabc-3');
+        const transactionHash = `0x${'ab'.repeat(32)}`;
+        const messageId = evmMessageId({ transactionHash, sourceEventIndex: 3 });
+
+        expect(messageId).toBe(`${transactionHash}-3`);
+        // The shape Axelar's amplifier accepts for an EVM message id.
+        expect(messageId).toMatch(/^0x[0-9a-f]{64}-(0|[1-9][0-9]*)$/);
     });
 
     it('refuses to guess when the source event fields are missing', () => {

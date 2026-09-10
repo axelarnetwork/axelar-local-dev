@@ -16,7 +16,7 @@ import type { EventId } from '@mysten/sui/client';
 import { arrayify, defaultAbiCoder, hexDataLength, hexZeroPad, hexlify } from 'ethers/lib/utils';
 
 import type { SuiNetwork } from './SuiNetwork';
-import { evmMessageId, suiCommandId, suiMessageId } from './utils/ids';
+import { evmMessageId, suiCommandId } from './utils/ids';
 
 const DEFAULT_GAS_LIMIT = BigInt(8e6);
 const SUI_CHAIN_NAME = 'sui';
@@ -37,9 +37,6 @@ export class SuiRelayer extends Relayer {
     private cursor: EventId | null = null;
     /** take_approved_message aborts on replay, so a command must run once. */
     private readonly executed = new Set<string>();
-    /** Exposed for tests and debugging only - never read on the relay path. */
-    readonly relayedMessages = new Map<string, Record<string, string>>();
-
     constructor(private readonly sui: SuiNetwork) {
         super();
     }
@@ -115,7 +112,13 @@ export class SuiRelayer extends Relayer {
 
     private async executeSuiToEvm(commandList: RelayCommand): Promise<void> {
         for (const to of networks) {
-            const commands = commandList[to.name];
+            // The bucket key is whatever the Sui contract passed as
+            // destination_chain. Axelar chain names are conventionally
+            // lowercase, so a Sui dApp sending to 'avalanche' would otherwise
+            // never match network 'Avalanche' - and because the event cursor
+            // has already advanced, that message would be lost silently.
+            const key = Object.keys(commandList).find((name) => name.toLowerCase() === to.name.toLowerCase());
+            const commands = key ? commandList[key] : undefined;
 
             if (!commands || commands.length === 0) continue;
 
@@ -127,10 +130,10 @@ export class SuiRelayer extends Relayer {
     /**
      * EVM -> Sui.
      *
-     * EvmRelayer lowercases only when deciding which relayer to dispatch to; it
-     * pushes into the bucket under the destination chain's original casing. So
-     * a dApp emitting 'Sui' lands in a differently-keyed bucket than the one
-     * Relayer.relay seeded.
+     * Each message is isolated: a Move abort in one must not abandon the rest
+     * of the tick. The most likely abort is a replay - the gateway's approval
+     * table is permanent, so re-running against a restarted EVM chain that
+     * reissues the same transaction hashes hits an already-executed message.
      */
     private async executeEvmToSui(commandList: RelayCommand): Promise<void> {
         const key = Object.keys(commandList).find((name) => name.toLowerCase() === SUI_CHAIN_NAME);
@@ -141,17 +144,20 @@ export class SuiRelayer extends Relayer {
         for (const command of toExecute) {
             if (!command.post) continue;
 
-            await command.post({});
+            try {
+                await command.post({});
+            } catch (error) {
+                logger.log(`sui relay failed for command ${command.commandId}: ${error}`);
+            }
         }
     }
 
     createCallContractCommand(commandId: string, relayData: RelayData, args: CallContractArgs): Command {
-        if (hexDataLength(args.destinationContractAddress) !== 32) {
-            throw new Error(
-                `a Sui destination must be a 32-byte Channel object id, got ${args.destinationContractAddress}. ` +
-                    `Send to the destination package's Channel address, not its package id.`,
-            );
-        }
+        // Validation is deferred into post() rather than thrown here. This runs
+        // inside EvmRelayer's event loop, before it advances lastRelayedBlock,
+        // so throwing would make it re-read the same log forever and wedge all
+        // relaying in both directions.
+        const invalid = this.destinationError(args);
 
         const message = {
             source_chain: args.from,
@@ -162,8 +168,6 @@ export class SuiRelayer extends Relayer {
             payload_hash: args.payloadHash,
         };
 
-        this.relayedMessages.set(commandId, message);
-
         return new Command(
             commandId,
             // Command's constructor keys on this exact name to skip ABI
@@ -172,6 +176,8 @@ export class SuiRelayer extends Relayer {
             [args.from, args.sourceAddress, args.destinationContractAddress, args.payloadHash, args.payload],
             [],
             async () => {
+                if (invalid) throw new Error(invalid);
+
                 const key = `${message.source_chain}:${message.message_id}`;
 
                 // approve_messages is idempotent but take_approved_message
@@ -179,14 +185,9 @@ export class SuiRelayer extends Relayer {
                 // over the same command would throw.
                 if (this.executed.has(key)) return;
 
-                const result = await approveAndExecute(
-                    this.sui.client as any,
-                    this.sui.deployer as any,
-                    this.sui.gatewayInfo as any,
-                    this.sui.discoveryInfo as any,
-                    message as any,
-                    { showEvents: true },
-                );
+                const result = await approveAndExecute(this.sui.client, this.sui.deployer, this.sui.gatewayInfo, this.sui.discoveryInfo, message, {
+                    showEvents: true,
+                });
 
                 this.executed.add(key);
                 relayData.callContract[commandId] = { ...relayData.callContract[commandId], execution: result.digest } as any;
@@ -195,6 +196,18 @@ export class SuiRelayer extends Relayer {
             },
             SUI_CHAIN_NAME,
         );
+    }
+
+    /** The message cannot be delivered; reported when the command runs. */
+    private destinationError(args: CallContractArgs): string | undefined {
+        if (hexDataLength(args.destinationContractAddress) !== 32) {
+            return (
+                `a Sui destination must be a 32-byte Channel object id, got ${args.destinationContractAddress}. ` +
+                `Send to the destination package's Channel address, not its package id.`
+            );
+        }
+
+        return undefined;
     }
 
     createCallContractWithTokenCommand(_commandId: string, _relayData: RelayData, _args: CallContractWithTokenArgs): Command {
@@ -241,19 +254,4 @@ export class SuiRelayer extends Relayer {
         }
     }
 
-    /** Ignore everything already on chain, for a relayer attached to a long-lived node. */
-    async skipPastEvents(): Promise<void> {
-        const page = await this.sui.client.queryEvents({
-            query: { MoveEventType: `${this.sui.gatewayPackageId}::events::ContractCall` },
-            order: 'descending',
-            limit: 1,
-        });
-
-        this.cursor = page.data.length ? page.data[0].id : this.cursor;
-    }
-
-    /** The message id this relayer would assign to a Sui event. */
-    messageIdFor(eventId: EventId): string {
-        return suiMessageId(eventId);
-    }
 }

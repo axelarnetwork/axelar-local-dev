@@ -1,4 +1,5 @@
-import { keccak256, hexlify, toUtf8Bytes, id as keccakId } from 'ethers/lib/utils';
+import { arrayify, defaultAbiCoder, keccak256, hexlify, toUtf8Bytes, id as keccakId } from 'ethers/lib/utils';
+import { TxBuilder } from '@axelar-network/axelar-cgp-sui';
 import type { CallContractArgs } from '@axelar-network/axelar-local-dev';
 
 import { SuiNetwork } from '../SuiNetwork';
@@ -41,10 +42,12 @@ describe('SuiRelayer', () => {
         };
     }
 
-    it('rejects a destination that is not a 32-byte Channel id', () => {
-        expect(() => relayer.createCallContractCommand(keccakId('x'), relayer.relayData, argsFor('hi', '0xdeadbeef'))).toThrow(
-            /Channel object id/,
-        );
+    it('rejects a destination that is not a 32-byte Channel id, at execution time', async () => {
+        // Deliberately not at construction: that runs inside EvmRelayer's event
+        // loop, where a throw would wedge all relaying.
+        const command = relayer.createCallContractCommand(keccakId('x'), relayer.relayData, argsFor('hi', '0xdeadbeef'));
+
+        await expect(command.post!({})).rejects.toThrow(/Channel object id/);
     });
 
     it('refuses callContractWithToken rather than silently doing nothing', () => {
@@ -79,14 +82,49 @@ describe('SuiRelayer', () => {
         await expect(command.post!({})).resolves.toBeUndefined();
     }, 300000);
 
-    it('picks up an outbound ContractCall event and turns it into an EVM command', async () => {
+    it('turns an outbound ContractCall event into an EVM command', async () => {
+        const message = 'hello avalanche from sui';
+        const payload = arrayify(defaultAbiCoder.encode(['string'], [message]));
+        const destination = '0xd7E33976B03964133D377Ce8f6a3718A212EecAC';
+
+        const builder = new TxBuilder(sui.client);
+        // ts-jest resolves @mysten/sui's subpath types differently from tsc, so
+        // Transaction comes back without a 2-arg splitCoins. The runtime is fine.
+        const [coin] = (builder.tx as any).splitCoins(builder.tx.gas, [1_000_000]);
+
+        await builder.moveCall({
+            target: `${sui.sample.packageId}::gmp::send_call`,
+            arguments: [
+                sui.sample.singletonId,
+                sui.gatewayId,
+                sui.gasServiceId,
+                'Avalanche',
+                destination,
+                payload,
+                sui.getExecutorAddress(),
+                coin,
+            ] as any,
+        });
+
+        const sent: any = await builder.signAndExecute(sui.deployer, { showEvents: true });
+        const emitted = sent.events.find((event: any) => event.type.endsWith('::events::ContractCall'));
+
+        expect(emitted).toBeDefined();
+
         await relayer.updateEvents();
 
-        const commandIds = Object.keys(relayer.relayData.callContract);
+        const commands = relayer['commands']['Avalanche'];
 
-        // Nothing outbound has been sent yet, so the only entries are the
-        // inbound ones the tests above registered.
-        expect(commandIds.length).toBeGreaterThan(0);
-        expect(suiCommandId({ txDigest: 'abc', eventSeq: '0' })).toMatch(/^0x[0-9a-f]{64}$/);
-    }, 120000);
+        expect(commands).toHaveLength(1);
+        expect(commands[0].commandId).toBe(suiCommandId(emitted.id));
+
+        // Covers the field-encoding trap: payload arrives as a byte array,
+        // payload_hash as a hex string.
+        const args = relayer.relayData.callContract[commands[0].commandId];
+
+        expect(args.payload).toBe(hexlify(payload));
+        expect(args.payloadHash).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(args.destinationContractAddress).toBe(destination);
+        expect(args.sourceAddress).toBe(sui.sample.channelAddress);
+    }, 300000);
 });
