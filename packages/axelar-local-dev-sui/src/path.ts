@@ -1,7 +1,6 @@
 import path from 'path';
 
 export const Path = {
-    base: path.join(__dirname, '..'),
     /** Move sources shipped with this package (the sample app). */
     move: path.join(__dirname, '..', 'move'),
     /**

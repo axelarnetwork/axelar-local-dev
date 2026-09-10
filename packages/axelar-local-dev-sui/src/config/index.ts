@@ -10,9 +10,11 @@ export const defaultSuiConfig = {
     signerCount: 3,
     signerThreshold: 2,
 
+    /** The node is often still starting when init runs, especially in CI. */
+    nodeRetries: 30,
+    nodeRetryDelayMs: 2000,
+
     /** The faucet rate-limits for the first seconds after `sui start`. */
     faucetRetries: 8,
     faucetRetryDelayMs: 2000,
 };
-
-export type SuiConfig = typeof defaultSuiConfig;
