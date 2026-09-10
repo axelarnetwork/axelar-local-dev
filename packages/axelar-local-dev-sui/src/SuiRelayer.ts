@@ -84,7 +84,10 @@ export class SuiRelayer extends Relayer {
     }
 
     private handleContractCall(event: { id: EventId; parsedJson?: unknown }): void {
-        const { source_id, destination_chain, destination_address, payload, payload_hash } = (event.parsedJson ?? {}) as Record<string, any>;
+        const { source_id, destination_chain, destination_address, payload, payload_hash } = (event.parsedJson ?? {}) as Record<
+            string,
+            any
+        >;
 
         if (!destination_chain) return;
 
@@ -185,9 +188,16 @@ export class SuiRelayer extends Relayer {
                 // over the same command would throw.
                 if (this.executed.has(key)) return;
 
-                const result = await approveAndExecute(this.sui.client, this.sui.deployer, this.sui.gatewayInfo, this.sui.discoveryInfo, message, {
-                    showEvents: true,
-                });
+                const result = await approveAndExecute(
+                    this.sui.client,
+                    this.sui.deployer,
+                    this.sui.gatewayInfo,
+                    this.sui.discoveryInfo,
+                    message,
+                    {
+                        showEvents: true,
+                    },
+                );
 
                 this.executed.add(key);
                 relayData.callContract[commandId] = { ...relayData.callContract[commandId], execution: result.digest } as any;
@@ -253,5 +263,4 @@ export class SuiRelayer extends Relayer {
             }
         }
     }
-
 }

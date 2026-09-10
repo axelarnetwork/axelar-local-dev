@@ -5,7 +5,7 @@ Welcome to the Axelar Local Development Environment! This monorepo contains esse
 - **Core Package**: [@axelar-network/axelar-local-dev](./packages/axelar-local-dev/)
 - **Optional Packages**:
   - [@axelar-network/axelar-local-dev-cosmos](./packages/axelar-local-dev-cosmos/)
-  - [@axelar-network/axelar-local-dev-sui](./packages/axelar-local-dev-sui/)
+  - [@axelar-network/axelar-local-dev-sui](./packages/axelar-local-dev-sui/) (workspace-only for now, not yet published)
 
 The `axelar-local-dev` package is all you need for cross-chain applications between EVM chains. However, if you wish to explore cross-chain applications between EVM chains and other chain stacks, check out our specific guides:
 

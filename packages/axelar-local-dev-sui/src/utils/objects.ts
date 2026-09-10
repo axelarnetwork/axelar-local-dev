@@ -10,12 +10,7 @@ type ObjectChangeWithId = Extract<SuiObjectChange, { objectId: string; objectTyp
  * than failing. Always pair this with requireObjectId at a call site that
  * cannot proceed without the object.
  */
-export function findObjectId(
-    tx: SuiTransactionBlockResponse,
-    objectType: string,
-    type = 'created',
-    excludes?: string,
-): string | undefined {
+export function findObjectId(tx: SuiTransactionBlockResponse, objectType: string, type = 'created', excludes?: string): string | undefined {
     const match = (tx.objectChanges ?? []).find(
         (change): change is ObjectChangeWithId =>
             change.type === type &&
