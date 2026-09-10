@@ -8,7 +8,7 @@ import { rmSync } from 'fs';
 
 import { Path } from './path';
 import { defaultSuiConfig } from './config';
-import { publishPackage, stageMovePackages } from './utils/publish';
+import { publishExternalPackage, publishPackage, stageMovePackages } from './utils/publish';
 import { requireObjectId } from './utils/objects';
 import { generateSigners } from './utils/signers';
 import type { DiscoveryInfo, GatewayApprovalInfo, SerializedWeightedSigners, SuiDeployment, SuiNetworkOptions } from './types';
@@ -256,6 +256,17 @@ export class SuiNetwork {
             signerKeys,
             domainSeparator: this.domainSeparator,
         } as GatewayApprovalInfo;
+    }
+
+    /**
+     * Publish a Move package of your own against this deployment.
+     *
+     * `fromDir` is the directory containing `<packageName>/Move.toml`. The
+     * package is staged beside the published framework, so its local
+     * dependencies link against real addresses.
+     */
+    async publishPackage(packageName: string, fromDir: string) {
+        return publishExternalPackage(this.client, this.deployer, packageName, fromDir, this.compileDir);
     }
 
     async fundWallet(address: string): Promise<void> {
