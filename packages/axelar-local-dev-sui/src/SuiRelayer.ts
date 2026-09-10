@@ -21,6 +21,17 @@ import { evmMessageId, suiCommandId, suiMessageId } from './utils/ids';
 const DEFAULT_GAS_LIMIT = BigInt(8e6);
 const SUI_CHAIN_NAME = 'sui';
 
+/**
+ * ContractCall's fields are not uniformly encoded in parsedJson: `payload`
+ * arrives as a byte array while `payload_hash` arrives as a 0x-prefixed hex
+ * string. Feeding the string through Uint8Array.from produces a 66-element
+ * array of NaN, which then fails hex padding with an unrelated-looking
+ * "value out of range" from ethers.
+ */
+function toHex(value: string | number[]): string {
+    return typeof value === 'string' ? value : hexlify(Uint8Array.from(value));
+}
+
 export class SuiRelayer extends Relayer {
     /** Paginates queryEvents so a tick never re-reads what it already saw. */
     private cursor: EventId | null = null;
@@ -86,8 +97,8 @@ export class SuiRelayer extends Relayer {
             to: destination_chain,
             sourceAddress: source_id,
             destinationContractAddress: destination_address,
-            payload: hexlify(Uint8Array.from(payload)),
-            payloadHash: hexZeroPad(hexlify(Uint8Array.from(payload_hash)), 32),
+            payload: toHex(payload),
+            payloadHash: hexZeroPad(toHex(payload_hash), 32),
             transactionHash: event.id.txDigest,
             sourceEventIndex: Number(event.id.eventSeq),
         };
