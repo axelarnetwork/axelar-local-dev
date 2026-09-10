@@ -1,4 +1,11 @@
-import { CLOCK_PACKAGE_ID, TxBuilder, bcsStructs, getDefinedSuiVersion, getInstalledSuiVersion, updateMoveToml } from '@axelar-network/axelar-cgp-sui';
+import {
+    CLOCK_PACKAGE_ID,
+    TxBuilder,
+    bcsStructs,
+    getDefinedSuiVersion,
+    getInstalledSuiVersion,
+    updateMoveToml,
+} from '@axelar-network/axelar-cgp-sui';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui/faucet';
@@ -305,7 +312,9 @@ export class SuiNetwork {
             }
         }
 
-        throw new Error(`could not fund ${address} from the faucet at ${this.faucetUrl} after ${defaultSuiConfig.faucetRetries} attempts: ${lastError}`);
+        throw new Error(
+            `could not fund ${address} from the faucet at ${this.faucetUrl} after ${defaultSuiConfig.faucetRetries} attempts: ${lastError}`,
+        );
     }
 
     /**

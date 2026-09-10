@@ -18,16 +18,27 @@ export function suiMessageId(eventId: { txDigest: string; eventSeq: string | num
 /**
  * Sui -> EVM. The EVM side only ever compares this against its own approval
  * table, so a one-way hash is sufficient and nothing needs the string back.
+ *
+ * Deliberately not AxelarAmplifierGateway's messageToCommandId: local-dev's
+ * EVM side runs the legacy CGP gateway, which treats the commandId as opaque.
  */
 export function suiCommandId(eventId: { txDigest: string; eventSeq: string | number }): string {
     return keccakId(`sui:${suiMessageId(eventId)}`);
 }
 
 /**
- * EVM -> Sui. `${transactionHash}-${sourceEventIndex}` is Axelar's canonical
- * EVM message id, so a locally relayed message carries the same identity it
- * would on testnet. Both fields are populated by EvmRelayer before the command
- * is created, which is why this needs no shared state.
+ * EVM -> Sui. `${transactionHash}-${sourceEventIndex}` matches the shape
+ * amplifier accepts for an EVM message id, so a locally relayed message looks
+ * like the real thing rather than an invented format.
+ *
+ * The value is not identical to what amplifier would derive: EvmRelayer sets
+ * sourceEventIndex from the block-level log index, while amplifier indexes
+ * into the receipt's own logs. Those agree on anvil, where each transaction
+ * gets its own block, and diverge in general. Nothing here depends on the
+ * difference - the id only has to be stable and unique within this harness.
+ *
+ * Both fields are populated by EvmRelayer before the command is created, which
+ * is why this needs no shared state.
  */
 export function evmMessageId(args: Pick<CallContractArgs, 'transactionHash' | 'sourceEventIndex'>): string {
     if (!args.transactionHash || args.sourceEventIndex === undefined || args.sourceEventIndex === null) {

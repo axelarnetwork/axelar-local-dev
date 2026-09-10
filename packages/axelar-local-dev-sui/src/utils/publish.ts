@@ -16,12 +16,7 @@ export interface PublishResult {
  * here would resolve every package against cgp-sui's own move/ and so fail for
  * any package that does not live there, such as our sample.
  */
-export async function publishPackage(
-    client: SuiClient,
-    keypair: Keypair,
-    packageName: string,
-    compileDir: string,
-): Promise<PublishResult> {
+export async function publishPackage(client: SuiClient, keypair: Keypair, packageName: string, compileDir: string): Promise<PublishResult> {
     // A package must be published at 0x0; the placeholder address in the
     // manifest is rewritten to the real id afterwards so dependents link
     // against it.
