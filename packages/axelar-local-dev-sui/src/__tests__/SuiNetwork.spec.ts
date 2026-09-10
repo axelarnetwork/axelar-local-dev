@@ -1,4 +1,7 @@
+import { hexlify, keccak256, toUtf8Bytes, id as keccakId } from 'ethers/lib/utils';
+
 import { SuiNetwork } from '../SuiNetwork';
+import { SuiRelayer } from '../SuiRelayer';
 
 /**
  * Bring-up: publishes the Axelar framework to a running local Sui network.
@@ -55,4 +58,32 @@ describe('SuiNetwork', () => {
         expect(deployment.discoveryId).toBe(sui.discoveryId);
         expect(Object.keys(deployment.packageIds).length).toBeGreaterThanOrEqual(5);
     });
+
+    it('can relay through a handle rebuilt from that blob', async () => {
+        // What the examples harness does: `start` publishes, then `deploy` and
+        // `execute` run as separate processes and reconnect from a side-file.
+        const roundTripped = JSON.parse(JSON.stringify(sui.getDeployment()));
+        const reconnected = await SuiNetwork.fromDeployment(roundTripped);
+        const relayer = new SuiRelayer(reconnected);
+
+        expect(reconnected.gatewayId).toBe(sui.gatewayId);
+        expect(reconnected.sample.channelAddress).toBe(sui.sample.channelAddress);
+
+        const payload = hexlify(toUtf8Bytes('hello from a reconnected process'));
+        const command = relayer.createCallContractCommand(keccakId('reconnect'), relayer.relayData, {
+            from: 'Avalanche',
+            to: 'sui',
+            sourceAddress: '0x0000000000000000000000000000000000000001',
+            destinationContractAddress: reconnected.sample.channelAddress,
+            payload,
+            payloadHash: keccak256(payload),
+            transactionHash: keccakId('reconnect-tx'),
+            sourceEventIndex: 0,
+        });
+
+        const result: any = await command.post!({});
+        const executed = (result.events ?? []).find((event: any) => event.type.endsWith('::gmp::Executed'));
+
+        expect(executed).toBeDefined();
+    }, 300000);
 });

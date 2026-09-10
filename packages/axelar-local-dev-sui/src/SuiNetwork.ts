@@ -2,7 +2,7 @@ import { CLOCK_PACKAGE_ID, TxBuilder, bcsStructs, getDefinedSuiVersion, getInsta
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui/faucet';
-import { hexlify } from 'ethers/lib/utils';
+import { arrayify, hexlify } from 'ethers/lib/utils';
 import { randomBytes } from 'crypto';
 import { rmSync } from 'fs';
 
@@ -11,7 +11,24 @@ import { defaultSuiConfig } from './config';
 import { publishPackage, stageMovePackages } from './utils/publish';
 import { requireObjectId } from './utils/objects';
 import { generateSigners } from './utils/signers';
-import type { DiscoveryInfo, GatewayApprovalInfo, SuiDeployment, SuiNetworkOptions } from './types';
+import type { DiscoveryInfo, GatewayApprovalInfo, SerializedWeightedSigners, SuiDeployment, SuiNetworkOptions } from './types';
+
+/** Uint8Array public keys do not survive a JSON round trip; hex does. */
+function serializeSigners(signers: any): SerializedWeightedSigners {
+    return {
+        signers: signers.signers.map((signer: any) => ({ pub_key: hexlify(signer.pub_key), weight: signer.weight })),
+        threshold: signers.threshold,
+        nonce: signers.nonce,
+    };
+}
+
+function deserializeSigners(signers: SerializedWeightedSigners): any {
+    return {
+        signers: signers.signers.map((signer) => ({ pub_key: arrayify(signer.pub_key), weight: signer.weight })),
+        threshold: signers.threshold,
+        nonce: signers.nonce,
+    };
+}
 
 /**
  * The sample app depends on the gateway, gas service and relayer discovery, so
@@ -93,6 +110,37 @@ export class SuiNetwork {
                     `Install the pinned release from https://github.com/MystenLabs/sui/releases/tag/${defined} and put it first on PATH.`,
             );
         }
+    }
+
+    /**
+     * Rebuild a handle to an already-published framework, for a process that
+     * did not publish it. `pnpm run start`, `deploy` and `execute` are three
+     * separate processes, so the ids travel through a side-file.
+     *
+     * A fresh keypair is generated and funded rather than carrying the original
+     * deployer's secret in that file: any funded account can drive the gateway,
+     * so there is no reason to write a key to disk.
+     */
+    static async fromDeployment(deployment: SuiDeployment, options: SuiNetworkOptions = {}): Promise<SuiNetwork> {
+        const sui = new SuiNetwork(options);
+
+        await sui.assertNodeReachable();
+        await sui.fundWallet(sui.deployer.toSuiAddress());
+
+        sui.packageIds = deployment.packageIds;
+        sui.gasServiceId = deployment.gasServiceId;
+        sui.domainSeparator = deployment.domainSeparator;
+        sui.sample = deployment.sample;
+        sui.discoveryInfo = { packageId: deployment.discoveryPackageId, discovery: deployment.discoveryId };
+        sui.gatewayInfo = {
+            packageId: deployment.gatewayPackageId,
+            gateway: deployment.gatewayId,
+            signers: deserializeSigners(deployment.signers),
+            signerKeys: deployment.signerKeys,
+            domainSeparator: deployment.domainSeparator,
+        } as GatewayApprovalInfo;
+
+        return sui;
     }
 
     async init(): Promise<void> {
@@ -228,7 +276,7 @@ export class SuiNetwork {
         throw new Error(`could not fund ${address} from the faucet at ${this.faucetUrl} after ${defaultSuiConfig.faucetRetries} attempts: ${lastError}`);
     }
 
-    private async assertNodeReachable(): Promise<void> {
+    async assertNodeReachable(): Promise<void> {
         try {
             await this.client.getChainIdentifier();
         } catch (error) {
@@ -253,6 +301,7 @@ export class SuiNetwork {
             gasServiceId: this.gasServiceId,
             domainSeparator: this.domainSeparator,
             signerKeys: this.gatewayInfo.signerKeys,
+            signers: serializeSigners(this.gatewayInfo.signers),
             sample: this.sample,
         };
     }
