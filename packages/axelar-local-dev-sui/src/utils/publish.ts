@@ -50,6 +50,26 @@ export async function publishPackage(
  * updateMoveToml write into the directory they are handed, and cgp-sui's own
  * move/ is a hardlinked path into the pnpm store.
  */
+/**
+ * Stage and publish a Move package that lives outside cgp-sui - an example's
+ * own module, say.
+ *
+ * It is staged as a sibling of the already-published framework packages so its
+ * `local = "../axelar_gateway"` style dependencies resolve against their real
+ * on-chain addresses rather than the unpublished placeholders.
+ */
+export async function publishExternalPackage(
+    client: SuiClient,
+    keypair: Keypair,
+    packageName: string,
+    fromDir: string,
+    compileDir: string,
+): Promise<PublishResult> {
+    copyMovePackage(packageName, fromDir, compileDir);
+
+    return publishPackage(client, keypair, packageName, compileDir);
+}
+
 export function stageMovePackages(rootPackage: string, compileDir: string, rootFromDir: string | null): string[] {
     const queue = [rootPackage];
     const seen = new Set<string>();
