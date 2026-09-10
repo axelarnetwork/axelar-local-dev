@@ -38,14 +38,6 @@ export async function publishPackage(client: SuiClient, keypair: Keypair, packag
 }
 
 /**
- * Stage a package and every local dependency it pulls in, then return the
- * order they must be published in.
- *
- * Staging is required rather than convenient: getContractBuild and
- * updateMoveToml write into the directory they are handed, and cgp-sui's own
- * move/ is a hardlinked path into the pnpm store.
- */
-/**
  * Stage and publish a Move package that lives outside cgp-sui - an example's
  * own module, say.
  *
@@ -65,6 +57,14 @@ export async function publishExternalPackage(
     return publishPackage(client, keypair, packageName, compileDir);
 }
 
+/**
+ * Stage a package and every local dependency it pulls in, then return the
+ * order they must be published in.
+ *
+ * Staging is required rather than convenient: getContractBuild and
+ * updateMoveToml write into the directory they are handed, and cgp-sui's own
+ * move/ is a hardlinked path into the pnpm store.
+ */
 export function stageMovePackages(rootPackage: string, compileDir: string, rootFromDir: string | null): string[] {
     const queue = [rootPackage];
     const seen = new Set<string>();

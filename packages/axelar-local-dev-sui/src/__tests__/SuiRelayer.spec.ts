@@ -123,7 +123,7 @@ describe('SuiRelayer', () => {
         const args = relayer.relayData.callContract[commands[0].commandId];
 
         expect(args.payload).toBe(hexlify(payload));
-        expect(args.payloadHash).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(args.payloadHash).toBe(keccak256(payload));
         expect(args.destinationContractAddress).toBe(destination);
         expect(args.sourceAddress).toBe(sui.sample.channelAddress);
     }, 300000);

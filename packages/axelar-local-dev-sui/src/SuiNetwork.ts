@@ -274,6 +274,10 @@ export class SuiNetwork {
      * dependencies link against real addresses.
      */
     async publishPackage(packageName: string, fromDir: string) {
+        // This shells out to `sui move build` just as init does, and a
+        // reconnected process never ran init's version check.
+        SuiNetwork.assertSuiVersion();
+
         // A process that reconnected via fromDeployment never staged anything,
         // and stop() deletes the tree, so the framework this package's
         // `local = "../axelar_gateway"` dependencies point at may be absent.

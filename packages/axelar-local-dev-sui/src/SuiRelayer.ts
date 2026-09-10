@@ -37,6 +37,7 @@ export class SuiRelayer extends Relayer {
     private cursor: EventId | null = null;
     /** take_approved_message aborts on replay, so a command must run once. */
     private readonly executed = new Set<string>();
+
     constructor(private readonly sui: SuiNetwork) {
         super();
     }
@@ -103,11 +104,21 @@ export class SuiRelayer extends Relayer {
             sourceEventIndex: Number(event.id.eventSeq),
         };
 
+        // Normalise the destination to the registered network's own spelling.
+        // The Sui contract chose this string, and Axelar chain names are
+        // conventionally lowercase, but Command.post looks the network up
+        // case-sensitively. Fixing it here rather than at execution time is
+        // deliberate: Relayer.relay seeds commands[to.name] for every network
+        // before updateEvents runs, so a case-insensitive lookup later always
+        // finds the seeded empty bucket instead of this one.
+        const network = networks.find((candidate) => candidate.name.toLowerCase() === String(destination_chain).toLowerCase());
+
+        args.to = network ? network.name : args.to;
+
         this.relayData.callContract[commandId] = args;
 
-        // Relayer.relay only seeds the 'sui' and 'wasm' buckets plus the
-        // registered EVM networks, so a destination we have not seen before
-        // has no array yet.
+        // Relayer.relay seeds 'sui', 'wasm' and the registered EVM networks, so
+        // a destination we have not seen before has no array yet.
         if (!this.commands[args.to]) this.commands[args.to] = [];
 
         this.commands[args.to].push(Command.createEVMContractCallCommand(commandId, this.relayData, args));
@@ -115,13 +126,9 @@ export class SuiRelayer extends Relayer {
 
     private async executeSuiToEvm(commandList: RelayCommand): Promise<void> {
         for (const to of networks) {
-            // The bucket key is whatever the Sui contract passed as
-            // destination_chain. Axelar chain names are conventionally
-            // lowercase, so a Sui dApp sending to 'avalanche' would otherwise
-            // never match network 'Avalanche' - and because the event cursor
-            // has already advanced, that message would be lost silently.
-            const key = Object.keys(commandList).find((name) => name.toLowerCase() === to.name.toLowerCase());
-            const commands = key ? commandList[key] : undefined;
+            // Exact match is correct: handleContractCall already normalised the
+            // key to this network's own spelling.
+            const commands = commandList[to.name];
 
             if (!commands || commands.length === 0) continue;
 
@@ -162,14 +169,24 @@ export class SuiRelayer extends Relayer {
         // relaying in both directions.
         const invalid = this.destinationError(args);
 
-        const message = {
+        if (invalid) {
+            // Reported here as well as from post(): the relay loop's catch logs
+            // through `logger`, which consumers silence, and this is a caller
+            // mistake rather than a transient failure.
+            console.error(`sui relay cannot deliver ${commandId}: ${invalid}`);
+        }
+
+        // Built lazily for the same reason: evmMessageId throws on incomplete
+        // args, and throwing here would wedge the loop just as the destination
+        // check would have.
+        const buildMessage = () => ({
             source_chain: args.from,
             message_id: evmMessageId(args),
             source_address: args.sourceAddress,
             destination_id: args.destinationContractAddress,
             payload: args.payload,
             payload_hash: args.payloadHash,
-        };
+        });
 
         return new Command(
             commandId,
@@ -181,6 +198,7 @@ export class SuiRelayer extends Relayer {
             async () => {
                 if (invalid) throw new Error(invalid);
 
+                const message = buildMessage();
                 const key = `${message.source_chain}:${message.message_id}`;
 
                 // approve_messages is idempotent but take_approved_message
