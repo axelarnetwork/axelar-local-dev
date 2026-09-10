@@ -8,10 +8,8 @@
     "release": "pnpm -r publish --access public --no-git-checks",
     "start:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos start",
     "build:core": "pnpm --filter @axelar-network/axelar-local-dev build",
-    "build:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui build",
     "build:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos build",
     "test:core": "pnpm --filter @axelar-network/axelar-local-dev test",
-    "test:sui": "pnpm --filter @axelar-network/axelar-local-dev-sui test",
     "test:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test",
     "test-e2e:cosmos": "pnpm --filter @axelar-network/axelar-local-dev-cosmos test:e2e"
   }

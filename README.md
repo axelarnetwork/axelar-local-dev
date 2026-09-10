@@ -4,12 +4,10 @@ Welcome to the Axelar Local Development Environment! This monorepo contains esse
 
 - **Core Package**: [@axelar-network/axelar-local-dev](./packages/axelar-local-dev/)
 - **Optional Packages**:
-  - [@axelar-network/axelar-local-dev-sui](./packages/axelar-local-dev-sui/)
   - [@axelar-network/axelar-local-dev-cosmos](./packages/axelar-local-dev-cosmos/)
 
 The `axelar-local-dev` package is all you need for cross-chain applications between EVM chains. However, if you wish to explore cross-chain applications between EVM chains and other chain stacks, check out our specific guides:
 
-- [Evm <-> Sui Integration Guide](./packages/axelar-local-dev-sui/README.md)
 - [Evm <-> Cosmos Integration Guide](./packages/axelar-local-dev-cosmos/README.md)
 
 ## Prerequisites
@@ -55,5 +53,4 @@ Both are closed by the same cgp-6.4 / gmp-sdk-6 / ITS-2.1.1 stack bump.
 We currently support the following chain stacks:
 
 - [EVM](./packages/axelar-local-dev/)
-- [Sui](./packages/axelar-local-dev-sui/)
 - [Cosmos](./packages/axelar-local-dev-cosmos/)
