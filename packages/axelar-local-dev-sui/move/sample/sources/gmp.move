@@ -32,11 +32,6 @@ module sample::gmp {
         });
     }
 
-    /// The address other chains must send to.
-    public fun channel_address(self: &Singleton): address {
-        self.channel.to_address()
-    }
-
     /// Tell the relayer which Move call consumes messages addressed to our
     /// Channel. Without this the discovery lookup returns nothing and inbound
     /// messages are undeliverable.
